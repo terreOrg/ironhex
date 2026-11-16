@@ -2,6 +2,7 @@ import { createPool, initializeDatabase } from './db.mjs';
 import { createAuthStore } from './auth.mjs';
 import { createHangarStore } from './hangar.mjs';
 import { createPilotStore } from './pilots.mjs';
+import { createOperationStore } from './operations.mjs';
 import { createBrevoMailer } from './mail.mjs';
 import { createAccountFlows } from './account-flows.mjs';
 import { createHttpServer } from './http.mjs';
@@ -24,6 +25,7 @@ const server = createHttpServer({
   accountFlows: createAccountFlows(pool,{mailer}),
   hangarStore: createHangarStore(pool),
   pilotStore: createPilotStore(pool),
+  operationStore: createOperationStore(pool),
   publicOrigin: process.env.IRONHEX_PUBLIC_ORIGIN || null,
   secureCookies: process.env.IRONHEX_AUTH_COOKIE_SECURE === 'true'
 });

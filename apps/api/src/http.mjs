@@ -82,6 +82,7 @@ export function createHttpServer({
   authStore = null,
   hangarStore = null,
   pilotStore = null,
+  operationStore = null,
   accountFlows = null,
   publicOrigin = null,
   secureCookies = false
@@ -114,17 +115,43 @@ export function createHttpServer({
           apiVersion:1,
           modes:{ai:true,hotseat:true,multiplayer:false},
           features:{database:true,accounts:!!authStore,hangar:!!authStore,pilots:!!pilotStore, emailDelivery:!!accountFlows?.emailAvailable,
-            campaigns:false,market:false},
-          combatAuthority:'browser'
+            operations:!!operationStore,campaigns:false,market:false},
+          combatAuthority:'browser',operationsAuthority:operationStore?'server':'unavailable'
         },head);
       }
 
-      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/') || path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/')) {
+      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/') || path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/') || path === '/api/v1/operations' || path.startsWith('/api/v1/operations/')) {
         if (!authStore) return json(res,503,{error:'auth_unavailable'},head);
 
         if (path === '/api/v1/auth/me' && (method === 'GET' || head)) {
           const user = await authStore.currentUser(extractSession(req.headers.cookie));
           return json(res,200,{authenticated:!!user,user},head);
+        }
+        if(path === '/api/v1/operations' || path.startsWith('/api/v1/operations/')){
+          const user=await authStore.currentUser(extractSession(req.headers.cookie));
+          if(!user) return json(res,401,{error:'unauthorized'},head);
+          if(user.emailVerificationRequired && !user.emailVerified)
+            return json(res,403,{error:'email_unverified'},head);
+          if(!operationStore) return json(res,503,{error:'operations_unavailable'},head);
+          if(path==='/api/v1/operations' && (method==='GET'||head))
+            return json(res,200,{items:await operationStore.list(user.id)},head);
+          if(path==='/api/v1/operations' && method==='POST'){
+            if(!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
+            return json(res,201,{item:await operationStore.create(user.id,await readJson(req))});
+          }
+          const match=/^\/api\/v1\/operations\/([^/]+)(?:\/(launch|advance|abandon))?$/.exec(path);
+          if(match){
+            const [,id,command]=match;
+            if(!command&&(method==='GET'||head))
+              return json(res,200,{item:await operationStore.get(user.id,id)},head);
+            if(command&&method==='POST'){
+              if(!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
+              const body=await readJson(req);
+              if(Object.keys(body).length)throw new AuthError(422,'invalid_operation');
+              return json(res,200,{item:await operationStore[command](user.id,id)},head);
+            }
+          }
+          return json(res,404,{error:'not_found'},head);
         }
         if (path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/')) {
           const user=await authStore.currentUser(extractSession(req.headers.cookie));
