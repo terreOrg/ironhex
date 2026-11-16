@@ -140,3 +140,17 @@ test('A verified heading must have a complete, exact set of independently verifi
  }
  assert(verifiedCount>0,'At least one narrow rule must have been fully audited');
 });
+
+test('Strict sequential audit cursor stops at the earliest unverified heading',()=>{
+  const state=JSON.parse(readFileSync(resolve(root,'rules/sequential-audit.json'),'utf8'));
+  assert.equal(state.schemaVersion,1);
+  assert.equal(state.bookId,registry.book.id);
+  const index=registry.topics.findIndex(topic=>topic.status!=='verified');
+  assert(index>=0);
+  assert.equal(state.currentIndex,index);
+  assert.equal(state.currentTopicId,registry.topics[index].id);
+  assert.deepEqual(state.completedPrefix,registry.topics.slice(0,index).map(topic=>topic.id));
+  assert(registry.topics.slice(0,index).every(topic=>topic.status==='verified'));
+  assert.equal(state.currentTopicId,'bmm-p005-four-legged-mech',
+    'Stop at quad support: a glossary-only test must not certify the next mechanics');
+});

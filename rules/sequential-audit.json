@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "bookId": "bmm-corrected-6th-2022",
+  "sequence": "rules/battlemech-manual.json topics array order",
+  "currentTopicId": "bmm-p005-four-legged-mech",
+  "currentIndex": 1,
+  "completedPrefix": [
+    "bmm-p005-mech"
+  ],
+  "policy": "Finish all requirements and source-backed gameplay tests for the current heading before auditing a later heading.",
+  "note": "Later previously verified isolated rules remain recorded as historical evidence, but do not advance the strict sequential cursor."
+}
