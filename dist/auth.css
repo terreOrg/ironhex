@@ -754,3 +754,10 @@ color:#1d3223;font-weight:800;font-size:14px;padding:14px;cursor:pointer}
  .economy-panel .economy-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .economy-panel .economy-filter-field{font-size:10px}
 }
+
+/* Persisted ammunition magazines and one-pack refills. */
+.economy-magazines{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:9px}
+.economy-magazines .economy-item{min-width:0}
+.economy-magazines .economy-item button:disabled{opacity:.47;cursor:not-allowed}
+.op-reward .op-info{display:block;margin-top:7px;font-size:11px;line-height:1.6;color:#c7dcae}
+@media(max-width:600px){.economy-magazines{grid-template-columns:1fr}}

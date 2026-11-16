@@ -1,6 +1,7 @@
 import {randomBytes} from 'node:crypto';
 import {Game} from '../../../packages/engine/engine.js';
 import {construct} from '../../../packages/engine/construction.js';
+import {ammoBinsFor,normalizedAmmoState} from '../../../packages/engine/equipment.js';
 import {validateDesign} from './hangar.mjs';
 import {AuthError} from './auth.mjs';
 import {runTacticalOrder,publicSnapshot} from './server-combat.mjs';
@@ -59,6 +60,11 @@ function makeRuntime(roster,saved=null,contractId='patrol') {
       const result=construct(entry.config);
       if(result.errors?.length||!result.unit)throw new AuthError(422,'invalid_design');
       Object.assign(unit,result.unit);
+      // A roster snapshots the owner's ammo reserves at contract creation.
+      // 0 rounds is meaningful: the engine must never silently refill it.
+      const stored=normalizedAmmoState(entry.config,entry.ammoState);
+      for(const bin of unit.bins)bin.shots=stored[bin.location+':'+(bin.slot+1)]??bin.shots;
+      game.syncAmmo(unit);
       unit.gunnery=entry.pilot?.gunnery??4;
       unit.piloting=entry.pilot?.piloting??5;
       unit.pilotWounds=0;
@@ -139,6 +145,17 @@ function buildReport(game,roster,contractId) {
     const unit=game.units[i];
     const experience=(result==='victory'?120:result==='defeat'?35:65)+
       (unit.dead?0:15);
+    const initial=normalizedAmmoState(r.config,r.ammoState);
+    const remaining=Object.fromEntries((unit.bins||[])
+      .map(bin=>[bin.location+':'+(bin.slot+1),Math.max(0,bin.shots)]));
+    const ammoState={};
+    const ammoUsed=ammoBinsFor(r.config).map(bin=>{
+      const rounds=Math.min(bin.capacity,remaining[bin.key]??0);
+      const starting=initial[bin.key];
+      ammoState[bin.key]=rounds;
+      return {weapon:bin.weapon,location:bin.location,slot:bin.slot+1,
+        starting,remaining:rounds,used:Math.max(0,starting-rounds),capacity:bin.capacity};
+    });
     return {
       mechId:r.mechId,chassis:r.chassis,
       pilotId:r.pilot?.id||null,callsign:r.pilot?.callsign||null,
@@ -146,7 +163,7 @@ function buildReport(game,roster,contractId) {
       wounds:unit.pilotWounds||0,
       destroyed:!!unit.dead,
       armorLost:units[i].armorLost,
-      structureLost:units[i].structureLost
+      structureLost:units[i].structureLost,ammoUsed,ammoState
     };
   });
   return {
@@ -154,7 +171,7 @@ function buildReport(game,roster,contractId) {
     rounds:Math.min(MAX_ROUNDS,game.round),
     units,rewards,
     log:(game.log||[]).slice(-90).map(v=>String(v).slice(0,300)),
-    equipmentNote:'Повреждения внесены в ангар; ремонт оплачивается в службе снабжения. Расход боеприпасов пока не учитывается.'
+    equipmentNote:'Боеприпасы списаны по фактическим выстрелам и повреждениям бункеров. Перезарядка требует комплекта со склада; ремонт оплачивается отдельно.'
   };
 }
 
@@ -187,9 +204,10 @@ export function createOperationStore(pool){
           for(const reward of report.rewards){
             await client.query(
               'UPDATE hangar_mechs SET armor_damage=armor_damage+$3, '+
-              'structure_damage=structure_damage+$4,wrecked=wrecked OR $5 '+
-              'WHERE id=$1 AND commander_id=$2',
-              [reward.mechId,owner,reward.armorLost,reward.structureLost,reward.destroyed]);
+              'structure_damage=structure_damage+$4,wrecked=wrecked OR $5, '+
+              'ammo_state=$6::jsonb WHERE id=$1 AND commander_id=$2',
+              [reward.mechId,owner,reward.armorLost,reward.structureLost,
+                reward.destroyed,JSON.stringify(reward.ammoState)]);
           }
           for(const reward of report.rewards){
             if(!reward.pilotId)continue;
@@ -269,7 +287,7 @@ export function createOperationStore(pool){
            current.rows.filter(r=>['draft','active'].includes(r.status)).length>=5)
           throw new AuthError(409,'operation_limit');
         const result=await client.query(
-          'SELECT m.id,m.chassis,m.state,m.armor_damage,m.structure_damage,m.wrecked,m.market_owned, ' +
+          'SELECT m.id,m.chassis,m.state,m.ammo_state,m.armor_damage,m.structure_damage,m.wrecked,m.market_owned, ' +
           'm.pilot_id,p.callsign,p.gunnery,p.piloting '+
           'FROM hangar_mechs m LEFT JOIN mechwarrior_pilots p '+
           'ON p.id=m.pilot_id AND p.commander_id=m.commander_id '+
@@ -292,6 +310,7 @@ export function createOperationStore(pool){
           const checked=validateDesign({config});
           return {
             mechId:mech.id,chassis:checked.chassis,config:checked.state.config,
+            ammoState:normalizedAmmoState(checked.state.config,mech.ammo_state),
             pilot:mech.pilot_id?{
               id:mech.pilot_id,callsign:mech.callsign,
               gunnery:mech.gunnery,piloting:mech.piloting

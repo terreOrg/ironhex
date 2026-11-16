@@ -12,6 +12,6 @@
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
     "check:generated": "node scripts/build-web.mjs --check",
-    "test:unit": "node --test tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs tests/economy.mjs tests/market.mjs"
+    "test:unit": "node --test tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs tests/economy.mjs tests/components.mjs tests/market.mjs"
   }
 }

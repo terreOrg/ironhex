@@ -12,7 +12,13 @@ const messages={
   mech_not_found:'Мех не найден в вашем ангаре.',
   invalid_purchase:'Недопустимый заказ.',
   invalid_mech_offer:'Модель отсутствует в каталоге.',
-  hangar_full:'В ангаре нет свободных мест.'
+  hangar_full:'В ангаре нет свободных мест.',
+  insufficient_ammo:'Недостаточно комплектов боеприпасов на складе.',
+  magazine_full:'Этот бункер уже заполнен.',
+  invalid_reload:'Недопустимая команда перезарядки.',
+  mech_assigned_operation:'Мех участвует в операции.',
+  mech_needs_repair:'Сначала отремонтируйте повреждения.',
+  prototype_not_licensed:'Учебный прототип нельзя снабжать по контракту.'
 };
 let root=null,refreshHangar=()=>{},busy=false,catalogPage=1,catalogTimer=null,catalogSerial=0,detailSerial=0;
 async function request(path,method='GET',body){
@@ -38,7 +44,9 @@ async function mutate(path,body){
     busy=false;
     await refreshEconomy();
     await refreshHangar();
-    notice(body.offerId?
+    notice(path.endsWith('/reload')?
+      'Боезапас '+item.weapon+' пополнен до '+item.rounds+' выстрелов.':
+      body.offerId?
       'Мех приобретён. Списано '+money(item.spent)+'. Откройте его в ангаре.':
       path.endsWith('/purchase')?
         'Заказ выполнен. Куплено единиц: '+body.quantity+'.':
@@ -142,6 +150,7 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
   const mechs=el('div','economy-mechs');mechs.id='economy-mechs';
   const supplies=el('div','economy-supplies');supplies.id='economy-supplies';
   const inventory=el('div','economy-inventory');inventory.id='economy-inventory';
+  const magazines=el('div','economy-magazines');magazines.id='economy-magazines';
   const repairs=el('div','economy-repairs');repairs.id='economy-repairs';
   const ledger=el('div','economy-ledger');ledger.id='economy-ledger';
   const status=el('p','op-message');status.id='economy-message';
@@ -153,6 +162,7 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
     filters,reset,filterHint,archiveSummary,archive,pager,
     el('h3','economy-heading','ВООРУЖЕНИЕ И РЕМОНТНЫЕ КОМПЛЕКТЫ'),supplies,
     el('h3','economy-heading','ОРУЖЕЙНЫЙ СКЛАД'),inventory,
+    el('h3','economy-heading','БОЕПРИПАСЫ И ПЕРЕЗАРЯДКА'),magazines,
     el('h3','economy-heading','РЕМОНТ АНГАРА'),repairs,
     el('h3','economy-heading','ЖУРНАЛ РАСЧЁТОВ'),ledger,status);
   const button=root.querySelector('#hub-market-button');
@@ -226,6 +236,7 @@ export async function refreshEconomy(){
       text.append(el('strong','',entry.name),
         el('small','','Цена: '+money(entry.price)+' · На складе: '+
           (entry.kind==='weapon'?(data.equipmentStock?.[entry.name]||0):
+            entry.kind==='ammo'?(data.equipmentStock?.[entry.sku]||0):
             (data.stock?.[entry.sku]||0))));
       const buy=el('button','op-primary','КУПИТЬ');
       buy.type='button';
@@ -235,6 +246,35 @@ export async function refreshEconomy(){
       };
       card.append(text,buy);stock.append(card);
     }
+    const magazines=root.querySelector('#economy-magazines');
+    magazines.replaceChildren();
+    for(const bin of data.magazines||[]){
+      const card=el('div','economy-item');
+      const details=el('div','');
+      const stockQty=data.equipmentStock?.[bin.reloadSku]||0;
+      details.append(el('strong','',bin.chassis+' · '+bin.weapon),
+        el('small','','Бункер '+bin.location+' / слот '+bin.slot+
+          ' · '+bin.rounds+' / '+bin.capacity+' выстрелов'+
+          ' · комплектов на складе: '+stockQty));
+      card.append(details);
+      if(bin.rounds<bin.capacity){
+        const reload=el('button','op-primary','ПЕРЕЗАРЯДИТЬ');
+        reload.type='button';
+        reload.disabled=!!bin.damaged||!bin.licensed||stockQty<1;
+        reload.title=bin.damaged?'Сначала отремонтируйте меха':
+          !bin.licensed?'Перезарядка доступна только боевым мехам':
+          stockQty<1?'Купите комплект '+bin.weapon:'Пополнить бункер до полного';
+        reload.onclick=()=>{
+          if(confirm('Израсходовать 1 комплект '+bin.weapon+' со склада?'))
+            void mutate('/api/v1/economy/reload',
+              {mechId:bin.mechId,location:bin.location,slot:bin.slot});
+        };
+        card.append(reload);
+      }
+      magazines.append(card);
+    }
+    if(!data.magazines?.length)magazines.append(el('p','op-empty',
+      'В ангаре нет мехов с баллистическими или ракетными бункерами.'));
     const repairs=root.querySelector('#economy-repairs');
     repairs.replaceChildren();
     for(const item of data.repairs||[]){

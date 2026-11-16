@@ -43,3 +43,12 @@ test('All equipment SKUs map to controlled inventory keys',()=>{
   assert.equal(weaponName('weapon:PPC-synthetic'),null);
   assert.equal(weaponCounts({equipment:[{type:'PPC'},{type:'PPC'},{type:'jump'}]}).get('PPC'),2);
 });
+
+test('Ammo packs are server-owned, listed only for supported firearms',()=>{
+  const ammo=EQUIPMENT_CATALOG.filter(x=>x.kind==='ammo');
+  assert(ammo.length>=10);
+  assert(ammo.every(x=>x.sku.startsWith('ammo:')&&x.rounds>0&&x.price>0));
+  assert(ammo.some(x=>x.sku==='ammo:LRM 20'));
+  assert(!ammo.some(x=>x.sku==='ammo:PPC'));
+  assert(!EQUIPMENT_CATALOG.some(x=>x.sku==='weapon:ER PPC'));
+});

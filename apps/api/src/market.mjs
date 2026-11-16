@@ -167,24 +167,24 @@ export const showMechOffer=offer=>({
   weapons:offer.config.equipment.filter(e=>EQUIPMENT.includes(e.type)).map(e=>e.type)
 });
 
-// Weapon purchases are pegged to existing IronHex game balance costs,
-// not to (unavailable) authoritative currency valuations in MTF.
-const PRICES={
-  'Large Laser':6000,'Medium Laser':2500,'Small Laser':1100,Flamer:900,
-  PPC:9500,'AC/2':3500,'AC/5':5500,'AC/10':9500,'AC/20':14500,
-  'Machine Gun':900,'LRM 5':2200,'LRM 10':4500,'LRM 15':6700,
-  'LRM 20':8700,'SRM 2':1500,'SRM 4':2500,'SRM 6':3600
-};
-if(EQUIPMENT.some(name=>!PRICES[name]))throw new Error('Missing equipment price');
-export const EQUIPMENT_CATALOG=EQUIPMENT.map(name=>({
-  sku:'weapon:'+name,name,price:PRICES[name],kind:'weapon'
-}));
+// Merchandise is generated from the *same* rules definitions as combat.
+export {WEAPON_SPECS} from '../../../packages/engine/equipment.js';
+import {WEAPON_SPECS,WEAPON_NAMES,AMMO_PACKS} from '../../../packages/engine/equipment.js';
+export const EQUIPMENT_CATALOG=[
+  ...WEAPON_NAMES.map(name=>{
+    const item=WEAPON_SPECS[name];
+    return {sku:item.id,name:item.name,price:item.price,kind:'weapon',
+      tons:item.tons,slots:item.slots,heat:item.heat,damage:item.damage,
+      ranges:item.ranges,roundsPerTon:item.roundsPerTon};
+  }),
+  ...Object.values(AMMO_PACKS).map(pack=>({...pack}))
+];
 export const weaponName=sku=>typeof sku==='string'&&sku.startsWith('weapon:')&&
-  EQUIPMENT.includes(sku.slice(7))?sku.slice(7):null;
+  Object.hasOwn(WEAPON_SPECS,sku.slice(7))?sku.slice(7):null;
 export function weaponCounts(config){
   const result=new Map();
   for(const item of config.equipment||[]){
-    if(!EQUIPMENT.includes(item.type))continue;
+    if(!Object.hasOwn(WEAPON_SPECS,item.type))continue;
     result.set(item.type,(result.get(item.type)||0)+1);
   }
   return result;

@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {example} from '../packages/engine/construction.js';
+import {createPool} from '../apps/api/src/db.mjs';
 
 const base='http://127.0.0.1:3000';
 const suffix=randomBytes(6).toString('hex');
@@ -155,7 +156,19 @@ assert.equal(quote.wrecked,state.report.rewards[0].destroyed);
 assert.equal((await req('/api/v1/economy/repair',{
   method:'POST',cookie:other.cookie,body:{mechId}})).status,404,
   'Rival commanders must not repair another hangar');
-assert.equal(state.report.equipmentNote.includes('пока'),true);
+assert.match(state.report.equipmentNote,/Боеприпасы списаны/);
+const magazinesInReport=state.report.rewards[0].ammoUsed;
+assert(Array.isArray(magazinesInReport));
+assert(magazinesInReport.length>=1);
+assert(magazinesInReport.every(bin=>Number.isInteger(bin.used)&&
+  bin.remaining>=0&&bin.remaining<=bin.capacity));
+const persistedMechAfterFight=(await req('/api/v1/hangar',{cookie:owner.cookie}))
+  .data.items.find(m=>m.id===mechId);
+for(const bin of magazinesInReport){
+  const key=bin.location+':'+bin.slot;
+  assert.equal(persistedMechAfterFight.ammoState[key],bin.remaining,
+    'Combat-resolved ammunition must be saved on the owned mech');
+}
 const persisted=await req('/api/v1/operations/'+id,{cookie:owner.cookie});
 assert.equal(persisted.status,200);
 assert.deepEqual(persisted.data.item.report,state.report);
@@ -289,3 +302,48 @@ const stillOwner=await req('/api/v1/pilots/'+pilotId,{cookie:owner.cookie});
 assert.equal(stillOwner.data.item.battles,1,
   'Abandoning interactive battle must not issue additional rewards');
 console.log('Interactive 3D protocol passed: private snapshots, enemy order rejection, version conflicts, server AI, phase persistence and abort');
+
+// Test a real reload transaction against a guaranteed depleted magazine.
+// The isolated test database is the only place we manipulate the starting
+// ammo fixture directly; game clients have no such mutation endpoint.
+const reloadBin=magazinesInReport[0],key=reloadBin.location+':'+reloadBin.slot;
+const pool=createPool();
+try{
+  const current=(await pool.query('SELECT ammo_state FROM hangar_mechs WHERE id=$1',[mechId]))
+    .rows[0].ammo_state||{};
+  current[key]=0;
+  await pool.query('UPDATE hangar_mechs SET ammo_state=$2::jsonb WHERE id=$1',
+    [mechId,JSON.stringify(current)]);
+}finally{await pool.end();}
+const reloadBody={mechId,location:reloadBin.location,slot:reloadBin.slot};
+const shopBefore=await req('/api/v1/economy',{cookie:owner.cookie});
+assert.equal(shopBefore.data.magazines.find(m=>m.mechId===mechId&&
+  m.location===reloadBody.location&&m.slot===reloadBody.slot).rounds,0);
+assert.equal((await req('/api/v1/economy/reload',{method:'POST',cookie:other.cookie,
+  body:reloadBody})).status,404);
+assert.equal((await req('/api/v1/economy/reload',{method:'POST',cookie:owner.cookie,
+  origin:false,body:reloadBody})).status,403);
+assert.equal((await req('/api/v1/economy/reload',{method:'POST',cookie:owner.cookie,
+  body:{...reloadBody,rounds:999}})).status,422);
+assert.equal((await req('/api/v1/economy/reload',{method:'POST',cookie:owner.cookie,
+  body:reloadBody})).status,409,'Reload must consume an owned pack');
+const ammoSku='ammo:'+reloadBin.weapon;
+const ammoOffer=shopBefore.data.catalog.find(x=>x.sku===ammoSku);
+assert(ammoOffer,'Every operational magazine must have a purchasable refill');
+const newPack=await req('/api/v1/economy/purchase',{method:'POST',cookie:owner.cookie,
+  body:{sku:ammoSku,quantity:1}});
+assert.equal(newPack.status,200,JSON.stringify(newPack.data));
+assert.equal(newPack.data.item.spent,ammoOffer.price);
+const loaded=await req('/api/v1/economy/reload',{method:'POST',cookie:owner.cookie,
+  body:reloadBody});
+assert.equal(loaded.status,200,JSON.stringify(loaded.data));
+assert.equal(loaded.data.item.rounds,reloadBin.capacity);
+const finalShop=await req('/api/v1/economy',{cookie:owner.cookie});
+assert.equal(finalShop.data.equipmentStock[ammoSku],0);
+assert.equal(finalShop.data.balance,shopBefore.data.balance-ammoOffer.price);
+assert.equal(finalShop.data.magazines.find(m=>m.mechId===mechId&&
+  m.location===reloadBody.location&&m.slot===reloadBody.slot).rounds,
+  reloadBin.capacity);
+assert.equal((await req('/api/v1/economy/reload',{method:'POST',cookie:owner.cookie,
+  body:reloadBody})).status,409,'Reload cannot consume another pack twice');
+console.log('Ammo logistics passed: combat magazine persistence, isolated storage, owner-only pack purchases, one-time reload');

@@ -1,5 +1,7 @@
 import {randomUUID} from 'node:crypto';
 import {AuthError} from './auth.mjs';
+import {ammoBinsFor,normalizedAmmoState,AMMO_PACKS} from '../../../packages/engine/equipment.js';
+import {construct} from '../../../packages/engine/construction.js';
 import {MECH_OFFERS,showMechOffer,EQUIPMENT_CATALOG,searchMechCatalog,getMechDetails} from './market.mjs';
 
 export const CONTRACTS=[
@@ -73,7 +75,7 @@ export function createEconomyStore(pool){
           'SELECT equipment_type,quantity FROM commander_equipment WHERE commander_id=$1',[owner]);
         const equipmentStock=Object.fromEntries(
           equipped.rows.map(row=>[row.equipment_type,row.quantity]));
-        const mechs=await c.query('SELECT id,chassis,armor_damage,structure_damage,wrecked '+
+        const mechs=await c.query('SELECT id,chassis,armor_damage,structure_damage,wrecked,market_owned,state,ammo_state '+
           'FROM hangar_mechs WHERE commander_id=$1 ORDER BY created_at DESC',[owner]);
         const ledger=await c.query('SELECT change_amount,reason,created_at FROM credit_ledger '+
           'WHERE commander_id=$1 ORDER BY id DESC LIMIT 20',[owner]);
@@ -81,6 +83,15 @@ export function createEconomyStore(pool){
           catalog:[...CATALOG.map(item=>({...item,kind:'supply'})),...EQUIPMENT_CATALOG],
           mechOffers:MECH_OFFERS.map(showMechOffer),
           repairs:mechs.rows.map(m=>repairQuote(m,stock)),
+          magazines:mechs.rows.flatMap(mech=>
+            ammoBinsFor(mech.state?.config).map(bin=>{
+              const levels=normalizedAmmoState(mech.state.config,mech.ammo_state);
+              return {mechId:mech.id,chassis:mech.chassis,
+                location:bin.location,slot:bin.slot+1,weapon:bin.weapon,
+                rounds:levels[bin.key],capacity:bin.capacity,
+                reloadSku:'ammo:'+bin.weapon,licensed:!!mech.market_owned,
+                damaged:!!(mech.wrecked||mech.armor_damage||mech.structure_damage)};
+            })),
           ledger:ledger.rows.map(e=>({amount:Number(e.change_amount),
             reason:e.reason,createdAt:e.created_at}))};
       });
@@ -95,12 +106,12 @@ export function createEconomyStore(pool){
       return inTransaction(pool,async c=>{
         await changeCredits(c,owner,-item.price*body.quantity,
           'Закупка: '+item.name,'supply:'+randomUUID());
-        const isWeapon=item.kind==='weapon';
+        const isWeapon=item.kind==='weapon'||item.kind==='ammo';
         const result=isWeapon?await c.query(
           'INSERT INTO commander_equipment(commander_id,equipment_type,quantity) '+
           'VALUES($1,$2,$3) ON CONFLICT(commander_id,equipment_type) DO UPDATE SET '+
           'quantity=commander_equipment.quantity+EXCLUDED.quantity RETURNING quantity',
-          [owner,item.name,body.quantity]):await c.query(
+          [owner,item.kind==='ammo'?item.sku:item.name,body.quantity]):await c.query(
           'INSERT INTO commander_supplies(commander_id,sku,quantity) '+
           'VALUES($1,$2,$3) ON CONFLICT(commander_id,sku) DO UPDATE SET '+
           'quantity=commander_supplies.quantity+EXCLUDED.quantity RETURNING quantity',
@@ -125,6 +136,47 @@ export function createEconomyStore(pool){
           'VALUES($1,$2,$3::jsonb,true) RETURNING id,chassis',
           [owner,offer.name,JSON.stringify({version:1,config:offer.config})]);
         return {id:newMech.rows[0].id,chassis:newMech.rows[0].chassis,spent:offer.price};
+      });
+    },
+    reload(owner,body){
+      if(!body||typeof body!=='object'||Array.isArray(body)||
+         Object.keys(body).length!==3||!UUID.test(body.mechId)||
+         !['HD','CT','LT','RT','LA','RA','LL','RL'].includes(body.location)||
+         !Number.isInteger(body.slot)||body.slot<1||body.slot>12)
+        throw new AuthError(422,'invalid_reload');
+      return inTransaction(pool,async c=>{
+        // Lock commander first to follow operation creation ordering, then mech.
+        await c.query('SELECT id FROM commanders WHERE id=$1 FOR UPDATE',[owner]);
+        const r=await c.query('SELECT id,chassis,state,ammo_state,wrecked,armor_damage,structure_damage,market_owned '+
+          'FROM hangar_mechs WHERE id=$1 AND commander_id=$2 FOR UPDATE',[body.mechId,owner]);
+        if(!r.rows.length)throw new AuthError(404,'mech_not_found');
+        const mech=r.rows[0];
+        if(!mech.market_owned)throw new AuthError(409,'prototype_not_licensed');
+        if(mech.wrecked||mech.armor_damage||mech.structure_damage)
+          throw new AuthError(409,'mech_needs_repair');
+        const active=await c.query(
+          "SELECT 1 FROM combat_operations WHERE commander_id=$1 "+
+          "AND status IN ('draft','active') AND roster @> $2::jsonb LIMIT 1",
+          [owner,JSON.stringify([{mechId:body.mechId}])]);
+        if(active.rows.length)throw new AuthError(409,'mech_assigned_operation');
+        if(construct(mech.state.config).errors.length)throw new AuthError(409,'invalid_design');
+        const bin=ammoBinsFor(mech.state.config).find(e=>
+          e.location===body.location&&e.slot===body.slot-1);
+        if(!bin||!AMMO_PACKS[bin.weapon])
+          throw new AuthError(422,'invalid_reload');
+        const levels=normalizedAmmoState(mech.state.config,mech.ammo_state);
+        if(levels[bin.key]>=bin.capacity)throw new AuthError(409,'magazine_full');
+        const sku='ammo:'+bin.weapon;
+        const spent=await c.query('UPDATE commander_equipment '+
+          'SET quantity=quantity-1 WHERE commander_id=$1 AND equipment_type=$2 '+
+          'AND quantity>0 RETURNING quantity',[owner,sku]);
+        if(!spent.rows.length)throw new AuthError(409,'insufficient_ammo');
+        levels[bin.key]=bin.capacity;
+        await c.query('UPDATE hangar_mechs SET ammo_state=$3::jsonb '+
+          'WHERE id=$1 AND commander_id=$2',
+          [body.mechId,owner,JSON.stringify(levels)]);
+        return {mechId:body.mechId,location:bin.location,
+          slot:body.slot,weapon:bin.weapon,rounds:bin.capacity,spent:0};
       });
     },
     repair(owner,body){

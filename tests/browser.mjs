@@ -546,6 +546,54 @@ test('Commander market displays C-Bills and submits only SKU and quantity',
     });
   });
 
+test('Market reload consumes an owned ammo pack and displays server magazine state',
+  {timeout:120000},async()=>{
+    await withPage('market-reload',{hub:true},async page=>{
+      const id='11111111-1111-4111-8111-111111111111';
+      let stock=1,rounds=0,reloads=0;
+      const respond=(route,status,body)=>route.fulfill({status,
+        contentType:'application/json',body:JSON.stringify(body)});
+      await page.route('**/api/v1/economy**',route=>{
+        const request=route.request(),url=new URL(request.url());
+        if(url.pathname==='/api/v1/economy/reload'){
+          assert.deepEqual(request.postDataJSON(),
+            {mechId:id,location:'RT',slot:5});
+          assert.equal(request.method(),'POST');
+          assert.equal(stock,1);
+          stock--;rounds=12;reloads++;
+          return respond(route,200,{item:{mechId:id,weapon:'LRM 10',
+            location:'RT',slot:5,rounds,spent:0}});
+        }
+        if(url.pathname==='/api/v1/economy'){
+          return respond(route,200,{
+            balance:150000,stock:{},equipmentStock:{'ammo:LRM 10':stock},
+            catalog:[{sku:'ammo:LRM 10',name:'Боезапас LRM 10',
+              price:600,kind:'ammo'}],
+            magazines:[{mechId:id,chassis:'Griffin',weapon:'LRM 10',
+              location:'RT',slot:5,rounds,capacity:12,
+              reloadSku:'ammo:LRM 10',licensed:true,damaged:false}],
+            mechOffers:[],repairs:[],ledger:[]
+          });
+        }
+        return respond(route,200,{total:4305,available:6,items:[],
+          matches:0,page:1,pages:0});
+      });
+      page.on('dialog',dialog=>void dialog.accept());
+      await page.locator('#hub-market-button').click();
+      await page.locator('#economy-magazines button').waitFor({state:'visible'});
+      assert.match(await page.locator('#economy-magazines').textContent(),/0 \/ 12/);
+      assert.match(await page.locator('#economy-supplies').textContent(),/На складе: 1/);
+      await page.locator('#economy-magazines button').click();
+      await page.waitForFunction(()=>document.querySelector('#economy-magazines')
+        ?.textContent.includes('12 / 12'));
+      assert.equal(reloads,1);
+      assert.equal(stock,0);
+      assert.equal(await page.locator('#economy-magazines button').count(),0);
+      await page.waitForFunction(()=>document.querySelector('#economy-message')
+        ?.textContent.includes('Боезапас LRM 10 пополнен'));
+    });
+  });
+
 test('Commander catalog supports combined mass filters and opens a complete Mech dossier',
   {timeout:120000},async()=>{
     await withPage('market-mech-dossier',{hub:true},async page=>{

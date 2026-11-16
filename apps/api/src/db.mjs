@@ -82,7 +82,8 @@ const schema = [
   "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS wrecked BOOLEAN NOT NULL DEFAULT false",
   "ALTER TABLE combat_operations ADD COLUMN IF NOT EXISTS contract_id TEXT NOT NULL DEFAULT 'patrol' CHECK(contract_id IN ('patrol','intercept','assault'))",
   "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS market_owned BOOLEAN NOT NULL DEFAULT true",
-  "CREATE TABLE IF NOT EXISTS commander_equipment (commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, equipment_type TEXT NOT NULL, quantity INTEGER NOT NULL CHECK(quantity >= 0 AND quantity <= 100000), PRIMARY KEY(commander_id,equipment_type))"
+  "CREATE TABLE IF NOT EXISTS commander_equipment (commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, equipment_type TEXT NOT NULL, quantity INTEGER NOT NULL CHECK(quantity >= 0 AND quantity <= 100000), PRIMARY KEY(commander_id,equipment_type))",
+   "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS ammo_state JSONB NOT NULL DEFAULT '{}'::jsonb"
 
 ];
 

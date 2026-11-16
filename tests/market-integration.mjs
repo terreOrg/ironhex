@@ -1,7 +1,7 @@
 // Real PostgreSQL integration for the NPC dealer and weapon warehouse.
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
-import {example} from '../packages/engine/construction.js';
+import {example,construct} from '../packages/engine/construction.js';
 const base='http://127.0.0.1:3000';
 const suffix=randomBytes(6).toString('hex');
 async function req(path,{method='GET',cookie,body,origin=true}={}){
@@ -92,6 +92,28 @@ assert.equal(purchasedConfig.walk,5);
 assert.equal(purchasedConfig.jump,5);
 assert(purchasedConfig.equipment.some(e=>e.type==='LRM 20'),
   'Purchased Griffin must have its real MTF armament');
+// Moving a purchased magazine to another slot is a replacement. It may
+// not create a fully loaded free bin in a new critical location.
+const moveMagazine=structuredClone(purchasedConfig);
+const originalMagazine=moveMagazine.equipment.find(e=>e.type==='ammo');
+assert(originalMagazine,'Imported chassis must contain a physical magazine');
+const unitSlots=construct(moveMagazine).unit.slots;
+const availableSlot=Object.entries(unitSlots)
+  .flatMap(([location,slots])=>slots.map((value,index)=>({
+    location,slot:index+1,value
+  })))
+  .find(slot=>slot.value===null&&['LT','RT','LA','RA'].includes(slot.location));
+assert(availableSlot,'Need a free slot to test unauthorized ammo relocation');
+originalMagazine.location=availableSlot.location;
+originalMagazine.slot=availableSlot.slot;
+assert.deepEqual(construct(moveMagazine).errors,[],
+  'Moving an ammo bin into an empty slot should be mechanically legal');
+const freeMagazine=await req('/api/v1/hangar/'+mechId,{
+  method:'PATCH',cookie:one.cookie,body:{config:moveMagazine}
+});
+assert.equal(freeMagazine.status,409,JSON.stringify(freeMagazine.data));
+assert.equal(freeMagazine.data.error,'insufficient_ammo',
+  'Refitting may not create a full magazine without owned reload stock');
 const modified=structuredClone(purchasedConfig);
 modified.equipment=modified.equipment.filter(e=>e.type!=='LRM 20'&&e.type!=='ammo');
 modified.equipment.push({type:'Medium Laser',location:'LA',slot:5});

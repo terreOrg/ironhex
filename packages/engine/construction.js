@@ -1,9 +1,14 @@
+import {WEAPON_SPECS,WEAPON_NAMES} from './equipment.js';
 export const LOCS=['HD','CT','LT','RT','LA','RA','LL','RL'];
 const masses=[.5,.5,1,1,1,1,1.5,1.5,1.5,2,2,2,2.5,2.5,3,3,3,3.5,3.5,4,4,4,4.5,4.5,5,5,5.5,5.5,6,6,6,7,7,7.5,7.5,8,8.5,8.5,9,9.5,10,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15.5,16,16.5,17.5,18,19,19.5,20.5,21.5,22.5,23.5,24.5,25.5,27,28.5,29.5,31.5,33,34.5,36.5,38.5,41,43.5,46,49,52.5];
 const structures=[[6,5,3,4],[8,6,4,6],[10,7,5,7],[11,8,6,8],[12,10,6,10],[14,11,7,11],[16,12,8,12],[18,13,9,13],[20,14,10,14],[21,15,10,15],[22,15,11,15],[23,16,12,16],[25,17,13,17],[27,18,14,18],[29,19,15,19],[30,20,16,20],[31,21,17,21]];
-// heat, damage, minimum, short, medium, long, tons, slots, rounds/ton, rack
-const data={'Large Laser':[8,8,0,5,10,15,5,2,0,0],'Medium Laser':[3,5,0,3,6,9,1,1,0,0],'Small Laser':[1,3,0,1,2,3,.5,1,0,0],'Flamer':[3,2,0,1,2,3,1,1,0,0],PPC:[10,10,3,6,12,18,7,3,0,0],'AC/2':[1,2,4,8,16,24,6,1,45,0],'AC/5':[1,5,3,6,12,18,8,4,20,0],'AC/10':[3,10,0,5,10,15,12,7,10,0],'AC/20':[7,20,0,3,6,9,14,10,5,0],'Machine Gun':[0,2,0,1,2,3,.5,1,200,0],'LRM 5':[2,1,6,7,14,21,2,1,24,5],'LRM 10':[4,1,6,7,14,21,5,2,12,10],'LRM 15':[5,1,6,7,14,21,7,3,8,15],'LRM 20':[6,1,6,7,14,21,10,5,6,20],'SRM 2':[2,2,0,3,6,9,1,1,50,2],'SRM 4':[3,2,0,3,6,9,2,1,25,4],'SRM 6':[4,2,0,3,6,9,3,2,15,6]};
-export const EQUIPMENT=Object.keys(data);
+// Stats, equipment weight and critical-slot usage share the market's
+// implemented component registry instead of maintaining a parallel table.
+const data=Object.fromEntries(Object.entries(WEAPON_SPECS).map(([name,w])=>[
+  name,[w.heat,w.damage,w.minimum,...w.ranges,w.tons,w.slots,
+    w.roundsPerTon,w.rack]
+]));
+export const EQUIPMENT=WEAPON_NAMES;
 export function construct(c){
  const errors=[],ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
  if(!Number.isInteger(ton)||ton<20||ton>100||ton%5)errors.push('Масса: 20–100 тонн с шагом 5.');

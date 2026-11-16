@@ -172,6 +172,11 @@ function renderOperation(op){
         E('span','', (item.destroyed?'МЕХ УНИЧТОЖЕН · ':'')+
           'Броня −'+item.armorLost+' · Структура −'+item.structureLost+
           ' · Ранения '+item.wounds+' · +'+item.experience+' XP'));
+      const spent=(item.ammoUsed||[]).filter(bin=>bin.used>0);
+      if(spent.length)row.append(E('small','op-info',
+        'РАСХОД БОЕПРИПАСОВ: '+spent.map(bin=>
+          bin.weapon+' '+bin.location+':'+bin.slot+' — '+bin.used+
+          ' ('+bin.remaining+'/'+bin.capacity+' осталось)').join(' · ')));
       rewards.append(row);
     }
     rewards.append(E('p','op-info',rep.equipmentNote||''));

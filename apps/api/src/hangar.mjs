@@ -1,5 +1,6 @@
 import { construct } from '../../../packages/engine/construction.js';
 import {weaponCounts} from './market.mjs';
+import {ammoBinsFor,normalizedAmmoState} from '../../../packages/engine/equipment.js';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -43,14 +44,15 @@ function serialize(row) {
   return {id:row.id, chassis:row.chassis, callsign:row.callsign,
     state:row.state, createdAt:row.created_at,
     armorDamage:row.armor_damage||0,structureDamage:row.structure_damage||0,
-    wrecked:!!row.wrecked,marketOwned:!!row.market_owned};
+    wrecked:!!row.wrecked,marketOwned:!!row.market_owned,
+    ammoState:row.ammo_state||{}};
 }
 
 export function createHangarStore(pool) {
   return {
     async list(commanderId) {
       const result=await pool.query(
-        'SELECT id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned FROM hangar_mechs ' +
+        'SELECT id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state FROM hangar_mechs ' +
         'WHERE commander_id=$1 ORDER BY created_at DESC LIMIT 100',
         [commanderId]
       );
@@ -62,7 +64,7 @@ export function createHangarStore(pool) {
         'INSERT INTO hangar_mechs(commander_id,chassis,callsign,state,market_owned) ' +
         'SELECT $1,$2,$3,$4::jsonb,false WHERE ' +
         '(SELECT count(*) FROM hangar_mechs WHERE commander_id=$1) < 50 ' +
-        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned',
+        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state',
         [commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]
       );
       if (!result.rows.length) throw new AuthError(409,'hangar_full');
@@ -74,6 +76,7 @@ export function createHangarStore(pool) {
       const client=await pool.connect();
       try{
         await client.query('BEGIN');
+        await client.query('SELECT id FROM commanders WHERE id=$1 FOR UPDATE',[commanderId]);
         const result=await client.query(
           'SELECT * FROM hangar_mechs WHERE id=$1 AND commander_id=$2 FOR UPDATE',
           [id,commanderId]);
@@ -122,11 +125,32 @@ export function createHangarStore(pool) {
             }
           }
         }
+        const before=ammoBinsFor(row.state.config);
+        const after=ammoBinsFor(design.state.config);
+        const previous=normalizedAmmoState(row.state.config,row.ammo_state);
+        const existing=new Map(before.map(bin=>[bin.key,bin]));
+        const levels={};
+        for(const bin of after){
+          const prior=existing.get(bin.key);
+          if(prior?.weapon===bin.weapon&&prior.capacity===bin.capacity){
+            levels[bin.key]=previous[bin.key];
+          }else{
+            if(row.market_owned){
+              const spent=await client.query('UPDATE commander_equipment '+
+                'SET quantity=quantity-1 WHERE commander_id=$1 AND equipment_type=$2 '+
+                'AND quantity>0 RETURNING quantity',
+                [commanderId,'ammo:'+bin.weapon]);
+              if(!spent.rows.length)throw new AuthError(409,'insufficient_ammo');
+            }
+            levels[bin.key]=bin.capacity;
+          }
+        }
         const changed=await client.query(
-          'UPDATE hangar_mechs SET chassis=$3,callsign=$4,state=$5::jsonb '+
+          'UPDATE hangar_mechs SET chassis=$3,callsign=$4,state=$5::jsonb,ammo_state=$6::jsonb '+
           'WHERE id=$1 AND commander_id=$2 '+
-          'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned',
-          [id,commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]);
+          'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state',
+          [id,commanderId,design.chassis,design.callsign,
+            JSON.stringify(design.state),JSON.stringify(levels)]);
         await client.query('COMMIT');
         return serialize(changed.rows[0]);
       }catch(error){
