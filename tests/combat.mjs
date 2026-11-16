@@ -520,6 +520,42 @@ test('Lethal collision damage destroys target and skid continues (BMM p.71)',()=
  assert.equal(result.hexes,3);assert.equal(t.dead,true);
  assert.equal(u.q,3);assert.equal(u.r,0);assert.equal(u.skidCollisionPending,null);
 });
+
+test('Entering depth-1 water ends skid without counting the water hex for damage (BMM p.70)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+ u.q=0;u.r=0;Object.assign(g.tile(2,0),{type:'water',height:-1,depth:1});
+ const amounts=[],original=g.packets.bind(g);
+ g.packets=(unit,dmg,...rest)=>{if(unit===u)amounts.push(dmg);return original(unit,dmg,...rest);};
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,2);
+ assert.equal(result.damage,9);
+ assert.equal(u.q,2);assert.equal(u.r,0);
+ assert.deepEqual(result.path,[{q:1,r:0},{q:2,r:0}]);
+ assert.deepEqual(amounts,[9]);
+ assert.equal(u.prone,true);
+});
+test('Depth-2 water in the first skid hex stops movement after fall damage only',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+ u.q=0;u.r=0;Object.assign(g.tile(1,0),{type:'water',height:-2,depth:2});
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,1);
+ assert.equal(result.damage,6);
+ assert.equal(u.q,1);assert.equal(u.r,0);
+ assert.deepEqual(result.path,[{q:1,r:0}]);
+});
+test('Entering water checks existing hull breaches after skid movement',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+ u.q=0;u.r=0;Object.assign(g.tile(1,0),{type:'water',height:-2,depth:2});
+ let checked=false;
+ const original=g.checkExistingHullBreaches.bind(g);
+ g.checkExistingHullBreaches=(unit)=>{checked=true;return original(unit);};
+ g.resolveSkid(u,0,2,5);
+ assert.equal(checked,true);
+});
+
 test('Skid terrain cost excludes optional night walking surcharge',()=>{
  const g=game(),u=g.units[0];g.rng=()=>.99;g.weather.night=true;
  for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
