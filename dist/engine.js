@@ -126,7 +126,30 @@ export class Game extends Legacy{
  buildQueue(){let counts=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead).length),order=[1-this.initiativeWinner,this.initiativeWinner];this.queue=[];while(counts.some(Boolean)){let batches=counts.map((n,i)=>n?Math.min(n,Math.max(1,Math.floor(n/Math.max(1,counts[1-i])))):0);for(const t of order)for(let k=0;k<batches[t];k++)this.queue.push(t);counts=counts.map((n,i)=>n-batches[i]);}this.activeTeam=this.queue[0]??null;this.actingId=null;}
  finish(u){if(this.phase==='move')u.moved=true;else if(this.phase==='fire')u.fired=true;else u.physicalDone=true;this.queue.shift();this.activeTeam=this.queue[0]??null;this.actingId=null;}
  initiative(){this.phaseRolls=[];let a,b,tries=0;do{a=this.roll('Инициатива: зелёные');b=this.roll('Инициатива: красные');}while(a===b&&++tries<10000);if(a===b)throw Error('Генератор выдаёт только ничьи инициативы');this.initiativeWinner=a>b?0:1;this.phase='move';this.buildQueue();this.note(`Инициатива ${a}:${b}. ${this.initiativeWinner?'Красные':'Зелёные'} действуют вторыми.`);}
- psrMod(u){let n=u.gyroHits*3+(this.weather.gale?1:0);for(const l of ['LL','RL']){const a=u.actuators[l];n+=u.structure[l]===0?5:a.hip||this.isBreached(u,l)?2:Number(a.upper)+Number(a.lower)+Number(a.foot);}return n;}
+ psrMod(u,fallAvoidance=false){
+  let n=u.gyroHits*3+(this.weather.gale?1:0);
+  if(u.config==='Quad'){
+   const legs=['LA','RA','LL','RL'];
+   const lost=legs.filter(l=>u.structure[l]===0).length;
+   // BMM p.44: one lost quad leg costs 1 MP instead of the biped
+   // +5 PSR modifier; two lost legs count as one lost biped leg.
+   if(lost===2)n+=5;else if(lost>=3)n+=10;
+   for(const l of legs){
+    if(u.structure[l]===0)continue;
+    const a=u.actuators[l];
+    n+=a.hip||this.isBreached(u,l)?2:Number(a.upper)+Number(a.lower)+Number(a.foot);
+   }
+   // BMM p.53: -2 applies only to PSRs made to avoid falls.
+   if(fallAvoidance&&lost===0)n-=2;
+   return n;
+  }
+  for(const l of ['LL','RL']){
+   const a=u.actuators[l];
+   n+=u.structure[l]===0?5:a.hip||this.isBreached(u,l)?2:
+     Number(a.upper)+Number(a.lower)+Number(a.foot);
+  }
+  return n;
+ }
  mp(u,mode='walk'){u=this.unit(u);if(!this.mobile(u))return 0;if(mode==='jump')return Math.max(0,u.jump-u.jumpLost-this.floodedSlots(u,'jump'));if(mode==='evade'&&(!this.tacticalOptions?.evading||u.actuators.LL.hip||u.actuators.RL.hip||this.isBreached(u,'LL')||this.isBreached(u,'RL')))return 0;const lost=['LL','RL'].filter(l=>u.structure[l]===0).length;if(lost===2)return 0;let w=lost===1?1:u.walk;if(!lost){let hips=['LL','RL'].filter(l=>u.actuators[l].hip||this.isBreached(u,l)).length;w=hips===2?0:hips?Math.ceil(w/2):w;for(const l of ['LL','RL'])if(!u.actuators[l].hip&&!this.isBreached(u,l))w-=Number(u.actuators[l].upper)+Number(u.actuators[l].lower)+Number(u.actuators[l].foot);}w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));return mode==='run'||mode==='evade'?(lost?0:Math.ceil(w*1.5)):w;}
  terrainCost(t){return (t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:t.depth?(t.depth===1?2:4):1)+(this.weather.night?1:0);}
  reachable(u,mode='walk'){u=this.unit(u);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||u.actuators.LL.hip||u.actuators.RL.hip||this.isBreached(u,'LL')||this.isBreached(u,'RL')))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];return this.tiles.filter(t=>!this.occupied(t.q,t.r,u.id)&&Math.max(1,distance(u,t))<=max&&this.jumpClear(u,t,max)).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
@@ -273,7 +296,7 @@ export class Game extends Legacy{
  if(!moved&&p.facing!==u.facing&&mode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)
   u.skidDirection=u.lastMovementDirection??u.facing;
  if(moved&&mode==='run'&&Number.isInteger(u.skidDirection)){
-  const n=u.distanceMoved+path.length,tn=u.piloting+this.psrMod(u)+skidModifier(n);
+  const n=u.distanceMoved+path.length,tn=u.piloting+this.psrMod(u,true)+skidModifier(n);
   const direction=u.skidDirection;u.skidDirection=null;
   if(this.roll(u.name+' · Скольжение',tn)<tn){
    const skid=this.resolveSkid(u,direction,n,tn);
@@ -328,8 +351,8 @@ export class Game extends Legacy{
  declareFire(id,assignments){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.unit(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:shots.length&&assignments[0].target!==a.target,aim:a.aim});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&this.mobile(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer'});}this.declarations.push({id,shots});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
  wound(u,n){for(let i=0;i<n&&!u.dead;i++){u.pilotWounds=Math.min(6,u.pilotWounds+1);if(u.pilotWounds>=6){u.dead=true;this.note(`${u.name}: пилот погиб.`);break;}u.consciousChecks++;if(!this.deferConsciousness)this.consciousness(u);}}
  consciousness(u){while(u.consciousChecks>0&&!u.dead){u.consciousChecks--;if(!u.unconscious&&this.roll(u.name+' · Сознание',conscious[u.pilotWounds])<conscious[u.pilotWounds]){u.unconscious=true;this.note(`${u.name}: пилот без сознания.`);}}}
- psr(u,modifier,reason,immediate=false,fallLevels=0,shutdownCheck=false){if(u.dead||u.prone)return true;if(!immediate){u.psrs.push({modifier,reason});return true;}this.consciousness(u);const tn=u.piloting+this.psrMod(u)+modifier;if(u.unconscious||u.gyroHits>=2||(u.shutdown&&!shutdownCheck)||this.roll(u.name+' · '+reason,tn)<tn){this.fall(u,fallLevels,tn);return false;}return true;}
- endPSR(){for(const u of this.units){this.consciousness(u);if(u.phaseDamage>=20)u.psrs.push({modifier:1,reason:'20+ урона'});if(!u.dead&&!u.prone){const tn=u.piloting+this.psrMod(u)+u.psrs.reduce((s,p)=>s+p.modifier,0);for(const p of u.psrs){if(!this.mobile(u)||u.gyroHits>=2||p.reason==='Потеря ноги'||this.roll(u.name+' · '+p.reason,tn)<tn){this.fall(u,0,tn);break;}}}u.psrs=[];u.phaseDamage=0;}}
+ psr(u,modifier,reason,immediate=false,fallLevels=0,shutdownCheck=false){if(u.dead||u.prone)return true;if(!immediate){u.psrs.push({modifier,reason});return true;}this.consciousness(u);const tn=u.piloting+this.psrMod(u,reason!=='Подъём')+modifier;if(u.unconscious||u.gyroHits>=2||(u.shutdown&&!shutdownCheck)||this.roll(u.name+' · '+reason,tn)<tn){this.fall(u,fallLevels,tn);return false;}return true;}
+ endPSR(){for(const u of this.units){this.consciousness(u);if(u.phaseDamage>=20)u.psrs.push({modifier:1,reason:'20+ урона'});if(!u.dead&&!u.prone){const tn=u.piloting+this.psrMod(u,true)+u.psrs.reduce((s,p)=>s+p.modifier,0);for(const p of u.psrs){if(!this.mobile(u)||u.gyroHits>=2||p.reason==='Потеря ноги'||this.roll(u.name+' · '+p.reason,tn)<tn){this.fall(u,0,tn);break;}}}u.psrs=[];u.phaseDamage=0;}}
  fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0){if(u.dead||u.falling)return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(u.shutdown||u.unconscious||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);let damage=Math.ceil(u.tonnage/10)*(levels+1)+extraDamage;if(this.tile(u.q,u.r).depth)damage=Math.floor(damage/2);this.note(`${u.name} упал: ${damage} урона.`);this.packets(u,damage,side);u.falling=false;}
  packets(u,amount,side='front',table='normal'){let total=amount;while(total>0&&!u.dead){const n=Math.min(5,total);this.hit(u,n,side,table);total-=n;}}
  hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){

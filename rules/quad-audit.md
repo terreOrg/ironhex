@@ -234,3 +234,20 @@ destroyed legs, repeated stand attempt denial, facing bounds,
 heat, MP and PSR emission. This **does not** yet certify all PSR
 modifiers or lost-leg speed effects (separate Quad requirements),
 so `bmm-req-082` remains `tested_case`.
+
+### Quad PSR modifiers feeding stand/fall logic
+
+`Game.psrMod(u,fallAvoidance)` now distinguishes all four Quad legs
+from the biped pair. Intact Quads receive the p.53 **-2 only when
+making a fall-avoidance PSR**, not for standing or preventing pilot
+injury in an already-occurring fall. A single destroyed Quad leg
+does not acquire the biped +5 lost-leg PSR penalty; losing two legs
+uses the biped one-leg equivalent; three legs the two-leg equivalent.
+The PSR contributions of hip/upper/lower/foot actuator damage
+include the front legs and ignore the destroyed leg's obsolete
+actuators. Biped PSR math remains unchanged.
+
+The standing test checks the exact 2D6 target after loss of a *rear*
+leg, the case that previously inherited a spurious biped +5 penalty.
+This is evidence for the standing requirement, but Quad movement
+speed / catastrophic leg loss still need independent checks.

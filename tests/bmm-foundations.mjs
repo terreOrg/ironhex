@@ -708,3 +708,45 @@ test('BMM pp.19,44: leg loss changes Quad standing attempts and roll requirement
  three.u.structure.LA=0;three.u.structure.RA=0;three.u.structure.LL=0;
  assert.equal(three.g.stand(0).ok,false,'Three destroyed legs prevent standing');
 });
+
+test('BMM pp.44,53: Quad PSR avoids biped lost-leg penalties and uses -2 only for fall avoidance',()=>{
+ const design=construct({...example,name:'Quad PSR audit',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,design.unit);
+ assert.equal(g.psrMod(u),0);
+ assert.equal(g.psrMod(u,true),-2,'Intact quad has -2 only on fall avoidance');
+ u.actuators.LA.upper=true;
+ assert.equal(g.psrMod(u),1,'Front leg actuator contributes to PSR');
+ assert.equal(g.psrMod(u,true),-1);
+ u.structure.RL=0;
+ assert.equal(g.psrMod(u),1,'First lost quad leg does not receive biped +5');
+ assert.equal(g.psrMod(u,true),1,'First lost quad leg loses -2 fall bonus');
+ u.actuators.LA.upper=false;
+ assert.equal(g.psrMod(u),0);
+ u.structure.RA=0;
+ assert.equal(g.psrMod(u),5,'Two lost quad legs act as a biped with one leg lost');
+ u.structure.LA=0;
+ assert.equal(g.psrMod(u),10,'Three lost quad legs act as a biped with no legs');
+ const b=flatGame(),biped=b.units[0];
+ assert.equal(b.psrMod(biped),0);
+ assert.equal(b.psrMod(biped,true),0,'Biped PSR modifiers stay unchanged');
+});
+
+test('BMM pp.19,44,53: standing PSR does not include intact-quad fall modifier',()=>{
+ const design=construct({...example,name:'Quad stand PSR',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,design.unit);
+ for(const other of g.units.slice(1))other.dead=true;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ u.prone=true;u.spent=0;u.moveMode='stand';u.standAttempts=0;
+ u.structure.LL=0;g.rng=()=>.99;
+ const result=g.stand(0);
+ assert(result.ok,result.error);
+ const roll=g.phaseRolls.find(x=>x.kind.includes('Подъём'));
+ assert(roll,'Standing on three quad legs must require a PSR');
+ assert.equal(roll.target,u.piloting,'First lost quad leg is not biped +5 penalty');
+});

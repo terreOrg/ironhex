@@ -1150,7 +1150,8 @@
       "status": "tested_case",
       "sourcePages": [
         19,
-        44
+        44,
+        53
       ],
       "evidence": [
         {
@@ -1160,6 +1161,14 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM pp.19,44: leg loss changes Quad standing attempts and roll requirement"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.44,53: Quad PSR avoids biped lost-leg penalties and uses -2 only for fall avoidance"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.19,44,53: standing PSR does not include intact-quad fall modifier"
         }
       ]
     },
