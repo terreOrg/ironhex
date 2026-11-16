@@ -674,3 +674,24 @@ color:#1d3223;font-weight:800;font-size:14px;padding:14px;cursor:pointer}
 @media(max-width:700px){
   .hub-frame.hub-section-active .hub-operations{animation:none}
 }
+
+/* Campaign economy / procurement terminal */
+.economy-panel{max-width:100%}
+.economy-wallet{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:17px;background:#1d2d24;border:1px solid #60785b;margin-bottom:22px}
+.economy-wallet small{font-size:10px;letter-spacing:1px;color:#a5b9a1}
+.economy-wallet strong{font:800 28px 'Barlow Condensed',sans-serif;color:#c3ee78;letter-spacing:1px}
+.economy-wallet span{font-size:10px;color:#93a58d}
+.economy-heading{font:700 19px 'Barlow Condensed',sans-serif;color:#b9d9b0;letter-spacing:1px;margin:22px 0 9px}
+.economy-supplies,.economy-repairs{display:grid;gap:8px}
+.economy-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid #39483c;background:#1b2820}
+.economy-item>div{min-width:0}
+.economy-item strong{font-size:13px;display:block;color:#e1edce}
+.economy-item small{font-size:10px;display:block;color:#a5b8a1;margin-top:6px;line-height:1.5}
+.economy-item button{width:auto;margin:0;min-width:104px}
+.economy-ledger{max-height:220px;overflow:auto;border-top:1px solid #39483c}
+.economy-entry{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #39483c;font-size:11px}
+.economy-plus,.op-credit-reward{color:#c3ee78}
+.economy-minus{color:#e7a88f}
+.hub-mech-damage{font-size:10px;color:#e8ae89;border-left:2px solid #e8ae89;padding-left:9px;line-height:1.6}
+.hub-repair{border-color:#a0b98a;color:#d1ebc4}
+@media(max-width:600px){.economy-item{flex-direction:column;align-items:stretch}.economy-item button{width:100%}.economy-wallet strong{font-size:24px}}
