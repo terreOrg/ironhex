@@ -7,6 +7,7 @@ import { once } from 'node:events';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { Game as TestBattleGame } from '../packages/engine/engine.js';
 
 const dist = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8',
@@ -521,5 +522,59 @@ test('Operation briefing creates a roster and displays a trusted after-action re
       assert.match(await page.locator('#op-current').textContent(),/Броня −2/);
       await page.locator('.op-history-entry').first().click();
       await page.locator('.op-outcome.victory').waitFor({state:'visible'});
+    });
+  });
+
+
+test('Authoritative 3D mode loads a saved snapshot and never applies a rejected dice/phase command',
+  {timeout:120000},async()=>{
+    const operationId='33333333-3333-4333-8333-333333333333';
+    await withPage('server-3d-commands',{
+      path:'/index.html?battle=1&operation='+operationId,
+      noWebGL:true
+    },async page=>{
+      const referee=new TestBattleGame();
+      let calls=0;
+      const snapshot=()=>JSON.parse(JSON.stringify(referee,
+        (key,value)=>key==='map'||key==='rng'?undefined:value));
+      const respond=(route,status,item)=>route.fulfill({
+        status,contentType:'application/json',body:JSON.stringify(item)
+      });
+      await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
+        const url=new URL(route.request().url());
+        if(url.pathname.endsWith('/snapshot')){
+          return respond(route,200,{item:{
+            id:operationId,controlMode:'interactive',status:'active',
+            version:1,game:snapshot()
+          }});
+        }
+        if(url.pathname.endsWith('/command')){
+          const payload=route.request().postDataJSON();
+          assert.equal(payload.type,'next');
+          assert.equal(payload.version,1);
+          calls++;
+          if(calls===1)return respond(route,422,{error:'illegal_tactical_order'});
+          const result=referee.nextPhase();
+          assert.equal(result.ok,true);
+          return respond(route,200,{item:{
+            id:operationId,controlMode:'interactive',status:'active',
+            version:2,game:snapshot(),
+            effect:{type:'next',result,rolls:[],resolution:[],afterRolls:[],ai:[]}
+          }});
+        }
+        return respond(route,404,{error:'not_found'});
+      });
+      await loaded(page);
+      await page.getByText('СЕРВЕРНЫЙ БОЙ:',{exact:false}).waitFor();
+      assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/);
+      await page.locator('#next').click();
+      await page.getByText('СЕРВЕР ОТКЛОНИЛ ПРИКАЗ',{exact:false}).waitFor();
+      assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/,
+        'The browser must not advance if the server rejects an order');
+      await page.locator('#next').click();
+      await page.waitForFunction(()=>document.querySelector('#phase')
+        ?.textContent.includes('ДВИЖЕНИЕ'),null,{timeout:20000});
+      assert.equal(calls,2);
+      assert.match(await page.locator('#phase').textContent(),/ДВИЖЕНИЕ/);
     });
   });
