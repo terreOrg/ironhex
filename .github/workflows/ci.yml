@@ -8,21 +8,23 @@ on:
 permissions:
   contents: read
 
+# CI runs one job on one self-hosted runner; a matrix of seven jobs
+# caused tests to be stuck in GitHub's queue despite idle capacity.
 concurrency:
   group: ironhex-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  syntax:
-    name: Source consistency and JavaScript syntax
+  verify:
+    name: Sources, rules engine, API, authentication and deploy gate
     runs-on: [self-hosted, Linux, X64, spellfire]
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Check out source
         uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Install Node.js 24
+      - name: Set up Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -36,36 +38,14 @@ jobs:
             apps/api/src/*.mjs scripts/*.mjs tests/*.mjs; do
             node --check "$file"
           done
-
-  tests:
-    name: ${{ matrix.suite }} tests
-    runs-on: [self-hosted, Linux, X64, spellfire]
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - suite: combat
-            file: tests/combat.mjs
-          - suite: construction
-            file: tests/construction.mjs
-          - suite: fire-arcs
-            file: tests/fire-arcs.mjs
-          - suite: api
-            file: tests/api.mjs
-          - suite: auth
-            file: tests/auth.mjs
-          - suite: deployment-gate
-            file: tests/deploy-gate.mjs
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Install Node.js 24
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-      - name: Run ${{ matrix.suite }} tests
+      - name: Run all unit tests
         shell: bash
-        run: node "${{ matrix.file }}"
+        run: |
+          set -euo pipefail
+          for file in tests/combat.mjs tests/construction.mjs \
+            tests/fire-arcs.mjs tests/api.mjs tests/auth.mjs \
+            tests/deploy-gate.mjs; do
+            echo "::group::Testing $file"
+            node --test "$file"
+            echo "::endgroup::"
+          done
