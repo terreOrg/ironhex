@@ -1043,11 +1043,14 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Quad structural topology identifies front/rear leg locations, leg-sized internal structure, six critical slots with leg actuators, and correct leg-mounted weapon/jump-jet restrictions; full quad construction and combat remain unsupported.",
-      "status": "tested_case",
+      "status": "verified",
       "sourcePages": [
         5,
         6,
-        45
+        19,
+        33,
+        45,
+        49
       ],
       "evidence": [
         {
@@ -1082,7 +1085,20 @@
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.6: quad leg critical capacities and armor limits cover 20-100 tons"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 5,
+        "crossReferencedPrintedPages": [
+          6,
+          19,
+          33,
+          45,
+          49
+        ],
+        "notes": "Verified only the quad chassis topology and critical-slot/actuator mapping, not quad movement or gameplay. Tests independently cover all seventeen standard masses (20–100 tons), four 6-slot legs, front/rear nomenclature, legal leg equipment, armor cap boundaries, nonexistent slot 7, critical persistence/repair, biped regression and fail-closed server admission. Underlying implementations passed all 4 GitHub Actions checks on 781ebca."
+      }
     },
     {
       "id": "bmm-req-081",

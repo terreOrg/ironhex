@@ -151,3 +151,20 @@ For every front/rear leg of a 55-ton test chassis, the constructor
 accepts the maximum leg armor but rejects one point above the limit
 and rejects placement in nonexistent critical slot seven. This is
 still a validation of structural topology only.
+
+## Verified atomic requirement: bmm-req-080
+
+The **structural topology only** has been marked `verified` after
+source and edge-case review against BMM printed pp. 5, 6, 19, 33,
+45 and 49 and successful unit, browser, Docker and deploy checks
+on commit `781ebca`. The test evidence covers all chassis mass
+brackets, exact 6-slot leg critical footprints, leg-mounted equipment
+bounds, leg-specific record sheets and hit report labels, critical
+damage persistence, and explicit non-deployability of experimental
+Quad chassis.
+
+This does **not** verify any of the other Quad requirements. In
+particular, lateral shift, standing/PSR, partial cover, firing while
+prone, full hit/physical combat consequences and loss of legs remain
+`known_missing`. The strict heading cursor stays at Quad until
+every atomic requirement is `verified`.
