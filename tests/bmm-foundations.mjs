@@ -810,3 +810,49 @@ test('BMM p.19: a failed two-leg Quad stand remains prone and cannot retry this 
  assert.equal(g.stand(0).ok,false,
   'Two-legged quad gets exactly one attempt per movement phase');
 });
+
+test('BMM pp.16,19: Quad with exactly one available MP uses a single minimum stand',()=>{
+ const design=construct({...example,name:'Quad min stand',config:'Quad',walk:1,
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ // 55t x 1 engine rating 55 is valid; the default armor/equipment still fits.
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const create=()=>{
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(design.unit));
+  for(const enemy of g.units.slice(1))enemy.dead=true;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.prone=true;u.spent=0;u.moveMode='stand';u.standAttempts=0;u.facing=0;
+  return {g,u};
+ };
+ const good=create();
+ // One walking MP, two running MP normally: reduce running with heat to one.
+ good.u.heat=5;
+ assert.equal(good.g.mp(good.u,'walk'),0);
+ assert.equal(good.g.mp(good.u,'run'),0);
+ // The minimum rule cannot override zero MP.
+ assert.equal(good.g.stand(0,3,{minimum:true}).ok,false);
+ const basic=create();
+ assert.equal(basic.g.mp(basic.u,'walk'),1);
+ assert.equal(basic.g.mp(basic.u,'run'),2);
+ assert.equal(basic.g.stand(0,3,{minimum:true}).ok,false,
+  'Minimum stand must not replace ordinary standing with 2 MP');
+ // Losing two legs forces 1 Walking MP and no running (p.44).
+ const damaged=create();
+ damaged.u.structure.LA=0;damaged.u.structure.RL=0;
+ assert.equal(damaged.g.mp(damaged.u,'walk'),1);
+ assert.equal(damaged.g.mp(damaged.u,'run'),0);
+ assert.equal(validateTacticalOrder({type:'stand',version:1,id:0,
+  facing:3,minimum:true}).minimum,true);
+ damaged.g.rng=()=>.99;
+ const out=damaged.g.stand(0,3,{minimum:true});
+ assert(out.ok,out.error);
+ assert.equal(damaged.u.spent,1,'Minimum standing spends one available MP');
+ assert.equal(damaged.u.moveMode,'run','Minimum movement is always running');
+ assert.equal(damaged.u.pendingHeat,1);
+ assert.equal(damaged.u.facing,3);
+ assert(damaged.g.phaseRolls.some(x=>x.kind.includes('Подъём')));
+ assert.equal(damaged.g.stand(0,2,{minimum:true}).ok,false,
+  'A single minimum stand cannot be retried');
+ assert.throws(()=>validateTacticalOrder({type:'stand',version:1,id:0,
+  minimum:'true'}),/invalid_command/);
+});

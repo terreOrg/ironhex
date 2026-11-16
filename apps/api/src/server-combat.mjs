@@ -1,7 +1,7 @@
 import {AuthError} from './auth.mjs';
 const fields={
   move:['id','q','r','mode','lateral'],rotate:['id','delta'],
-  stand:['id','facing'],drop:['id'],hold:['id'],twist:['id','twist'],
+  stand:['id','facing','minimum'],drop:['id'],hold:['id'],twist:['id','twist'],
   fire:['id','shots'],physical:['id','target','attack','limb'],
   club:['id'],charge:['id','target','attack'],minimum:['id'],
   shutdown:['id'],dump:['id','bin'],flip:['id','enabled'],brace:['id','limb'],
@@ -28,7 +28,8 @@ export function validateTacticalOrder(b){
     move:()=>int(b.q,-6,6)&&int(b.r,-6,6)&&['walk','run','jump','evade'].includes(b.mode)&&
       (b.lateral===undefined||['shift-left-forward','shift-right-forward',
         'shift-left-backward','shift-right-backward'].includes(b.lateral)),
-    rotate:()=>[-1,1].includes(b.delta),stand:()=>b.facing===undefined||int(b.facing,0,5),drop:()=>true,hold:()=>true,
+    rotate:()=>[-1,1].includes(b.delta),stand:()=> (b.facing===undefined||int(b.facing,0,5))&&
+      (b.minimum===undefined||typeof b.minimum==='boolean'),drop:()=>true,hold:()=>true,
     twist:()=>int(b.twist,-1,1),
     fire:()=>Array.isArray(b.shots)&&b.shots.length<=32&&
       b.shots.every(shot)&&new Set(b.shots.map(x=>x.index)).size===b.shots.length,
@@ -87,7 +88,7 @@ export function runTacticalOrder(game,body){
     switch(type){
       case 'move':r=game.move(id,b.q,b.r,b.mode,{lateral:b.lateral});break;
       case 'rotate':r=game.rotate(id,b.delta);break;
-      case 'stand':r=game.stand(id,b.facing??null);break;
+      case 'stand':r=game.stand(id,b.facing??null,{minimum:b.minimum});break;
       case 'drop':r=game.drop(id);break;
       case 'hold':r=game.hold(id);break;
       case 'twist':r=game.twist(id,b.twist);break;

@@ -1149,6 +1149,7 @@
       "statement": "Quad standing requires no PSR with all four legs intact, but requires a PSR after leg destruction; with only two legs it permits a single running stand attempt, while losing three prevents standing. Verified facing choice and movement/heat costs are required.",
       "status": "tested_case",
       "sourcePages": [
+        16,
         19,
         44,
         48,
@@ -1178,6 +1179,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.19: a failed two-leg Quad stand remains prone and cannot retry this turn"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.16,19: Quad with exactly one available MP uses a single minimum stand"
         }
       ]
     },

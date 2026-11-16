@@ -278,3 +278,14 @@ the requested free facing, consumes exactly 2 MP and 1 heat,
 takes the fall consequence, and cannot attempt another stand
 during the same phase. This prevents treating the successful
 attempt path as evidence for all standing outcomes.
+
+### Minimum Movement stand (printed pp.16 and 19)
+
+An explicit `minimum:true` tactical standing order now permits one
+attempt by a prone mech with **exactly one available MP** (and no
+previous MP spent/standing attempt), counted as running. This
+exception does not allow standing with zero MP and does not bypass
+the normal standing option when two or more MP are available.
+The successful facing remains free; the option is schema-validated.
+Tests cover one-MP Quad recovery after two legs destroyed, zero- and
+two-MP rejection and single-attempt limitation.

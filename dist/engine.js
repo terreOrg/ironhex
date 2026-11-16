@@ -352,7 +352,7 @@ export class Game extends Legacy{
   }
  }
 }u.distanceMoved=mode==='jump'?distance(u.moveStart,u):u.distanceMoved+path.length;this.note(`${u.name}: ${mode}, потрачено ${u.spent} MP.`);return {ok:true,path,from,to:{q:u.q,r:u.r},mode,rolls:[...this.phaseRolls]};}
- stand(id,newFacing=null){const u=this.unit(id),quad=u?.config==='Quad';
+ stand(id,newFacing=null,options={}){const u=this.unit(id),quad=u?.config==='Quad';
   const lost=quad?['LA','RA','LL','RL'].filter(l=>!u.structure[l]).length:0;
   if(!this.canAct(u)||!u.prone||!this.mobile(u)||u.gyroHits>=2||
     (quad?lost>=3:u.structure.LL+u.structure.RL===0))
@@ -362,10 +362,16 @@ export class Game extends Legacy{
   const restricted=quad?lost===2:!u.structure.LL||!u.structure.RL;
   if(restricted&&(quad?!!u.standAttempts:(!u.structure.LA&&!u.structure.RA||u.standAttempts)))
     return fail('Подъём невозможен');
+  // BMM pp.16,19: a prone Mech with only 1 available MP may use
+  // Minimum Movement to attempt standing once, counted as running.
+  const minimum=options?.minimum===true;
+  const available=Math.max(this.mp(u,'walk'),this.mp(u,'run'));
+  if(minimum&&(u.spent!==0||u.standAttempts!==0||available!==1))
+    return fail('Минимальный подъём требует ровно 1 доступный MP и одну попытку');
   const standingBudget=restricted?2:this.mp(u,'run');
-  if(u.spent+2>standingBudget)return fail('Нужно 2 MP');
-  this.phaseRolls=[];u.standAttempts++;u.spent+=2;u.pendingHeat++;
-  u.moveMode=restricted||u.spent>this.mp(u,'walk')?'run':'walk';
+  if(!minimum&&u.spent+2>standingBudget)return fail('Нужно 2 MP');
+  this.phaseRolls=[];u.standAttempts++;u.spent+=minimum?1:2;u.pendingHeat++;
+  u.moveMode=minimum||restricted||u.spent>this.mp(u,'walk')?'run':'walk';
   u.prone=false;this.actingId=id;
   // BMM p.19: a Quad with all four legs intact stands automatically.
   const stood=quad&&lost===0||this.psr(u,0,'Подъём',true);
