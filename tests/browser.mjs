@@ -639,6 +639,8 @@ test('Critical repair panel uses server prices and replaces one damaged part',
         ?.textContent.includes('Все критические системы'));
       assert.equal(repaired,1);
       assert.match(await page.locator('#economy-wallet').textContent(),/144/);
+      await page.waitForFunction(()=>document.querySelector('#economy-message')
+        ?.textContent.includes('Компонент «Двигатель» восстановлен'));
       assert.match(await page.locator('#economy-message').textContent(),
         /Компонент «Двигатель» восстановлен/);
     });
