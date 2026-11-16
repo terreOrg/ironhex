@@ -309,6 +309,32 @@ test('Successful skid PSR permits entering next hex with no fall',()=>{
  assert.equal(u.skidded,false);assert.equal(u.prone,false);
  assert(g.phaseRolls.some(r=>r.kind.includes('Скольжение')));
 });
+
+test('Skid is triggered by facing changes embedded inside a multi-hex move',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>0;
+ for(const t of g.tiles)Object.assign(t,{type:'pavement',paved:true,depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;acting(g,0,'move');
+ const result=g.move(0,2,1,'run');
+ assert(result.ok);assert.equal(u.skidded,true);
+ assert.equal(u.prone,true);assert.equal(u.q,3);assert.equal(u.r,0);
+ assert(g.phaseRolls.some(r=>r.kind.includes('Скольжение')));
+});
+test('Skidding through difficult woods reduces sliding distance as specified in BMM p.68',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.99;
+ for(const t of g.tiles)Object.assign(t,{type:'pavement',paved:true,depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;
+ Object.assign(g.tile(1,0),{type:'woods',paved:false});
+ const result=g.resolveSkid(u,0,4,4);
+ assert.equal(result.hexes,1);assert.equal(u.q,1);assert.equal(u.r,0);
+ assert.equal(result.damage,Math.ceil(u.tonnage/10)+Math.ceil(Math.ceil(u.tonnage/10)/2));
+});
+test('Skid off the mapsheet destroys the mech rather than leaving invalid coordinates',()=>{
+ const g=game(),u=g.units[0];u.q=6;u.r=0;
+ const result=g.resolveSkid(u,0,2,4);
+ assert.equal(result.hexes,0);assert.equal(u.dead,true);
+ assert.equal(u.q,6);assert.equal(u.r,0);
+});
+
 test('Skid modifiers apply to being targeted and to shots until End Phase',()=>{
  const g=game(),u=g.units[0],t=g.units[2];
  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
