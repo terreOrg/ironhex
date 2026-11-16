@@ -81,6 +81,7 @@ export function createHttpServer({
   probeDatabase = async () => {},
   authStore = null,
   hangarStore = null,
+  pilotStore = null,
   accountFlows = null,
   publicOrigin = null,
   secureCookies = false
@@ -112,18 +113,60 @@ export function createHttpServer({
         return json(res,200,{
           apiVersion:1,
           modes:{ai:true,hotseat:true,multiplayer:false},
-          features:{database:true,accounts:!!authStore,hangar:!!authStore, emailDelivery:!!accountFlows?.emailAvailable,
+          features:{database:true,accounts:!!authStore,hangar:!!authStore,pilots:!!pilotStore, emailDelivery:!!accountFlows?.emailAvailable,
             campaigns:false,market:false},
           combatAuthority:'browser'
         },head);
       }
 
-      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/')) {
+      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/') || path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/')) {
         if (!authStore) return json(res,503,{error:'auth_unavailable'},head);
 
         if (path === '/api/v1/auth/me' && (method === 'GET' || head)) {
           const user = await authStore.currentUser(extractSession(req.headers.cookie));
           return json(res,200,{authenticated:!!user,user},head);
+        }
+        if (path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/')) {
+          const user=await authStore.currentUser(extractSession(req.headers.cookie));
+          if(!user) return json(res,401,{error:'unauthorized'},head);
+          if(user.emailVerificationRequired && !user.emailVerified)
+            return json(res,403,{error:'email_unverified'},head);
+          if(!pilotStore) return json(res,503,{error:'pilots_unavailable'},head);
+          if(path==='/api/v1/pilots' && (method==='GET'||head))
+            return json(res,200,{items:await pilotStore.list(user.id)},head);
+          if(path==='/api/v1/pilots' && method==='POST') {
+            if(!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
+            return json(res,201,{item:await pilotStore.create(user.id,await readJson(req))});
+          }
+          const match=/^\/api\/v1\/pilots\/([^/]+)(\/history)?$/.exec(path);
+          if(match) {
+            const [,id,history]=match;
+            if(history && (method==='GET'||head))
+              return json(res,200,{items:await pilotStore.history(user.id,id)},head);
+            if(!history && (method==='GET'||head))
+              return json(res,200,{item:await pilotStore.get(user.id,id)},head);
+            if(!history && (method==='PATCH'||method==='DELETE')) {
+              if(!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
+              if(method==='DELETE')
+                return json(res,200,await pilotStore.remove(user.id,id));
+              return json(res,200,{item:await pilotStore.update(user.id,id,await readJson(req))});
+            }
+          }
+          return json(res,404,{error:'not_found'},head);
+        }
+        if(pilotStore && /^\/api\/v1\/hangar\/[^/]+\/pilot$/.test(path)) {
+          const user=await authStore.currentUser(extractSession(req.headers.cookie));
+          if(!user) return json(res,401,{error:'unauthorized'},head);
+          if(user.emailVerificationRequired && !user.emailVerified)
+            return json(res,403,{error:'email_unverified'},head);
+          if(method!=='PUT') return json(res,405,{error:'method_not_allowed'});
+          if(!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
+          const body=await readJson(req);
+          if(!Object.hasOwn(body,'pilotId')||Object.keys(body).length!==1)
+            throw new AuthError(422,'invalid_assignment');
+          return json(res,200,await pilotStore.assign(
+            user.id,path.split('/')[4],body.pilotId
+          ));
         }
         if (path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/')) {
           const user = await authStore.currentUser(extractSession(req.headers.cookie));
