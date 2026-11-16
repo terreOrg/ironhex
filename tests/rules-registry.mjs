@@ -14,7 +14,7 @@ test('BMM catalogue retains all initially indexed chapter/subchapter headings',(
  assert.equal(registry.schemaVersion,1);
  assert.equal(registry.book.id,'bmm-corrected-6th-2022');
  assert.equal(registry.scope.battlemechsOnly,true);
- assert(registry.topics.length>=326,'Do not silently drop original TOC topics');
+ assert(registry.topics.length>=352,'Do not silently drop original TOC topics');
  assert(registry.topics.some(r=>r.title==='CASE II'&&r.page===119));
  assert(registry.topics.some(r=>r.title==='Hull Integrity And Breaches'&&r.page===65));
  assert(registry.topics.some(r=>r.title==='FIRING WEAPONS'&&r.page===25));
