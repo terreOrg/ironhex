@@ -158,3 +158,72 @@ test('BMM p.10: a shutdown or unconscious unit still consumes a movement selecti
  assert.equal(u.moved,true);
  assert.equal(g.queue.length,0);
 });
+
+
+test('BMM p.11: all declared weapon attacks complete before phase consciousness checks',()=>{
+ const g=flatGame(),t=g.units[2],observed=[];
+ g.rng=()=>0;g.phase='fire';
+ g.hit=(victim,damage)=>{
+  g.wound(victim,1);
+  observed.push(victim.unconscious);
+  return {location:'CT',damage,hits:[]};
+ };
+ const shot={index:0,target:t.id,weapon:{...g.units[0].weapons[0],ammo:null,rack:0},
+  preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false},
+  bin:null,aim:null,heatMode:false};
+ g.declarations=[{id:0,shots:[shot]},{id:1,shots:[shot]}];
+ g.resolveFire();
+ assert.deepEqual(observed,[false,false]);
+ assert.equal(t.pilotWounds,2);
+ assert.equal(t.unconscious,true);
+ assert.equal(g.deferConsciousness,false);
+ assert.equal(g.resolution.length,2);
+});
+
+test('BMM p.12: physical attacks also complete before unconsciousness is checked',()=>{
+ const g=flatGame(),t=g.units[2],observed=[];
+ g.rng=()=>0;g.phase='physical';
+ g.hit=(victim,damage)=>{
+  g.wound(victim,1);
+  observed.push(victim.unconscious);
+  return {location:'CT',damage,hits:[]};
+ };
+ const strike={target:t.id,type:'punch',targetNumber:2,damage:5,side:'front',table:'punch'};
+ g.physicalDeclarations=[{id:0,...strike},{id:1,...strike}];
+ g.resolvePhysical();
+ assert.deepEqual(observed,[false,false]);
+ assert.equal(t.pilotWounds,2);
+ assert.equal(t.unconscious,true);
+ assert.equal(g.deferConsciousness,false);
+});
+
+test('BMM p.11: phase consciousness rolls occur before required piloting rolls',()=>{
+ const g=flatGame(),target=g.units[2],order=[],original=g.consciousness.bind(g);
+ g.rng=()=>0;g.phase='fire';
+ g.consciousness=u=>{
+  if(u===target)order.push('consciousness');
+  return original(u);
+ };
+ g.fall=u=>{if(u===target){order.push('fall');u.prone=true;}};
+ g.hit=(victim,damage)=>{
+  order.push('attack');
+  g.wound(victim,1);
+  victim.psrs.push({modifier:0,reason:'Damage'});
+  return {location:'CT',damage,hits:[]};
+ };
+ const shot={index:0,target:target.id,weapon:{...g.units[0].weapons[0],ammo:null,rack:0},
+  preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false},
+  bin:null,aim:null,heatMode:false};
+ g.declarations=[{id:0,shots:[shot]},{id:1,shots:[shot]}];
+ g.resolveFire();
+ assert.deepEqual(order.slice(0,4),['attack','attack','consciousness','fall']);
+ assert.equal(g.deferConsciousness,false);
+});
+
+test('BMM p.9: injuries outside attack resolution retain immediate consciousness checks',()=>{
+ const g=flatGame(),u=g.units[2];g.rng=()=>0;
+ g.wound(u,1);
+ assert.equal(u.pilotWounds,1);
+ assert.equal(u.unconscious,true);
+ assert.equal(u.consciousChecks,0);
+});

@@ -330,7 +330,14 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: injuries outside attack resolution retain immediate consciousness checks"
+        }
+      ],
+      "note": "Already implemented phase and injury mechanics have deterministic sequencing tests, but additional simultaneous fire, optional segmented fire and rare damage/PSR exceptions remain unverified."
     },
     {
       "id": "bmm-p009-skills",
@@ -468,9 +475,17 @@
         {
           "file": "tests/combat.mjs",
           "test": "Declared shot survives destruction of shooter"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.11: all declared weapon attacks complete before phase consciousness checks"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.11: phase consciousness rolls occur before required piloting rolls"
         }
       ],
-      "note": "Introductory sequencing evidence is linked. Rules in the detailed Heat/Combat chapters and all exceptions still require cross-chapter verification."
+      "note": "Already implemented phase and injury mechanics have deterministic sequencing tests, but additional simultaneous fire, optional segmented fire and rare damage/PSR exceptions remain unverified."
     },
     {
       "id": "bmm-p011-segmented-fire",
@@ -525,9 +540,13 @@
         {
           "file": "tests/combat.mjs",
           "test": "Two punches declare two independent attack rolls"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.12: physical attacks also complete before unconsciousness is checked"
         }
       ],
-      "note": "Introductory sequencing evidence is linked. Rules in the detailed Heat/Combat chapters and all exceptions still require cross-chapter verification."
+      "note": "Already implemented phase and injury mechanics have deterministic sequencing tests, but additional simultaneous fire, optional segmented fire and rare damage/PSR exceptions remain unverified."
     },
     {
       "id": "bmm-p012-unequal-numbers-of-mechs",

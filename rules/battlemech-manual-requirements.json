@@ -924,6 +924,58 @@
       "statement": "Handle an unbounded series of initiative ties exactly per rulebook, or prove that a finite RNG safety cap cannot reject a legitimate valid dice sequence.",
       "status": "known_missing",
       "evidence": []
+    },
+    {
+      "id": "bmm-req-073",
+      "topicId": "bmm-p010-weapon-attack-phase",
+      "page": 10,
+      "statement": "All previously declared weapon attacks resolve before any phase-induced consciousness rolls.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.11: all declared weapon attacks complete before phase consciousness checks"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-074",
+      "topicId": "bmm-p010-weapon-attack-phase",
+      "page": 10,
+      "statement": "After resolving all weapon attacks, the engine resolves accumulated consciousness checks before Piloting Skill Rolls.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.11: phase consciousness rolls occur before required piloting rolls"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-075",
+      "topicId": "bmm-p012-physical-attack-phase",
+      "page": 12,
+      "statement": "During the Physical Attack Phase, all physical attacks resolve before checking the injured pilots' consciousness.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.12: physical attacks also complete before unconsciousness is checked"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-076",
+      "topicId": "bmm-p009-damaging-a-warrior",
+      "page": 9,
+      "statement": "Outside simultaneous attack resolution, wounds continue to trigger immediate consciousness checks when the relevant rule calls for them.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: injuries outside attack resolution retain immediate consciousness checks"
+        }
+      ]
     }
   ]
 }

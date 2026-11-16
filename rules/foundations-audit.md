@@ -73,3 +73,16 @@ the former possibility of manually marking an incomplete heading `verified`.
 
 Run: `npm run test:unit` and `npm run rules:coverage`. GitHub Actions runs
 the new foundations tests under Node 24 and validates generated browser sources.
+
+## Weapon and physical attack sequencing audit (pp.11–12)
+
+The book requires **all previously declared attacks to resolve before phase
+consciousness checks**, and those checks to occur **before deferred Piloting
+Skill Rolls**. The engine previously checked consciousness immediately inside
+`wound()`, which could mark a MechWarrior unconscious while other previously
+declared shots were still unresolved. The phase resolver now defers these
+checks until after all firearm or physical attack declarations have been
+resolved, then runs consciousness checks followed by PSRs. Outside these
+phases, immediate injury checks remain immediate. Four regression tests
+cover firearm, physical, consciousness-before-PSR and out-of-phase injury.
+This proves these ordering cases, **not** the entirety of either attack phase.
