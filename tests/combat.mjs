@@ -573,6 +573,25 @@ test('Shared MG pool cannot declare two shots with one round',()=>{const g=game(
 
 
 
+
+test('Firing arcs include the exact ±60° and ±120° hex-direction boundaries',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;
+ const directions=[
+  {q:-1,r:1,left:false,right:true,torso:false},
+  {q:0,r:1,left:true,right:true,torso:true},
+  {q:1,r:0,left:true,right:true,torso:true},
+  {q:1,r:-1,left:true,right:true,torso:true},
+  {q:0,r:-1,left:true,right:false,torso:false}
+ ];
+ for(const d of directions){
+  t.q=d.q;t.r=d.r;
+  const arm={...u.weapons[0],rear:false};
+  assert.equal(g.arc(u,t,{...arm,location:'LA'}),d.left,'left arm at '+d.q+','+d.r);
+  assert.equal(g.arc(u,t,{...arm,location:'RA'}),d.right,'right arm at '+d.q+','+d.r);
+  assert.equal(g.arc(u,t,{...arm,location:'CT'}),d.torso,'torso at '+d.q+','+d.r);
+ }
+});
+
 test('Split torso-arm weapon uses restrictive torso firing arc (TechManual p.57)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=-1;t.r=1;
  const gun={...u.weapons[0],location:'RA',rear:false,locations:['RA','RT']};
