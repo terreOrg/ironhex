@@ -251,6 +251,53 @@ test('Fire from split torso-arm weapon occupies both mounts for later physical a
  assert(u.firedLocations.includes('RA'));assert(u.firedLocations.includes('RT'));
  assert.equal(g.physicalPreview(0,2,'punch','RA').legal,false);
 });
+
+test('Underwater punches, kicks and hatchet hits deal half damage rounded down (BMM pp.35,65)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ Object.assign(g.tile(0,0),{type:'water',depth:2,height:-2});
+ Object.assign(g.tile(1,0),{type:'water',depth:2,height:-2});
+ const underwaterPunch=g.physicalPreview(0,2,'punch','RA');
+ const underwaterKick=g.physicalPreview(0,2,'kick','RL');
+ const normal=new Game({rng:()=>.5});for(const tile of normal.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ normal.units[0].q=0;normal.units[0].r=0;normal.units[0].facing=0;
+ normal.units[2].q=1;normal.units[2].r=0;
+ const normalPunch=normal.physicalPreview(0,2,'punch','RA');
+ const normalKick=normal.physicalPreview(0,2,'kick','RL');
+ assert.equal(underwaterPunch.legal,true,underwaterPunch.reason);
+ assert.equal(underwaterKick.legal,true,underwaterKick.reason);
+ assert.equal(underwaterPunch.damage,Math.floor(normalPunch.damage/2));
+ assert.equal(underwaterKick.damage,Math.floor(normalKick.damage/2));
+ u.hatchets=[{location:'RA',slots:1}];
+ u.slots.RA[7]='hatchet';const axe=g.physicalPreview(0,2,'hatchet','RA');
+ assert.equal(axe.legal,true,axe.reason);
+ assert.equal(axe.damage,Math.floor(Math.ceil(u.tonnage/5)/2));
+});
+test('A depth-1 standing mech can only kick a fully submerged adjacent target (BMM p.35)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ Object.assign(g.tile(0,0),{type:'water',depth:1,height:-1});
+ Object.assign(g.tile(1,0),{type:'water',depth:2,height:-2});
+ const kick=g.physicalPreview(0,2,'kick','RL');
+ assert.equal(kick.legal,true,kick.reason);assert.equal(kick.underwaterPhysical,true);
+ assert.equal(g.physicalPreview(0,2,'punch','RA').legal,false);
+ assert.equal(g.physicalPreview(0,2,'club','RA').legal,false);
+});
+test('Depth-1 to depth-1 underwater kick halves damage, upper punches do not (BMM p.35)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ Object.assign(g.tile(0,0),{type:'water',depth:1,height:-1});
+ Object.assign(g.tile(1,0),{type:'water',depth:1,height:-1});
+ const punch=g.physicalPreview(0,2,'punch','RA'),kick=g.physicalPreview(0,2,'kick','RL');
+ assert.equal(punch.underwaterPhysical,false);assert.equal(kick.underwaterPhysical,true);
+ assert.equal(punch.damage,Math.ceil(u.tonnage/10));
+ assert.equal(kick.damage,Math.floor(Math.ceil(u.tonnage/5)/2));
+});
+
 test('Prone fire with both arms intact allows unbraced torso mounts (BMM p.30)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;u.prone=true;u.brace='LA';
  assert(g.preview(0,2,1).legal);
