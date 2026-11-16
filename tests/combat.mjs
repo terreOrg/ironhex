@@ -84,6 +84,55 @@ test('Ammo explosion bypasses armor and wounds pilot twice',()=>{const g=game(),
 test('A damaged gyro reduces stability, not base walking MP',()=>{const g=game(),u=g.units[0];u.gyroHits=1;assert.equal(g.psrMod(u),3);assert.equal(g.mp(u),5);u.actuators.LL.hip=true;assert.equal(g.mp(u),3);});
 test('Heat reduces walk and derived run',()=>{const g=game(),u=g.units[0];u.heat=10;assert.equal(g.mp(u),3);assert.equal(g.mp(u,'run'),5);});
 
+
+test('A fully submerged mech can fire at a depth-1 target, but only leg hits count (BMM p.65)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ Object.assign(g.tile(0,0),{type:'water',depth:2,height:-2});
+ Object.assign(g.tile(1,0),{type:'water',depth:1,height:-1});
+ u.weapons[0]={name:'Medium Laser',heat:3,damage:5,min:0,ammo:null,location:'RA',ranges:[3,6,9]};
+ const p=g.preview(0,2,0);
+ assert.equal(p.legal,true,p.reason);assert.equal(p.cover,true);assert.equal(p.underwaterCover,true);
+ assert.equal(p.mods.cover,1);
+ g.rng=()=>.5;const before=t.armor.LT;
+ const blocked=g.hit(t,3,'front','normal',null,p.cover,p.underwaterCover);
+ assert.equal(blocked.damage,0);assert.equal(t.armor.LT,before);
+ let dice=[.2,.4];g.rng=()=>dice.shift()??.5;
+ const hit=g.hit(t,3,'front','normal',null,p.cover,p.underwaterCover);
+ assert.equal(hit.location,'RL');assert.equal(hit.damage,3);
+});
+test('Depth-1 leg-mounted lasers fire underwater while upper mounts cannot (BMM p.65)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ Object.assign(g.tile(0,0),{type:'water',depth:1,height:-1});
+ Object.assign(g.tile(1,0),{type:'water',depth:2,height:-2});
+ u.weapons[0]={name:'Medium Laser',heat:3,damage:5,min:0,ammo:null,location:'LL',ranges:[3,6,9]};
+ assert.equal(g.preview(0,2,0).legal,true);
+ u.weapons[0].location='RA';assert.equal(g.preview(0,2,0).legal,false);
+});
+test('At depth 1, underwater-to-waterline aimed shots may target legs but not upper torso',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;t.shutdown=true;
+ Object.assign(g.tile(0,0),{type:'water',depth:2,height:-2});
+ Object.assign(g.tile(1,0),{type:'water',depth:1,height:-1});
+ u.weapons[0]={name:'Medium Laser',heat:3,damage:5,min:0,ammo:null,location:'RA',ranges:[3,6,9]};
+ assert.equal(g.preview(0,2,0,{aim:'RL'}).legal,true);
+ assert.equal(g.preview(0,2,0,{aim:'CT'}).legal,false);
+});
+test('Surface shots at depth-1 target continue to be blocked only by leg water cover',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ Object.assign(g.tile(1,0),{type:'water',depth:1,height:-1});
+ const p=g.preview(0,2,0);assert.equal(p.legal,true,p.reason);
+ assert.equal(p.underwaterCover,false);assert.equal(p.cover,true);
+ g.rng=()=>.5;const a=t.armor.LT;const out=g.hit(t,3,'front','normal',null,p.cover,p.underwaterCover);
+ assert.equal(out.location,'LT');assert.equal(out.damage,3);assert.equal(t.armor.LT,a-3);
+});
+
 test('Underwater ranges match every supported BMM energy-weapon table row (p.65)',()=>{
  const rows={
  'Small Laser':[1,2,2],'Medium Laser':[2,4,6],'Large Laser':[3,6,9],
