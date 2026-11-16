@@ -424,3 +424,23 @@ sides and both destruction and flooding.
 `bmm-req-092` is `tested_case` rather than fully verified because
 the separate quad lost-leg fall and movement consequences still need
 a full phase-level audit (bmm-req-089), including removal while prone.
+
+### Quad prone fire (printed pp.30, 45, 48)
+
+The combat preview/declaration pipeline now implements the p.30
+exception: a prone Quad with all four functional legs and no hip
+critical damage fires with **no +2 prone modifier** and can fire
+from each of its four leg-mounted weapon locations. There is no
+biped arm-bracing requirement because Quad front legs are not arms.
+The predicate checks structure, actuator damage, the critical-slot
+record and flooding, avoiding a mismatch after restoring persistent
+damage. Losing a leg or suffering a hip critical removes the
+exception: torso-mounted guns use the ordinary +2 prone modifier
+and leg-mounted guns are no longer available while prone. Biped
+prone penalties and bracing behavior remain unchanged.
+
+Tests compare standing and prone TNs for all four leg locations,
+confirm actual weapon declaration, enumerate damage to each hip,
+test destroyed/flooded legs and saved hip critical slots, and check
+biped regression. Requirement `bmm-req-085` is **tested_case**
+until full quad physical/damage round-trip certification.

@@ -1241,12 +1241,21 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "An intact prone quad without hip critical damage fires without the ordinary prone modifier and can use leg-mounted weapons.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         30,
         48
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.30: intact prone Quad fires all four leg-mounted weapons without +2"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.30,45,48: hip damage and leg loss revoke quad prone-fire bonuses"
+        }
+      ]
     },
     {
       "id": "bmm-req-086",

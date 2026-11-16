@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures,QUAD_PUNCH_LOCATIONS,QUAD_KICK_LOCATIONS} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures,QUAD_PUNCH_LOCATIONS,QUAD_KICK_LOCATIONS,quadProneFireBonus} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
@@ -1193,4 +1193,76 @@ test('BMM pp.45,65: quad side torso destruction or flooding affects front leg on
  const biped=flatGame(),b=biped.units[0];
  b.config='Biped';biped.destroyLocation(b,'LT');
  assert.equal(b.structure.LA,0,'Biped still loses corresponding arm');
+});
+
+test('BMM p.30: intact prone Quad fires all four leg-mounted weapons without +2',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const g=flatGame(),u=g.units[0],target=g.units[2];
+ Object.assign(u,structuredClone(built.unit));
+ u.q=0;u.r=0;u.facing=0;u.moveMode='stand';u.prone=false;u.brace='LA';u.heat=0;
+ target.q=2;target.r=0;target.prone=false;
+ assert.equal(quadProneFireBonus(u),true);
+ for(const leg of ['LA','RA','LL','RL']){
+  u.weapons=[{name:'Medium Laser',heat:3,damage:5,min:0,ranges:[3,6,9],
+   ammo:null,location:leg,rear:false,destroyed:false}];
+  const standing=g.preview(u.id,target.id,0);
+  assert.equal(standing.legal,true,'Standing '+leg+' '+standing.reason);
+  u.prone=true;
+  const prone=g.preview(u.id,target.id,0);
+  assert.equal(prone.legal,true,'Prone '+leg+' '+prone.reason);
+  assert.equal(prone.mods.prone,0,'Quad '+leg+' has no prone penalty');
+  assert.equal(prone.targetNumber,standing.targetNumber,
+   'Prone Quad '+leg+' must have same TN as standing');
+  u.prone=false;
+ }
+ u.prone=true;u.weapons=[{name:'Medium Laser',heat:3,damage:5,min:0,ranges:[3,6,9],
+  ammo:null,location:'RA',rear:false,destroyed:false}];
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ const declared=g.declareFire(u.id,[{index:0,target:target.id}]);
+ assert.equal(declared.ok,true,declared.error);
+ assert.equal(g.declarations.length,1);
+ assert.equal(g.declarations[0].shots[0].preview.mods.prone,0);
+});
+
+test('BMM pp.30,45,48: hip damage and leg loss revoke quad prone-fire bonuses',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const g=flatGame(),u=g.units[0],target=g.units[2];
+ Object.assign(u,structuredClone(built.unit));
+ u.q=0;u.r=0;u.facing=0;u.prone=true;u.moveMode='stand';u.heat=0;
+ target.q=2;target.r=0;
+ u.weapons=[{name:'Medium Laser',heat:3,damage:5,min:0,ranges:[3,6,9],
+  ammo:null,location:'CT',rear:false,destroyed:false}];
+ const baseline=g.preview(u.id,target.id,0);
+ assert.equal(baseline.legal,true,baseline.reason);
+ assert.equal(baseline.mods.prone,0);
+ for(const leg of ['LA','RA','LL','RL']){
+  u.actuators[leg].hip=true;
+  assert.equal(quadProneFireBonus(u),false,leg+' damaged hip');
+  const restricted=g.preview(u.id,target.id,0);
+  assert.equal(restricted.legal,true,restricted.reason);
+  assert.equal(restricted.mods.prone,2);
+  assert.equal(restricted.targetNumber,baseline.targetNumber+2);
+  u.weapons[0].location=leg;
+  assert.equal(g.preview(u.id,target.id,0).legal,false,
+   'Leg-mounted prone gun unavailable with damaged '+leg+' hip');
+  u.weapons[0].location='CT';
+  u.actuators[leg].hip=false;
+  u.crit[leg][0]=true;
+  assert.equal(quadProneFireBonus(u),false,'Restored hip crit slot must be recognized');
+  u.crit[leg][0]=false;
+  u.structure[leg]=0;
+  assert.equal(quadProneFireBonus(u),false,'Destroyed '+leg+' revokes bonus');
+  assert.equal(g.preview(u.id,target.id,0).mods.prone,2);
+  u.structure[leg]=u.maxStructure[leg];
+  u.breached.push(leg);
+  assert.equal(quadProneFireBonus(u),false,'Flooded '+leg+' is not functional');
+  u.breached.pop();
+ }
+ assert.equal(quadProneFireBonus(u),true,'Restored undamaged four legs regain bonus');
+ u.config='Biped';
+ assert.equal(quadProneFireBonus(u),false);
+ assert.equal(g.preview(u.id,target.id,0).mods.prone,2,
+  'Biped retains normal prone firing penalty');
 });
