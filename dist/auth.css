@@ -98,3 +98,10 @@ body.hub-open>.hub-root{display:block}
 .hub-footer{display:flex;justify-content:space-between;gap:15px;border-top:1px solid #4e6352;padding-top:18px;font:10px monospace;color:#8da898}
 @media(max-width:850px){.hub-main{grid-template-columns:1fr;gap:10px}.hub-intro h1{font-size:51px}.hub-signal{margin-top:16px}}
 @media(max-width:540px){.hub-operations{grid-template-columns:1fr}.hub-primary{grid-column:auto}.hub-top,.hub-profile{align-items:start;flex-direction:column}.hub-main{padding:5px 0}.hub-footer{flex-wrap:wrap}}
+
+#auth-forgot-link,#auth-back,#auth-resend,#auth-pending-logout{margin:6px 0;border:1px solid #748a78;background:#27392d;color:#dbecc9;padding:11px;cursor:pointer;font:11px monospace}
+#auth-forgot-link{border:0;background:transparent;text-decoration:underline;color:#c7e6a8}
+#account-flow [hidden],#auth-verify-pending[hidden]{display:none!important}
+#account-flow h3{font:800 20px system-ui;color:#d6efb2;margin:20px 0 12px}
+#account-flow p{color:#b7cbb7;font:12px/1.6 system-ui}
+#auth-verify-pending button{display:block;width:100%}

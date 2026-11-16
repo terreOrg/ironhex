@@ -128,6 +128,8 @@ export function createHttpServer({
         if (path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/')) {
           const user = await authStore.currentUser(extractSession(req.headers.cookie));
           if (!user) return json(res,401,{error:'unauthorized'},head);
+          if (user.emailVerificationRequired && !user.emailVerified)
+            return json(res,403,{error:'email_unverified'},head);
           if (!hangarStore) {
             if (path === '/api/v1/hangar' && (method === 'GET' || head))
               return json(res,200,{items:await authStore.hangar(user.id)},head);
