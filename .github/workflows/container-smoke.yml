@@ -1,0 +1,56 @@
+name: Ironhex Container Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - Dockerfile
+      - nginx.conf
+      - compose.yaml
+      - .dockerignore
+      - 'dist/**'
+      - '.github/workflows/container-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ironhex-container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  container:
+    name: Build and serve game
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify Compose configuration
+        run: docker compose -f compose.yaml config --quiet
+      - name: Build and smoke-test isolated Nginx image
+        shell: bash
+        run: |
+          set -euo pipefail
+          image_tag="ironhex-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}"
+          container="ironhex-smoke-${GITHUB_RUN_ID}"
+          trap 'docker logs "$container" 2>/dev/null || true; docker rm -f "$container" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
+          docker build --tag "$image_tag" .
+          docker run -d --rm --name "$container" \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --tmpfs /tmp:rw,noexec,nosuid,size=32m \
+            "$image_tag"
+          for i in $(seq 1 30); do
+            if docker exec "$container" sh -c 'wget -qO- http://127.0.0.1:8080/health | grep -qx OK'; then
+              break
+            fi
+            sleep 1
+          done
+          docker exec "$container" sh -c 'wget -qO- http://127.0.0.1:8080/health | grep -qx OK'
+          docker exec "$container" sh -c 'wget -qO- http://127.0.0.1:8080/index.html | grep -q IRON'
+          docker exec "$container" wget -qO /dev/null http://127.0.0.1:8080/app.js
+          docker exec "$container" wget -qO /dev/null http://127.0.0.1:8080/atlas-09.glb
+          docker exec "$container" wget -qO /dev/null http://127.0.0.1:8080/aether-02.glb
+          echo "IRON HEX container smoke test passed."
