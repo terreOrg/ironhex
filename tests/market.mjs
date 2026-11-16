@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {construct} from '../packages/engine/construction.js';
-import {MECH_OFFERS,rejectedMtf,sourceManifest,totalMtfRecords,searchMechCatalog} from '../apps/api/src/market.mjs';
+import {MECH_OFFERS,rejectedMtf,sourceManifest,totalMtfRecords,searchMechCatalog,getMechDetails,mechWeightClass} from '../apps/api/src/market.mjs';
 import {importMtf} from '../apps/api/src/mtf.mjs';
 const base=fileURLToPath(new URL('../data/megamek/meks/',import.meta.url));
 
@@ -77,4 +77,55 @@ test('MegaMek reference index includes all 4,305 MTF entries with safe paginatio
   const empty=searchMechCatalog({query:'no-such-mech-type-99111'});
   assert.equal(empty.matches,0);
   assert.deepEqual(empty.items,[]);
+});
+
+test('Technical dossier returns verified engine data without synthetic statistics',()=>{
+  const griffin=MECH_OFFERS.find(x=>x.id==='mm-grf-1m');
+  assert(griffin,'Expected pinned Griffin variant');
+  const sheet=getMechDetails(griffin.sourcePath);
+  assert.equal(sheet.name,griffin.name);
+  assert.equal(sheet.available,true);
+  assert.equal(sheet.tonnage,55);
+  assert.equal(sheet.engineRating,275);
+  assert.deepEqual(sheet.movement,{walk:5,run:8,jump:5});
+  assert.equal(sheet.heatSinks,12);
+  assert(sheet.armor.some(x=>x.location==='CT'&&x.rear===7&&x.structure>0));
+  assert(sheet.weapons.some(w=>w.name==='LRM 20'&&w.location==='RT'));
+  assert(sheet.equipment.some(e=>e.type==='ammo'&&e.weapon==='LRM 20'));
+  assert(sheet.criticalSlots.RT.some(slot=>slot==='LRM 20'));
+  assert.equal(sheet.sourceLicense,'CC-BY-NC-SA-4.0');
+  assert.equal(getMechDetails('../secrets.json'),null,
+    'Detail endpoint must never interpret paths outside the trusted index');
+  const archive=searchMechCatalog({page:1,limit:60}).items.find(x=>!x.available);
+  assert(archive);
+  const unavailable=getMechDetails(archive.sourcePath);
+  assert.equal(unavailable.available,false);
+  assert.equal(unavailable.tonnage,undefined,
+    'Unimported MTF variants must not be assigned imaginary tonnage');
+  assert(unavailable.note.includes('не включён'));
+});
+test('Filters combine server-side before pagination and do not guess unknown mass',()=>{
+  assert.equal(mechWeightClass(35),'light');
+  assert.equal(mechWeightClass(55),'medium');
+  assert.equal(mechWeightClass(75),'heavy');
+  assert.equal(mechWeightClass(100),'assault');
+  const medium=searchMechCatalog({weightClass:'medium',tonnageMin:50,
+    tonnageMax:55,availableOnly:true,sort:'tonnage'});
+  assert(medium.matches>0);
+  assert(medium.items.every(x=>x.available&&x.weightClass==='medium'&&
+    x.tonnage>=50&&x.tonnage<=55));
+  const noMass=searchMechCatalog({tonnageMin:99,tonnageMax:100,limit:60});
+  assert(noMass.items.every(x=>x.available),
+    'Rows without parsed tonnage must not leak into a mass-filtered search');
+  const names=searchMechCatalog({query:'GRF-1M',tonnageMin:55,tonnageMax:55});
+  assert(names.items.some(x=>x.offerId==='mm-grf-1m'));
+  assert.equal(searchMechCatalog({query:'GRF-1M',tonnageMax:40}).matches,0);
+  assert.equal(searchMechCatalog({priceMax:0}).matches,0);
+  const withYear=MECH_OFFERS.find(x=>x.era);
+  assert(withYear);
+  assert(searchMechCatalog({eraMin:withYear.era,eraMax:withYear.era,
+    availableOnly:true}).items.every(x=>x.era===withYear.era));
+  const sorted=searchMechCatalog({availableOnly:true,sort:'price',limit:60}).items;
+  assert.deepEqual(sorted.map(x=>x.price),sorted.map(x=>x.price).sort((a,b)=>a-b));
+  assert.equal(searchMechCatalog({availableOnly:true,limit:2,page:2}).items.length,2);
 });

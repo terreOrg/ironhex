@@ -546,6 +546,78 @@ test('Commander market displays C-Bills and submits only SKU and quantity',
     });
   });
 
+test('Commander catalog supports combined mass filters and opens a complete Mech dossier',
+  {timeout:120000},async()=>{
+    await withPage('market-mech-dossier',{hub:true},async page=>{
+      const calls=[];
+      const respond=(route,status,body)=>route.fulfill({status,
+        contentType:'application/json',body:JSON.stringify(body)});
+      const path='data/mekfiles/meks/3025 CCE/Medium/Griffin GRF-1M.mtf';
+      const offer={id:'mm-grf-1m',offerId:'mm-grf-1m',
+        sourcePath:path,name:'Griffin GRF-1M',tonnage:55,
+        price:55000,era:3025,role:'Striker',
+        weapons:['LRM 20'],description:'55 т · LRM 20',
+        available:true,weightClass:'medium'};
+      await page.route('**/api/v1/economy**',route=>{
+        const request=route.request(),url=new URL(request.url());
+        if(url.pathname==='/api/v1/economy')return respond(route,200,{
+          balance:150000,stock:{},equipmentStock:{},
+          mechOffers:[offer],catalog:[],repairs:[],ledger:[],contracts:[]
+        });
+        if(url.pathname==='/api/v1/economy/mechs'){
+          calls.push(Object.fromEntries(url.searchParams));
+          return respond(route,200,{total:4305,available:8,matches:1,
+            page:1,pages:1,items:[offer]});
+        }
+        if(url.pathname==='/api/v1/economy/mechs/detail'){
+          assert.equal(url.searchParams.get('path'),path);
+          return respond(route,200,{item:{...offer,sourceLicense:'CC-BY-NC-SA-4.0',
+            techBase:'Inner Sphere',engineRating:275,
+            movement:{walk:5,run:8,jump:5},heatSinks:12,
+            remainingTonnage:0,armor:[
+              {location:'CT',front:20,rear:7,structure:18},
+              {location:'HD',front:9,rear:null,structure:3}
+            ],
+            weapons:[{name:'LRM 20',location:'RT',damage:1,heat:6,
+              minimum:6,range:[7,14,21],ammo:18,rack:20,rear:false}],
+            equipment:[{type:'LRM 20',location:'RT',slot:3},
+              {type:'ammo',location:'RT',slot:8,mass:1,weapon:'LRM 20'}],
+            criticalSlots:{RT:['LRM 20',null,'Боезапас LRM 20']},
+            sourceUrl:'https://github.com/MegaMek/mm-data/blob/pinned/path.mtf'
+          }});
+        }
+        return respond(route,404,{error:'not_found'});
+      });
+      await page.locator('#hub-market-button').click();
+      await page.locator('#economy-mechs .economy-name').waitFor({state:'visible'});
+      await page.locator('#economy-mechs .economy-name').click();
+      await page.locator('#economy-detail-dialog[open] h2').waitFor({state:'visible'});
+      assert.match(await page.locator('#economy-detail-dialog').textContent(),/Griffin GRF-1M/);
+      assert.match(await page.locator('#economy-detail-dialog').textContent(),/275 Fusion/);
+      assert.match(await page.locator('#economy-detail-dialog').textContent(),/LRM 20/);
+      assert.match(await page.locator('#economy-detail-dialog').textContent(),/ВНУТРЕННЯЯ СТРУКТУРА/);
+      await page.locator('#economy-detail-dialog .economy-critical summary').click();
+      assert.match(await page.locator('#economy-detail-dialog').textContent(),/Боезапас LRM 20/);
+      await page.locator('#economy-detail-dialog .economy-detail-close').click();
+      assert.equal(await page.locator('#economy-detail-dialog').evaluate(e=>e.open),false);
+      await page.locator('#economy-weight-class').selectOption('medium');
+      await page.locator('#economy-tonnage-min').selectOption('50');
+      await page.locator('#economy-tonnage-max').selectOption('60');
+      await page.locator('#economy-sort').selectOption('tonnage');
+      await page.waitForFunction(()=>document.querySelector('#economy-archive-summary')
+        ?.textContent.includes('найдено'));
+      await page.waitForTimeout(400);
+      assert(calls.some(c=>c.weightClass==='medium'&&c.tonnageMin==='50'&&
+        c.tonnageMax==='60'&&c.sort==='tonnage'),
+        'The complete set of filters must reach the server');
+      await page.locator('#economy-reset-filters').click();
+      await page.waitForTimeout(200);
+      assert.equal(await page.locator('#economy-tonnage-min').inputValue(),'');
+      assert.equal(await page.locator('#economy-weight-class').inputValue(),'');
+      assert(calls.some(c=>c.tonnageMin===''&&c.weightClass===''));
+    });
+  });
+
 test('Operation briefing creates a roster and displays a trusted after-action report',
   {timeout:120000},async()=>{
     await withPage('operations-briefing',{hub:true},async page=>{

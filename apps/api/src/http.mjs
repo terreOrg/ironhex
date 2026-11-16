@@ -141,7 +141,20 @@ export function createHttpServer({
             const query=url.searchParams.get('query')||'';
             const page=url.searchParams.get('page')||1;
             const availableOnly=url.searchParams.get('available')==='1';
-            return json(res,200,economyStore.browseMechs({query,page,limit:36,availableOnly}),head);
+            const get=k=>url.searchParams.get(k)||'';
+            return json(res,200,economyStore.browseMechs({
+              query,page,limit:36,availableOnly,
+              tonnageMin:get('tonnageMin'),tonnageMax:get('tonnageMax'),
+              weightClass:get('weightClass'),eraMin:get('eraMin'),
+              eraMax:get('eraMax'),priceMax:get('priceMax'),
+              role:get('role'),weapon:get('weapon'),sort:get('sort')
+            }),head);
+          }
+          if(path==='/api/v1/economy/mechs/detail'&&(method==='GET'||head)){
+            const url=new URL(req.url,'http://localhost');
+            const sourcePath=url.searchParams.get('path')||'';
+            const item=economyStore.mechDetails(sourcePath);
+            return item?json(res,200,{item},head):json(res,404,{error:'mech_not_found'},head);
           }
           if(path==='/api/v1/economy/mechs/purchase'&&method==='POST'){
             if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');

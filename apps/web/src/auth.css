@@ -716,3 +716,41 @@ color:#1d3223;font-weight:800;font-size:14px;padding:14px;cursor:pointer}
 .economy-pager span{font-size:11px;color:#b1c7a8}
 .economy-pager button{width:auto;min-width:92px}
 #economy-archive .economy-mech-offer{min-height:124px}
+
+/* Searchable MegaMek archive and accessible Mech technical dossier. */
+.economy-panel .economy-filter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;margin:10px 0 8px}
+.economy-panel .economy-filter-field{display:flex;flex-direction:column;gap:5px;min-width:0;color:#b9d0b2;font-size:11px}
+.economy-panel .economy-filter-field input,.economy-panel .economy-filter-field select{width:100%;min-height:37px;padding:8px 10px;border:1px solid #536c56;background:#15241d;color:#eaf3e2;font:13px/1.3 system-ui,sans-serif;box-sizing:border-box}
+.economy-panel .economy-filter-field input:focus-visible,.economy-panel .economy-filter-field select:focus-visible,.economy-name:focus-visible{outline:2px solid #bdec82;outline-offset:2px}
+.economy-panel .economy-filter-hint{font-size:11px;line-height:1.55;color:#a0b6a1;margin:5px 0 12px}
+.economy-panel .economy-reset{width:auto;margin:6px 0 18px;padding:9px 16px}
+.economy-name{display:block;text-align:left;padding:0;border:0;background:transparent;color:#c8f08a;font-weight:750;font-size:15px;line-height:1.35;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;cursor:pointer;max-width:100%}
+.economy-name:hover{color:#f3ffd0}
+.economy-mech-offer .economy-name{width:auto;min-width:0;margin:0}
+.economy-detail-dialog{width:min(940px,calc(100vw - 28px));max-width:940px;max-height:min(88vh,1000px);padding:0;border:2px solid #839f78;background:#11251b;color:#e8efe0;box-shadow:0 18px 80px #000b;overflow-y:auto;box-sizing:border-box}
+.economy-detail-dialog::backdrop{background:rgba(1,9,6,.80)}
+.economy-detail-content{padding:25px 30px 32px}
+.economy-detail-content h2{font:800 clamp(23px,3vw,36px)/1.1 'Barlow Condensed',system-ui,sans-serif;color:#d3f497;margin:10px 0 16px;letter-spacing:.02em}
+.economy-detail-close{float:right;padding:8px 12px;border:1px solid #789572;color:#e6f7d5;background:#253b2d;font-size:11px;cursor:pointer;width:auto;min-width:0}
+.economy-detail-license{font-size:11px;color:#a1b8a6;margin:0 0 16px}
+.economy-detail-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin:12px 0 23px}
+.economy-detail-stat{display:flex;flex-direction:column;gap:6px;background:#1b3124;padding:10px;border:1px solid #456149;min-height:53px;box-sizing:border-box}
+.economy-detail-stat span{color:#9dafaa;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.economy-detail-stat strong{color:#e9f4db;font-size:15px;line-height:1.4}
+.economy-detail-section{margin:19px 0}
+.economy-detail-section h3{font:800 18px 'Barlow Condensed',system-ui,sans-serif;color:#c4df99;margin:0 0 9px;letter-spacing:.04em}
+.economy-table-scroll{width:100%;max-width:100%;overflow-x:auto}
+.economy-detail-table{border-collapse:collapse;font-size:12px;line-height:1.45;min-width:440px;width:100%}
+.economy-detail-table th,.economy-detail-table td{border-bottom:1px solid #38513f;text-align:left;vertical-align:top;padding:9px 10px}
+.economy-detail-table th{color:#bfe5a2;background:#263b2a;white-space:nowrap;font-weight:700}
+.economy-detail-table td{color:#d6e3ce}
+.economy-critical summary{cursor:pointer;color:#d6eda5;margin-bottom:10px}
+.economy-critical p{font-size:11px;line-height:1.65;word-break:break-word;padding:6px 8px;border-left:2px solid #698264}
+.economy-detail-dialog .economy-source-link{font-size:12px;margin:15px 0 5px}
+@media(max-width:600px){
+ .economy-detail-content{padding:15px 16px 22px}
+ .economy-detail-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .economy-detail-stat strong{font-size:13px}
+ .economy-panel .economy-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .economy-panel .economy-filter-field{font-size:10px}
+}

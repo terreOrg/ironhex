@@ -40,6 +40,29 @@ assert.equal((await req('/api/v1/economy/mechs/purchase',{
   body:{offerId:'mm-grf-1m',price:1}})).status,422);
 assert.equal((await req('/api/v1/economy/mechs/purchase',{
   method:'POST',cookie:one.cookie,body:{offerId:'not-listed'}})).status,422);
+const urlPath=encodeURIComponent(offer.sourcePath);
+assert.equal((await req('/api/v1/economy/mechs/detail?path='+urlPath)).status,401);
+const dossier=await req('/api/v1/economy/mechs/detail?path='+urlPath,
+  {cookie:one.cookie});
+assert.equal(dossier.status,200,JSON.stringify(dossier.data));
+assert.equal(dossier.data.item.name,'Griffin GRF-1M');
+assert.equal(dossier.data.item.engineRating,275);
+assert(dossier.data.item.weapons.some(w=>w.name==='LRM 20'));
+assert(dossier.data.item.armor.some(a=>a.location==='CT'&&a.rear===7));
+const filtered=await req('/api/v1/economy/mechs?'+new URLSearchParams({
+  query:'GRF-1M',weightClass:'medium',tonnageMin:'55',tonnageMax:'55',
+  sort:'tonnage',available:'1'
+}),{cookie:one.cookie});
+assert.equal(filtered.status,200,JSON.stringify(filtered.data));
+assert(filtered.data.items.some(x=>x.offerId==='mm-grf-1m'));
+assert(filtered.data.items.every(x=>x.available&&x.tonnage===55));
+const excluded=await req('/api/v1/economy/mechs?'+new URLSearchParams({
+  query:'GRF-1M',tonnageMax:'40'
+}),{cookie:one.cookie});
+assert.equal(excluded.status,200);
+assert.equal(excluded.data.matches,0);
+assert.equal((await req('/api/v1/economy/mechs/detail?path='+
+  encodeURIComponent('../../etc/passwd'),{cookie:one.cookie})).status,404);
 const prototype=await req('/api/v1/hangar',{method:'POST',
   cookie:one.cookie,body:{config:example}});
 assert.equal(prototype.status,201);
