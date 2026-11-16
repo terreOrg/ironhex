@@ -1,0 +1,3450 @@
+{
+  "schemaVersion": 1,
+  "book": {
+    "id": "bmm-corrected-6th-2022",
+    "title": "BattleTech: BattleMech Manual",
+    "edition": "Corrected sixth printing, 2022",
+    "publisher": "Catalyst Game Labs",
+    "pageNumbering": "printed",
+    "provenance": "User-provided PDF, corrected sixth printing: 326 parsed table-of-contents headings plus 26 manually restored headings from multi-column layout; printed contents pp. 2–3."
+  },
+  "scope": {
+    "battlemechsOnly": true,
+    "includeOptionalRules": true,
+    "disclaimer": "Provisional heading-level inventory; many individual rule exceptions are not yet enumerated or tested. No 100% conformity claim."
+  },
+  "statusDefinitions": {
+    "not_audited": "Indexed; implementation and tests have not been individually audited.",
+    "tested_subset": "At least one automated test is linked; not necessarily complete.",
+    "known_missing": "Known missing rule/mechanic in current IronHex engine.",
+    "verified": "Entire section independently audited and tested (not assigned by this initial pass)."
+  },
+  "topics": [
+    {
+      "id": "bmm-p005-mech",
+      "title": "’Mech",
+      "page": 5,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p005-four-legged-mech",
+      "title": "Four-Legged ’Mech",
+      "page": 5,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p005-game-terms",
+      "title": "GAME TERMS",
+      "page": 5,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p005-introduction",
+      "title": "INTRODUCTION",
+      "page": 5,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p005-optional-rules",
+      "title": "Optional Rules",
+      "page": 5,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p005-vs-total-warfare",
+      "title": "Vs. Total Warfare",
+      "page": 5,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-armor-value",
+      "title": "Armor Value",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-attacker-movement-modifier",
+      "title": "Attacker Movement Modifier",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-damage-value",
+      "title": "Damage Value",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-level",
+      "title": "Level",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-location",
+      "title": "Location",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-mapsheet",
+      "title": "Mapsheet",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-margin-of-success-failure-mos-mof",
+      "title": "Margin of Success/Failure (MoS/MoF)",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-modified-target-number",
+      "title": "Modified Target Number",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-movement-points",
+      "title": "Movement Points",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-playing-area",
+      "title": "Playing Area",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-scenario",
+      "title": "Scenario",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-slot",
+      "title": "Slot",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-target",
+      "title": "Target",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-target-movement-modifier",
+      "title": "Target Movement Modifier",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p006-target-number",
+      "title": "Target Number",
+      "page": 6,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p007-mech-record-sheet",
+      "title": "’Mech Record Sheet",
+      "page": 7,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p007-components",
+      "title": "COMPONENTS",
+      "page": 7,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p007-counters",
+      "title": "Counters",
+      "page": 7,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p007-dice",
+      "title": "Dice",
+      "page": 7,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p007-mapsheets",
+      "title": "Mapsheets",
+      "page": 7,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p008-a-note-on-realism-and-scale",
+      "title": "A Note on Realism and Scale",
+      "page": 8,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p008-level",
+      "title": "Level",
+      "page": 8,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p008-scale",
+      "title": "SCALE",
+      "page": 8,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p009-damaging-a-warrior",
+      "title": "Damaging A Warrior",
+      "page": 9,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p009-skills",
+      "title": "Skills",
+      "page": 9,
+      "chapter": "Foundations",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p009-the-mechwarrior",
+      "title": "THE MECHWARRIOR",
+      "page": 9,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p010-alternate-initiative",
+      "title": "Alternate Initiative",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p010-deploying-mechs",
+      "title": "DEPLOYING ’MECHS",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p010-initiative-phase",
+      "title": "Initiative Phase",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p010-movement-phase",
+      "title": "Movement Phase",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p010-moving-multiple-mechs",
+      "title": "Moving Multiple ’Mechs",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p010-playing-the-game",
+      "title": "PLAYING THE GAME",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p010-sequence-of-play",
+      "title": "SEQUENCE OF PLAY",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p010-weapon-attack-phase",
+      "title": "Weapon Attack Phase",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p011-segmented-fire",
+      "title": "Segmented Fire",
+      "page": 11,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p012-end-phase",
+      "title": "End Phase",
+      "page": 12,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p012-heat-phase",
+      "title": "Heat Phase",
+      "page": 12,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p012-physical-attack-phase",
+      "title": "Physical Attack Phase",
+      "page": 12,
+      "chapter": "Turn sequence",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p012-unequal-numbers-of-mechs",
+      "title": "UNEQUAL NUMBERS OF ’MECHS",
+      "page": 12,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p012-victory-conditions",
+      "title": "VICTORY CONDITIONS",
+      "page": 12,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p013-movement",
+      "title": "MOVEMENT",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p013-movement-dice",
+      "title": "Movement Dice",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p013-movement-modes",
+      "title": "MOVEMENT MODES",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p013-piloting-skill-rolls",
+      "title": "Piloting Skill Rolls",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p013-running",
+      "title": "Running",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Heat reduces walk and derived run"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p013-standing-still",
+      "title": "Standing Still",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p013-walking",
+      "title": "Walking",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Heat reduces walk and derived run"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p014-facing",
+      "title": "Facing",
+      "page": 14,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Facing changes cost one MP per hexside and reject over-budget or invalid turns"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p014-jumping",
+      "title": "Jumping",
+      "page": 14,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p014-sprinting-optional",
+      "title": "Sprinting (Optional)",
+      "page": 14,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p015-ground-movement",
+      "title": "Ground Movement",
+      "page": 15,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p016-minimum-movement",
+      "title": "Minimum Movement",
+      "page": 16,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Losing one leg permits walking but not ordinary running or evasion (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p016-terrain",
+      "title": "Terrain",
+      "page": 16,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p018-immobile",
+      "title": "Immobile",
+      "page": 18,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p018-jumping-movement",
+      "title": "JUMPING MOVEMENT",
+      "page": 18,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p018-stacking",
+      "title": "Stacking",
+      "page": 18,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p019-dropping-to-the-ground",
+      "title": "Dropping to the Ground",
+      "page": 19,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p019-movement-in-water",
+      "title": "MOVEMENT IN WATER",
+      "page": 19,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Run may not enter water; jump may land there"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p019-moving-while-prone",
+      "title": "Moving While Prone",
+      "page": 19,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p019-prone-battlemechs",
+      "title": "PRONE BATTLEMECHS",
+      "page": 19,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p019-standing-up",
+      "title": "Standing Up",
+      "page": 19,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "A one-legged prone BattleMech may attempt to stand even though it cannot run (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p020-bridge-movement",
+      "title": "Bridge Movement",
+      "page": 20,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p020-movement-on-pavement",
+      "title": "MOVEMENT ON PAVEMENT",
+      "page": 20,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p020-reckless-movement",
+      "title": "RECKLESS MOVEMENT",
+      "page": 20,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p020-road-movement",
+      "title": "Road Movement",
+      "page": 20,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p020-skidding",
+      "title": "Skidding",
+      "page": 20,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p021-hidden-mechs",
+      "title": "Hidden ’Mechs",
+      "page": 21,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p021-lifting-items-simplified",
+      "title": "Lifting Items (Simplified)",
+      "page": 21,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p021-other-actions",
+      "title": "OTHER ACTIONS",
+      "page": 21,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p021-tag-designation",
+      "title": "TAG Designation",
+      "page": 21,
+      "chapter": "Movement",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p022-combat",
+      "title": "COMBAT",
+      "page": 22,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p022-intervening-terrain",
+      "title": "Intervening Terrain",
+      "page": 22,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p022-levels-and-height",
+      "title": "Levels and Height",
+      "page": 22,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p022-line-of-sight",
+      "title": "LINE OF SIGHT",
+      "page": 22,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p023-other-mechs-and-los",
+      "title": "Other ’Mechs and LOS",
+      "page": 23,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p023-water-hexes",
+      "title": "Water Hexes",
+      "page": 23,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-arcs-and-reversing-flipping-arms",
+      "title": "Arcs and Reversing (Flipping) Arms",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-arcs-and-torso-twists",
+      "title": "Arcs and Torso Twists",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-attack-declaration",
+      "title": "ATTACK DECLARATION",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p024-firing-arcs",
+      "title": "FIRING ARCS",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p024-forward-arc",
+      "title": "Forward Arc",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-left-side-arc",
+      "title": "Left Side Arc",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-rear-arc",
+      "title": "Rear Arc",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-reversing-flipping-arms",
+      "title": "Reversing (Flipping) Arms",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-right-side-arc",
+      "title": "Right Side Arc",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p025-base-target-number",
+      "title": "Base Target Number",
+      "page": 25,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p025-expanded-arm-flipping-optional",
+      "title": "Expanded Arm Flipping (Optional)",
+      "page": 25,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p025-firing-weapons",
+      "title": "FIRING WEAPONS",
+      "page": 25,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p025-making-the-attack",
+      "title": "Making the Attack",
+      "page": 25,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p025-target-number-modifiers",
+      "title": "Target Number Modifiers",
+      "page": 25,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p025-torso-twists",
+      "title": "Torso Twists",
+      "page": 25,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p027-combat-in-water",
+      "title": "Combat in Water",
+      "page": 27,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p030-prone-mechs",
+      "title": "Prone ’Mechs",
+      "page": 30,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Missing either arm prevents prone firing under standard rules (BMM p.30)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p030-specialized-attacks",
+      "title": "Specialized Attacks",
+      "page": 30,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Head aimed shot replaces immobile bonus with +3 (BMM p.30)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p031-ammunition-expenditure",
+      "title": "Ammunition Expenditure",
+      "page": 31,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Automatic shared-ammo shot preserves a later explicitly reserved magazine (BMM ammo expenditure)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p031-rolling-to-hit",
+      "title": "Rolling to Hit",
+      "page": 31,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p032-attack-direction",
+      "title": "Attack Direction",
+      "page": 32,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p032-damage-resolution",
+      "title": "Damage Resolution",
+      "page": 32,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p032-determining-hit-location",
+      "title": "Determining Hit Location",
+      "page": 32,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p032-hit-location",
+      "title": "HIT LOCATION",
+      "page": 32,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p034-different-levels",
+      "title": "Different Levels",
+      "page": 34,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p034-making-a-physical-attack",
+      "title": "Making A Physical Attack",
+      "page": 34,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p034-physical-attacks",
+      "title": "PHYSICAL ATTACKS",
+      "page": 34,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p035-charge-attacks",
+      "title": "Charge Attacks",
+      "page": 35,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Charge distance uses moved hexes, not shortest hex distance (BMM p.35)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p035-physical-attacks-and-prone-mechs",
+      "title": "Physical Attacks And Prone ’Mechs",
+      "page": 35,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p035-physical-attacks-and-water",
+      "title": "Physical Attacks And Water",
+      "page": 35,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Underwater punches, kicks and hatchet hits deal half damage rounded down (BMM pp.35,65)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p036-club-attacks",
+      "title": "Club Attacks",
+      "page": 36,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p036-death-from-above-attacks",
+      "title": "Death From Above Attacks",
+      "page": 36,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p038-kick-attacks",
+      "title": "Kick Attacks",
+      "page": 38,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p038-physical-weapon-attacks",
+      "title": "Physical Weapon Attacks",
+      "page": 38,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p038-punch-attacks",
+      "title": "Punch Attacks",
+      "page": 38,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Two punches declare two independent attack rolls"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p040-damage-resolution",
+      "title": "Damage Resolution",
+      "page": 40,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p040-push-attacks",
+      "title": "Push Attacks",
+      "page": 40,
+      "chapter": "Combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p041-damage",
+      "title": "DAMAGE",
+      "page": 41,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p041-damage-resolution",
+      "title": "DAMAGE RESOLUTION",
+      "page": 41,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p041-step-by-step-damage",
+      "title": "Step-By-Step Damage",
+      "page": 41,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p043-damage-timing",
+      "title": "DAMAGE TIMING",
+      "page": 43,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p043-hull-integrity-and-breaches",
+      "title": "HULL INTEGRITY AND BREACHES",
+      "page": 43,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p043-location-destruction",
+      "title": "LOCATION DESTRUCTION",
+      "page": 43,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p044-head-destruction",
+      "title": "Head Destruction",
+      "page": 44,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Head destruction kills the pilot rather than only disabling the unit (BMM p.44)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p044-leg-destruction",
+      "title": "Leg Destruction",
+      "page": 44,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Losing one leg permits walking but not ordinary running or evasion (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p044-transferring-damage",
+      "title": "Transferring Damage",
+      "page": 44,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Unprotected explosion transfers inward; CASE does not block ordinary ballistic hits"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p045-critical-hits",
+      "title": "CRITICAL HITS",
+      "page": 45,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p045-floating-criticals-optional",
+      "title": "Floating Criticals (Optional)",
+      "page": 45,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p045-torso-destruction",
+      "title": "Torso Destruction",
+      "page": 45,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Destroyed torso destroys attached arm and ammunition"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p046-applying-critical-hits",
+      "title": "Applying Critical Hits",
+      "page": 46,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Last critical slot hit this phase does not transfer later criticals (BMM p.46)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p047-ammunition",
+      "title": "Ammunition",
+      "page": 47,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammo explosion bypasses armor and wounds pilot twice"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p047-arm-blown-off-arm",
+      "title": "Arm Blown Off (Arm)",
+      "page": 47,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p047-cockpit-head",
+      "title": "Cockpit (Head)",
+      "page": 47,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p047-critical-hit-effects",
+      "title": "CRITICAL HIT EFFECTS",
+      "page": 47,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p047-engine-torso",
+      "title": "Engine (Torso)",
+      "page": 47,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/components.mjs",
+          "test": "Persistent core damage changes heat and mobility, without hidden client state"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p047-foot-actuator-leg",
+      "title": "Foot Actuator (Leg)",
+      "page": 47,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-gyro-torso",
+      "title": "Gyro (Torso)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-hand-actuator-arm",
+      "title": "Hand Actuator (Arm)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-head-blown-off-head",
+      "title": "Head Blown Off (Head)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-heat-sinks",
+      "title": "Heat Sinks",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/components.mjs",
+          "test": "Damage to individual critical slots survives serialization and disables weapons"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p048-hip-leg",
+      "title": "Hip (Leg)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-jump-jet-umu-leg-torso",
+      "title": "Jump Jet/UMU (Leg/Torso)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-leg-blown-off-leg",
+      "title": "Leg Blown Off (Leg)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-life-support-head",
+      "title": "Life Support (Head)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p048-lower-arm-actuator-arm",
+      "title": "Lower Arm Actuator (Arm)",
+      "page": 48,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p049-destroying-a-mech",
+      "title": "DESTROYING A ’MECH",
+      "page": 49,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p049-lower-leg-actuator-leg",
+      "title": "Lower Leg Actuator (Leg)",
+      "page": 49,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p049-sensors-head",
+      "title": "Sensors (Head)",
+      "page": 49,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p049-shoulder-arm",
+      "title": "Shoulder (Arm)",
+      "page": 49,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p049-upper-arm-actuator-arm",
+      "title": "Upper Arm Actuator (Arm)",
+      "page": 49,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p049-upper-leg-actuator-leg",
+      "title": "Upper Leg Actuator (Leg)",
+      "page": 49,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p049-weapons-and-equipment",
+      "title": "Weapons And Equipment",
+      "page": 49,
+      "chapter": "Damage and criticals",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p050-building-up-heat",
+      "title": "Building Up Heat",
+      "page": 50,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p050-heat",
+      "title": "HEAT",
+      "page": 50,
+      "chapter": "Heat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p050-heat-points",
+      "title": "HEAT POINTS",
+      "page": 50,
+      "chapter": "Heat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p051-dissipating-heat",
+      "title": "Dissipating Heat",
+      "page": 51,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "External heat limit does not cap movement or weapon self-heat (BMM p.50)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p051-effects-of-heat",
+      "title": "EFFECTS OF HEAT",
+      "page": 51,
+      "chapter": "Heat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p051-movement",
+      "title": "Movement",
+      "page": 51,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p051-recording-heat-build-up",
+      "title": "Recording Heat Build-Up",
+      "page": 51,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p052-ammunition",
+      "title": "Ammunition",
+      "page": 52,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammo explosion avoidance uses the highest heat threshold reached (BMM p.52)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p052-damage-to-mechwarriors",
+      "title": "Damage To MechWarriors",
+      "page": 52,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p052-shutdown",
+      "title": "Shutdown",
+      "page": 52,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "First involuntary reactor shutdown PSR can succeed (BMM p.52)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p052-weapon-attacks",
+      "title": "Weapon Attacks",
+      "page": 52,
+      "chapter": "Heat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p053-making-piloting-skill-rolls",
+      "title": "Making Piloting Skill Rolls",
+      "page": 53,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Any subsequent PSR after reactor shutdown fails automatically (BMM p.53)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p053-piloting-skill-rolls-psr",
+      "title": "PILOTING SKILL ROLLS (PSR)",
+      "page": 53,
+      "chapter": "Piloting and other actions",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p055-displacement",
+      "title": "DISPLACEMENT",
+      "page": 55,
+      "chapter": "Piloting and other actions",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p055-domino-effect",
+      "title": "Domino Effect",
+      "page": 55,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p055-piloting-skill-roll-timing",
+      "title": "Piloting Skill Roll Timing",
+      "page": 55,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p056-facing-after-a-fall",
+      "title": "Facing After a Fall",
+      "page": 56,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p056-falling",
+      "title": "FALLING",
+      "page": 56,
+      "chapter": "Piloting and other actions",
+      "kind": "heading",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Failed water landing falls the full water depth before halving damage (BMM pp.19,57)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p056-location-after-a-fall",
+      "title": "Location After a Fall",
+      "page": 56,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p057-accidental-falls-from-above",
+      "title": "Accidental Falls From Above",
+      "page": 57,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p057-falling-damage-to-a-mech",
+      "title": "Falling Damage to a ’Mech",
+      "page": 57,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p057-falling-damage-to-a-mechwarrior",
+      "title": "Falling Damage to a MechWarrior",
+      "page": 57,
+      "chapter": "Piloting and other actions",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Failed initial heat shutdown PSR causes fall and automatic pilot injury (BMM pp.52,54)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p058-damaging-a-mechwarrior",
+      "title": "DAMAGING A MECHWARRIOR",
+      "page": 58,
+      "chapter": "Piloting and other actions",
+      "kind": "heading",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "MechWarrior consciousness rolls increase after each wound (BMM p.58)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p058-dumping-ammunition",
+      "title": "DUMPING AMMUNITION",
+      "page": 58,
+      "chapter": "Piloting and other actions",
+      "kind": "heading",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammunition being dumped remains in the bin but cannot be fired (BMM p.58)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p058-tag-designation",
+      "title": "TAG DESIGNATION",
+      "page": 58,
+      "chapter": "Piloting and other actions",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p059-terrain-types",
+      "title": "TERRAIN TYPES",
+      "page": 59,
+      "chapter": "Terrain and underwater",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-clear",
+      "title": "Clear",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-jungle-heavy",
+      "title": "Jungle, Heavy",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-jungle-light",
+      "title": "Jungle, Light",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-pavement",
+      "title": "Pavement",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-rough",
+      "title": "Rough",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-rubble",
+      "title": "Rubble",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-sand",
+      "title": "Sand",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-water-depth-0",
+      "title": "Water (Depth 0)",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-water-depth-1",
+      "title": "Water (Depth 1)",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-water-depth-2",
+      "title": "Water (Depth 2)",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-water-depth-3",
+      "title": "Water (Depth 3+)",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-woods-heavy",
+      "title": "Woods, Heavy",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p060-woods-light",
+      "title": "Woods, Light",
+      "page": 60,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p061-ice-simplified",
+      "title": "Ice (Simplified)",
+      "page": 61,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p061-mud-simplified",
+      "title": "Mud (Simplified)",
+      "page": 61,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p061-smoke-heavy",
+      "title": "Smoke, Heavy",
+      "page": 61,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p061-smoke-light",
+      "title": "Smoke, Light",
+      "page": 61,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p061-snow-deep",
+      "title": "Snow, Deep",
+      "page": 61,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p061-swamp-simplified",
+      "title": "Swamp (Simplified)",
+      "page": 61,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p061-terrain-modifications",
+      "title": "TERRAIN MODIFICATIONS",
+      "page": 61,
+      "chapter": "Terrain and underwater",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p062-extreme-temperatures",
+      "title": "Extreme Temperatures",
+      "page": 62,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p062-fog",
+      "title": "Fog",
+      "page": 62,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p062-light",
+      "title": "Light",
+      "page": 62,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p062-rain",
+      "title": "Rain",
+      "page": 62,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p062-weather-conditions",
+      "title": "WEATHER CONDITIONS",
+      "page": 62,
+      "chapter": "Terrain and underwater",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p063-effects-of-fire",
+      "title": "Effects of Fire",
+      "page": 63,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p063-fire-and-smoke-simplified",
+      "title": "FIRE AND SMOKE (SIMPLIFIED)",
+      "page": 63,
+      "chapter": "Terrain and underwater",
+      "kind": "heading",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p063-snow",
+      "title": "Snow",
+      "page": 63,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p063-starting-a-fire",
+      "title": "Starting a Fire",
+      "page": 63,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p063-wind",
+      "title": "Wind",
+      "page": 63,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p063-wind-direction",
+      "title": "Wind Direction",
+      "page": 63,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p064-attacking-underwater",
+      "title": "Attacking Underwater",
+      "page": 64,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Underwater ranges match every supported BMM energy-weapon table row (p.65)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p064-extinguishing-fire",
+      "title": "Extinguishing Fire",
+      "page": 64,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p064-spreading-fire",
+      "title": "Spreading Fire",
+      "page": 64,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p064-underwater-combat",
+      "title": "UNDERWATER COMBAT",
+      "page": 64,
+      "chapter": "Terrain and underwater",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p065-hull-integrity-and-breaches",
+      "title": "Hull Integrity And Breaches",
+      "page": 65,
+      "chapter": "Terrain and underwater",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Underwater armor damage can breach a leg location on a roll of 10+ (BMM p.65)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p066-basements",
+      "title": "Basements",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p066-building-levels",
+      "title": "Building Levels",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p066-building-types",
+      "title": "BUILDING TYPES",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p066-construction-factor",
+      "title": "Construction Factor",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p066-simplified-buildings",
+      "title": "Simplified Buildings",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p066-urban-combat",
+      "title": "URBAN COMBAT",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p067-movement-effects",
+      "title": "MOVEMENT EFFECTS",
+      "page": 67,
+      "chapter": "Urban combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p067-moving-into-buildings",
+      "title": "Moving Into Buildings",
+      "page": 67,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p068-skidding",
+      "title": "Skidding",
+      "page": 68,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p071-attacking-mechs-inside-buildings",
+      "title": "Attacking ’Mechs Inside Buildings",
+      "page": 71,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p071-attacking-buildings",
+      "title": "Attacking Buildings",
+      "page": 71,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p071-combat-effects",
+      "title": "COMBAT EFFECTS",
+      "page": 71,
+      "chapter": "Urban combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p072-combat-within-buildings",
+      "title": "Combat Within Buildings",
+      "page": 72,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p073-collapse",
+      "title": "Collapse",
+      "page": 73,
+      "chapter": "Urban combat",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p075-battlefield-support",
+      "title": "BATTLEFIELD SUPPORT",
+      "page": 75,
+      "chapter": "Support and deployment",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p075-before-play-begins",
+      "title": "Before Play Begins",
+      "page": 75,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p075-during-game-play",
+      "title": "During Game Play",
+      "page": 75,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p079-arrival",
+      "title": "Arrival",
+      "page": 79,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p079-drop-times",
+      "title": "Drop Times",
+      "page": 79,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p079-dropping-mechs-simplified",
+      "title": "DROPPING ’MECHS (SIMPLIFIED)",
+      "page": 79,
+      "chapter": "Support and deployment",
+      "kind": "heading",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p081-broken-morale-simplified-optional",
+      "title": "Broken Morale (Simplified—Optional)",
+      "page": 81,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p081-crippling-damage",
+      "title": "Crippling Damage",
+      "page": 81,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p081-ejection-simplified",
+      "title": "EJECTION (SIMPLIFIED)",
+      "page": 81,
+      "chapter": "Support and deployment",
+      "kind": "heading",
+      "optional": true,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p081-forced-withdrawal",
+      "title": "FORCED WITHDRAWAL",
+      "page": 81,
+      "chapter": "Support and deployment",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p082-hidden-mechs",
+      "title": "HIDDEN ’MECHS",
+      "page": 82,
+      "chapter": "Support and deployment",
+      "kind": "heading",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p082-point-blank-shots",
+      "title": "Point-Blank Shots",
+      "page": 82,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p082-positive-design-quirks",
+      "title": "Positive Design Quirks",
+      "page": 82,
+      "chapter": "Support and deployment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p086-negative-design-quirks",
+      "title": "Negative Design Quirks",
+      "page": 86,
+      "chapter": "Quirks",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p089-battlemech-quirk-listing",
+      "title": "BattleMech Quirk Listing",
+      "page": 89,
+      "chapter": "Quirks",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p089-master-unit-list",
+      "title": "Master Unit List",
+      "page": 89,
+      "chapter": "Quirks",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p096-weapon-types",
+      "title": "WEAPON TYPES",
+      "page": 96,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p097-arrow-iv-homing-missiles-simplified",
+      "title": "Arrow IV Homing Missiles (Simplified)",
+      "page": 97,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": true,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p097-artillery",
+      "title": "ARTILLERY",
+      "page": 97,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p098-autocannon",
+      "title": "Autocannon",
+      "page": 98,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p098-autocannons",
+      "title": "AUTOCANNONS",
+      "page": 98,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p098-lb-x-autocannon-lb-x",
+      "title": "LB-X Autocannon (LB-X)",
+      "page": 98,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p098-light-autocannon-lac",
+      "title": "Light Autocannon (LAC)",
+      "page": 98,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p098-protomech-autocannon-pac",
+      "title": "ProtoMech Autocannon (PAC)",
+      "page": 98,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p098-rotary-autocannon-rac",
+      "title": "Rotary Autocannon (RAC)",
+      "page": 98,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-anti-personnel-gauss-rifle",
+      "title": "Anti-Personnel Gauss Rifle",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-er-flamer",
+      "title": "ER Flamer",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-flamer",
+      "title": "Flamer",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-flamers",
+      "title": "FLAMERS",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-gauss-rifle",
+      "title": "Gauss Rifle",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-gauss-rifles",
+      "title": "GAUSS RIFLES",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-heavy-flamer",
+      "title": "Heavy Flamer",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p099-ultra-autocannon-uac",
+      "title": "Ultra Autocannon (UAC)",
+      "page": 99,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-binary-laser-blazer-cannon",
+      "title": "Binary Laser (Blazer) Cannon",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-chemical-laser",
+      "title": "Chemical Laser",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-heavy-gauss-rifle",
+      "title": "Heavy Gauss Rifle",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-hyper-assault-gauss-rifle",
+      "title": "Hyper-Assault Gauss Rifle",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-improved-heavy-gauss-rifle",
+      "title": "Improved Heavy Gauss Rifle",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-laser",
+      "title": "Laser",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-lasers",
+      "title": "LASERS",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-light-gauss-rifle",
+      "title": "Light Gauss Rifle",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-magshot-gauss-rifle",
+      "title": "Magshot Gauss Rifle",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p100-silver-bullet-gauss-rifle",
+      "title": "Silver Bullet Gauss Rifle",
+      "page": 100,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-extended-range-er-laser",
+      "title": "Extended-Range (ER) Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/components.mjs",
+          "test": "Inner Sphere ER direct-fire weapons use verified damage, heat and ranges"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p101-extended-range-er-pulse-laser",
+      "title": "Extended-Range (ER) Pulse Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-heavy-laser",
+      "title": "Heavy Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-heavy-machine-gun-hmg",
+      "title": "Heavy Machine Gun (HMG)",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-improved-heavy-laser",
+      "title": "Improved Heavy Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-m-pod",
+      "title": "M-POD",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-machine-gun-mg",
+      "title": "Machine Gun (MG)",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-machine-guns",
+      "title": "MACHINE GUNS",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-pulse-laser",
+      "title": "Pulse Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/components.mjs",
+          "test": "Pulse targeting uses an actual -2 hit modifier in tactical probability"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p101-re-engineered-laser",
+      "title": "Re-engineered Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-variable-speed-pulse-vsp-laser",
+      "title": "Variable-Speed Pulse (VSP) Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p101-x-pulse-laser",
+      "title": "X-Pulse Laser",
+      "page": 101,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p102-advanced-tactical-missile-atm-launcher",
+      "title": "Advanced Tactical Missile (ATM) Launcher",
+      "page": 102,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p102-enhanced-lrm-launcher-nlrm",
+      "title": "Enhanced LRM Launcher (NLRM)",
+      "page": 102,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p102-light-machine-gun-lmg",
+      "title": "Light Machine Gun (LMG)",
+      "page": 102,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p102-machine-gun-array-mga",
+      "title": "Machine Gun Array (MGA)",
+      "page": 102,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p102-missile-launchers",
+      "title": "MISSILE LAUNCHERS",
+      "page": 102,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p103-extended-lrm-launcher-elrm",
+      "title": "Extended LRM Launcher (ELRM)",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p103-improved-one-shot-i-os-missile-launcher",
+      "title": "Improved One Shot (I-OS) Missile Launcher .",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p103-long-range-missile-launcher-lrm",
+      "title": "Long Range Missile Launcher (LRM)",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Every supported launcher rack follows BattleMech Manual cluster table (BMM p.33)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p103-medium-range-missile-mrm-launcher",
+      "title": "Medium Range Missile (MRM) Launcher",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p103-multi-missile-launcher-mml",
+      "title": "Multi-Missile Launcher (MML)",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p103-one-shot-os-missile-launcher",
+      "title": "One-Shot (OS) Missile Launcher",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p103-rocket-launcher-rl",
+      "title": "Rocket Launcher (RL)",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p103-short-range-missile-srm-launcher",
+      "title": "Short Range Missile (SRM) Launcher",
+      "page": 103,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Every supported launcher rack follows BattleMech Manual cluster table (BMM p.33)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p104-inarc-missile-beacon",
+      "title": "iNarc Missile Beacon",
+      "page": 104,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p104-narc-missile-beacon",
+      "title": "Narc Missile Beacon",
+      "page": 104,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p104-narc-missile-beacons",
+      "title": "NARC MISSILE BEACONS",
+      "page": 104,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p104-streak-lrm-slrm-launcher",
+      "title": "Streak LRM (SLRM) Launcher",
+      "page": 104,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p104-streak-srm-ssrm-launcher",
+      "title": "Streak SRM (SSRM) Launcher",
+      "page": 104,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p104-thunderbolt-missile-launcher",
+      "title": "Thunderbolt Missile Launcher",
+      "page": 104,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p104-torpedo-srt-lrt-nlrt-launcher",
+      "title": "Torpedo (SRT, LRT, NLRT) Launcher",
+      "page": 104,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p105-er-ppc",
+      "title": "ER PPC",
+      "page": 105,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p105-heavy-ppc",
+      "title": "Heavy PPC",
+      "page": 105,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p105-light-ppc",
+      "title": "Light PPC",
+      "page": 105,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p105-ppc",
+      "title": "PPC",
+      "page": 105,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p105-ppc-capacitor",
+      "title": "PPC Capacitor",
+      "page": 105,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p105-snub-nose-ppc",
+      "title": "Snub-Nose PPC",
+      "page": 105,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p106-autocannon-munitions",
+      "title": "Autocannon Munitions",
+      "page": 106,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p106-plasma-cannon",
+      "title": "Plasma Cannon",
+      "page": 106,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p106-plasma-rifle",
+      "title": "Plasma Rifle",
+      "page": 106,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p107-missile-munitions",
+      "title": "Missile Munitions",
+      "page": 107,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p107-narc-inarc-pods",
+      "title": "Narc / iNarc Pods",
+      "page": 107,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p108-claws",
+      "title": "Claws",
+      "page": 108,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p108-physical-weapons",
+      "title": "PHYSICAL WEAPONS",
+      "page": 108,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-active-probes",
+      "title": "Active Probes",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-electronics",
+      "title": "ELECTRONICS",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-flail",
+      "title": "Flail",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-hatchet",
+      "title": "Hatchet",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/components.mjs",
+          "test": "Paid jump jets, heat sinks and hatchets are used by movement/heat/melee"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p109-lance",
+      "title": "Lance",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-mace",
+      "title": "Mace",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-retractable-blade",
+      "title": "Retractable Blade",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-sword",
+      "title": "Sword",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-talons",
+      "title": "Talons",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p109-vibroblade",
+      "title": "Vibroblade",
+      "page": 109,
+      "chapter": "Weapons",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p110-artemis-iv-fire-control-system",
+      "title": "Artemis IV Fire-Control System",
+      "page": 110,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p110-artemis-v-fire-control-system",
+      "title": "Artemis V Fire-Control System",
+      "page": 110,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p110-c3-computer-system",
+      "title": "C3 Computer System",
+      "page": 110,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p112-c3-boosted-system",
+      "title": "C3 Boosted System",
+      "page": 112,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p112-c3i-computer-system",
+      "title": "C3I Computer System",
+      "page": 112,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p112-ecm-suites",
+      "title": "ECM Suites",
+      "page": 112,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p113-mrm-apollo-fire-control-system",
+      "title": "MRM “Apollo” Fire Control System",
+      "page": 113,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p113-target-acquisition-gear-tag",
+      "title": "Target Acquisition Gear (TAG)",
+      "page": 113,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p114-armor",
+      "title": "Armor",
+      "page": 114,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p114-electronic-warfare-system-cews",
+      "title": "Electronic Warfare System (CEWS)",
+      "page": 114,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p114-structural-components",
+      "title": "STRUCTURAL COMPONENTS",
+      "page": 114,
+      "chapter": "Electronics and targeting",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p114-targeting-computer",
+      "title": "Targeting Computer",
+      "page": 114,
+      "chapter": "Electronics and targeting",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p115-cockpit-systems",
+      "title": "Cockpit Systems",
+      "page": 115,
+      "chapter": "Chassis technology",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p115-engines",
+      "title": "Engines",
+      "page": 115,
+      "chapter": "Chassis technology",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p115-gyros",
+      "title": "Gyros",
+      "page": 115,
+      "chapter": "Chassis technology",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p116-maneuverability-aids",
+      "title": "Maneuverability Aids",
+      "page": 116,
+      "chapter": "Chassis technology",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p117-structure",
+      "title": "Structure",
+      "page": 117,
+      "chapter": "Chassis technology",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p118-actuator-enhancement-system-aes",
+      "title": "Actuator Enhancement System (AES)",
+      "page": 118,
+      "chapter": "Special equipment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p118-anti-missile-system-ams",
+      "title": "Anti-Missile System (AMS)",
+      "page": 118,
+      "chapter": "Special equipment",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p118-armored-component",
+      "title": "Armored Component",
+      "page": 118,
+      "chapter": "Special equipment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    },
+    {
+      "id": "bmm-p118-laser-anti-missile-system-l-ams",
+      "title": "Laser Anti-Missile System (L-AMS)",
+      "page": 118,
+      "chapter": "Special equipment",
+      "kind": "topic",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p118-storage-equipment-case",
+      "title": "Storage Equipment (CASE)",
+      "page": 118,
+      "chapter": "Special equipment",
+      "kind": "topic",
+      "optional": false,
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE vents an ammo explosion after RT is destroyed; pilot still suffers feedback (BMM p.47)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-p119-case-ii",
+      "title": "CASE II",
+      "page": 119,
+      "chapter": "Special equipment",
+      "kind": "heading",
+      "optional": false,
+      "status": "known_missing",
+      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+    },
+    {
+      "id": "bmm-p119-coolant-pod",
+      "title": "Coolant Pod",
+      "page": 119,
+      "chapter": "Special equipment",
+      "kind": "topic",
+      "optional": false,
+      "status": "not_audited"
+    }
+  ]
+}

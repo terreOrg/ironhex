@@ -5,6 +5,16 @@ cockpit UI, dice, mech record sheets and a construction tool.
 
 **Published prototype:** https://iron-hex-battletech.chemosh.chatgpt.site/
 
+## Rules audit and BattleMech Manual conformance
+
+[BattleMech Manual audit register](rules/README.md) tracks the corrected sixth
+printing (2022) in version control. It separates **352 table-of-contents topics**
+from **24 granular requirements** with exact regression-test links.
+Passing one test never certifies a whole topic. Run
+`node --test tests/rules-registry.mjs` to verify the inventory and its links;
+`npm run rules:coverage` prints the current audit status.
+Source-specific rule gaps remain visible and are blocked from claiming 100% coverage.
+
 ## Architecture
 
 The project has a modular web/API structure with a shared rules engine:
@@ -28,7 +38,7 @@ regenerate and commit the static runtime to preserve the published Sites app:
 ```bash
 node scripts/build-web.mjs
 node scripts/build-web.mjs --check
-node --test tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs
+node --test tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/rules-registry.mjs tests/api.mjs
 python3 -m http.server 8080 --directory dist
 ```
 
