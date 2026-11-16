@@ -1344,12 +1344,17 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Destroyed or flooded side torso disables or removes the corresponding front leg while distinguishing the rear leg.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         45,
         65
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.45,65: quad side torso destruction or flooding affects front leg only"
+        }
+      ]
     },
     {
       "id": "bmm-req-093",

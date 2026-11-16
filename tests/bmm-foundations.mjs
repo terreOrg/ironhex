@@ -1164,3 +1164,33 @@ test('BMM p.38: a quad may kick front or rear with the correct leg pair and +1 r
  assert.equal(g.physicalPreview(u.id,target.id,'kick','LA').legal,false,
   'Biped arms cannot be used as kicking legs');
 });
+
+test('BMM pp.45,65: quad side torso destruction or flooding affects front leg only',()=>{
+ const fixture=construct({...example,name:'Quad torso coupling',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(fixture.errors,[],fixture.errors.join('; '));
+ for(const [side,front,rear] of [['LT','LA','LL'],['RT','RA','RL']]){
+  const built=flatGame(),u=built.units[0];
+  Object.assign(u,structuredClone(fixture.unit));
+  const oldRear=u.structure[rear],oldArmor=u.armor[rear];
+  built.destroyLocation(u,side);
+  assert.equal(u.structure[side],0);
+  assert.equal(u.structure[front],0,'Destroyed '+side+' removes corresponding front leg');
+  assert.equal(u.armor[front],0);
+  assert(u.crit[front].every(Boolean),'All front leg critical slots are destroyed');
+  assert.equal(u.structure[rear],oldRear,'Rear leg survives '+side+' destruction');
+  assert.equal(u.armor[rear],oldArmor,'Rear leg armor survives torso destruction');
+  const flooded=flatGame(),v=flooded.units[0];
+  Object.assign(v,structuredClone(fixture.unit));
+  assert.equal(flooded.breachLocation(v,side),true);
+  assert.equal(flooded.isBreached(v,front),true,
+   'Flooded '+side+' disables corresponding front leg');
+  assert.equal(flooded.isBreached(v,rear),false,
+   'Rear leg is not disabled by side torso flooding');
+  assert.equal(v.structure[front],v.maxStructure[front],
+   'Flooding makes front leg nonfunctional without destroying its structure');
+ }
+ const biped=flatGame(),b=biped.units[0];
+ b.config='Biped';biped.destroyLocation(b,'LT');
+ assert.equal(b.structure.LA,0,'Biped still loses corresponding arm');
+});

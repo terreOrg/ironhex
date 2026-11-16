@@ -409,3 +409,18 @@ damaged front/rear hip pairs, leg-weapon fire, and biped compatibility.
 The status of `bmm-req-088` is `tested_case`, **not verified**
 pending an end-to-end physical phase, fall PSRs and detailed rear-arc
 critical/flooding interactions.
+
+### Side-torso loss and flooding (printed pp.45,65)
+
+The existing side-torso transfer implementation was checked with
+a new deterministic Quad audit fixture. Losing LT or RT destroys the
+matching **front** leg (LA or RA), but does not damage the same-side
+rear leg (LL or RL). Flooding a side torso likewise disables the
+front leg and its contents, while leaving the rear leg operational;
+flooding does not erase structure as destruction does. A biped
+retains its standard arm-loss behavior. The tests cover **both**
+sides and both destruction and flooding.
+
+`bmm-req-092` is `tested_case` rather than fully verified because
+the separate quad lost-leg fall and movement consequences still need
+a full phase-level audit (bmm-req-089), including removal while prone.
