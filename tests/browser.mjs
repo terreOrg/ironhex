@@ -511,6 +511,7 @@ test('Operation briefing creates a roster and displays a trusted after-action re
       await page.locator('#hub-campaigns-button').click();
       await page.locator('#op-create-form').waitFor({state:'visible'});
       await page.locator('#op-mech-list input[name=mechId]').check();
+      await page.locator('#op-create-form input[name=interactive]').uncheck();
       await page.locator('#op-create').click();
       await page.locator('#op-current .op-overline').waitFor({state:'visible'});
       assert.match(await page.locator('#op-current').textContent(),/ПОДГОТОВКА/);
@@ -576,5 +577,62 @@ test('Authoritative 3D mode loads a saved snapshot and never applies a rejected 
         ?.textContent.includes('ДВИЖЕНИЕ'),null,{timeout:20000});
       assert.equal(calls,2);
       assert.match(await page.locator('#phase').textContent(),/ДВИЖЕНИЕ/);
+    });
+  });
+
+
+test('Commander launches an interactive 3D operation from the mission briefing',
+  {timeout:120000},async()=>{
+    const mechId='44444444-4444-4444-8444-444444444444';
+    const id='55555555-5555-4555-8555-555555555555';
+    await withPage('interactive-operation-entry',{hub:true,noWebGL:true},async page=>{
+      let operation=null;
+      const simulation=new TestBattleGame();
+      const game=JSON.parse(JSON.stringify(simulation,
+        (key,value)=>key==='map'||key==='rng'?undefined:value));
+      const result=(route,code,obj)=>route.fulfill({
+        status:code,contentType:'application/json',body:JSON.stringify(obj)});
+      await page.route('**/api/v1/hangar',route=>result(route,200,{
+        items:[{id:mechId,chassis:'Shadow Hawk',state:{config:{tonnage:55}}}]
+      }));
+      await page.route('**/api/v1/operations**',async route=>{
+        const {pathname}=new URL(route.request().url());
+        const method=route.request().method();
+        if(pathname==='/api/v1/operations'&&method==='GET')
+          return result(route,200,{items:operation?[operation]:[]});
+        if(pathname==='/api/v1/operations'&&method==='POST'){
+          const body=route.request().postDataJSON();
+          assert.equal(body.mode,'interactive');
+          assert.deepEqual(body.mechIds,[mechId]);
+          operation={id,title:body.title,status:'draft',version:0,
+            controlMode:'interactive',roster:[{mechId,chassis:'Shadow Hawk',
+              tonnage:55,pilot:null}],state:null,report:null};
+          return result(route,201,{item:operation});
+        }
+        if(pathname.endsWith('/snapshot')&&method==='GET')
+          return result(route,200,{item:{...operation,game}});
+        if(pathname.endsWith('/launch')&&method==='POST'){
+          operation={...operation,status:'active',version:1,
+            state:{round:1,phase:'initiative',units:[],log:[]}};
+          return result(route,200,{item:operation});
+        }
+        if(pathname==='/api/v1/operations/'+id&&method==='GET')
+          return result(route,200,{item:operation});
+        return result(route,404,{error:'not_found'});
+      });
+      await page.locator('#hub-campaigns-button').click();
+      await page.locator('#op-mech-list input[name=mechId]').check();
+      assert.equal(await page.locator('#op-create-form input[name=interactive]').isChecked(),true);
+      await page.locator('#op-create').click();
+      await page.getByRole('button',{name:'НАЧАТЬ ОПЕРАЦИЮ'}).click();
+      await page.locator('#hub-battle-frame').waitFor({state:'visible'});
+      assert.match(await page.locator('#hub-battle-frame').getAttribute('src'),
+        /operation=55555555-5555-4555-8555-555555555555/);
+      await page.waitForFunction(()=>{
+        const frame=document.querySelector('#hub-battle-frame');
+        return frame?.contentDocument?.querySelector('#status')?.textContent
+          .includes('SERVER VERIFIED');
+      },null,{timeout:60000});
+      assert.equal(await page.locator('#hub-work-title').textContent(),'Быстрый бой');
     });
   });
