@@ -124,7 +124,8 @@ async function enterGame() {
   q('#auth-close').hidden = false;
   if (dialog.open) dialog.close();
   const battlefield = !!document.querySelector('#viewport');
-  const directBattle = new URL(location.href).searchParams.get('custom') === '1';
+  const params = new URL(location.href).searchParams;
+  const directBattle = params.get('custom') === '1' || params.get('battle') === '1';
   if (battlefield && !directBattle && !started) {
     const {openHub} = await import('./hub.js');
     openHub({

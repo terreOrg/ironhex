@@ -153,7 +153,7 @@ async function showHistory(p) {
       ' · +'+ev.experience+' XP · поражено целей: '+ev.kills));
   }catch(e){panel.append(el('p','','Ошибка: '+e.message));}
 }
-export function installPilotUI(hubRoot) {
+export function installPilotUI(hubRoot,onNavigate=()=>{}) {
   root=hubRoot;
   const action=el('button','hub-action');
   action.id='hub-pilots-button';
@@ -198,11 +198,10 @@ export function installPilotUI(hubRoot) {
   ].join('');
   $('#hub-hangar',root).after(panel);
   action.onclick=()=>{
-    $('#hub-hangar',root).hidden=true;
-    panel.hidden=false;
+    onNavigate('pilots');
     void refreshRoster();
   };
-  $('#pilot-roster-close',root).onclick=()=>{panel.hidden=true;};
+  $('#pilot-roster-close',root).onclick=()=>onNavigate('home');
   $('#pilot-cancel',root).onclick=clearEditor;
   $('#pilot-editor',root).onsubmit=async event=>{
     event.preventDefault();

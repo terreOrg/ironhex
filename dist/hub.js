@@ -18,17 +18,15 @@ function create() {
   root.id='commander-hub';
   root.innerHTML="<div class=\"hub-frame\">\n  <header class=\"hub-top\"><div class=\"hub-logo\">⬡ IRON<span>HEX</span><small>TACTICAL COMMAND NETWORK</small></div>\n  <div class=\"hub-profile\"><div>КОМАНДИР <strong id=\"hub-commander\"></strong></div><button id=\"hub-profile-button\" type=\"button\">ПРОФИЛЬ / ВЫХОД</button></div></header>\n  <div class=\"hub-main\"><section class=\"hub-intro\"><small>КОМАНДНЫЙ ТЕРМИНАЛ / БРИФИНГ</small><h1>ПУЛЬТ<br>КОМАНДИРА<span>.</span></h1>\n  <p>Выберите операцию. Сохранённые мехи привязаны к вашему аккаунту.</p><div class=\"hub-signal\">● UPLINK ESTABLISHED / DATABASE ONLINE</div></section>\n  <div class=\"hub-operations\">\n    <button id=\"hub-battle\" class=\"hub-action hub-primary\" type=\"button\"><span>⚔</span><strong>БЫСТРЫЙ БОЙ</strong><small>Развернуть отряд на поле сражения</small></button>\n    <button id=\"hub-hangar-button\" class=\"hub-action\" type=\"button\"><span>⬡</span><strong>АНГАР</strong><small>Ваши сохранённые мехи</small></button>\n    <a href=\"mechlab.html\" class=\"hub-action\"><span>⚙</span><strong>КОНСТРУКТОР</strong><small>Создать или модифицировать меха</small></a>\n    <div class=\"hub-action hub-soon\" aria-disabled=\"true\"><span>◈</span><strong>КАМПАНИИ</strong><small>В разработке</small></div>\n    <div class=\"hub-action hub-soon\" aria-disabled=\"true\"><span>▣</span><strong>РЫНОК</strong><small>В разработке</small></div>\n  </div></div>\n  <section class=\"hub-hangar\" id=\"hub-hangar\" hidden>\n    <div class=\"hub-hangar-head\"><div><small>ЛИЧНЫЙ РЕЕСТР</small><h2>ВАШ АНГАР</h2></div>\n    <div><a href=\"mechlab.html\">+ СОЗДАТЬ МЕХА</a> <button id=\"hub-hangar-close\" type=\"button\">ЗАКРЫТЬ</button></div></div>\n    <p id=\"hub-hangar-status\" role=\"status\"></p><div id=\"hub-hangar-cards\" class=\"hub-hangar-grid\"></div>\n  </section>\n  <footer class=\"hub-footer\">IRONHEX / COMMANDER CONTROL <span>UNOFFICIAL BATTLETECH FAN PROJECT</span></footer>\n</div>";
   document.body.append(root);
-  installPilotUI(root);
-  root.querySelector('#hub-battle').onclick=()=>onBattle?.();
+  installPilotUI(root,openSection);
+  initializeWorkspace();
+  root.querySelector('#hub-battle').onclick=()=>openSection('battle');
   root.querySelector('#hub-profile-button').onclick=()=>onProfile?.();
   root.querySelector('#hub-hangar-button').onclick=()=>{
-    root.querySelector('#hub-roster').hidden=true;
-    root.querySelector('#hub-hangar').hidden=false;
+    openSection('hangar');
     void refresh();
   };
-  root.querySelector('#hub-hangar-close').onclick=()=>{
-    root.querySelector('#hub-hangar').hidden=true;
-  };
+  root.querySelector('#hub-hangar-close').onclick=()=>openSection('home');
 }
 async function refresh() {
   const label=root.querySelector('#hub-hangar-status');
@@ -56,7 +54,7 @@ async function refresh() {
         if(!config) return;
         const pilot=pilots.find(p=>p.assignedMechId===item.id);
         localStorage.setItem('ironhex-design',JSON.stringify({config,position:0,pilot:pilot?{id:pilot.id,callsign:pilot.callsign,gunnery:pilot.gunnery,piloting:pilot.piloting}:null}));
-        location.href='index.html?custom=1';
+        openSection('battle',{src:'index.html?custom=1'});
       };
       const del=E('button','hub-delete','УДАЛИТЬ');
       del.type='button';
@@ -81,7 +79,164 @@ export function openHub({user,onBattle:launch,onProfile:profile}) {
   onBattle=launch;
   onProfile=profile;
   root.querySelector('#hub-commander').textContent=user.handle;
-  root.querySelector('#hub-hangar').hidden=true;
-  root.querySelector('#hub-roster').hidden=true;
+  openSection('home');
   document.body.classList.add('hub-open');
+}
+
+// The same menu transforms from the welcome grid to a left-hand command rail.
+// Content is switched in place so changing sections does not lose the login.
+const SECTION_INFO={
+  battle:{code:'TACTICAL OPERATIONS / 01',title:'Быстрый бой',
+    detail:'Тактическая симуляция. Управление мехами, сектора огня и боевой журнал.'},
+  hangar:{code:'MECH REGISTRY / 02',title:'Ангар',
+    detail:'Сохранённые конструкции, комплектация и назначение мехвоинов.'},
+  mechlab:{code:'ENGINEERING / 03',title:'Конструктор мехов',
+    detail:'Проверка массы, брони, вооружения и критических слотов.'},
+  pilots:{code:'PERSONNEL / 04',title:'Личный состав',
+    detail:'Удостоверения, позывные, квалификация и послужной список.'},
+  campaigns:{code:'CAMPAIGN OPERATIONS / 05',title:'Кампании',
+    detail:'Будущая система контрактов, путешествий и развития подразделения.'},
+  market:{code:'LOGISTICS / 06',title:'Рынок',
+    detail:'Будущая система закупок, ремонта и торговли.'}
+};
+function initializeWorkspace(){
+  const operations=root.querySelector('.hub-operations');
+  const home=E('button','hub-home-action','');
+  home.type='button';
+  home.id='hub-home-button';
+  home.hidden=true;
+  home.textContent='← НА ГЛАВНУЮ';
+  home.onclick=()=>openSection('home');
+  operations.prepend(home);
+
+  const workarea=E('section','hub-workarea');
+  workarea.id='hub-workarea';
+  workarea.hidden=true;
+  workarea.setAttribute('aria-label','Содержимое выбранного раздела');
+  const heading=E('div','hub-work-heading');
+  const breadcrumb=E('small','hub-work-code');
+  breadcrumb.id='hub-work-code';
+  const title=E('h2','hub-work-title');
+  title.id='hub-work-title';
+  title.tabIndex=-1;
+  const desc=E('p','hub-work-description');
+  desc.id='hub-work-description';
+  heading.append(breadcrumb,title,desc);
+  const content=E('div','hub-work-content');
+  content.id='hub-work-content';
+  workarea.append(heading,content);
+  root.querySelector('.hub-main').append(workarea);
+
+  // These existing panels retain their handlers, API requests and form state.
+  content.append(root.querySelector('#hub-hangar'),root.querySelector('#hub-roster'));
+
+  for(const [name,src,titleText] of [
+    ['battle','index.html?battle=1','Тактический бой'],
+    ['mechlab','mechlab.html','Конструктор мехов']]){
+    const panel=E('section','hub-embedded-panel');
+    panel.id='hub-'+name+'-panel';
+    panel.hidden=true;
+    const toolbar=E('div','hub-embed-toolbar');
+    toolbar.append(E('span','','● КАНАЛ УПРАВЛЕНИЯ / ACTIVE'));
+    const fullscreen=E('a','hub-fullscreen-link','↗ ОТКРЫТЬ ОТДЕЛЬНО');
+    fullscreen.href=src;
+    fullscreen.target='_blank';
+    fullscreen.rel='noopener noreferrer';
+    toolbar.append(fullscreen);
+    const iframe=E('iframe','hub-embed-frame');
+    iframe.id='hub-'+name+'-frame';
+    iframe.title=titleText;
+    iframe.setAttribute('referrerpolicy','same-origin');
+    iframe.setAttribute('allow','fullscreen');
+    iframe.setAttribute('loading','lazy');
+    panel.append(toolbar,iframe);
+    content.append(panel);
+  }
+
+  for(const [name,text] of [
+    ['campaigns','Раздел кампаний находится в разработке. Здесь появятся контракты, развитие подразделения, последствия сражений и экономика наёмников.'],
+    ['market','Раздел рынка находится в разработке. Здесь можно будет приобретать мехов, запчасти и вооружение, а также ремонтировать технику.']]){
+    const panel=E('section','hub-coming-panel');
+    panel.id='hub-'+name+'-panel';
+    panel.hidden=true;
+    panel.append(E('span','hub-coming-icon',name==='campaigns'?'◈':'▣'),
+      E('h3','',name==='campaigns'?'ЖУРНАЛ КАМПАНИЙ':'ЛОГИСТИКА И РЫНОК'),
+      E('p','',text),
+      E('span','hub-coming-state','МОДУЛЬ В РАЗРАБОТКЕ'));
+    content.append(panel);
+  }
+
+  const mechlabLink=operations.querySelector('a[href="mechlab.html"]');
+  if(mechlabLink){
+    mechlabLink.id='hub-mechlab-button';
+    mechlabLink.addEventListener('click',event=>{
+      event.preventDefault();
+      openSection('mechlab');
+    });
+  }
+  // Coming-soon tiles open a real information section, without advertising
+  // the unimplemented market/campaign mechanics as playable features.
+  [...operations.querySelectorAll('.hub-soon')].forEach((tile,i)=>{
+    const name=i===0?'campaigns':'market';
+    const button=E('button',tile.className);
+    button.id='hub-'+name+'-button';
+    button.type='button';
+    button.innerHTML=tile.innerHTML;
+    button.removeAttribute('aria-disabled');
+    button.addEventListener('click',()=>openSection(name));
+    tile.replaceWith(button);
+  });
+
+  // All links to MechLab from the hangar stay inside the central workspace.
+  root.querySelector('#hub-hangar').addEventListener('click',event=>{
+    const link=event.target.closest('a[href^="mechlab.html"]');
+    if(!link)return;
+    event.preventDefault();
+    openSection('mechlab',{src:link.getAttribute('href')});
+  });
+}
+export function openSection(section,{src}={}){
+  if(!root)return;
+  const frame=root.querySelector('.hub-frame');
+  const active=section!=='home'&&Object.hasOwn(SECTION_INFO,section);
+  frame.classList.toggle('hub-section-active',active);
+  root.querySelector('#hub-home-button').hidden=!active;
+  root.querySelector('.hub-intro').hidden=active;
+  const workarea=root.querySelector('#hub-workarea');
+  workarea.hidden=!active;
+  const panels=['hangar','roster','battle','mechlab','campaigns','market'];
+  for(const name of panels) {
+    const target=name==='roster'?'hub-roster':'hub-'+name+(name==='hangar'?'':'-panel');
+    const panel=root.querySelector('#'+target);
+    if(panel)panel.hidden=(name==='roster'?'pilots':name)!==section;
+  }
+  const activeButtons=['hub-battle','hub-hangar-button','hub-mechlab-button',
+    'hub-pilots-button','hub-campaigns-button','hub-market-button'];
+  const sections=['battle','hangar','mechlab','pilots','campaigns','market'];
+  for(let i=0;i<activeButtons.length;i++){
+    const node=root.querySelector('#'+activeButtons[i]);
+    if(!node)continue;
+    const selected=active&&sections[i]===section;
+    node.classList.toggle('hub-action-active',selected);
+    if(selected)node.setAttribute('aria-current','page');
+    else node.removeAttribute('aria-current');
+  }
+  if(active){
+    const info=SECTION_INFO[section];
+    root.querySelector('#hub-work-code').textContent=info.code;
+    root.querySelector('#hub-work-title').textContent=info.title;
+    root.querySelector('#hub-work-description').textContent=info.detail;
+    if(section==='battle'||section==='mechlab'){
+      const iframe=root.querySelector('#hub-'+section+'-frame');
+      const address=src||(section==='battle'?'index.html?battle=1':'mechlab.html');
+      if(iframe.getAttribute('src')!==address)iframe.setAttribute('src',address);
+      root.querySelector('#hub-'+section+'-panel .hub-fullscreen-link').href=address;
+    }
+    root.querySelector('#hub-work-title').focus({preventScroll:true});
+  }
+  if(!active){
+    // Restore the original landing grid; sections are preserved for fast return.
+    root.querySelector('#hub-work-title').blur();
+  }
+  window.scrollTo?.({top:0,behavior:'instant'});
 }
