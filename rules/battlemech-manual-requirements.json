@@ -1105,7 +1105,7 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Four intact legs permit lateral shifts preserving facing, at the correct terrain plus one MP cost; backward-lateral shifts obey walking-only restrictions.",
-      "status": "tested_case",
+      "status": "verified",
       "sourcePages": [
         15,
         17
@@ -1131,7 +1131,16 @@
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.15: explicit lateral shift respects elevation, heavy terrain and occupancy"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 15,
+        "crossReferencedPrintedPages": [
+          17
+        ],
+        "notes": "Lateral shifts available only to Quads with all four legs intact: every forward/backward side direction, surcharge 1 MP above full destination terrain and level costs, no facing change, rearward only walking and no level change, collision/occupancy and full movement budgets validated. Both shortest-path preference and explicit server-validated move orders are tested. All 4 GitHub Actions checks for implementation commit 2e93b1a succeeded."
+      }
     },
     {
       "id": "bmm-req-082",

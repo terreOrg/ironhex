@@ -15,7 +15,7 @@ that gameplay support exists.
 | Requirement | Printed pages | Missing behavior / test focus |
 | --- | --- | --- |
 | bmm-req-080 | 5, 6, 33, 45 | **Tested subset:** separate four-leg structural map and actuator slots; genuine quad record sheet, MTF import and battle construction still blocked |
-| bmm-req-081 | 15, 17 | Sideways movement and terrain/MP charges, restrictions on rearward shifts |
+| bmm-req-081 | 15, 17 | **Verified:** all four shifts, +1 MP, retained facing, backward walk-only, level/terrain/occupancy rules and explicit player command |
 | bmm-req-082 | 19 | Standing without normal PSR for an intact quad, damaged/two-leg exceptions |
 | bmm-req-083 | 25, 83 | Normal torso twist prohibition and optional-quirk exception |
 | bmm-req-084 | 26, 35 | Quad partial-cover handling for all four legs and standing in Depth 1 |
@@ -202,3 +202,17 @@ Regression tests cover each of the four directions, walking and
 running, explicit facing retention, rearward running denial,
 no backward level changes, terrain/elevation MP surcharge,
 occupied target hexes and command schema validation.
+
+## Verified atomic requirement: bmm-req-081
+
+BMM p.15 lateral-shift mechanics and p.17 movement cost have now
+been independently compared to source and marked `verified`.
+Implementation includes four directions with no facing change,
+correct terrain and level surcharge, backward walk-only constraint
+(no backward level changes), all-four-legs requirement, normal
+turn/occupancy checks, and an explicitly selectable lateral tactical
+order. Unit tests cover boundary, invalid and biped cases.
+All four GitHub Actions checks passed for `2e93b1a`.
+
+The Quad heading remains `known_missing`, with standing,
+movement after leg loss, combat and remaining exceptions outstanding.
