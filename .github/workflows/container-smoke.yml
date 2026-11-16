@@ -91,7 +91,8 @@ jobs:
           done
           docker exec "$api" node -e "fetch('http://127.0.0.1:3000/api/health').then(async r=>{const body=await r.json();process.exit(r.ok&&body.database==='ok'?0:1)}).catch(()=>process.exit(1))"
           docker exec "$api" node -e "fetch('http://127.0.0.1:3000/api/v1/catalog/chassis').then(async r=>{const body=await r.json();process.exit(r.ok&&body.items?.length===4?0:1)}).catch(()=>process.exit(1))"
-          docker exec "$database" psql -U ironhex -d ironhex -Atc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'" | grep -qx '11'
+          docker exec "$database" psql -U ironhex -d ironhex -Atc "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='public'" | grep -qx '12'
           docker exec "$api" node /app/tests/auth-integration.mjs
           docker exec "$api" node /app/tests/auth-email-integration.mjs
+          docker exec "$api" node /app/tests/operations-integration.mjs
           echo "PostgreSQL migrations, auth registration/login, health and catalogue verified."
