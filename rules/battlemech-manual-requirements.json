@@ -373,8 +373,17 @@
       "topicId": "bmm-p068-skidding",
       "page": 68,
       "statement": "Skidding into another BattleMech requires involuntary charge, avoidance and displacement.",
-      "status": "known_missing",
-      "evidence": []
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid collision resolves fall first, then involuntary charge and target displacement (BMM p.69)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Unmoved target may avoid an involuntary skidding charge with a PSR"
+        }
+      ]
     },
     {
       "id": "bmm-req-032",
@@ -475,6 +484,14 @@
       "topicId": "bmm-p118-storage-equipment-case",
       "page": 118,
       "statement": "Automatic weightless critical-slot-free standard Clan CASE protection applies to all explosive locations of a Clan BattleMech.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-041",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Resolve remaining skid path when involuntary charge misses or defender successfully evades, without illegal overlapping positions.",
       "status": "known_missing",
       "evidence": []
     }

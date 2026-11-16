@@ -378,6 +378,39 @@ test('Skid is triggered by facing changes embedded inside a multi-hex move',()=>
  assert.equal(u.prone,true);assert.equal(u.q,3);assert.equal(u.r,0);
  assert(g.phaseRolls.some(r=>r.kind.includes('Скольжение')));
 });
+
+test('Skid collision resolves fall first, then involuntary charge and target displacement (BMM p.69)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>.99;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;t.q=1;t.r=0;t.moved=true;
+ for(const loc of ['LL','RL'])t.armor[loc]=100;
+ const ct=t.structure.CT;
+ const result=g.resolveSkid(u,0,4,5);
+ assert.equal(result.collision,true);
+ assert.equal(u.prone,true);assert.equal(u.q,1);assert.equal(u.r,0);
+ assert.equal(t.q,2);assert.equal(t.r,0);assert.equal(t.moved,true);
+ assert.equal(u.skidCollisionPending,null);
+ assert(g.log.some(s=>s.includes('непреднамеренный таран')));
+ assert(g.phaseRolls.some(r=>r.kind.includes('Непреднамеренный таран')));
+});
+test('Unmoved target may avoid an involuntary skidding charge with a PSR',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>.99;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;t.q=1;t.r=0;t.moved=false;
+ const result=g.resolveSkid(u,0,4,5);
+ assert.equal(result.collision,true);assert.equal(t.q,1);assert.equal(t.r,0);
+ assert.equal(u.q,0);assert.equal(u.r,0);
+ assert(g.phaseRolls.some(r=>r.kind.includes('Уклонение от скольжения')));
+});
+test('Failed involuntary skidding charge does not displace the target',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>0;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;t.q=1;t.r=0;t.moved=true;
+ const result=g.resolveSkid(u,0,4,5);
+ assert.equal(result.collision,true);
+ assert.equal(t.q,1);assert.equal(t.r,0);assert.equal(u.q,0);
+});
+
 test('Skidding through difficult woods reduces sliding distance as specified in BMM p.68',()=>{
  const g=game(),u=g.units[0];g.rng=()=>.99;
  for(const t of g.tiles)Object.assign(t,{type:'pavement',paved:true,depth:0,height:0,surface:0});

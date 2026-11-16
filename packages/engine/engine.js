@@ -116,8 +116,11 @@ export class Game extends Legacy{
    if(!t){u.dead=true;this.note(u.name+': скольжение за край поля.');break;}
    if(this.occupied(q,r,u.id)){
     // Collision resolution must be separately linked to involuntary charge.
-    u.skidCollisionPending={q,r};
-    this.note(u.name+': скольжение привело к столкновению; требуется разрешение тарана.');
+    const target=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===q&&v.r===r);
+    u.skidCollisionPending={q,r,targetId:target?.id};
+    // Entering the collision hex counts for skid damage even if impact stops it.
+    hexes++;
+    this.note(u.name+': столкновение во время скольжения.');
     break;
    }
    u.q=q;u.r=r;path.push({q,r});hexes++;
@@ -125,7 +128,37 @@ export class Game extends Legacy{
   }
   u.spent=this.mp(u,'run');
   if(!u.dead)this.fall(u,0,tn,null,hexes*perHex);
-  return {path,hexes,damage:falling+hexes*perHex,collision:!!u.skidCollisionPending};
+  const collision=u.skidCollisionPending;
+  if(collision&&!u.dead){
+   const target=this.unit(collision.targetId);
+   const result=this.resolveSkidCollision(u,target,direction,moved,collision);
+   if(result.hit)path.push({q:u.q,r:u.r});
+  }
+  return {path,hexes,damage:falling+hexes*perHex,collision:!!collision};
+ }
+ // Skidding damage is inflicted before any accidental collision/charge.
+ // BMM 2022 p.69: +2 run, +1 skid, +3 involuntary charge.
+ resolveSkidCollision(u,t,dir,moved,hex){
+  if(!t||t.dead||u.dead)return {hit:false};
+  const targetNumber=Math.max(2,u.piloting+2+1+3+(t.moved?this.tmm(t):0));
+  const attackRoll=this.roll(u.name+' · Непреднамеренный таран',targetNumber);
+  if(attackRoll<targetNumber){this.note(u.name+': таран при скольжении не попал.');return {hit:false};}
+  // The BattleMech Manual allows an unmoved defender to attempt to dodge.
+  if(!t.moved&&this.mobile(t)){
+   const avoidance=t.piloting+this.psrMod(t);
+   if(this.roll(t.name+' · Уклонение от скольжения',avoidance)>=avoidance){
+    this.note(t.name+': избежал непреднамеренного тарана.');return {hit:false,avoided:true};
+   }
+  }
+  const targetDamage=Math.ceil(u.tonnage/10*moved),selfDamage=Math.ceil(t.tonnage/10),side=this.hitSide(t,u);
+  this.packets(t,targetDamage,side,'kick');
+  this.packets(u,selfDamage,'front','normal');
+  if(!t.dead&&!this.displace(t,dir)){t.dead=true;this.note(t.name+': вытеснение невозможно.');}
+  u.q=hex.q;u.r=hex.r;t.moved=true;
+  if(!t.dead)this.psr(t,2,'Таран при скольжении',true);
+  this.note(u.name+': непреднамеренный таран, '+targetDamage+' урона цели и '+selfDamage+' себе.');
+  u.skidCollisionPending=null;
+  return {hit:true,damage:targetDamage,selfDamage};
  }
  rotate(id,delta){const u=this.unit(id);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u))return fail('Разворот недоступен');const cost=Math.abs(delta);if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');if(u.moveMode!=='jump'){const mode=u.moveMode==='stand'?'walk':u.moveMode;if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');u.spent+=cost;u.moveMode=mode;}if(u.moveMode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)u.skidDirection=u.lastMovementDirection??u.facing;u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};}
  move(id,q,r,mode='walk'){const u=this.unit(id),dst=this.reachable(u,mode).find(t=>t.q===q&&t.r===r);if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});if(this.tile(q,r).depth){this.checkExistingHullBreaches(u);if(!u.dead)this.psr(u,0,'Посадка в воду',true,this.tile(q,r).depth);}else if(this.psrMod(u))this.psr(u,0,'Посадка',true);}else for(const p of dst.path){

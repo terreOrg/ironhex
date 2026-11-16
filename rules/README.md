@@ -76,3 +76,11 @@ criticals on a secondary 8+ roll. Tests also check campaign persistence.
 The Clan-specific 0.5-ton variant and automatic standard Clan CASE remain
 **known missing requirements**, so the CASE II section remains
 `tested_subset`, never `verified`.
+
+### Skid collisions (2026-11-16)
+
+A skidding mech now resolves the fall/slide packets before an involuntary
+charge; successful charges damage the target and displace it, and unmoved
+targets get an avoidance PSR. The route after a failed or dodged charge and
+collisions with structures remain unverified. The p.68 heading remains
+`known_missing` until those edge cases are tested.
