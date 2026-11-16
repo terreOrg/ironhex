@@ -507,6 +507,44 @@ test('Mobile headquarters uses a scrollable compact command rail without clipped
   });
 
 
+
+test('Commander market displays C-Bills and submits only SKU and quantity',
+  {timeout:120000},async()=>{
+    await withPage('market-purchase',{hub:true},async page=>{
+      let purchases=0;
+      const respond=(route,status,body)=>route.fulfill({
+        status,contentType:'application/json',body:JSON.stringify(body)
+      });
+      await page.route('**/api/v1/economy**',route=>{
+        const request=route.request();
+        if(request.method()==='POST'){
+          assert.equal(new URL(request.url()).pathname,'/api/v1/economy/purchase');
+          assert.deepEqual(request.postDataJSON(),{sku:'armor_patch',quantity:1});
+          purchases++;
+          return respond(route,200,{item:{sku:'armor_patch',spent:900,quantity:purchases}});
+        }
+        return respond(route,200,{
+          balance:150000-purchases*900,
+          stock:{armor_patch:purchases},
+          contracts:[{id:'patrol',name:'Приграничный патруль',victory:32000}],
+          catalog:[{sku:'armor_patch',name:'Комплект бронепластин',price:900,restore:10}],
+          repairs:[],ledger:[{amount:150000,reason:'Стартовый капитал'}]
+        });
+      });
+      page.on('dialog',dialog=>void dialog.accept());
+      await page.locator('#hub-market-button').click();
+      await page.locator('#economy-wallet strong').waitFor({state:'visible'});
+      assert.match(await page.locator('#economy-wallet strong').textContent(),/150/);
+      await page.locator('#economy-supplies button').click();
+      await page.waitForFunction(()=>document.querySelector('#economy-supplies small')
+        ?.textContent.includes('На складе: 1'));
+      assert.equal(purchases,1);
+      assert.match(await page.locator('#economy-message').textContent(),/Заказ выполнен/);
+      await page.locator('#hub-home-button').click();
+      assert.equal(await page.locator('.hub-intro').isVisible(),true);
+    });
+  });
+
 test('Operation briefing creates a roster and displays a trusted after-action report',
   {timeout:120000},async()=>{
     await withPage('operations-briefing',{hub:true},async page=>{
