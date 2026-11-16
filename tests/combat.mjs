@@ -302,6 +302,22 @@ test('External heat allowance resets after Heat Phase (BMM p.50)',()=>{
  assert.equal(u.externalHeat,2);assert.equal(u.pendingHeat,2);
 });
 
+
+test('Hot reactor without explosive ammo does not roll for ammo explosion (BMM p.52)',()=>{
+ const g=game(),u=g.units[0];u.heat=28;u.sinks=0;
+ for(const bin of u.bins)bin.shots=0;
+ g.rng=()=>.99;g.heatPhase();
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Перегрев боезапаса')).length,0);
+});
+test('Ammo explosion avoidance uses the highest heat threshold reached (BMM p.52)',()=>{
+ for(const [heat,threshold] of [[19,4],[23,6],[28,8]]){
+  const g=game(),u=g.units[0];u.heat=heat;u.sinks=0;g.rng=()=>.99;
+  g.heatPhase();
+  const rolls=g.phaseRolls.filter(r=>r.kind.includes('Перегрев боезапаса'));
+  assert.equal(rolls.length,1);assert.equal(rolls[0].target,threshold);
+ }
+});
+
 test('Flamer heat mode adds heat without armor damage',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.weapons[0]={name:'Flamer',damage:2,heat:3,ranges:[1,2,3],min:0,ammo:null,location:'RA',rack:0};acting(g,0,'fire');const before=JSON.stringify(t.armor);assert(g.declareFire(0,[{index:0,target:2,heatMode:true}]).ok);g.resolveFire();assert.equal(t.pendingHeat,2);assert.equal(JSON.stringify(t.armor),before);});
 test('Selected ammunition bin is decremented',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=-4;u.r=0;u.facing=0;t.q=4;t.r=0;acting(g,0,'fire');assert(g.declareFire(0,[{index:1,target:2,bin:1}]).ok);g.resolveFire();assert.equal(u.bins[0].shots,12);assert.equal(u.bins[1].shots,11);});
 for(let seed=1;seed<=8;seed++)test('Full AI battle seed '+seed,()=>{let state=seed;const g=new Game({rng:()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/2**32)});let steps=0;while(g.winner===null&&steps++<600){if(['move','fire','physical'].includes(g.phase)&&g.queue.length){const u=g.units.find(u=>g.canAct(u));assert(u,'queue must have an actionable unit');const r=g.phase==='move'?g.aiMove(u.id):g.phase==='fire'?g.aiAttack(u.id):g.aiPhysical(u.id);assert(r.ok,r.error);}else assert(g.nextPhase().ok);for(const u of g.units){assert(Number.isFinite(u.heat));assert(u.heat>=0);assert(Object.values(u.structure).every(n=>n>=0));assert(u.bins.every(b=>b.shots>=0));}}assert(g.winner!==null||g.round>20,'battle must finish or continue advancing rounds');});
