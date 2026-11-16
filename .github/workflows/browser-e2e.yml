@@ -1,0 +1,46 @@
+name: Ironhex Browser E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/**'
+      - 'tests/browser.mjs'
+      - '.github/workflows/browser-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ironhex-browser-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browser:
+    name: Chromium / WebGL / UI
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pinned Playwright
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Install headless Chromium
+        run: npx --no-install playwright install chromium
+      - name: Execute browser test suite
+        run: node --test tests/browser.mjs
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ironhex-browser-failure-${{ github.run_id }}
+          path: test-results/*.png
+          if-no-files-found: ignore
+          retention-days: 7
