@@ -34,6 +34,37 @@ test('Failed water landing falls the full water depth before halving damage (BMM
 });
 test('Turn cannot advance while unit declarations remain',()=>{const g=game();acting(g,0,'move');assert.equal(g.nextPhase().ok,false);g.hold(0);assert(g.nextPhase().ok);assert.equal(g.phase,'fire');});
 test('Shared MG pool cannot declare two shots with one round',()=>{const g=game(),u=g.units[3],t=g.units[0];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.bins.find(b=>b.weapon===6).shots=1;g.syncAmmo(u);acting(g,3,'fire');assert.equal(g.declareFire(3,[{index:6,target:0},{index:7,target:0}]).ok,false);assert.equal(g.declarations.length,0);});
+
+test('Head aimed shot replaces immobile bonus with +3 (BMM p.30)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;u.gunnery=7;t.q=4;t.r=0;t.shutdown=true;
+ const normal=g.preview(0,2,0),aimed=g.preview(0,2,0,{aim:'HD'});
+ assert(normal.legal&&aimed.legal);assert.equal(normal.mods.target,-4);
+ assert.equal(aimed.mods.target,0);assert.equal(aimed.mods.aim,3);
+ assert.equal(aimed.targetNumber-normal.targetNumber,7);
+});
+test('Cluster launchers cannot aim even at immobile targets (BMM p.30)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;t.shutdown=true;
+ assert.equal(g.preview(0,2,1,{aim:'CT'}).legal,false);
+ acting(g,0,'fire');assert.equal(g.declareFire(0,[{index:1,target:2,aim:'CT'}]).ok,false);
+});
+test('Aimed fire against a mobile mech is disallowed (BMM p.30)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;
+ assert.equal(g.preview(0,2,0,{aim:'CT'}).legal,false);
+ acting(g,0,'fire');assert.equal(g.declareFire(0,[{index:0,target:2,aim:'CT'}]).ok,false);
+});
+test('Aimed fire ignores partial-cover penalty but cannot target hidden legs (BMM p.30)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;t.shutdown=true;
+ Object.assign(g.tile(4,0),{type:'water',depth:1,height:-1,surface:0});
+ const normal=g.preview(0,2,0),aimed=g.preview(0,2,0,{aim:'CT'});
+ assert.equal(normal.mods.cover,1);assert.equal(aimed.mods.cover,0);
+ assert(aimed.legal);assert.equal(g.preview(0,2,0,{aim:'LL'}).legal,false);
+});
+test('Aimed fire rerolls leg locations obscured by cover (BMM p.30)',()=>{
+ const g=game(),u=g.units[2],dice=[.2,.35,.55,.35];g.rng=()=>dice.shift()??.55;
+ const prev=u.armor.CT,out=g.hit(u,3,'front','normal','CT',true);
+ assert.equal(out.location,'CT');assert.equal(out.damage,3);
+ assert.equal(u.armor.CT,prev-3);assert.equal(g.phaseRolls.length,2);
+});
 test('Declared shot survives destruction of shooter',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;acting(g,0,'fire');assert(g.declareFire(0,[{index:0,target:2}]).ok);u.dead=true;g.resolveFire();assert.equal(g.resolution.length,1);assert.equal(u.pendingHeat,10);});
 test('Two punches declare two independent attack rolls',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;acting(g,0,'physical');assert(g.declarePhysical(0,2,'punch','both').ok);assert.equal(g.physicalDeclarations.length,2);g.resolvePhysical();assert.equal(g.resolution.length,2);});
 test('First involuntary reactor shutdown PSR can succeed (BMM p.52)',()=>{const g=game(),u=g.units[0];g.rng=()=>.99;u.heat=30;u.sinks=0;g.heatPhase();assert.equal(u.shutdown,true);assert.equal(u.prone,false);});
