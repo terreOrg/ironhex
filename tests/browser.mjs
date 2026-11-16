@@ -339,6 +339,7 @@ test('Password recovery opens from login and accepts a one-time link',
       await page.locator('#auth-forgot button[type=submit]').click();
       await page.getByText('Если этот адрес зарегистрирован').waitFor();
       await page.goto(baseURL+'/#reset='+'a'.repeat(64));
+      await page.reload();
       await page.locator('#auth-new-password').waitFor({state:'visible'});
       await page.locator('#auth-new-password input[name=password]').fill('Another-Long-Pass-2026!');
       await page.locator('#auth-new-password input[name=confirm]').fill('Another-Long-Pass-2026!');

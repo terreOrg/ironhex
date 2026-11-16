@@ -47,6 +47,17 @@ forgotLink.textContent='Забыли пароль?';
 qFirst('#auth-login').append(forgotLink);
 function qFirst(selector){return dialog.querySelector(selector);}
 let resetToken=null;
+
+const emailState=document.createElement('p');
+emailState.id='auth-email-state';
+emailState.className='auth-note';
+qFirst('#auth-profile').append(emailState);
+const verifyProfileButton=document.createElement('button');
+verifyProfileButton.type='button';
+verifyProfileButton.id='auth-profile-verify';
+verifyProfileButton.textContent='ПОДТВЕРДИТЬ E-MAIL';
+qFirst('#auth-profile').append(verifyProfileButton);
+
 function toggleFlow(flow) {
   for(const id of ['auth-guest','auth-profile','auth-forgot','auth-new-password','auth-verify-pending']) {
     qFirst('#'+id).hidden=true;
@@ -156,6 +167,8 @@ function display() {
   if (user) {
     q('#auth-handle').textContent = user.handle;
     q('#auth-email').textContent = user.email;
+    q('#auth-email-state').textContent = user.emailVerified ? 'Почта подтверждена' : 'Почта ещё не подтверждена';
+    q('#auth-profile-verify').hidden = !!user.emailVerified;
   }
 }
 
@@ -309,6 +322,15 @@ q('#auth-new-password').addEventListener('submit',async event=>{
   } catch(error) {
     feedback(error.message,true);
   } finally {button.disabled=false;}
+});
+q('#auth-profile-verify').addEventListener('click',async()=>{
+  const button=q('#auth-profile-verify');
+  button.disabled=true;
+  try {
+    await request(endpoint+'resend-verification','POST',{});
+    feedback('Письмо с подтверждением отправлено.');
+  } catch(error) {feedback(error.message,true);}
+  finally {button.disabled=false;}
 });
 q('#auth-resend').addEventListener('click',async()=>{
   const button=q('#auth-resend');

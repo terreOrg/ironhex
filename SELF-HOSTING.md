@@ -172,3 +172,85 @@ The API deliberately exposes **no mutating endpoints** until identity,
 authorization, idempotency and server-authoritative transactions are built.
 The current game has local browser state only. Keep Ironhex limited to LAN/VPN
 unless you add authentication, rate limits, and more restrictive controls.
+
+## 7. LAN-only HTTPS and Brevo account email
+
+Keep Ironhex private to LAN/WireGuard. Reuse the existing Caddy wildcard
+certificate for `*.krbox.top` rather than creating a public DNS entry.
+
+1. In Technitium add a local A record: `ironhex.krbox.top` -> `192.168.0.117`.
+2. Inside the **existing** `*.krbox.top` Caddy site block, before its
+   fallback `handle`, add these two host-based handlers:
+
+   ```caddyfile
+   @ironhex_api {
+       host ironhex.krbox.top
+       path /api/*
+   }
+   handle @ironhex_api {
+       reverse_proxy 127.0.0.1:18089
+   }
+   @ironhex_web host ironhex.krbox.top
+   handle @ironhex_web {
+       reverse_proxy 127.0.0.1:18088
+   }
+   ```
+
+   Keep the existing external-access restriction for everything except
+   Playmat. Do not create another wildcard site and do not expose 2019.
+3. After testing the HTTPS endpoint, redirect the old LAN-only HTTP site:
+
+   ```caddyfile
+   http://ironhex.lan {
+       redir https://ironhex.krbox.top{uri} permanent
+   }
+   ```
+
+4. Run `sudo caddy validate --config /etc/caddy/Caddyfile`, then
+   `sudo systemctl reload caddy`.
+5. In Komodo Stack environment set:
+
+   ```dotenv
+   IRONHEX_PUBLIC_ORIGIN=https://ironhex.krbox.top
+   IRONHEX_AUTH_COOKIE_SECURE=true
+   ```
+
+   Redeploy after changing environment. Browser origin must match exactly.
+   Do not send passwords over the old HTTP address.
+
+### Brevo configuration
+
+Brevo integration uses a **Brevo v3 REST API key**, not the SMTP relay
+password. Choose an address verified in Brevo as the sender and set
+these environment variables **only in Komodo**, never in Git:
+
+```dotenv
+IRONHEX_BREVO_API_KEY=<Brevo-v3-API-key>
+IRONHEX_EMAIL_FROM=<verified-sender-address>
+IRONHEX_REQUIRE_VERIFIED_EMAIL=false
+```
+
+Deploy and verify a real email arrives at a mailbox you control. Existing
+accounts start as unverified; they can request a verification message
+from the Profile screen, or from the verification gate. The email contains
+a short-lived link to the private HTTPS Ironhex domain.
+
+Verification links expire after 24 hours; password-reset links after
+30 minutes. A token is stored hashed in PostgreSQL, is single-use, and
+resetting a password invalidates all existing sessions. The password reset
+form does not reveal whether the address exists.
+
+**Only after testing HTTPS and delivery**, change
+`IRONHEX_REQUIRE_VERIFIED_EMAIL=true` in Komodo and redeploy.
+That prevents unverified accounts from using the battle UI or hangar.
+Do not enable it until existing users have an opportunity to verify.
+
+If the Brevo API key is absent, existing registration and login keep
+working, while verification and reset requests return 503.
+
+To verify API configuration after deployment:
+
+```bash
+curl -fsS https://ironhex.krbox.top/api/health
+curl -fsS https://ironhex.krbox.top/api/v1/capabilities
+```
