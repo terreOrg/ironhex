@@ -1042,14 +1042,23 @@
       "id": "bmm-req-080",
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
-      "statement": "Quad limb construction uses front and rear leg locations and leg actuators, never biped arm actuator assumptions.",
-      "status": "known_missing",
+      "statement": "Quad structural topology identifies four leg locations, each with leg-sized internal structure and six critical slots containing leg actuators; full quad construction and combat are not yet supported.",
+      "status": "tested_case",
       "sourcePages": [
         5,
         6,
         45
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.5 and p.33: all quad limbs are legs with six-slot actuator sections"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.5 quad layout is inspectable but cannot enter unsupported battles"
+        }
+      ]
     },
     {
       "id": "bmm-req-081",

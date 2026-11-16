@@ -14,7 +14,7 @@ that gameplay support exists.
 
 | Requirement | Printed pages | Missing behavior / test focus |
 | --- | --- | --- |
-| bmm-req-080 | 5, 6, 45 | Four legs with front/rear designation, proper internal sections and actuator slots |
+| bmm-req-080 | 5, 6, 33, 45 | **Tested subset:** separate four-leg structural map and actuator slots; genuine quad record sheet, MTF import and battle construction still blocked |
 | bmm-req-081 | 15, 17 | Sideways movement and terrain/MP charges, restrictions on rearward shifts |
 | bmm-req-082 | 19 | Standing without normal PSR for an intact quad, damaged/two-leg exceptions |
 | bmm-req-083 | 25, 83 | Normal torso twist prohibition and optional-quirk exception |
@@ -55,3 +55,20 @@ boundary cases and cross-system paths, then run through CI.
 **Do not advance the cursor** until all fifteen specific requirements and
 the umbrella requirement `bmm-req-070` are independently verified. The
 earlier isolated verifications on printed pages 6 and 7 do not waive this gate.
+
+## First atomic implementation: four-leg structural layout
+
+The constructor now exports `QUAD_LEG_LOCATIONS` and
+`quadStructuralLayout(tonnage)`: Left/Right Front and Rear Leg map to
+legacy slot keys LA/RA/LL/RL, each with leg internal-structure allocation,
+six critical slots, and hip/upper/lower/foot actuators (never a biped
+shoulder/hand). Tests iterate the full 20–100 ton standard chassis range,
+check slot sizes, compare a 55-ton quad front leg with a biped arm, and
+reject invalid masses.
+
+`construct({config:'Quad', ...})` returns a **rejected** design together
+with an inspectable `quadLayout` for audit. It does not supply a playable
+unit or import/sell a quad. This is `tested_case` for bmm-req-080,
+**not verified**: weapon installation, integration with critical hits,
+MTF parsing, record sheets, and movement remain missing.
+The strict cursor remains at `bmm-p005-four-legged-mech`.

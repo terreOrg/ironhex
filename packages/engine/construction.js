@@ -13,6 +13,28 @@ const data=Object.fromEntries(Object.entries(WEAPON_SPECS).map(([name,w])=>[
   name,[w.heat,w.damage,w.minimum,...w.ranges,w.tons,w.slots,
     w.roundsPerTon,w.rack,w.accuracyModifier||0]
 ]));
+// BMM 2022, printed pp.5 and 33: a quad's "arms" on the biped
+// hit-location sheet are *front legs*, not biped weapon arms.
+// Keep the legacy storage keys LA/RA/LL/RL until a full quad record-sheet
+// migration; do not grant quad combat eligibility merely for having a layout.
+export const QUAD_LEG_LOCATIONS=Object.freeze({
+ LA:'Left Front Leg',RA:'Right Front Leg',
+ LL:'Left Rear Leg',RL:'Right Rear Leg'
+});
+export function quadStructuralLayout(tonnage){
+ if(!Number.isInteger(tonnage)||tonnage<20||tonnage>100||tonnage%5)
+  throw new RangeError('quad_tonnage_must_be_20_to_100_in_steps_of_5');
+ const [center,side,,leg]=structures[(tonnage-20)/5];
+ const structure={HD:3,CT:center,LT:side,RT:side,LA:leg,RA:leg,LL:leg,RL:leg};
+ const slots={
+  HD:['life','sensors','cockpit',null,'sensors','life'],
+  CT:['engine','engine','engine','gyro','gyro','gyro','gyro','engine','engine','engine',null,null],
+  LT:Array(12).fill(null),RT:Array(12).fill(null)
+ };
+ for(const loc of Object.keys(QUAD_LEG_LOCATIONS))
+  slots[loc]=['hip','upper','lower','foot',null,null];
+ return {config:'Quad',structure,slots,legLocations:{...QUAD_LEG_LOCATIONS}};
+}
 export const EQUIPMENT=WEAPON_NAMES;
 export function construct(c){
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
@@ -26,7 +48,10 @@ export function construct(c){
  if(!Number.isInteger(walk)||walk<1||rating<20||rating>400||rating%5)errors.push('Рейтинг двигателя: 20–400.');
  if(!Number.isInteger(jump)||jump<0||jump>walk)errors.push('Прыжок: от 0 до значения ходьбы.');
  if(!Number.isInteger(sinks)||sinks<10)errors.push('Нужно не менее 10 теплоотводов.');
- if(errors.length)return {errors};
+ // Preserve a correct but non-combat-ready quad plan for the audit and
+ // construction tests. Quad imports and hangar admission still fail closed.
+ if(errors.length)return {errors,...(chassisConfig==='Quad'&&Number.isInteger(ton)&&ton>=20&&ton<=100&&ton%5===0?
+  {quadLayout:quadStructuralLayout(ton)}:{})};
  const st=structures[(ton-20)/5],structure=Object.fromEntries(LOCS.map((l,i)=>[l,[3,st[0],st[1],st[1],st[2],st[2],st[3],st[3]][i]]));
  const armor={},rear={};for(const l of LOCS){armor[l]=Number(c.armor?.[l]??0);if(!Number.isInteger(armor[l])||armor[l]<0)errors.push(l+': броня должна быть целой и неотрицательной.');if(['CT','LT','RT'].includes(l)){rear[l]=Number(c.rear?.[l]??0);if(!Number.isInteger(rear[l])||rear[l]<0)errors.push(l+': кормовая броня должна быть целой и неотрицательной.');}if(armor[l]+(rear[l]||0)>(l==='HD'?9:2*structure[l]))errors.push(l+': превышен предел брони.');}
  const slots={HD:['life','sensors','cockpit',null,'sensors','life'],CT:['engine','engine','engine','gyro','gyro','gyro','gyro','engine','engine','engine',null,null],LT:Array(12).fill(null),RT:Array(12).fill(null),LA:['shoulder','upper','lower','hand',...Array(8).fill(null)],RA:['shoulder','upper','lower','hand',...Array(8).fill(null)],LL:['hip','upper','lower','foot',null,null],RL:['hip','upper','lower','foot',null,null]};

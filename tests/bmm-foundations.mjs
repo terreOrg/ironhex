@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Game,defaultMechWarriorSkills} from '../dist/engine.js';
-import {construct,example,isBattleMechConfiguration} from '../dist/construction.js';
+import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 
 const flatGame=()=>{
  const game=new Game({rng:()=>.5});
@@ -266,4 +266,39 @@ test('BMM p.5: quad designs never silently use biped-only construction',()=>{
   const other=construct({...example,config:'Tripod'});
   assert(other.errors.some(error=>error.includes('Конфигурация')),
     'A non-BattleMech must never be relabelled as a biped');
+});
+
+test('BMM p.5 and p.33: all quad limbs are legs with six-slot actuator sections',()=>{
+ const expected={LA:'Left Front Leg',RA:'Right Front Leg',LL:'Left Rear Leg',RL:'Right Rear Leg'};
+ assert.deepEqual(QUAD_LEG_LOCATIONS,expected);
+ for(let ton=20;ton<=100;ton+=5){
+  const plan=quadStructuralLayout(ton);
+  assert.equal(plan.config,'Quad');
+  assert.deepEqual(plan.legLocations,expected);
+  for(const loc of Object.keys(expected)){
+   assert.equal(plan.structure[loc],plan.structure.LL,'Each quad leg has the same internal structure at '+ton+' t');
+   assert.deepEqual(plan.slots[loc],['hip','upper','lower','foot',null,null],
+    'Front legs may not inherit 12 biped-arm slots');
+  }
+  assert.equal(plan.slots.CT.length,12);
+  assert.equal(plan.slots.LT.length,12);
+  assert.equal(plan.slots.RT.length,12);
+  assert.equal(plan.slots.HD.length,6);
+ }
+ const quad55=quadStructuralLayout(55);
+ assert.equal(quad55.structure.LA,13);
+ assert.equal(quad55.structure.RA,13);
+ assert.equal(construct(example).unit.structure.LA,9,'Biped arms are distinct from quad front legs');
+ for(const invalid of [15,22,101,55.5,NaN])
+  assert.throws(()=>quadStructuralLayout(invalid),/quad_tonnage/);
+});
+
+test('BMM p.5 quad layout is inspectable but cannot enter unsupported battles',()=>{
+ const result=construct({...example,config:'Quad'});
+ assert(result.errors.length>0);
+ assert.equal(result.unit,undefined);
+ assert.equal(result.quadLayout.config,'Quad');
+ assert.equal(result.quadLayout.slots.LA.length,6);
+ assert.equal(result.quadLayout.structure.LA,result.quadLayout.structure.LL);
+ assert.equal(construct(example).unit.config,'Biped');
 });
