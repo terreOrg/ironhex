@@ -494,6 +494,71 @@
       "statement": "Resolve remaining skid path when involuntary charge misses or defender successfully evades, without illegal overlapping positions.",
       "status": "known_missing",
       "evidence": []
+    },
+    {
+      "id": "bmm-req-042",
+      "topicId": "bmm-p045-floating-criticals-optional",
+      "page": 45,
+      "statement": "Standard rules never trigger floating critical rerolls.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating criticals is opt-in; default location 2 stays in torso (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-043",
+      "topicId": "bmm-p045-floating-criticals-optional",
+      "page": 45,
+      "statement": "Optional initial 2 relocates damage and the TAC opportunity to the second hit location.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating critical relocates hit and TAC from initial 2 (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-044",
+      "topicId": "bmm-p045-floating-criticals-optional",
+      "page": 45,
+      "statement": "A subsequent result of 2 is an ordinary torso hit without a new TAC.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating critical second 2 loses TAC and stays side torso (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-045",
+      "topicId": "bmm-p045-floating-criticals-optional",
+      "page": 45,
+      "statement": "Partial cover rerolls floating critical location rolls that indicate a hidden leg.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Partial cover rerolls floating critical results for hidden legs (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-046",
+      "topicId": "bmm-p045-floating-criticals-optional",
+      "page": 45,
+      "statement": "Only regular hit location rolls trigger the optional floating critical mechanic.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating criticals does not apply to punch and kick tables"
+        }
+      ]
     }
   ]
 }
