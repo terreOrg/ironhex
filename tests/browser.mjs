@@ -279,7 +279,7 @@ test('Direct MechLab navigation also requires login',
     await withPage('mechlab-guest',{path:'/mechlab.html',unauthenticated:true},async page=>{
       await page.locator('#auth-login').waitFor({state:'visible'});
       assert.equal(await page.locator('body > main').isVisible(),false);
-      assert.equal(await page.locator('#core').children().count(),0);
+      assert.equal(await page.locator('#core > *').count(),0);
       await page.locator('#auth-login input[name=identity]').fill('TestCommander');
       await page.locator('#auth-login input[name=password]').fill('Private-Test-Password-2026!');
       await page.locator('#auth-login button[type=submit]').click();
