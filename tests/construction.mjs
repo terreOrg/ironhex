@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {construct,example} from '../dist/construction.js';
+import {WEAPON_NAMES,WEAPON_SPECS} from '../dist/equipment.js';
+import {Game} from '../dist/engine.js';
 const r=construct(example);assert.deepEqual(r.errors,[]);assert.equal(r.total,55);assert.equal(r.rating,275);assert.equal(r.unit.weapons[1].ammo,24);
 const c=()=>structuredClone(example);
 let d=c();d.tonnage=50;assert(construct(d).errors.some(e=>e.includes('массы')));
@@ -11,3 +13,50 @@ d=c();d.equipment.push({type:'ammo',location:'LT',slot:3,weapon:99,mass:1});asse
 d=c();d.tonnage=100;d.walk=3;d.jump=0;d.sinks=10;d.equipment=[{type:'AC/20',location:'RA',slot:5,splitLocation:'RT',splitSlot:1,splitCount:8},{type:'ammo',location:'LT',slot:1,weapon:0,mass:1},{type:'hatchet',location:'LA',slot:5}];assert.deepEqual(construct(d).errors,[]);assert.equal(construct(d).unit.hatchets.length,1);assert.equal(construct(d).unit.slots.RT[1],'w:0');
 assert.deepEqual(construct(d).unit.weapons[0].locations,['RA','RT']);d.equipment[0].splitLocation='LL';assert(construct(d).errors.some(e=>e.includes('AC/20')));d.equipment[0].splitLocation='RT';d.equipment[0].type='AC/10';assert(construct(d).errors.some(e=>e.includes('8+ критических')));
 console.log('9 construction checks passed');
+
+// Every weapon listed in the shared equipment registry must be constructible
+// and immediately usable in the combat engine. This is an integration contract,
+// not a substitute for weapon-specific rulebook conformance tests.
+let integrated=0;
+for(const name of WEAPON_NAMES){
+ const spec=WEAPON_SPECS[name],split=spec.slots>8;
+ const cfg={
+  name:'Weapon Integration',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[
+   {type:name,location:'RA',slot:5,
+    ...(split?{splitLocation:'RT',splitSlot:1,splitCount:6}:{})},
+   ...(spec.roundsPerTon?[{type:'ammo',location:'LT',slot:1,weapon:0,mass:1}]:[])
+  ]
+ };
+ const design=construct(cfg);
+ assert.deepEqual(design.errors,[],name);
+ assert.equal(design.unit.weapons[0].damage,spec.damage,name);
+ assert.equal(design.unit.weapons[0].heat,spec.heat,name);
+ assert.equal(design.unit.weapons[0].toHit,spec.accuracyModifier,name);
+ const battle=new Game({rng:()=>.99});
+ for(const tile of battle.tiles)
+  Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ const attacker=battle.units[0],target=battle.units[2];
+ Object.assign(attacker,design.unit,{q:0,r:0,facing:0});
+ Object.assign(target,{q:2,r:0});
+ const preview=battle.preview(0,2,0);
+ assert.equal(preview.legal,true,name+': '+preview.reason);
+ assert.equal(preview.mods.weapon,spec.accuracyModifier,name);
+ const ammunition=attacker.weapons[0].ammo;
+ battle.phase='fire';battle.activeTeam=attacker.team;
+ battle.queue=[attacker.team];battle.actingId=null;
+ const declaration=battle.declareFire(0,[{index:0,target:2}]);
+ assert.equal(declaration.ok,true,name+': '+declaration.error);
+ const resolution=battle.resolveFire();
+ assert.equal(resolution.length,1,name);
+ assert.equal(resolution[0].shots[0].hit,true,name);
+ assert.equal(resolution[0].shots[0].damage>0,true,name);
+ assert.equal(attacker.pendingHeat,spec.heat,name);
+ if(spec.roundsPerTon)
+  assert.equal(attacker.weapons[0].ammo,ammunition-1,name);
+ else assert.equal(attacker.weapons[0].ammo,null,name);
+ integrated++;
+}
+console.log(integrated+' registered weapons passed construction-to-combat integration');
