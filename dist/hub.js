@@ -1,5 +1,6 @@
 import {installPilotUI,crewPicker} from './pilot-ui.js';
 import {installOperationUI,refreshOperations} from './operation-ui.js';
+import {installEconomyUI,refreshEconomy} from './economy-ui.js';
 // Main menu and hangar are only initialized after authentication.
 let root, onBattle, onProfile;
 const E=(tag,cls,txt)=>{
@@ -22,6 +23,7 @@ function create() {
   installPilotUI(root,openSection);
   initializeWorkspace();
   installOperationUI(root);
+  installEconomyUI(root,refresh);
   root.querySelector('#hub-battle').onclick=()=>openSection('battle');
   window.addEventListener('ironhex:open-3d-operation',event=>{
     const id=event.detail?.id;
@@ -50,7 +52,7 @@ async function refresh() {
   label.textContent='Загрузка ангара…';
   cards.replaceChildren();
   try {
-    const [{items},{items:pilots}]=await Promise.all([api('/api/v1/hangar'),api('/api/v1/pilots')]);
+    const [{items},{items:pilots},economy]=await Promise.all([api('/api/v1/hangar'),api('/api/v1/pilots'),api('/api/v1/economy')]);
     label.textContent=items.length?'Мехов в ангаре: '+items.length:
       'Ангар пуст. Создайте первого меха в конструкторе.';
     for(const item of items) {
@@ -84,6 +86,27 @@ async function refresh() {
       };
       crewPicker(item,detail,pilots,refresh,error=>{label.textContent=error;});
       actions.append(edit,fight,del);
+      const quote=economy.repairs?.find(x=>x.mechId===item.id);
+      if(quote?.needsRepair){
+        detail.append(E('p','hub-mech-damage',
+          'ТРЕБУЕТ РЕМОНТА · Броня −'+quote.armorDamage+
+          ' · Конструкция −'+quote.structureDamage+
+          ' · Стоимость '+Number(quote.creditCost).toLocaleString('ru-RU')+' C-Bills'));
+        const repair=E('button','hub-repair','ПОЛНЫЙ РЕМОНТ');
+        repair.type='button';
+        repair.onclick=async()=>{
+          if(!confirm('Восстановить '+item.chassis+' за '+quote.creditCost+' C-Bills?'))return;
+          repair.disabled=true;
+          try{
+            await api('/api/v1/economy/repair',{
+              method:'POST',headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({mechId:item.id})
+            });
+            await refresh();
+          }catch(e){label.textContent='Ошибка ремонта: '+e.message;repair.disabled=false;}
+        };
+        actions.append(repair);
+      }
       detail.append(actions);
       card.append(detail);
       cards.append(card);
@@ -113,7 +136,7 @@ const SECTION_INFO={
   campaigns:{code:'SERVER OPERATIONS / 05',title:'Боевые операции',
     detail:'Подготовка отряда, серверная симуляция, сохранение раундов и рапорты.'},
   market:{code:'LOGISTICS / 06',title:'Рынок',
-    detail:'Будущая система закупок, ремонта и торговли.'}
+    detail:'Контрактные C-Bills, закупка ремкомплектов и восстановление боевых мехов.'}
 };
 function initializeWorkspace(){
   const operations=root.querySelector('.hub-operations');
@@ -243,6 +266,7 @@ export function openSection(section,{src}={}){
     root.querySelector('#hub-work-title').textContent=info.title;
     root.querySelector('#hub-work-description').textContent=info.detail;
     if(section==='campaigns')void refreshOperations();
+    if(section==='market')void refreshEconomy();
     if(section==='battle'||section==='mechlab'){
       const iframe=root.querySelector('#hub-'+section+'-frame');
       const address=src||(section==='battle'?'index.html?battle=1':'mechlab.html');
