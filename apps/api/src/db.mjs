@@ -55,7 +55,11 @@ const schema = [
   price_c_bills BIGINT NOT NULL CHECK (price_c_bills > 0),
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','open','sold','cancelled')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-)`
+)`,
+  "CREATE UNIQUE INDEX IF NOT EXISTS commanders_handle_ci_idx ON commanders (lower(handle))",
+  "CREATE TABLE IF NOT EXISTS commander_credentials (commander_id UUID PRIMARY KEY REFERENCES commanders(id) ON DELETE CASCADE, email TEXT NOT NULL, email_normalized TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())",
+  "CREATE TABLE IF NOT EXISTS commander_sessions (token_hash TEXT PRIMARY KEY CHECK (length(token_hash) = 64), commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL)",
+  "CREATE INDEX IF NOT EXISTS commander_sessions_expires_idx ON commander_sessions(expires_at)"
 ];
 
 export async function initializeDatabase(pool) {
