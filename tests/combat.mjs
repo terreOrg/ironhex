@@ -25,6 +25,43 @@ test('Critical hits in destroyed sections do not transfer to intact torsos (BMM 
  g.criticalHit(u,'LT',true);
  assert.equal(u.crit.CT.filter(Boolean).length,0);
 });
+
+test('CASE vents an ammo explosion after RT is destroyed; pilot still suffers feedback (BMM p.47)',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
+ u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case';u.crit.RT=Array(12).fill(false);
+ bin.shots=1;u.structure.RT=1;u.structure.CT=10;
+ g.explode(u,bin);
+ assert.equal(u.structure.RT,0);assert.equal(u.structure.CT,10);
+ assert.equal(u.pilotWounds,2);assert.equal(u.dead,false);
+});
+test('Unprotected explosion transfers inward; CASE does not block ordinary ballistic hits',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
+ u.slots.RT=Array(12).fill(null);u.crit.RT=Array(12).fill(false);
+ bin.shots=1;u.structure.RT=1;u.structure.CT=10;g.explode(u,bin);
+ assert.equal(u.structure.CT,1);
+ const h=game(),v=h.units[0];h.rng=()=>.5;
+ v.slots.RT=Array(12).fill(null);v.slots.RT[0]='case';v.crit.RT=Array(12).fill(false);
+ v.armor.RT=0;v.structure.RT=1;v.structure.CT=10;
+ const ctArmor=v.armor.CT;h.damage(v,'RT',3);
+ assert.equal(v.armor.CT,ctArmor-2);assert.equal(v.structure.CT,10);
+});
+test('CASE in receiving side torso contains explosions arriving from arm (BMM p.118)',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
+ bin.location='LA';bin.shots=1;
+ u.slots.LA=Array(12).fill(null);u.crit.LA=Array(12).fill(false);
+ u.slots.LT=Array(12).fill(null);u.slots.LT[0]='case';u.crit.LT=Array(12).fill(false);
+ u.structure.LA=1;u.structure.LT=1;u.structure.CT=10;
+ g.explode(u,bin);
+ assert.equal(u.structure.LA,0);assert.equal(u.structure.LT,0);
+ assert.equal(u.structure.CT,10);
+});
+test('CASE critical slots are inapplicable and cannot suffer critical hits (BMM p.118)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case';u.slots.RT[1]='sink';
+ u.crit.RT=Array(12).fill(false);g.criticalHit(u,'RT');
+ assert.equal(u.crit.RT[0],false);assert.equal(u.crit.RT[1],true);
+});
+
 test('Ammunition explosion that destroys center torso kills pilot (BMM p.44)',()=>{
  const g=game(),u=g.units[0],bin=u.bins.find(b=>b.location==='RT');
  assert(bin);bin.shots=5;u.structure.RT=1;u.structure.CT=1;
