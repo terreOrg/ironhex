@@ -8,8 +8,8 @@ const CORE_SERVICE_COST=Object.freeze({
   shoulder:1400,upper:1100,lower:1000,hand:800,
   hip:1800,foot:1000
 });
-export function normalizedCriticalDamage(config,raw={}){
-  const built=construct(config);
+export function normalizedCriticalDamage(config,raw={},options={}){
+  const built=construct(config,options);
   if(built.errors.length||!built.unit)throw Error('invalid_component_config');
   const result={};
   for(const loc of LOCS){
@@ -42,10 +42,10 @@ function refs(slots,label){
     });
   return result;
 }
-export function damagedComponents(config,critical={}){
-  const unit=construct(config).unit;
+export function damagedComponents(config,critical={},options={}){
+  const unit=construct(config,options).unit;
   if(!unit)return [];
-  const damaged=normalizedCriticalDamage(config,critical);
+  const damaged=normalizedCriticalDamage(config,critical,options);
   const groups=new Map();
   for(const loc of LOCS){
     for(const index of damaged[loc]||[]){

@@ -112,3 +112,20 @@ diagnostic sheet and the existing Griffin-style biped sheet.
 This is still not evidence of playable Quad movement, firing arcs,
 critical-hit locations or combat persistence. The quad remains
 blocked from ordinary constructor and market paths.
+
+### Diagnostic critical persistence and repair topology
+
+The internal-only `auditQuad:true` option is now threaded through
+`normalizedCriticalDamage` and `damagedComponents`. It reconstructs
+the **actual six slots** on a front or rear Quad leg, drops malformed
+critical indices, and correctly identifies the hip actuator, jump jet
+and leg-mounted weapon for damage persistence and repair planning.
+`construct` supplies four leg actuator records for a diagnostic Quad
+unit, so `applyCriticalDamage` can mark leg actuators, lost jump jets
+and destroyed weapons rather than silently treating front legs as arms.
+The public default path still rejects all Quad designs.
+
+A deterministic test checks occupied/unoccupied slots, duplicate and
+invalid critical indices, all four actuator maps, damage capture and
+repair descriptors. This closes a previously untested persistence
+portion of `bmm-req-080`. **The overall Quad topic stays open.**

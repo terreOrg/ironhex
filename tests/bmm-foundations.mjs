@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {Game,defaultMechWarriorSkills} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
+import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
 
 const flatGame=()=>{
  const game=new Game({rng:()=>.5});
@@ -381,4 +382,47 @@ test('BMM p.5: quad diagnostic record sheet shows four legs, not biped arms',()=
  const b={...u,...biped.unit};
  assert(recordSheet(b).includes('Правая рука / нога'));
  assert(!recordSheet(b).includes('Quad (диагностическая схема)'));
+});
+
+test('BMM pp.5,45: quad front/rear leg criticals preserve their six physical slots',()=>{
+ const config={...example,name:'Quad critical persistence',config:'Quad',
+  jump:1,sinks:10,equipment:[
+   {type:'jump',location:'RA',slot:5},
+   {type:'Medium Laser',location:'RA',slot:6}
+  ]};
+ const standard=construct(config);
+ assert(standard.errors.length>0,'A quad remains unsupported in ordinary combat');
+ assert.equal(standard.unit,undefined);
+ const built=construct(config,{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const unit=built.unit;
+ for(const leg of ['LA','RA','LL','RL']){
+  assert.deepEqual(Object.keys(unit.actuators[leg]).sort(),['foot','hip','lower','upper']);
+  assert(unit.slots[leg].length===6);
+  assert(unit.crit[leg].length===6);
+ }
+ assert.deepEqual(unit.slots.RA,
+  ['hip','upper','lower','foot','jump','w:0']);
+ // The server's ordinary path must continue rejecting the unsupported type.
+ assert.throws(()=>normalizedCriticalDamage(config,{RA:[0]}),/invalid_component_config/);
+ const malformed={RA:[5,0,4,0,6,100,-1,1.2,'3'],LA:[0,1,2,3,5]};
+ const sanitized=normalizedCriticalDamage(config,malformed,{auditQuad:true});
+ assert.deepEqual(sanitized,{LA:[0,1,2,3],RA:[0,4,5]});
+ applyCriticalDamage(unit,sanitized);
+ assert.equal(unit.actuators.RA.hip,true);
+ assert.equal(unit.actuators.LA.hip,true);
+ assert.equal(unit.actuators.LA.foot,true);
+ assert.equal(unit.actuators.RL.hip,false);
+ assert.equal(unit.jumpLost,1);
+ assert.equal(unit.weapons[0].destroyed,true);
+ assert.deepEqual(captureCriticalDamage(unit),sanitized);
+ const repairs=damagedComponents(config,sanitized,{auditQuad:true});
+ assert(repairs.some(item=>item.location==='RA'&&item.slot===1&&
+  item.kind==='service'&&item.serviceCost>0));
+ assert(repairs.some(item=>item.location==='RA'&&item.slot===5&&
+  item.kind==='system'));
+ assert(repairs.some(item=>item.location==='RA'&&item.slot===6&&
+  item.kind==='weapon'));
+ assert.deepEqual(damagedComponents(config,sanitized),[],
+  'Unimplemented quad maintenance is not exposed in the public economy');
 });

@@ -99,6 +99,10 @@ export function construct(c,{auditQuad=false}={}){
    }
  });
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
- return {errors,total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
+ return {errors,total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,
+  ...(quadLayout?{actuators:Object.fromEntries(
+    Object.keys(QUAD_LEG_LOCATIONS).map(loc=>[loc,
+      {hip:false,upper:false,lower:false,foot:false}]))}:{}),
+  name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
 }
 export const example={name:'Griffin custom',tonnage:55,walk:5,jump:5,sinks:12,armor:{HD:9,CT:20,LT:20,RT:20,LA:14,RA:14,LL:18,RL:18},rear:{CT:7,LT:6,RT:6},equipment:[{type:'PPC',location:'RA',slot:5},{type:'LRM 10',location:'RT',slot:3},{type:'ammo',location:'RT',slot:5,weapon:1,mass:1},{type:'ammo',location:'RT',slot:6,weapon:1,mass:1},{type:'jump',location:'LT',slot:1},{type:'jump',location:'LT',slot:2},{type:'jump',location:'RT',slot:1},{type:'jump',location:'RT',slot:2},{type:'jump',location:'CT',slot:12},{type:'sink',location:'CT',slot:11}]};

@@ -1069,6 +1069,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.5: quad diagnostic record sheet shows four legs, not biped arms"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.5,45: quad front/rear leg criticals preserve their six physical slots"
         }
       ]
     },
