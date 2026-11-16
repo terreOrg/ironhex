@@ -64,6 +64,22 @@ async function enterGame() {
   dialog.classList.remove('auth-dialog--gate');
   q('#auth-close').hidden = false;
   if (dialog.open) dialog.close();
+  const battlefield = !!document.querySelector('#viewport');
+  const directBattle = new URL(location.href).searchParams.get('custom') === '1';
+  if (battlefield && !directBattle && !started) {
+    const {openHub} = await import('./hub.js');
+    openHub({
+      user,
+      onBattle: async () => {
+        if (started) return;
+        started = true;
+        document.body.classList.remove('hub-open');
+        await import('./app.js');
+      },
+      onProfile: () => { if (!dialog.open) dialog.showModal(); }
+    });
+    return;
+  }
   if (!started) {
     started = true;
     await import(gameModule);
