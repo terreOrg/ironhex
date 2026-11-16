@@ -168,3 +168,21 @@ particular, lateral shift, standing/PSR, partial cover, firing while
 prone, full hit/physical combat consequences and loss of legs remain
 `known_missing`. The strict heading cursor stays at Quad until
 every atomic requirement is `verified`.
+
+## Next atomic requirement — lateral shift (bmm-req-081, BMM p.15)
+
+Implemented as diagnostic-engine pathfinding only: an intact Quad can
+move to any of its four diagonally adjacent side hexes without changing
+facing, at the standard terrain/elevation entry cost **plus 1 MP**.
+Backward-side shifts are permitted only while walking, and like
+ordinary backward movement cannot change levels. Shift options are
+removed if **any** of the four legs is destroyed. A pure helper
+exposes legal shift actions; real pathfinding uses them and prefers
+the unchanged facing on a legal, equal-cost shift. No biped receives
+lateral movement. Source: printed p.15 diagram and Ground Movement
+text, p.17 Movement Costs Table.
+
+Three tests cover four directions, facing retention and execution,
+walk-versus-run restrictions, height changes, heavy-woods terrain
+costs and all four destroyed-leg variants. The parent Quad heading
+remains `known_missing` until the complete Quad rule set is verified.

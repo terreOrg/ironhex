@@ -1105,12 +1105,25 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Four intact legs permit lateral shifts preserving facing, at the correct terrain plus one MP cost; backward-lateral shifts obey walking-only restrictions.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         15,
         17
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.15: intact quad can shift into each side hex for terrain cost + 1 MP"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.15: rearward quad shifts are walking-only and cannot change level"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.15: destroyed quad leg disables all lateral shifts; bipeds never gain them"
+        }
+      ]
     },
     {
       "id": "bmm-req-082",

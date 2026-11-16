@@ -7,6 +7,20 @@ const quadLegNames=Object.freeze({
 export function locationNameForMech(mech,loc){
  return (mech?.config==='Quad'&&quadLegNames[loc])||LOCATIONS[loc]||loc;
 }
+// BMM corrected sixth printing, p.15: only a quad with all four legs
+// may shift without turning. Rearward lateral movement is walking-only.
+export function quadLateralDirections(u,mode='walk'){
+ if(u?.config!=='Quad'||!['walk','run','evade'].includes(mode)||
+   ['LA','RA','LL','RL'].some(loc=>(u.structure?.[loc]??0)<=0))return [];
+ const shifts=[
+  {action:'shift-left-forward',offset:1,backward:false},
+  {action:'shift-right-forward',offset:-1,backward:false}
+ ];
+ if(mode==='walk')shifts.push(
+  {action:'shift-left-backward',offset:2,backward:true},
+  {action:'shift-right-backward',offset:-2,backward:true});
+ return shifts;
+}
 const wrap=n=>(n%6+6)%6, key=(q,r)=>q+','+r, fail=error=>({ok:false,error});
 const transfer={LA:'LT',RA:'RT',LL:'LT',RL:'RT',LT:'CT',RT:'CT'};
 const front=['CT','RA','RA','RL','RT','CT','LT','LL','LA','LA','HD'],left=['LT','LL','LA','LA','LL','LT','CT','RT','RA','RL','HD'],right=['RT','RL','RA','RA','RL','RT','CT','LT','LA','LL','HD'];
@@ -116,7 +130,14 @@ export class Game extends Legacy{
  mp(u,mode='walk'){u=this.unit(u);if(!this.mobile(u))return 0;if(mode==='jump')return Math.max(0,u.jump-u.jumpLost-this.floodedSlots(u,'jump'));if(mode==='evade'&&(!this.tacticalOptions?.evading||u.actuators.LL.hip||u.actuators.RL.hip||this.isBreached(u,'LL')||this.isBreached(u,'RL')))return 0;const lost=['LL','RL'].filter(l=>u.structure[l]===0).length;if(lost===2)return 0;let w=lost===1?1:u.walk;if(!lost){let hips=['LL','RL'].filter(l=>u.actuators[l].hip||this.isBreached(u,l)).length;w=hips===2?0:hips?Math.ceil(w/2):w;for(const l of ['LL','RL'])if(!u.actuators[l].hip&&!this.isBreached(u,l))w-=Number(u.actuators[l].upper)+Number(u.actuators[l].lower)+Number(u.actuators[l].foot);}w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));return mode==='run'||mode==='evade'?(lost?0:Math.ceil(w*1.5)):w;}
  terrainCost(t){return (t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:t.depth?(t.depth===1?2:4):1)+(this.weather.night?1:0);}
  reachable(u,mode='walk'){u=this.unit(u);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||u.actuators.LL.hip||u.actuators.RL.hip||this.isBreached(u,'LL')||this.isBreached(u,'RL')))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];return this.tiles.filter(t=>!this.occupied(t.q,t.r,u.id)&&Math.max(1,distance(u,t))<=max&&this.jumpClear(u,t,max)).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
- const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of ['left','right','forward','back']){let q=p.q,r=p.r,f=p.facing,c=1;if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{if(action==='back'&&mode!=='walk')continue;const d=DIRS[wrap(f+(action==='back'?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>!x.dead&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.prone))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||action==='back'&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)&&(!ends.has(key(q,r))||ends.get(key(q,r)).cost>cost))ends.set(key(q,r),v);}}return [...ends.values()];}
+ const lateralShifts=quadLateralDirections(u,mode);
+ const actions=['left','right','forward','back',...lateralShifts.map(s=>s.action)];
+ const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>!x.dead&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.prone))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
+  const old=ends.get(key(q,r));
+  if(!old||old.cost>cost||
+    (u.config==='Quad'&&old.cost===cost&&v.facing===u.facing&&old.facing!==u.facing))
+    ends.set(key(q,r),v);
+ }}}return [...ends.values()];}
  jumpClear(u,t,max){const n=distance(u,t),height=this.tile(u.q,u.r).height+max;for(let i=1;i<=n;i++){const p=roundHex(u.q+(t.q-u.q)*i/n,u.r+(t.r-u.r)*i/n),x=this.tile(p.q,p.r);if(x&&x.surface>height)return false;}return true;}
  isPaved(t){return !!t&&(t.paved===true||t.road===true||['pavement','road'].includes(t.type));}
  skidTerrainCost(t){return t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:1;}

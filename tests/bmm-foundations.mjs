@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,locationNameForMech} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
@@ -490,4 +490,83 @@ test('BMM p.6: quad leg critical capacities and armor limits cover 20-100 tons',
   assert(outOfRange.errors.some(error=>error.includes(leg)&&error.includes('слот')),
    leg+' must never accept a seventh critical slot');
  }
+});
+
+test('BMM p.15: intact quad can shift into each side hex for terrain cost + 1 MP',()=>{
+ const config={...example,name:'Quad lateral shift',config:'Quad',
+  jump:0,sinks:10,equipment:[]};
+ const built=construct(config,{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,built.unit);
+ for(const other of g.units.slice(1))other.dead=true;
+ u.q=0;u.r=0;u.facing=0;u.spent=0;u.moveMode='stand';u.prone=false;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert.equal(quadLateralDirections(u,'walk').length,4);
+ assert.equal(quadLateralDirections(u,'run').length,2);
+ const destinations=g.reachable(u,'walk');
+ for(const [dir,kind] of [[1,'forward'],[5,'forward'],[2,'backward'],[4,'backward']]){
+  const [q,r]=DIRS[dir];
+  const p=destinations.find(dest=>dest.q===q&&dest.r===r);
+  assert(p,'Quad cannot shift to dir '+dir);
+  assert.equal(p.cost,2,'Lateral shift must cost base 1 MP plus 1 MP');
+  assert.equal(p.facing,0,'A lateral shift may not rotate the chassis');
+  assert.equal(p.path.at(-1).lateral,kind);
+ }
+ const moved=g.move(u.id,...DIRS[1],'walk');
+ assert(moved.ok,moved.error);
+ assert.equal(u.facing,0);
+ assert.equal(u.spent,2);
+});
+
+test('BMM p.15: rearward quad shifts are walking-only and cannot change level',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},
+   {auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,built.unit);for(const other of g.units.slice(1))other.dead=true;
+ u.q=0;u.r=0;u.facing=0;u.moveMode='stand';u.spent=0;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert(quadLateralDirections(u,'run').every(x=>!x.backward));
+ assert(quadLateralDirections(u,'evade').every(x=>!x.backward));
+ assert(g.reachable(u,'run').every(dest=>dest.path.every(p=>p.lateral!=='backward')));
+ const uphill=g.tile(...DIRS[2]);
+ uphill.height=1;uphill.surface=1;
+ const targets=g.reachable(u,'walk');
+ for(const dest of targets){
+  let prev={q:u.q,r:u.r};
+  for(const step of dest.path){
+   if(step.lateral==='backward')
+    assert.equal(g.tile(step.q,step.r).height,g.tile(prev.q,prev.r).height,
+      'Walking backwards laterally may not change levels');
+   prev=step;
+  }
+ }
+ const heavy=g.tile(...DIRS[1]);
+ heavy.type='heavy';heavy.height=0;heavy.surface=0;
+ const side= g.reachable(u,'walk').find(x=>x.q===DIRS[1][0]&&x.r===DIRS[1][1]);
+ assert(side);
+ assert.equal(side.cost,4,'Heavy woods terrain 3 + lateral shift 1');
+ assert.equal(side.facing,0);
+ assert.equal(side.path.at(-1).lateral,'forward');
+});
+
+test('BMM p.15: destroyed quad leg disables all lateral shifts; bipeds never gain them',()=>{
+ const g=flatGame(),u=g.units[0];
+ const config={...example,config:'Quad',jump:0,sinks:10,equipment:[]};
+ const built=construct(config,{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ Object.assign(u,built.unit);for(const other of g.units.slice(1))other.dead=true;
+ u.q=0;u.r=0;u.facing=0;u.moveMode='stand';u.spent=0;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ for(const leg of ['LA','RA','LL','RL']){
+  u.structure[leg]=0;
+  assert.deepEqual(quadLateralDirections(u,'walk'),[],leg);
+  assert(g.reachable(u,'walk').every(dest=>
+    dest.path.every(step=>!step.lateral)),leg);
+  u.structure[leg]=u.maxStructure[leg];
+ }
+ u.config='Biped';
+ assert.deepEqual(quadLateralDirections(u,'walk'),[]);
+ assert(g.reachable(u,'walk').every(dest=>dest.path.every(step=>!step.lateral)));
 });
