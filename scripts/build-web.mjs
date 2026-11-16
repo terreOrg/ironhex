@@ -7,7 +7,7 @@ const mappings = [
   ...['app.js','hub.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','auth.css','cockpit.css','dice.js','index.html','mechlab.html',
       'mechlab.js','record-sheet.js','style.css']
     .map(name => ['apps/web/src/' + name, 'dist/' + name]),
-  ...['engine.js','legacy-engine.js','construction.js','equipment.js','fire-arcs.js']
+  ...['engine.js','legacy-engine.js','construction.js','equipment.js','component-damage.js','fire-arcs.js']
     .map(name => ['packages/engine/' + name, 'dist/' + name])
 ];
 const check = process.argv.includes('--check');

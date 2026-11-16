@@ -175,7 +175,8 @@ export const EQUIPMENT_CATALOG=[
     const item=WEAPON_SPECS[name];
     return {sku:item.id,name:item.name,price:item.price,kind:'weapon',
       tons:item.tons,slots:item.slots,heat:item.heat,damage:item.damage,
-      ranges:item.ranges,roundsPerTon:item.roundsPerTon};
+      ranges:item.ranges,roundsPerTon:item.roundsPerTon,
+      introYear:item.introYear,techBase:item.techBase};
   }),
   ...Object.values(AMMO_PACKS).map(pack=>({...pack})),
   ...SYSTEM_ITEMS.map(item=>({...item}))

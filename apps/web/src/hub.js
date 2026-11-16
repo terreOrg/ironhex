@@ -89,12 +89,17 @@ async function refresh() {
       crewPicker(item,detail,pilots,refresh,error=>{label.textContent=error;});
       actions.append(edit,fight,del);
       const quote=economy.repairs?.find(x=>x.mechId===item.id);
+      if(item.brokenComponents?.length){
+        detail.append(E('p','hub-mech-damage',
+          'КРИТИЧЕСКИЕ ПОВРЕЖДЕНИЯ · '+item.brokenComponents.length+
+          ' компонентов. Замена и обслуживание — в разделе «Рынок и ремонт».'));
+      }
       if(quote?.needsRepair){
         detail.append(E('p','hub-mech-damage',
           'ТРЕБУЕТ РЕМОНТА · Броня −'+quote.armorDamage+
           ' · Конструкция −'+quote.structureDamage+
           ' · Стоимость '+Number(quote.creditCost).toLocaleString('ru-RU')+' C-Bills'));
-        const repair=E('button','hub-repair','ПОЛНЫЙ РЕМОНТ');
+        const repair=E('button','hub-repair','РЕМОНТ КОРПУСА');
         repair.type='button';
         repair.onclick=async()=>{
           if(!confirm('Восстановить '+item.chassis+' за '+quote.creditCost+' C-Bills?'))return;

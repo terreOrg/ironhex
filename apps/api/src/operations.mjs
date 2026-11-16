@@ -2,6 +2,8 @@ import {randomBytes} from 'node:crypto';
 import {Game} from '../../../packages/engine/engine.js';
 import {construct} from '../../../packages/engine/construction.js';
 import {ammoBinsFor,normalizedAmmoState} from '../../../packages/engine/equipment.js';
+import {captureCriticalDamage,applyCriticalDamage,damagedComponents,normalizedCriticalDamage} from
+  '../../../packages/engine/component-damage.js';
 import {validateDesign} from './hangar.mjs';
 import {AuthError} from './auth.mjs';
 import {runTacticalOrder,publicSnapshot} from './server-combat.mjs';
@@ -71,6 +73,9 @@ function makeRuntime(roster,saved=null,contractId='patrol') {
       unit.dead=false;
       unit.id=i;
       unit.team=0;
+      applyCriticalDamage(unit,entry.criticalDamage);
+      // Destroyed magazines and previously damaged weapons remain inoperable.
+      game.syncAmmo(unit);
     }
     for(const enemy of game.units.filter(u=>u.team===1))
       enemy.gunnery=contractById(contractId)?.enemyGunnery??4;
@@ -163,7 +168,11 @@ function buildReport(game,roster,contractId) {
       wounds:unit.pilotWounds||0,
       destroyed:!!unit.dead,
       armorLost:units[i].armorLost,
-      structureLost:units[i].structureLost,ammoUsed,ammoState
+      structureLost:units[i].structureLost,ammoUsed,ammoState,
+      criticalDamage:captureCriticalDamage(unit),
+      brokenComponents:damagedComponents(r.config,captureCriticalDamage(unit))
+        .map(part=>({id:part.id,name:part.name,location:part.location,
+          slot:part.slot,kind:part.kind}))
     };
   });
   return {
@@ -205,9 +214,11 @@ export function createOperationStore(pool){
             await client.query(
               'UPDATE hangar_mechs SET armor_damage=armor_damage+$3, '+
               'structure_damage=structure_damage+$4,wrecked=wrecked OR $5, '+
-              'ammo_state=$6::jsonb WHERE id=$1 AND commander_id=$2',
+              'ammo_state=$6::jsonb,critical_damage=$7::jsonb '+
+              'WHERE id=$1 AND commander_id=$2',
               [reward.mechId,owner,reward.armorLost,reward.structureLost,
-                reward.destroyed,JSON.stringify(reward.ammoState)]);
+                reward.destroyed,JSON.stringify(reward.ammoState),
+                JSON.stringify(reward.criticalDamage)]);
           }
           for(const reward of report.rewards){
             if(!reward.pilotId)continue;
@@ -287,7 +298,7 @@ export function createOperationStore(pool){
            current.rows.filter(r=>['draft','active'].includes(r.status)).length>=5)
           throw new AuthError(409,'operation_limit');
         const result=await client.query(
-          'SELECT m.id,m.chassis,m.state,m.ammo_state,m.armor_damage,m.structure_damage,m.wrecked,m.market_owned, ' +
+          'SELECT m.id,m.chassis,m.state,m.ammo_state,m.critical_damage,m.armor_damage,m.structure_damage,m.wrecked,m.market_owned, ' +
           'm.pilot_id,p.callsign,p.gunnery,p.piloting '+
           'FROM hangar_mechs m LEFT JOIN mechwarrior_pilots p '+
           'ON p.id=m.pilot_id AND p.commander_id=m.commander_id '+
@@ -299,6 +310,14 @@ export function createOperationStore(pool){
           throw new AuthError(409,'prototype_not_licensed');
         if(result.rows.some(r=>r.armor_damage>0||r.structure_damage>0||r.wrecked))
           throw new AuthError(409,'mech_needs_repair');
+        for(const row of result.rows){
+          if(!row.state?.config)continue;
+          const damage=normalizedCriticalDamage(row.state.config,row.critical_damage);
+          const parts=damagedComponents(row.state.config,damage);
+          if(parts.some(p=>p.name==='Кабина')||
+            parts.filter(p=>p.name==='Двигатель').reduce((n,p)=>n+p.damagedSlots,0)>=3)
+            throw new AuthError(409,'mech_critical_shutdown');
+        }
         if(current.rows.some(r=>['draft','active'].includes(r.status)&&
           r.roster.some(entry=>mechIds.includes(entry.mechId))))
           throw new AuthError(409,'mech_assigned_operation');
@@ -311,6 +330,7 @@ export function createOperationStore(pool){
           return {
             mechId:mech.id,chassis:checked.chassis,config:checked.state.config,
             ammoState:normalizedAmmoState(checked.state.config,mech.ammo_state),
+            criticalDamage:normalizedCriticalDamage(checked.state.config,mech.critical_damage),
             pilot:mech.pilot_id?{
               id:mech.pilot_id,callsign:mech.callsign,
               gunnery:mech.gunnery,piloting:mech.piloting

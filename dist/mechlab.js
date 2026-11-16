@@ -68,7 +68,8 @@ async function saveToHangar(copy=false) {
         insufficient_ammo:'Нужен совместимый комплект боеприпасов на складе.',
         factory_frame_locked:'У купленного меха нельзя менять базовый каркас, двигатель, броню или штатные системы.',
         mech_assigned_operation:'Мех уже назначен на активную операцию.',
-        mech_needs_repair:'Перед переоборудованием отремонтируйте меха.'})[data.error]||data.error||'HTTP '+response.status
+        mech_needs_repair:'Перед переоборудованием отремонтируйте меха.',
+        mech_needs_component_repair:'Перед переоборудованием замените повреждённые компоненты в ангаре.'})[data.error]||data.error||'HTTP '+response.status
     );
     currentHangarId=data.item.id;
     marketOwned=data.item.marketOwned===true;

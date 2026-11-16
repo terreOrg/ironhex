@@ -1,6 +1,8 @@
 import { construct } from '../../../packages/engine/construction.js';
 import {weaponCounts} from './market.mjs';
 import {ammoBinsFor,normalizedAmmoState,systemCounts} from '../../../packages/engine/equipment.js';
+import {normalizedCriticalDamage,damagedComponents} from
+  '../../../packages/engine/component-damage.js';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -45,14 +47,16 @@ function serialize(row) {
     state:row.state, createdAt:row.created_at,
     armorDamage:row.armor_damage||0,structureDamage:row.structure_damage||0,
     wrecked:!!row.wrecked,marketOwned:!!row.market_owned,
-    ammoState:row.ammo_state||{}};
+    ammoState:row.ammo_state||{},criticalDamage:row.critical_damage||{},
+    brokenComponents:row.state?.config?
+      damagedComponents(row.state.config,row.critical_damage):[]};
 }
 
 export function createHangarStore(pool) {
   return {
     async list(commanderId) {
       const result=await pool.query(
-        'SELECT id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state FROM hangar_mechs ' +
+        'SELECT id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state,critical_damage FROM hangar_mechs ' +
         'WHERE commander_id=$1 ORDER BY created_at DESC LIMIT 100',
         [commanderId]
       );
@@ -64,7 +68,7 @@ export function createHangarStore(pool) {
         'INSERT INTO hangar_mechs(commander_id,chassis,callsign,state,market_owned) ' +
         'SELECT $1,$2,$3,$4::jsonb,false WHERE ' +
         '(SELECT count(*) FROM hangar_mechs WHERE commander_id=$1) < 50 ' +
-        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state',
+        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state,critical_damage',
         [commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]
       );
       if (!result.rows.length) throw new AuthError(409,'hangar_full');
@@ -91,6 +95,8 @@ export function createHangarStore(pool) {
         if(row.market_owned){
           if(row.wrecked||row.armor_damage||row.structure_damage)
             throw new AuthError(409,'mech_needs_repair');
+          if(Object.keys(normalizedCriticalDamage(row.state.config,row.critical_damage)).length)
+            throw new AuthError(409,'mech_needs_component_repair');
           const old=row.state.config,now=design.state.config;
           const same=(l,r)=>JSON.stringify(l)===JSON.stringify(r);
           for(const key of ['tonnage','walk','armor','rear']){
@@ -145,7 +151,7 @@ export function createHangarStore(pool) {
         const changed=await client.query(
           'UPDATE hangar_mechs SET chassis=$3,callsign=$4,state=$5::jsonb,ammo_state=$6::jsonb '+
           'WHERE id=$1 AND commander_id=$2 '+
-          'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state',
+          'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned,ammo_state,critical_damage',
           [id,commanderId,design.chassis,design.callsign,
             JSON.stringify(design.state),JSON.stringify(levels)]);
         await client.query('COMMIT');

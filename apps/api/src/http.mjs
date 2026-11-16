@@ -161,14 +161,16 @@ export function createHttpServer({
             return json(res,201,{item:await economyStore.buyMech(user.id,await readJson(req))},head);
           }
           if(method==='POST'&&['/api/v1/economy/purchase','/api/v1/economy/repair',
-            '/api/v1/economy/reload'].includes(path)){
+            '/api/v1/economy/reload','/api/v1/economy/components/repair'].includes(path)){
             if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
             const input=await readJson(req);
             const item=path.endsWith('/purchase')?
               await economyStore.purchase(user.id,input):
               path.endsWith('/reload')?
                 await economyStore.reload(user.id,input):
-                await economyStore.repair(user.id,input);
+                path.endsWith('/components/repair')?
+                  await economyStore.repairComponent(user.id,input):
+                  await economyStore.repair(user.id,input);
             return json(res,200,{item},head);
           }
           return json(res,404,{error:'not_found'},head);

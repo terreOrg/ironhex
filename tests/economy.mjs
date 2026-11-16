@@ -50,7 +50,8 @@ test('Ammo packs are server-owned, listed only for supported firearms',()=>{
   assert(ammo.every(x=>x.sku.startsWith('ammo:')&&x.rounds>0&&x.price>0));
   assert(ammo.some(x=>x.sku==='ammo:LRM 20'));
   assert(!ammo.some(x=>x.sku==='ammo:PPC'));
-  assert(!EQUIPMENT_CATALOG.some(x=>x.sku==='weapon:ER PPC'));
+  assert(EQUIPMENT_CATALOG.some(x=>x.sku==='weapon:ER PPC'));
+  assert(!EQUIPMENT_CATALOG.some(x=>x.sku==='weapon:Clan ER PPC'));
 });
 
 test('Physical equipment is purchasable only where combat mechanics already exist',()=>{

@@ -761,3 +761,11 @@ color:#1d3223;font-weight:800;font-size:14px;padding:14px;cursor:pointer}
 .economy-magazines .economy-item button:disabled{opacity:.47;cursor:not-allowed}
 .op-reward .op-info{display:block;margin-top:7px;font-size:11px;line-height:1.6;color:#c7dcae}
 @media(max-width:600px){.economy-magazines{grid-template-columns:1fr}}
+
+/* Per-slot persistent critical damage / repair component terminal. */
+.economy-components{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+.economy-components .economy-item{min-width:0}
+.economy-components .economy-item>div{min-width:0}
+.economy-components .economy-item small{overflow-wrap:anywhere;line-height:1.45}
+.economy-components button:disabled{opacity:.48;cursor:not-allowed}
+@media(max-width:600px){.economy-components{grid-template-columns:1fr}}

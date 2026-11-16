@@ -18,7 +18,12 @@ const messages={
   invalid_reload:'Недопустимая команда перезарядки.',
   mech_assigned_operation:'Мех участвует в операции.',
   mech_needs_repair:'Сначала отремонтируйте повреждения.',
-  prototype_not_licensed:'Учебный прототип нельзя снабжать по контракту.'
+  prototype_not_licensed:'Учебный прототип нельзя снабжать по контракту.',
+  mech_needs_component_repair:'Сначала восстановите повреждённые компоненты.',
+  mech_critical_shutdown:'Восстановите кабину или критически повреждённый двигатель.',
+  component_not_damaged:'Компонент уже исправен.',
+  invalid_component_repair:'Неизвестный ремонт.',
+  magazine_damaged:'Бункер повреждён. Сначала замените его через ремонт компонентов.'
 };
 let root=null,refreshHangar=()=>{},busy=false,catalogPage=1,catalogTimer=null,catalogSerial=0,detailSerial=0;
 async function request(path,method='GET',body){
@@ -44,7 +49,9 @@ async function mutate(path,body){
     busy=false;
     await refreshEconomy();
     await refreshHangar();
-    notice(path.endsWith('/reload')?
+    notice(path.endsWith('/components/repair')?
+      'Компонент «'+item.name+'» восстановлен. Стоимость услуги: '+money(item.spent)+'.':
+      path.endsWith('/reload')?
       'Боезапас '+item.weapon+' пополнен до '+item.rounds+' выстрелов.':
       body.offerId?
       'Мех приобретён. Списано '+money(item.spent)+'. Откройте его в ангаре.':
@@ -151,6 +158,7 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
   const supplies=el('div','economy-supplies');supplies.id='economy-supplies';
   const inventory=el('div','economy-inventory');inventory.id='economy-inventory';
   const magazines=el('div','economy-magazines');magazines.id='economy-magazines';
+  const parts=el('div','economy-components');parts.id='economy-components';
   const repairs=el('div','economy-repairs');repairs.id='economy-repairs';
   const ledger=el('div','economy-ledger');ledger.id='economy-ledger';
   const status=el('p','op-message');status.id='economy-message';
@@ -163,7 +171,8 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
     el('h3','economy-heading','ВООРУЖЕНИЕ, СИСТЕМЫ, БОЕПРИПАСЫ И РЕМОНТ'),supplies,
     el('h3','economy-heading','ОРУЖЕЙНЫЙ СКЛАД'),inventory,
     el('h3','economy-heading','БОЕПРИПАСЫ И ПЕРЕЗАРЯДКА'),magazines,
-    el('h3','economy-heading','РЕМОНТ АНГАРА'),repairs,
+    el('h3','economy-heading','ПОВРЕЖДЁННЫЕ КОМПОНЕНТЫ'),parts,
+    el('h3','economy-heading','РЕМОНТ БРОНИ И КОРПУСА'),repairs,
     el('h3','economy-heading','ЖУРНАЛ РАСЧЁТОВ'),ledger,status);
   const button=root.querySelector('#hub-market-button');
   button?.classList.remove('hub-soon');
@@ -238,6 +247,19 @@ export async function refreshEconomy(){
           (entry.kind==='weapon'?(data.equipmentStock?.[entry.name]||0):
             ['ammo','system'].includes(entry.kind)?(data.equipmentStock?.[entry.sku]||0):
             (data.stock?.[entry.sku]||0))));
+      if(entry.kind==='weapon'){
+        text.append(el('small','',
+          'Урон '+entry.damage+' · Нагрев '+entry.heat+
+          ' · Дальность '+(entry.ranges||[]).join(' / ')+' гексов'+
+          ' · Масса '+entry.tons+' т · Слоты '+entry.slots+
+          (entry.introYear>3025?' · Возвращение технологии: '+entry.introYear:'') ));
+      }else if(entry.kind==='ammo'){
+        text.append(el('small','',
+          entry.rounds+' выстрелов на комплект · Масса '+entry.tons+' т'));
+      }else if(entry.kind==='system'){
+        text.append(el('small','',
+          'Компонент взаимодействует с движением, нагревом или рукопашным боем'));
+      }
       const buy=el('button','op-primary','КУПИТЬ');
       buy.type='button';
       buy.onclick=()=>{
@@ -275,6 +297,35 @@ export async function refreshEconomy(){
     }
     if(!data.magazines?.length)magazines.append(el('p','op-empty',
       'В ангаре нет мехов с баллистическими или ракетными бункерами.'));
+    const components=root.querySelector('#economy-components');
+    components.replaceChildren();
+    for(const part of data.components||[]){
+      const card=el('div','economy-item economy-part');
+      const content=el('div','');
+      const stock=part.sku?part.requiredStock:0;
+      content.append(el('strong','',part.chassis+' · '+part.name),
+        el('small','','Повреждение: '+part.location+', слот '+part.slot+
+          ' · повреждено критических слотов: '+part.damagedSlots),
+        el('small','',part.sku?
+          'Требуется со склада: '+part.sku+
+            ' · доступно '+stock+' шт.':
+          'Обслуживание: '+money(part.serviceCost)));
+      const fix=el('button','op-primary','ВОССТАНОВИТЬ');
+      fix.type='button';
+      fix.disabled=!part.licensed||!!part.sku&&stock<1;
+      fix.title=!part.licensed?'Только лицензированные боевые мехи':
+        part.sku&&stock<1?'Сначала приобретите запасную деталь на рынке':'';
+      fix.onclick=()=>{
+        const text=part.sku?'Использовать запасной компонент '+part.sku+'?':
+          'Оплатить обслуживание '+part.name+' за '+money(part.serviceCost)+'?';
+        if(confirm(text))void mutate('/api/v1/economy/components/repair',
+          {mechId:part.mechId,partId:part.id});
+      };
+      card.append(content,fix);
+      components.append(card);
+    }
+    if(!data.components?.length)components.append(
+      el('p','op-empty','Все критические системы мехов исправны.'));
     const repairs=root.querySelector('#economy-repairs');
     repairs.replaceChildren();
     for(const item of data.repairs||[]){
@@ -288,7 +339,7 @@ export async function refreshEconomy(){
           'Полностью исправен'));
       card.append(details);
       if(item.needsRepair){
-        const fix=el('button','op-primary','ПОЧИНИТЬ');
+        const fix=el('button','op-primary','ВОССТАНОВИТЬ КОРПУС');
         fix.onclick=()=>{
           if(confirm('Полный ремонт '+item.chassis+' за '+money(item.creditCost)+
             ' (с применением имеющихся комплектов)?'))

@@ -7,6 +7,12 @@ const rows={
   'Small Laser':[1,3,0,1,2,3,.5,1,0,0,1100],
   Flamer:[3,2,0,1,2,3,1,1,0,0,900],
   PPC:[10,10,3,6,12,18,7,3,0,0,9500],
+  // Inner Sphere extended-range energy weapons: tabletop heat, damage,
+  // range, tonnage and slots; IronHex shop prices are balance values.
+  'ER Small Laser':[2,3,0,2,4,5,.5,1,0,0,1750],
+  'ER Medium Laser':[5,5,0,4,8,12,1,1,0,0,4800],
+  'ER Large Laser':[12,8,0,7,14,19,5,2,0,0,10800],
+  'ER PPC':[15,10,0,7,14,23,7,3,0,0,18500],
   'AC/2':[1,2,4,8,16,24,6,1,45,0,3500],
   'AC/5':[1,5,3,6,12,18,8,4,20,0,5500],
   'AC/10':[3,10,0,5,10,15,12,7,10,0,9500],
@@ -27,6 +33,7 @@ export const WEAPON_SPECS=Object.freeze(Object.fromEntries(
     return [name,Object.freeze({
       id:'weapon:'+name,name,kind:'weapon',supported:true,techBase:'Inner Sphere',
       heat,damage,minimum,ranges:[short,medium,long],tons,slots,
+      introYear:name.startsWith('ER ')?3037:3025,
       roundsPerTon,rack,price,
       mechanic:roundsPerTon?'ammo_weapon':'energy_weapon'
     })];

@@ -594,6 +594,56 @@ test('Market reload consumes an owned ammo pack and displays server magazine sta
     });
   });
 
+test('Critical repair panel uses server prices and replaces one damaged part',
+  {timeout:120000},async()=>{
+    await withPage('critical-repair',{hub:true},async page=>{
+      const mechId='11111111-1111-4111-8111-111111111111';
+      let repaired=0;
+      const respond=(route,status,body)=>route.fulfill({
+        status,contentType:'application/json',body:JSON.stringify(body)});
+      await page.route('**/api/v1/economy**',route=>{
+        const request=route.request();
+        const {pathname}=new URL(request.url());
+        if(pathname==='/api/v1/economy/components/repair'){
+          assert.equal(request.method(),'POST');
+          assert.deepEqual(request.postDataJSON(),
+            {mechId,partId:'CT:1'});
+          repaired++;
+          return respond(route,200,{item:{mechId,partId:'CT:1',
+            name:'Двигатель',spent:6000,remaining:0}});
+        }
+        if(pathname==='/api/v1/economy')
+          return respond(route,200,{
+            balance:150000-repaired*6000,stock:{},equipmentStock:{},
+            mechOffers:[],catalog:[],repairs:[],magazines:[],
+            components:repaired?[]:[{
+              mechId,chassis:'Griffin',id:'CT:1',name:'Двигатель',
+              kind:'service',sku:null,location:'CT',slot:1,
+              damagedSlots:1,serviceCost:6000,licensed:true,
+              requiredStock:null
+            }],
+            ledger:[]
+          });
+        return respond(route,200,{total:4305,available:6,items:[],
+          matches:0,page:1,pages:0});
+      });
+      page.on('dialog',dialog=>void dialog.accept());
+      await page.locator('#hub-market-button').click();
+      await page.locator('#economy-components button').waitFor({state:'visible'});
+      assert.match(await page.locator('#economy-components').textContent(),
+        /Двигатель/);
+      assert.match(await page.locator('#economy-components').textContent(),
+        /6\s*000/);
+      await page.locator('#economy-components button').click();
+      await page.waitForFunction(()=>document.querySelector('#economy-components')
+        ?.textContent.includes('Все критические системы'));
+      assert.equal(repaired,1);
+      assert.match(await page.locator('#economy-wallet').textContent(),/144/);
+      assert.match(await page.locator('#economy-message').textContent(),
+        /Компонент «Двигатель» восстановлен/);
+    });
+  });
+
 test('Commander catalog supports combined mass filters and opens a complete Mech dossier',
   {timeout:120000},async()=>{
     await withPage('market-mech-dossier',{hub:true},async page=>{

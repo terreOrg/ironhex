@@ -1,15 +1,13 @@
 import {EQUIPMENT,construct} from '../../../packages/engine/construction.js';
+import {WEAPON_SPECS} from '../../../packages/engine/equipment.js';
 
 const LOCATION_NAMES={
   'Left Arm':'LA','Right Arm':'RA','Left Torso':'LT','Right Torso':'RT',
   'Center Torso':'CT','Head':'HD','Left Leg':'LL','Right Leg':'RL'
 };
-const CRITICAL_SLOTS={
-  'Large Laser':2,'Medium Laser':1,'Small Laser':1,Flamer:1,
-  PPC:3,'AC/2':1,'AC/5':4,'AC/10':7,'AC/20':10,
-  'Machine Gun':1,'LRM 5':1,'LRM 10':2,'LRM 15':3,'LRM 20':5,
-  'SRM 2':1,'SRM 4':1,'SRM 6':2
-};
+// The importer and combat constructor must agree on equipment footprints.
+const CRITICAL_SLOTS=Object.fromEntries(
+  Object.entries(WEAPON_SPECS).map(([name,spec])=>[name,spec.slots]));
 const FIXED=new Set([
   '-Empty-','Fusion Engine','Gyro','Sensors','Life Support','Cockpit',
   'Shoulder','Upper Arm Actuator','Lower Arm Actuator','Hand Actuator',

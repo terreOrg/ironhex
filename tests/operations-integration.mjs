@@ -2,7 +2,7 @@
 // Run by the isolated Container Smoke workflow, never against production data.
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
-import {example} from '../packages/engine/construction.js';
+import {example,construct} from '../packages/engine/construction.js';
 import {createPool} from '../apps/api/src/db.mjs';
 
 const base='http://127.0.0.1:3000';
@@ -347,3 +347,129 @@ assert.equal(finalShop.data.magazines.find(m=>m.mechId===mechId&&
 assert.equal((await req('/api/v1/economy/reload',{method:'POST',cookie:owner.cookie,
   body:reloadBody})).status,409,'Reload cannot consume another pack twice');
 console.log('Ammo logistics passed: combat magazine persistence, isolated storage, owner-only pack purchases, one-time reload');
+
+// Critical-damage fixture only in disposable CI PostgreSQL. These mutations
+// are not available to browsers; the combat engine records the same slots.
+const criticalDB=createPool();
+let criticalConfig,weaponIndex,damageFixture,brokenAmmo,brokenWeapon;
+try{
+  const row=(await criticalDB.query(
+    'SELECT state,ammo_state FROM hangar_mechs WHERE id=$1',[mechId])).rows[0];
+  criticalConfig=row.state.config;
+  const unit=construct(criticalConfig).unit;
+  const physicalSlots=Object.entries(unit.slots)
+    .flatMap(([location,slots])=>slots.map((value,index)=>({
+      location,slot:index+1,value
+    })));
+  const weaponSlot=physicalSlots.find(s=>s.value?.startsWith('w:'));
+  const ammoSlot=physicalSlots.find(s=>s.value?.startsWith('ammo:'));
+  assert(weaponSlot&&ammoSlot,'Imported mech needs real weapon and magazine criticals');
+  weaponIndex=Number(weaponSlot.value.slice(2));
+  damageFixture={};
+  for(const entry of [{location:'CT',slot:1},weaponSlot,ammoSlot]){
+    (damageFixture[entry.location]??=[]).push(entry.slot-1);
+  }
+  const previous=structuredClone(row.ammo_state||{});
+  previous[ammoSlot.location+':'+ammoSlot.slot]=0;
+  await criticalDB.query(
+    'UPDATE hangar_mechs SET critical_damage=$2::jsonb,ammo_state=$3::jsonb '+
+    'WHERE id=$1',
+    [mechId,JSON.stringify(damageFixture),JSON.stringify(previous)]);
+  brokenAmmo=ammoSlot;
+  brokenWeapon=weaponSlot;
+}finally{await criticalDB.end();}
+const failures=(await req('/api/v1/economy',{cookie:owner.cookie})).data;
+const broken=failures.components.filter(part=>part.mechId===mechId);
+assert.equal(broken.length,3,'Engine + weapon + ammo bin are physically damaged');
+const weaponPart=broken.find(part=>part.kind==='weapon');
+const ammoPart=broken.find(part=>part.kind==='ammo');
+const enginePart=broken.find(part=>part.name==='Двигатель');
+assert(weaponPart&&ammoPart&&enginePart);
+assert.equal(enginePart.serviceCost,6000);
+assert.equal(weaponPart.requiredStock,0);
+assert.equal(failures.magazines.find(m=>m.mechId===mechId&&
+  m.location===brokenAmmo.location&&m.slot===brokenAmmo.slot).damaged,true);
+assert.equal((await req('/api/v1/economy/reload',{
+  method:'POST',cookie:owner.cookie,
+  body:{mechId,location:brokenAmmo.location,slot:brokenAmmo.slot}
+})).data.error,'magazine_damaged',
+  'A destroyed magazine may not be reloaded without replacing the bin');
+assert.equal((await req('/api/v1/hangar/'+mechId,{
+  method:'PATCH',cookie:owner.cookie,body:{config:criticalConfig}
+})).data.error,'mech_needs_component_repair',
+  'Refits must not return broken weapons to the working warehouse');
+
+const damagedMission=await req('/api/v1/operations',{
+  method:'POST',cookie:owner.cookie,
+  body:{title:'Проверка повреждённого меха',mechIds:[mechId],
+    mode:'interactive'}
+});
+assert.equal(damagedMission.status,201,JSON.stringify(damagedMission.data));
+const damagedStarted=await req('/api/v1/operations/'+damagedMission.data.item.id+
+  '/launch',{method:'POST',cookie:owner.cookie});
+assert.equal(damagedStarted.status,200,JSON.stringify(damagedStarted.data));
+const battleDb=createPool();
+try{
+  const row=(await battleDb.query(
+    'SELECT battle_state FROM combat_operations WHERE id=$1',
+    [damagedMission.data.item.id])).rows[0];
+  const mech=row.battle_state.game.units[0];
+  assert.equal(mech.engineHits,1);
+  assert.equal(mech.weapons[weaponIndex].destroyed,true);
+  assert.equal(mech.bins.find(b=>b.location===brokenAmmo.location&&
+    b.slot===brokenAmmo.slot-1).destroyed,true);
+}finally{await battleDb.end();}
+assert.equal((await req('/api/v1/economy/components/repair',{
+  method:'POST',cookie:owner.cookie,
+  body:{mechId,partId:enginePart.id}
+})).data.error,'mech_assigned_operation');
+assert.equal((await req('/api/v1/operations/'+damagedMission.data.item.id+
+  '/abandon',{method:'POST',cookie:owner.cookie})).status,200);
+
+const requestRepair=partId=>req('/api/v1/economy/components/repair',{
+  method:'POST',cookie:owner.cookie,body:{mechId,partId}
+});
+assert.equal((await req('/api/v1/economy/components/repair',{
+  method:'POST',cookie:other.cookie,
+  body:{mechId,partId:weaponPart.id}
+})).status,404,'No cross-account equipment repairs');
+assert.equal((await req('/api/v1/economy/components/repair',{
+  method:'POST',cookie:owner.cookie,origin:false,
+  body:{mechId,partId:weaponPart.id}
+})).status,403);
+assert.equal((await req('/api/v1/economy/components/repair',{
+  method:'POST',cookie:owner.cookie,
+  body:{mechId,partId:weaponPart.id,price:0}
+})).status,422);
+assert.equal((await requestRepair(weaponPart.id)).status,409,
+  'A destroyed weapon must be replaced from owned stock');
+
+for(const part of [weaponPart,ammoPart]){
+  const offer=failures.catalog.find(x=>x.sku===
+    (part.kind==='weapon'?'weapon:'+part.sku:part.sku));
+  assert(offer);
+  const bought=await req('/api/v1/economy/purchase',{
+    method:'POST',cookie:owner.cookie,body:{sku:offer.sku,quantity:1}
+  });
+  assert.equal(bought.status,200,JSON.stringify(bought.data));
+  const fixed=await requestRepair(part.id);
+  assert.equal(fixed.status,200,JSON.stringify(fixed.data));
+  assert.equal(fixed.data.item.sku,part.sku);
+  assert.equal((await requestRepair(part.id)).status,409,
+    'Repairing an already replaced component must not consume a second item');
+}
+const beforeEngine=(await req('/api/v1/economy',{cookie:owner.cookie})).data.balance;
+const engineFixed=await requestRepair(enginePart.id);
+assert.equal(engineFixed.status,200,JSON.stringify(engineFixed.data));
+assert.equal(engineFixed.data.item.spent,6000);
+const afterEngine=(await req('/api/v1/economy',{cookie:owner.cookie})).data;
+assert.equal(afterEngine.balance,beforeEngine-6000);
+assert.equal(afterEngine.components.filter(part=>part.mechId===mechId).length,0);
+assert.equal(afterEngine.magazines.find(m=>m.mechId===mechId&&
+  m.location===brokenAmmo.location&&m.slot===brokenAmmo.slot).rounds,
+  failures.magazines.find(m=>m.mechId===mechId&&
+    m.location===brokenAmmo.location&&m.slot===brokenAmmo.slot).capacity);
+const restoredMech=(await req('/api/v1/hangar',{cookie:owner.cookie}))
+  .data.items.find(item=>item.id===mechId);
+assert.deepEqual(restoredMech.criticalDamage,{});
+console.log('Component damage passed: per-slot battle persistence, critical engine effects, damaged inventory isolation, spare-parts replacement and paid core service');
