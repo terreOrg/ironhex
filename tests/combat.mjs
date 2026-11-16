@@ -10,6 +10,28 @@ test('A damaged gyro reduces stability, not base walking MP',()=>{const g=game()
 test('Heat reduces walk and derived run',()=>{const g=game(),u=g.units[0];u.heat=10;assert.equal(g.mp(u),3);assert.equal(g.mp(u,'run'),5);});
 test('Run may not enter water; jump may land there',()=>{const g=game(),u=g.units[0],t=g.tile(-3,1);Object.assign(t,{type:'water',depth:1,height:-1,surface:0});acting(g,0,'move');assert(!g.reachable(u,'run').some(x=>x.q===t.q&&x.r===t.r));assert(g.reachable(u,'jump').some(x=>x.q===t.q&&x.r===t.r));});
 test('Facing change consumes one movement point',()=>{const g=game();acting(g,0,'move');assert(g.rotate(0,1).ok);assert.equal(g.units[0].spent,1);assert.equal(g.units[0].facing,1);});
+
+test('Facing changes cost one MP per hexside and reject over-budget or invalid turns',()=>{
+ const g=game(),u=g.units[0];acting(g,0,'move');
+ assert(g.rotate(0,3).ok);assert.equal(u.spent,3);assert.equal(u.facing,3);
+ assert.equal(g.rotate(0,3).ok,false);assert.equal(u.spent,3);assert.equal(u.facing,3);
+ assert.equal(g.rotate(0,1.5).ok,false);assert.equal(g.rotate(0,4).ok,false);
+});
+test('Jump landing in water uses an unmodified PSR regardless of depth (BMM p.19)',()=>{
+ const g=game(),u=g.units[0],t=g.tile(u.q+1,u.r);
+ Object.assign(t,{type:'water',depth:2,height:-2,surface:0});g.rng=()=>.99;
+ acting(g,0,'move');assert(g.move(0,t.q,t.r,'jump').ok);
+ assert.equal(g.phaseRolls[0].target,u.piloting);
+ assert.equal(u.prone,false);
+});
+test('Failed water landing falls the full water depth before halving damage (BMM pp.19,57)',()=>{
+ const g=game(),u=g.units[0],t=g.tile(u.q+1,u.r);
+ Object.assign(t,{type:'water',depth:2,height:-2,surface:0});g.rng=()=>0;
+ acting(g,0,'move');assert(g.move(0,t.q,t.r,'jump').ok);
+ assert.equal(g.phaseRolls[0].target,u.piloting);
+ assert.equal(u.prone,true);
+ assert.equal(u.phaseDamage,Math.floor(Math.ceil(u.tonnage/10)*3/2));
+});
 test('Turn cannot advance while unit declarations remain',()=>{const g=game();acting(g,0,'move');assert.equal(g.nextPhase().ok,false);g.hold(0);assert(g.nextPhase().ok);assert.equal(g.phase,'fire');});
 test('Shared MG pool cannot declare two shots with one round',()=>{const g=game(),u=g.units[3],t=g.units[0];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.bins.find(b=>b.weapon===6).shots=1;g.syncAmmo(u);acting(g,3,'fire');assert.equal(g.declareFire(3,[{index:6,target:0},{index:7,target:0}]).ok,false);assert.equal(g.declarations.length,0);});
 test('Declared shot survives destruction of shooter',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;acting(g,0,'fire');assert(g.declareFire(0,[{index:0,target:2}]).ok);u.dead=true;g.resolveFire();assert.equal(g.resolution.length,1);assert.equal(u.pendingHeat,10);});
