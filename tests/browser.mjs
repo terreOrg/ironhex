@@ -539,7 +539,8 @@ test('Commander market displays C-Bills and submits only SKU and quantity',
       await page.waitForFunction(()=>document.querySelector('#economy-supplies small')
         ?.textContent.includes('На складе: 1'));
       assert.equal(purchases,1);
-      assert.match(await page.locator('#economy-message').textContent(),/Заказ выполнен/);
+      await page.waitForFunction(()=>document.querySelector('#economy-message')
+        ?.textContent.includes('Заказ выполнен'));
       await page.locator('#hub-home-button').click();
       assert.equal(await page.locator('.hub-intro').isVisible(),true);
     });
