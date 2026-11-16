@@ -669,8 +669,8 @@
     {
       "id": "bmm-req-054",
       "topicId": "bmm-p068-skidding",
-      "page": 70,
-      "statement": "When skidding into an unoccupied Depth 1+ water hex, the unit immediately stops and takes no additional skid damage for that water hex; existing submerged hull breaches are checked.",
+      "page": 68,
+      "statement": "When skidding into an unoccupied Depth 1+ water hex, the unit immediately stops and takes no additional skid damage for that water hex; existing submerged hull breaches are checked. (See BattleMech Manual p.70.)",
       "status": "tested_case",
       "evidence": [
         {
