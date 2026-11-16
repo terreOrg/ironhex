@@ -1308,3 +1308,58 @@ test('BMM p.48: biped retains hip PSR behavior after Quad critical-hit integrati
  assert.equal(u.psrs.at(-1).reason,'Актуатор LL');
  assert.equal(g.mp(u,'walk'),Math.ceil(u.walk/2));
 });
+
+test('BMM p.45: each quad leg loss causes one immediate fall and ends movement',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ for(const leg of ['LA','RA','LL','RL']){
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(built.unit));
+  u.q=0;u.r=0;u.prone=false;u.moved=false;u.falling=false;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  let fallCount=0;
+  g.fall=actor=>{assert.equal(actor,u);fallCount++;actor.prone=true;};
+  g.destroyLocation(u,leg);
+  assert.equal(fallCount,1,leg+' must fall immediately');
+  assert.equal(u.prone,true);
+  assert.equal(u.moveEndedByLegLoss,true);
+  assert.equal(u.structure[leg],0);
+  assert.equal(g.mp(u,'walk'),4,'First leg loss subtracts 1 walking MP');
+  assert.equal(g.reachable(u,'walk').length,0,'No more movement in same turn');
+  assert.equal(g.stand(u.id).ok,false,'Cannot recover in the same Movement Phase');
+  g.destroyLocation(u,leg);
+  assert.equal(fallCount,1,'Repeating destruction is idempotent for '+leg);
+  assert.deepEqual(u.destroyedSections.filter(l=>l===leg),[leg]);
+  g.endPhase();
+  assert.equal(u.moveEndedByLegLoss,false,'New turn clears the movement block');
+ }
+});
+
+test('BMM p.45: prone quad leg loss does not cause an extra fall',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(built.unit));
+ u.q=0;u.r=0;u.prone=true;
+ let calls=0;g.fall=()=>{calls++};
+ g.destroyLocation(u,'LA');
+ assert.equal(calls,0);
+ assert.equal(g.mp(u,'walk'),4);
+ assert.equal(u.moveEndedByLegLoss,true);
+});
+
+test('BMM p.45: side torso destroying quad front leg triggers real falling damage once',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(built.unit));
+ u.q=0;u.r=0;u.facing=0;u.prone=false;u.dead=false;
+ g.rng=()=>.5;
+ g.destroyLocation(u,'LT');
+ assert.equal(u.structure.LA,0);
+ assert.equal(u.structure.LL,u.maxStructure.LL,'Rear leg survives side torso loss');
+ assert.equal(u.prone,true);
+ assert.equal(g.log.filter(line=>String(line).includes('упал:')).length,1,
+  'Exactly one real fall for recursively destroyed front leg');
+ assert.equal(g.mp(u,'walk'),4);
+});

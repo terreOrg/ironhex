@@ -1318,12 +1318,25 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Destruction of one or more quad legs applies immediate falling, movement loss and special-rule penalties per surviving-leg count.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         19,
         45
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.45: each quad leg loss causes one immediate fall and ends movement"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.45: prone quad leg loss does not cause an extra fall"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.45: side torso destroying quad front leg triggers real falling damage once"
+        }
+      ]
     },
     {
       "id": "bmm-req-090",

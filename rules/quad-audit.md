@@ -462,3 +462,25 @@ One, two and three Quad hip criticals reduce Walking MP from 5 to 3
 without treating the Quad as immobile (BMM p.48). Full critical
 damage timing, new criticals in the same leg, and advanced mobility
 interaction remain unverified, so `bmm-req-090` is `tested_case`.
+
+### Immediate fall on Quad leg destruction (printed pp.44–45)
+
+A previously missing effect is now triggered directly in
+`Game.destroyLocation`: destruction of **any** of the four Quad
+legs immediately knocks a standing Quad prone and resolves the
+usual falling damage. This is not a deferred PSR. A Quad that
+was already prone does **not** fall again. Side-torso destruction
+recursively removing its front leg triggers the same single fall;
+a per-section idempotency record prevents double application
+when damage transfer touches an already destroyed section.
+
+Movement is blocked for the remainder of the current Movement
+Phase (including attempted stands), and the block is reset for
+the next round. Deterministic tests exercise all four legs,
+idempotent re-destruction, prone leg loss, the first-loss MP
+reduction, and a real fall from LT removal.
+
+`bmm-req-089` remains `tested_case`: additional cases for
+two/three/four leg losses, jumping after losing a leg, immobility
+when all four are lost and phase-edge collision timing are still
+required. The strict sequential cursor does not advance.
