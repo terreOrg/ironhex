@@ -74,7 +74,13 @@ const schema = [
   "CREATE INDEX IF NOT EXISTS combat_operations_active_idx ON combat_operations(commander_id,status)",
   "ALTER TABLE pilot_battle_history ADD COLUMN IF NOT EXISTS operation_id UUID REFERENCES combat_operations(id) ON DELETE SET NULL",
   "CREATE UNIQUE INDEX IF NOT EXISTS pilot_history_operation_unique_idx ON pilot_battle_history(operation_id,pilot_id) WHERE operation_id IS NOT NULL",
-  "ALTER TABLE combat_operations ADD COLUMN IF NOT EXISTS control_mode TEXT NOT NULL DEFAULT 'auto' CHECK(control_mode IN ('auto','interactive'))"
+  "ALTER TABLE combat_operations ADD COLUMN IF NOT EXISTS control_mode TEXT NOT NULL DEFAULT 'auto' CHECK(control_mode IN ('auto','interactive'))",
+  "CREATE TABLE IF NOT EXISTS commander_wallets (commander_id UUID PRIMARY KEY REFERENCES commanders(id) ON DELETE CASCADE, balance BIGINT NOT NULL DEFAULT 150000 CHECK(balance>=0))",
+  "CREATE TABLE IF NOT EXISTS commander_supplies (commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, sku TEXT NOT NULL CHECK(sku IN ('armor_patch','structure_kit')), quantity INTEGER NOT NULL CHECK(quantity>=0 AND quantity<=100000), PRIMARY KEY(commander_id,sku))",
+  "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS armor_damage INTEGER NOT NULL DEFAULT 0 CHECK(armor_damage>=0)",
+  "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS structure_damage INTEGER NOT NULL DEFAULT 0 CHECK(structure_damage>=0)",
+  "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS wrecked BOOLEAN NOT NULL DEFAULT false",
+  "ALTER TABLE combat_operations ADD COLUMN IF NOT EXISTS contract_id TEXT NOT NULL DEFAULT 'patrol' CHECK(contract_id IN ('patrol','intercept','assault'))"
 
 ];
 

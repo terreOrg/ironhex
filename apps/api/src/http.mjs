@@ -83,6 +83,7 @@ export function createHttpServer({
   hangarStore = null,
   pilotStore = null,
   operationStore = null,
+  economyStore = null,
   accountFlows = null,
   publicOrigin = null,
   secureCookies = false
@@ -115,17 +116,35 @@ export function createHttpServer({
           apiVersion:1,
           modes:{ai:true,hotseat:true,multiplayer:false},
           features:{database:true,accounts:!!authStore,hangar:!!authStore,pilots:!!pilotStore, emailDelivery:!!accountFlows?.emailAvailable,
-            operations:!!operationStore,campaigns:false,market:false},
+            operations:!!operationStore,campaigns:!!economyStore,market:!!economyStore,economy:!!economyStore,repairs:!!economyStore},
           combatAuthority:'browser',operationsAuthority:operationStore?'server':'unavailable'
         },head);
       }
 
-      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/') || path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/') || path === '/api/v1/operations' || path.startsWith('/api/v1/operations/')) {
+      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/') || path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/') || path === '/api/v1/operations' || path.startsWith('/api/v1/operations/') || path === '/api/v1/economy' || path.startsWith('/api/v1/economy/')) {
         if (!authStore) return json(res,503,{error:'auth_unavailable'},head);
 
         if (path === '/api/v1/auth/me' && (method === 'GET' || head)) {
           const user = await authStore.currentUser(extractSession(req.headers.cookie));
           return json(res,200,{authenticated:!!user,user},head);
+        }
+        if(path === '/api/v1/economy' || path.startsWith('/api/v1/economy/')){
+          const user=await authStore.currentUser(extractSession(req.headers.cookie));
+          if(!user)return json(res,401,{error:'unauthorized'},head);
+          if(user.emailVerificationRequired&&!user.emailVerified)
+            return json(res,403,{error:'email_unverified'},head);
+          if(!economyStore)return json(res,503,{error:'economy_unavailable'},head);
+          if(path==='/api/v1/economy'&&(method==='GET'||head))
+            return json(res,200,await economyStore.summary(user.id),head);
+          if(method==='POST'&&['/api/v1/economy/purchase','/api/v1/economy/repair'].includes(path)){
+            if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
+            const input=await readJson(req);
+            const item=path.endsWith('/purchase')?
+              await economyStore.purchase(user.id,input):
+              await economyStore.repair(user.id,input);
+            return json(res,200,{item},head);
+          }
+          return json(res,404,{error:'not_found'},head);
         }
         if(path === '/api/v1/operations' || path.startsWith('/api/v1/operations/')){
           const user=await authStore.currentUser(extractSession(req.headers.cookie));

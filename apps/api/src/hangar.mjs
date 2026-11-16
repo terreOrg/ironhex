@@ -40,14 +40,16 @@ export function validateDesign(input) {
 
 function serialize(row) {
   return {id:row.id, chassis:row.chassis, callsign:row.callsign,
-    state:row.state, createdAt:row.created_at};
+    state:row.state, createdAt:row.created_at,
+    armorDamage:row.armor_damage||0,structureDamage:row.structure_damage||0,
+    wrecked:!!row.wrecked};
 }
 
 export function createHangarStore(pool) {
   return {
     async list(commanderId) {
       const result=await pool.query(
-        'SELECT id,chassis,callsign,state,created_at FROM hangar_mechs ' +
+        'SELECT id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked FROM hangar_mechs ' +
         'WHERE commander_id=$1 ORDER BY created_at DESC LIMIT 100',
         [commanderId]
       );
@@ -59,7 +61,7 @@ export function createHangarStore(pool) {
         'INSERT INTO hangar_mechs(commander_id,chassis,callsign,state) ' +
         'SELECT $1,$2,$3,$4::jsonb WHERE ' +
         '(SELECT count(*) FROM hangar_mechs WHERE commander_id=$1) < 50 ' +
-        'RETURNING id,chassis,callsign,state,created_at',
+        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked',
         [commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]
       );
       if (!result.rows.length) throw new AuthError(409,'hangar_full');
@@ -71,7 +73,7 @@ export function createHangarStore(pool) {
       const result=await pool.query(
         'UPDATE hangar_mechs SET chassis=$3,callsign=$4,state=$5::jsonb ' +
         'WHERE id=$1 AND commander_id=$2 ' +
-        'RETURNING id,chassis,callsign,state,created_at',
+        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked',
         [id,commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]
       );
       if (!result.rows.length) throw new AuthError(404,'mech_not_found');
