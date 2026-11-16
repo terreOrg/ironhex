@@ -74,8 +74,8 @@ function createLimiter(max, windowMs) {
 }
 
 /**
- * Only same-origin JSON POSTs are accepted for authentication.
- * Mutation APIs for market, C-Bills and combat stay disabled.
+ * Mutations require a valid commander session, same-origin request and JSON payload.
+ * Financial state and tactical outcomes are always calculated by the server.
  */
 export function createHttpServer({
   probeDatabase = async () => {},
