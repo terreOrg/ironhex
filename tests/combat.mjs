@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {Game,chargeTravelHexes,distance,CLUSTER_HITS} from '../dist/engine.js';
+import {Game,chargeTravelHexes,distance,CLUSTER_HITS,UNDERWATER_RANGES} from '../dist/engine.js';
 let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS',name);};
 function game(){const g=new Game({rng:()=>.5});for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});return g;}
 function acting(g,id,phase){g.phase=phase;g.activeTeam=g.units[id].team;g.queue=[g.activeTeam];g.actingId=null;}
@@ -83,6 +83,59 @@ test('Sixth wound kills pilot without making a consciousness check (BMM p.58)',(
 test('Ammo explosion bypasses armor and wounds pilot twice',()=>{const g=game(),u=g.units[0];u.bins[0].shots=1;const a=u.armor.RT;g.explode(u,u.bins[0]);assert.equal(u.structure.RT,3);assert.equal(u.armor.RT,a);assert.equal(u.pilotWounds,2);});
 test('A damaged gyro reduces stability, not base walking MP',()=>{const g=game(),u=g.units[0];u.gyroHits=1;assert.equal(g.psrMod(u),3);assert.equal(g.mp(u),5);u.actuators.LL.hip=true;assert.equal(g.mp(u),3);});
 test('Heat reduces walk and derived run',()=>{const g=game(),u=g.units[0];u.heat=10;assert.equal(g.mp(u),3);assert.equal(g.mp(u,'run'),5);});
+
+test('Underwater ranges match every supported BMM energy-weapon table row (p.65)',()=>{
+ const rows={
+ 'Small Laser':[1,2,2],'Medium Laser':[2,4,6],'Large Laser':[3,6,9],
+ PPC:[4,7,10],
+ 'ER Small Laser':[1,2,3],'ER Medium Laser':[3,5,8],
+ 'ER Large Laser':[3,9,12],'ER PPC':[4,10,16],
+ 'Clan ER Small Laser':[1,2,4],'Clan ER Medium Laser':[3,7,10],
+ 'Clan ER Large Laser':[5,10,16],'Clan ER PPC':[4,10,16],
+ 'Small Pulse Laser':[1,2,2],'Medium Pulse Laser':[2,3,4],
+ 'Large Pulse Laser':[2,5,7],
+ 'Clan Small Pulse Laser':[1,2,4],'Clan Medium Pulse Laser':[3,5,8],
+ 'Clan Large Pulse Laser':[4,10,14]
+ };
+ assert.equal(Object.keys(UNDERWATER_RANGES).length,Object.keys(rows).length);
+ for(const [name,expected] of Object.entries(rows))
+  assert.equal(JSON.stringify(UNDERWATER_RANGES[name]),JSON.stringify(expected),name);
+});
+test('Medium Laser range modifiers underwater follow 2/4/6 rather than half ranges',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'water',depth:2,height:-2,surface:0});
+ u.q=0;u.r=0;u.facing=0;u.weapons[0]={name:'Medium Laser',heat:3,damage:5,
+   min:0,ammo:null,location:'RA',ranges:[3,6,9]};
+ for(const [hex,modifier] of [[2,0],[3,2],[4,2],[5,4],[6,4]]){
+  t.q=hex;t.r=0;
+  const preview=g.preview(0,2,0);
+  assert.equal(preview.legal,true,'range '+hex+': '+preview.reason);
+  assert.equal(preview.mods.range,modifier,'range '+hex);
+ }
+});
+test('PPC underwater uses BMM 4/7/10 ranges with minimum distance 3',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'water',depth:2,height:-2,surface:0});
+ u.q=0;u.r=0;u.facing=0;u.weapons[0]={name:'PPC',heat:10,damage:10,
+   min:3,ammo:null,location:'RA',ranges:[6,12,18]};
+ for(const [hex,rangeMod,minMod] of [[2,0,2],[4,0,0],[5,2,0],[6,2,0]]){
+  t.q=hex;t.r=0;const p=g.preview(0,2,0);
+  assert.equal(p.legal,true,'PPC '+hex+': '+p.reason);
+  assert.equal(p.mods.range,rangeMod);assert.equal(p.mods.minimum,minMod);
+ }
+});
+test('Flamers, autocannons and missiles cannot fire underwater under BMM rules',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+  Object.assign(tile,{type:'water',depth:2,height:-2,surface:0});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ for(const name of ['Flamer','AC/2','LRM 10','SRM 2']){
+  u.weapons[0]={name,damage:2,heat:1,min:0,ranges:[3,6,9],
+   ammo:name==='Flamer'?null:10,location:'RA',rack:name.startsWith('LRM')?10:name.startsWith('SRM')?2:0};
+  const p=g.preview(0,2,0);assert.equal(p.legal,false,name);
+  assert.equal(p.reason,'Оружие не допускает подводную стрельбу');
+ }
+});
+
 test('Run may not enter water; jump may land there',()=>{const g=game(),u=g.units[0],t=g.tile(-3,1);Object.assign(t,{type:'water',depth:1,height:-1,surface:0});acting(g,0,'move');assert(!g.reachable(u,'run').some(x=>x.q===t.q&&x.r===t.r));assert(g.reachable(u,'jump').some(x=>x.q===t.q&&x.r===t.r));});
 test('Facing change consumes one movement point',()=>{const g=game();acting(g,0,'move');assert(g.rotate(0,1).ok);assert.equal(g.units[0].spent,1);assert.equal(g.units[0].facing,1);});
 
