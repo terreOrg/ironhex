@@ -1,52 +1,56 @@
 # IRON HEX — BattleTech
 
-Browser-based isometric BattleTech fan game with animated 3D models, a cockpit-style interface, animated dice, live mech record sheets and a mech construction tool.
+Unofficial browser-based isometric BattleTech prototype, with animated 3D models,
+cockpit UI, dice, mech record sheets and a construction tool.
 
-**Play:** https://iron-hex-battletech.chemosh.chatgpt.site/
+**Published prototype:** https://iron-hex-battletech.chemosh.chatgpt.site/
 
-## Run locally
+## Architecture
 
-No build step or npm dependencies are required. Serve `dist/` with an HTTP server:
+The project has a modular web/API structure with a shared rules engine:
 
-```sh
+- `apps/web/src/` — authoritative browser JavaScript, HTML and CSS
+- `packages/engine/` — shared BattleTech rules used by browser and backend
+- `apps/api/` — Node.js read-only API and PostgreSQL schema foundation
+- `dist/` — generated browser runtime, vendored 3D assets and GLB models
+- `compose.yaml` — Komodo Docker stack: frontend, API and PostgreSQL
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) and [SELF-HOSTING.md](SELF-HOSTING.md).
+
+The existing browser AI and hotseat game work independently of the API.
+**Campaign persistence, accounts, a functioning market and online multiplayer
+are not implemented yet.** The database tables are only preparation.
+
+## Development
+
+Use Node.js 24 or later. After editing `apps/web/src` or `packages/engine`,
+regenerate and commit the static runtime to preserve the published Sites app:
+
+```bash
+node scripts/build-web.mjs
+node scripts/build-web.mjs --check
+node --test tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs
 python3 -m http.server 8080 --directory dist
 ```
 
-Open http://localhost:8080. ES modules require HTTP; opening index.html through file:// is not supported. WebGL enables 3D rendering; a Canvas map is available as fallback. The interface is in Russian. Play against the computer or use local hotseat mode; there is no network multiplayer.
+Open http://localhost:8080. Opening index.html using file:// does not work.
+WebGL is needed for 3D; Canvas is the fallback.
 
-## Tests
+For full frontend/API/PostgreSQL hosting, follow [SELF-HOSTING.md](SELF-HOSTING.md).
+The API uses `/api/health`, `/api/v1/catalog/chassis` and
+`/api/v1/capabilities`. It has no unauthenticated write endpoints.
 
-Use Node.js 24 or later:
+## Automated tests
 
-```sh
-node tests/combat.mjs
-node tests/construction.mjs
-node tests/fire-arcs.mjs
-```
+GitHub Actions on the existing self-hosted runners runs unit tests, browser
+Playwright tests and Docker image smoke checks.
 
-## Source layout
+## Rules and licenses
 
-- `dist/app.js` — scene, interaction, animations and user interface.
-- `dist/engine.js` — combat rules and phase resolution.
-- `dist/legacy-engine.js` — shared base engine, map and chassis definitions.
-- `dist/construction.js`, `dist/mechlab.*` — mech construction and validation.
-- `dist/fire-arcs.js` — directional and range overlays.
-- `dist/record-sheet.js` — live record sheet.
-- `dist/dice.js` — animated dice display.
-- `dist/style.css`, `dist/cockpit.css` — responsive UI and cockpit styling.
-- `dist/*.glb` — bundled animated 3D assets.
-- `dist/three.js` and loader/helper modules — bundled Three.js runtime.
-- `tests/` — deterministic combat, construction and firing-sector checks.
-- `.openai/hosting.json` — existing Sites deployment configuration.
+This is an unofficial prototype, **not a complete implementation of the AGoAC
+rulebook**. See `dist/coverage.html` for rules coverage and limitations.
+The models are visual proxies, not canonical depictions.
 
-## Rules coverage
-
-This is an unofficial prototype, **not a complete implementation of the rulebook**. See `dist/coverage.html` for supported mechanics and remaining limitations, including official scenarios and some LOS, displacement and physical-attack edge cases.
-
-The model assets are visual proxies, not canonical models of the named chassis. Custom mech designs are stored locally in the browser.
-
-## Asset licenses and credits
-
-See `dist/ASSET-LICENSE.md` and `dist/LICENSES/`. Third-party code and models retain their original licenses. BattleTech names and rules remain the property of their respective rights holders. This project is not affiliated with or endorsed by them.
-
-Exported from published source commit `5c5274a8719014e069ea29816a2ef7d1d70f135a`.
+See `dist/ASSET-LICENSE.md` and `dist/LICENSES/` for bundled asset credits
+and licensing. BattleTech names and rules remain the property of their
+respective owners; this project is not affiliated with or endorsed by them.

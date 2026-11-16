@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - Dockerfile
+      - 'apps/api/**'
+      - 'apps/web/**'
+      - 'packages/engine/**'
+      - 'scripts/build-web.mjs'
       - nginx.conf
       - compose.yaml
       - .dockerignore
@@ -21,21 +25,23 @@ concurrency:
 
 jobs:
   container:
-    name: Build and serve game
+    name: Frontend and backend Docker smoke
     runs-on: [self-hosted, Linux, X64, spellfire]
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Verify Compose configuration
+      - name: Verify Compose with CI-only placeholder secret
+        env:
+          IRONHEX_DB_PASSWORD: ci-validation-only
         run: docker compose -f compose.yaml config --quiet
       - name: Build and smoke-test isolated Nginx image
         shell: bash
         run: |
           set -euo pipefail
-          image_tag="ironhex-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}"
-          container="ironhex-smoke-${GITHUB_RUN_ID}"
+          image_tag="ironhex-web-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}"
+          container="ironhex-web-smoke-${GITHUB_RUN_ID}"
           trap 'docker logs "$container" 2>/dev/null || true; docker rm -f "$container" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
           docker build --tag "$image_tag" .
           docker run -d --rm --name "$container" \
@@ -53,4 +59,12 @@ jobs:
           docker exec "$container" wget -qO /dev/null http://127.0.0.1:8080/app.js
           docker exec "$container" wget -qO /dev/null http://127.0.0.1:8080/atlas-09.glb
           docker exec "$container" wget -qO /dev/null http://127.0.0.1:8080/aether-02.glb
-          echo "IRON HEX container smoke test passed."
+
+      - name: Build backend image
+        shell: bash
+        run: |
+          set -euo pipefail
+          image_tag="ironhex-api-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}"
+          trap 'docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
+          docker build -f apps/api/Dockerfile --tag "$image_tag" .
+          docker image inspect "$image_tag" --format '{{.Id}}'

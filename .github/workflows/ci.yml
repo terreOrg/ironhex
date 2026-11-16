@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   syntax:
-    name: JavaScript syntax
+    name: Source consistency and JavaScript syntax
     runs-on: [self-hosted, Linux, X64, spellfire]
     timeout-minutes: 10
     steps:
@@ -26,11 +26,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Validate generated browser sources
+        run: node scripts/build-web.mjs --check
       - name: Validate JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
-          for file in dist/*.js tests/*.mjs; do
+          for file in dist/*.js apps/web/src/*.js packages/engine/*.js \
+            apps/api/src/*.mjs scripts/*.mjs tests/*.mjs; do
             node --check "$file"
           done
 
@@ -48,6 +51,8 @@ jobs:
             file: tests/construction.mjs
           - suite: fire-arcs
             file: tests/fire-arcs.mjs
+          - suite: api
+            file: tests/api.mjs
     steps:
       - name: Check out source
         uses: actions/checkout@v4

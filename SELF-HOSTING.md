@@ -1,109 +1,113 @@
-# Self-hosting IRON HEX on the user's CentOS / Komodo server
+# IRON HEX on CentOS Stream / Komodo
 
-IRON HEX is a static browser application. It has **no application database** and
-does not require a Node.js server at runtime. The two large animated GLB models,
-Three.js and the rules engine are included under `dist/`.
+The repository contains a **three-service** Docker Compose stack:
 
-## 1. Deploy in Komodo
+- `ironhex-web`: non-root Nginx serving the existing BattleTech game
+- `ironhex-api`: Node.js 24 API (read-only while authentication is unfinished)
+- `ironhex-db`: PostgreSQL 17 with persistent `ironhex-db-data` volume
 
-Create a new **Stack** named `ironhex` using the Git repository source:
+No explicit Compose networks are defined; Komodo manages the stack's default
+network. Caddy stays on the host as a systemd service.
+
+## 1. Create or update the Komodo Stack
 
 | Setting | Value |
 | --- | --- |
-| Server | The CentOS host connected to Komodo |
-| Source | Git repository |
+| Name | `ironhex` |
+| Server | CentOS host |
+| Source | Git Repository |
 | Repository | `terreOrg/ironhex` |
 | Branch | `main` |
 | Compose file | `compose.yaml` |
-| Project name | `ironhex` |
-| Run build / Build on deploy | **Enabled** |
-| Environment (optional) | `IRONHEX_PORT=18088` |
+| Build on deploy | **Enabled** |
 
-Leave `Files on host` disabled when choosing the Git source. No custom Docker
-network or shared volume is required. Deploy the Stack.
+In **Stack environment variables**, set a long random password:
 
-The compose file builds a non-root Nginx image and binds its sole port to
-**127.0.0.1:18088**, not to the host's public/LAN interfaces.
-
-If port 18088 is in use, change `IRONHEX_PORT` in Komodo before deploying.
-
-Check from the host:
-
-```bash
-curl -fsS http://127.0.0.1:18088/health
-curl -I http://127.0.0.1:18088/
-docker ps --filter name=ironhex
+```
+IRONHEX_DB_PASSWORD=<set-a-unique-strong-password-in-Komodo>
+IRONHEX_PORT=18088
+IRONHEX_API_PORT=18089
 ```
 
-The first command should print `OK` and the second return HTTP 200.
+The password is required. Do not commit it to Git, paste it into a chat, or
+create a public `.env` file. To generate one privately on the server:
+`openssl rand -hex 32`. Put the result directly in Komodo's environment editor.
 
-## 2. Publish only on the trusted LAN through host Caddy
+If you already deployed the previous *frontend-only* Stack, update its Git source
+and use **Deploy** with building enabled; it will replace the old one-container
+stack with three services. Do not delete the named database volume after
+initialization.
 
-Caddy remains a **systemd service on the host**, not a Docker container.
-Add an independent site block to `/etc/caddy/Caddyfile`:
+No port forwarding or public DNS record is needed. Both HTTP ports bind to
+`127.0.0.1` on the host. Database port 5432 is not published at all.
+
+## 2. Verify containers before enabling the reverse proxy
+
+```bash
+docker ps --filter name=ironhex
+curl -fsS http://127.0.0.1:18088/health
+curl -fsS http://127.0.0.1:18089/api/health
+curl -fsS http://127.0.0.1:18089/api/v1/catalog/chassis
+```
+
+Expected health checks: web returns `OK` and API returns
+`{"status":"ok","service":"ironhex-api","database":"ok"}`.
+
+The chassis endpoint returns four units from the shared rules engine.
+
+## 3. Caddy (host service, not a Docker container)
+
+Replace the previous `http://ironhex.lan` block with:
 
 ```caddyfile
 http://ironhex.lan {
-    reverse_proxy 127.0.0.1:18088
+    handle /api/* {
+        reverse_proxy 127.0.0.1:18089
+    }
+    handle {
+        reverse_proxy 127.0.0.1:18088
+    }
 }
 ```
 
-Then validate and reload:
+**Use `handle`, not `handle_path`:** the API expects the `/api/` prefix.
 
 ```bash
-sudo caddy fmt --overwrite /etc/caddy/Caddyfile
 sudo caddy validate --config /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 ```
 
-In Technitium DNS, add a local A record:
+In Technitium DNS, create a local A record:
+`ironhex.lan -> 192.168.0.117`.
 
-```
-ironhex.lan -> 192.168.0.117
-```
+From a device on the LAN (or VPN with local DNS), open:
 
-Open `http://ironhex.lan` from a device using that DNS (or a VPN client that
-can reach the LAN and resolve `.lan`).
+- `http://ironhex.lan/` — current browser game
+- `http://ironhex.lan/api/health` — backend/database health
+- `http://ironhex.lan/api/v1/catalog/chassis` — starter chassis catalog
 
-Do **not** add public DNS records or router forwarding for port 18088.
-To add an HTTPS-only VPN/internal domain in the future, configure an explicit
-Caddy site using the existing local-only wildcard certificate setup.
+For now the browser still runs the same AI/hotseat game independently from
+the backend. Online gameplay, users, wallet balance, campaigns and market
+transactions are not ready yet.
 
-## 3. See changes in the running game
+## 4. Seeing updates
 
-Commit changes to `main` on GitHub. Existing CI runs unit and browser tests.
-In Komodo open the `ironhex` Stack and click **Deploy** (not just Restart).
+Commit updates to `main` and ensure Actions are green. In Komodo press
+**Deploy**, not just Restart. This fetches changes and rebuilds both images
+(using canonical web sources and shared engine). Refresh the browser. For
+existing Sites publishing, run `node scripts/build-web.mjs` and commit
+generated `dist` files as well.
 
-Komodo updates the repository working copy and rebuilds the image from `dist/`.
-The Compose service has `pull_policy: build`, so image contents are rebuilt.
-Nginx requests are configured to revalidate cached HTML, JavaScript and GLB
-assets, avoiding stale resources after a game update. Refresh the browser tab.
+A future automated deployment can be triggered locally by GitHub Actions
+on `jig`/`jog` after tests succeed. Do not publicly expose Komodo just
+to receive webhooks.
 
-You can always redeploy an earlier Git commit by selecting it in the Komodo
-stack Git configuration (then Deploy), or by reverting in GitHub.
+## 5. Persistence and security
 
-**Important:** Do not enable Docker image auto-update expecting it to notice
-changes to JavaScript in the Git repository. That feature checks remote image
-digests, not the source tree.
+The DB volume retains application schema across routine rebuilds. Back it up
+before upgrades and never use `docker compose down -v` on this stack.
 
-## 4. Optional: auto-deploy
-
-Komodo supports Stack Git webhooks. Enable Stack `webhook_force_deploy` and
-`run_build` so that changes to `dist/**` also trigger an image rebuild (not
-just edits to `compose.yaml`). The webhook endpoint is shown in Komodo under
-the Stack's **Config -> Webhooks**.
-
-The home Komodo dashboard is private. Do **not** expose it on the Internet
-just to accept a GitHub push webhook. A safer follow-up is a post-CI GitHub
-Actions job running on the existing local `jig`/`jog` runners that calls
-the Komodo webhook **over the host's local network**, with a scoped secret.
-Set up that action only after the first manual deployment succeeds.
-
-## Security and limitations
-
-- Nginx serves static files only; gameplay state and mech designs reside in
-  each visitor's browser localStorage, not on this server.
-- No multiplayer server is included. Hotseat and computer opponent still work.
-- The service is loopback-only. Caddy determines who can reach it.
-- Use this only with trusted commits: self-hosted runners on a publicly
-  readable repository must not execute untrusted fork pull requests.
+The API deliberately exposes **no mutating endpoints** until identity,
+authorization, idempotency and server-authoritative transactions are built.
+The current game has local browser state only. Keep Ironhex limited to LAN/VPN
+unless you add authentication, rate limits, and more restrictive controls.

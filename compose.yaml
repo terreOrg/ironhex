@@ -1,22 +1,69 @@
 name: ironhex
 
 services:
-  ironhex:
+  ironhex-web:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ironhex:local
+    image: ironhex-web:local
     pull_policy: build
-    container_name: ironhex
+    container_name: ironhex-web
     restart: unless-stopped
-
-    # Caddy runs on the host; no direct LAN/WAN exposure from Docker.
     ports:
       - "127.0.0.1:${IRONHEX_PORT:-18088}:8080"
-
     security_opt:
       - no-new-privileges:true
     cap_drop:
       - ALL
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
+
+  ironhex-api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: ironhex-api:local
+    pull_policy: build
+    container_name: ironhex-api
+    restart: unless-stopped
+    depends_on:
+      ironhex-db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      PGHOST: ironhex-db
+      PGPORT: "5432"
+      PGUSER: ironhex
+      PGPASSWORD: "${IRONHEX_DB_PASSWORD:?Set IRONHEX_DB_PASSWORD in Komodo}"
+      PGDATABASE: ironhex
+    ports:
+      - "127.0.0.1:${IRONHEX_API_PORT:-18089}:3000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
+
+  ironhex-db:
+    image: postgres:17-alpine
+    container_name: ironhex-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ironhex
+      POSTGRES_PASSWORD: "${IRONHEX_DB_PASSWORD:?Set IRONHEX_DB_PASSWORD in Komodo}"
+      POSTGRES_DB: ironhex
+    volumes:
+      - ironhex-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ironhex -d ironhex"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  ironhex-db-data:
