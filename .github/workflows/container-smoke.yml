@@ -62,13 +62,21 @@ jobs:
           docker run -d --rm --name "$database" \
             -e POSTGRES_USER=ironhex -e POSTGRES_DB=ironhex \
             -e POSTGRES_PASSWORD=ci-only-not-a-real-secret postgres:17-alpine
+          # PostgreSQL's temporary bootstrap server accepts Unix-socket queries,
+          # then shuts down. Test the final TCP listener to avoid that race.
+          ready=0
           for i in $(seq 1 60); do
-            if docker exec "$database" pg_isready -U ironhex -d ironhex >/dev/null 2>&1; then
+            if docker exec "$database" sh -ec 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atqc "SELECT 1"' 2>/dev/null | grep -qx '1'; then
+              ready=1
               break
             fi
             sleep 1
           done
-          docker exec "$database" pg_isready -U ironhex -d ironhex
+          if [ "$ready" -ne 1 ]; then
+            docker logs "$database"
+            echo "PostgreSQL did not become ready" >&2
+            exit 1
+          fi
           docker run -d --rm --name "$api" --network "container:$database" \
             -e PGHOST=127.0.0.1 -e PGPORT=5432 \
             -e PGUSER=ironhex -e PGDATABASE=ironhex \
