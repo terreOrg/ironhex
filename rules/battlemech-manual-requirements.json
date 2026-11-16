@@ -1293,11 +1293,16 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "A quad with undamaged relevant hips may kick rearward with the extra +1 target number modifier and proper kick location table.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         38
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.38: a quad may kick front or rear with the correct leg pair and +1 rear TN"
+        }
+      ]
     },
     {
       "id": "bmm-req-089",

@@ -391,3 +391,21 @@ and checks biped physical-table regressions. This is
 `bmm-req-087: tested_case`, not verified: physical attack declaration
 constraints, cover interactions, rear kicks and critical-hit
 resolution require independent integration tests.
+
+### Quad backward kicking (printed p.38)
+
+Quad kicking now accepts both front legs in the forward arc and
+both rear legs in the rear arc. It checks *both* corresponding hip
+actuators, the selected leg's weapon fire, terrain elevation, and
+applies the p.38 **+1 Target Number** modifier to a rear kick.
+For side effects it resolves the p.38 Quad Kick Location Table already
+added to the hit-location engine. The AI considers four-legged
+forward and backward kick choices. Quads are explicitly barred from
+punching, pushing or club attacks requiring biped arms.
+
+The focused regression covers front and rear targets, all four
+candidate legs, the +1 TN differential, damage and location table,
+damaged front/rear hip pairs, leg-weapon fire, and biped compatibility.
+The status of `bmm-req-088` is `tested_case`, **not verified**
+pending an end-to-end physical phase, fall PSRs and detailed rear-arc
+critical/flooding interactions.

@@ -1117,3 +1117,50 @@ test('BMM pp.33,38-39: Quad hit, punch and kick locations match every table row'
  die(6);assert.equal(g.hit(u,5,'rear','kick').location,'LL',
   'Biped rear kick table stays unchanged');
 });
+
+test('BMM p.38: a quad may kick front or rear with the correct leg pair and +1 rear TN',()=>{
+ const design=construct({...example,name:'Quad kick audit',config:'Quad',jump:0,sinks:10,equipment:[]},
+  {auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const g=flatGame(),u=g.units[0],target=g.units[2];
+ Object.assign(u,design.unit);
+ g.phase='physical';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ u.q=0;u.r=0;u.facing=0;u.prone=false;u.moveMode='stand';
+ u.firedLocations=[];target.prone=false;target.dead=false;target.q=1;target.r=0;
+ const front=g.physicalPreview(u.id,target.id,'kick','LA');
+ assert.equal(front.legal,true,front.reason);
+ assert.equal(front.damage,11);
+ assert.equal(front.table,'kick');
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','RA').legal,true);
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','RL').legal,false,
+  'A rear leg cannot make a forward kick');
+ target.q=-1;target.r=0;
+ const rear=g.physicalPreview(u.id,target.id,'kick','RL');
+ assert.equal(rear.legal,true,rear.reason);
+ assert.equal(rear.damage,11);
+ assert.equal(rear.targetNumber,front.targetNumber+1,'Rear Quad kick has +1 TN');
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','LL').legal,true);
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','LA').legal,false,
+  'A front leg cannot kick into the rear arc');
+ for(const type of ['punch','push','club','hatchet']){
+  assert.equal(g.physicalPreview(u.id,target.id,type,'RA').legal,false,
+   'Quad has no biped arms for '+type);
+ }
+ u.actuators.LL.hip=true;
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','RL').legal,false,
+  'Both rear hips must be intact, even when kicking with the other rear leg');
+ u.actuators.LL.hip=false;u.actuators.LA.hip=true;
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','RL').legal,true,
+  'Rear kick remains legal when a front hip is damaged');
+ target.q=1;target.r=0;
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','RA').legal,false,
+  'Both front hips must be intact');
+ u.actuators.LA.hip=false;u.firedLocations=['RA'];
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','RA').legal,false,
+  'A Quad leg cannot kick after firing its own leg-mounted weapon');
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','LA').legal,true,
+  'The other intact front leg remains eligible');
+ u.config='Biped';u.firedLocations=[];
+ assert.equal(g.physicalPreview(u.id,target.id,'kick','LA').legal,false,
+  'Biped arms cannot be used as kicking legs');
+});
