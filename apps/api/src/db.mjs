@@ -73,7 +73,8 @@ const schema = [
   "CREATE INDEX IF NOT EXISTS combat_operations_owner_idx ON combat_operations(commander_id,created_at DESC)",
   "CREATE INDEX IF NOT EXISTS combat_operations_active_idx ON combat_operations(commander_id,status)",
   "ALTER TABLE pilot_battle_history ADD COLUMN IF NOT EXISTS operation_id UUID REFERENCES combat_operations(id) ON DELETE SET NULL",
-  "CREATE UNIQUE INDEX IF NOT EXISTS pilot_history_operation_unique_idx ON pilot_battle_history(operation_id,pilot_id) WHERE operation_id IS NOT NULL"
+  "CREATE UNIQUE INDEX IF NOT EXISTS pilot_history_operation_unique_idx ON pilot_battle_history(operation_id,pilot_id) WHERE operation_id IS NOT NULL",
+  "ALTER TABLE combat_operations ADD COLUMN IF NOT EXISTS control_mode TEXT NOT NULL DEFAULT 'auto' CHECK(control_mode IN ('auto','interactive'))"
 
 ];
 
