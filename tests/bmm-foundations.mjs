@@ -912,3 +912,22 @@ test('BMM p.19: declared walk/run controls Quad standing budget and later moveme
  assert.throws(()=>validateTacticalOrder({
   type:'stand',version:1,id:0,mode:'jump'}),/invalid_command/);
 });
+
+test('BMM p.5 Quad torso cannot twist or flip its front legs as arms',()=>{
+ const g=flatGame(),u=g.units[0];
+ g.phase='fire';g.activeTeam=u.team;
+ u.config='Quad';u.prone=false;u.twist=0;u.flip=false;
+ for(const value of [-1,1]){
+  const result=g.twist(u.id,value);
+  assert.equal(result.ok,false,'Quad must not twist '+value);
+  assert.equal(u.twist,0);
+ }
+ assert.equal(g.flipArms(u.id,true).ok,false);
+ assert.equal(u.flip,false);
+ assert.equal(g.twist(u.id,0).ok,false,'A Quad cannot invoke torso twist without a quirk');
+ u.config='Biped';
+ assert.equal(g.twist(u.id,1).ok,true,'Biped retains torso twist');
+ assert.equal(u.twist,1);
+ u.twist=0;
+ assert.equal(g.twist(u.id,0.5).ok,false,'Fractional twist must be rejected');
+});

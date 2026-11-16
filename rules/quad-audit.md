@@ -313,3 +313,13 @@ single-command UI chooses an allowed mode for backward
 compatibility. For a two-legged Quad and minimum stands, running
 is mandatory, so an explicit Walking declaration is invalid.
 Validation and deterministic heat tests cover all cases.
+
+### Quad torso-twist and arm-flip fail-closed guard
+
+The combat action now rejects Quad torso twist commands (including
+zero-angle twist orders), and forbids flipping front legs as biped
+arms. The AI's fire search also restricts a Quad to zero twist.
+The standard biped twist remains available; fractional twist values
+are now rejected for both chassis. This is the standard, non-quirk
+case only: qualifying optional torso-twist quirks are **not yet
+implemented**, so bmm-req-083 and bmm-req-094 remain open.
