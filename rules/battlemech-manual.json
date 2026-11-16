@@ -2290,7 +2290,7 @@
       "kind": "topic",
       "optional": false,
       "status": "known_missing",
-      "note": "Basic skid PSR, slide damage and involuntary charge on hit are tested. Miss/avoidance continuation and collisions with buildings require further resolution; status stays known_missing.",
+      "note": "Continuation after missed or lethal involuntary charges is tested; intermediate skid damage applies after collisions. Defender-chosen immediate dodge movement, building collisions, water and level interrupts remain unimplemented; this heading is NOT verified.",
       "evidence": [
         {
           "file": "tests/combat.mjs",
@@ -2335,6 +2335,26 @@
         {
           "file": "tests/combat.mjs",
           "test": "Failed involuntary skidding charge does not displace the target"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Missed skid charge crosses defender hex and applies later damage (BMM p.71)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Missed charge in the last skid hex cannot leave overlapping mechs"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Lethal collision damage destroys target and skid continues (BMM p.71)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid terrain cost excludes optional night walking surcharge"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Destroyed skidding attacker never resolves collision or retains pending impact"
         }
       ]
     },
