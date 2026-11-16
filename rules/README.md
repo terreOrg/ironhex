@@ -84,3 +84,12 @@ charge; successful charges damage the target and displace it, and unmoved
 targets get an avoidance PSR. The route after a failed or dodged charge and
 collisions with structures remain unverified. The p.68 heading remains
 `known_missing` until those edge cases are tested.
+
+### Floating Criticals (optional, BMM p.45)
+
+This rule is disabled by default and can be enabled at battle setup via the
+browser or the authoritative server command. Normal location-table rolls of 2
+are rerolled to determine the affected location; a second roll of 2 does not
+cause another through-armor critical. Partial cover forces a covered leg
+location to reroll. Five explicit combat cases are tracked above; this
+heading is **tested_subset**, not certified fully verified.
