@@ -68,7 +68,10 @@ const schema = [
   "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS pilot_id UUID REFERENCES mechwarrior_pilots(id) ON DELETE SET NULL",
   "CREATE UNIQUE INDEX IF NOT EXISTS hangar_mechs_unique_pilot_idx ON hangar_mechs(pilot_id) WHERE pilot_id IS NOT NULL",
   "CREATE TABLE IF NOT EXISTS pilot_battle_history (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, pilot_id UUID NOT NULL REFERENCES mechwarrior_pilots(id) ON DELETE CASCADE, commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, mech_chassis TEXT NOT NULL, result TEXT NOT NULL CHECK(result IN ('victory','defeat','draw')), xp_awarded INTEGER NOT NULL DEFAULT 0 CHECK(xp_awarded >= 0), kills INTEGER NOT NULL DEFAULT 0 CHECK(kills >= 0), created_at TIMESTAMPTZ NOT NULL DEFAULT now())",
-  "CREATE INDEX IF NOT EXISTS pilot_battle_history_pilot_idx ON pilot_battle_history(pilot_id,created_at DESC)"
+  "CREATE INDEX IF NOT EXISTS pilot_battle_history_pilot_idx ON pilot_battle_history(pilot_id,created_at DESC)",
+  "CREATE TABLE IF NOT EXISTS combat_operations (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, title TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'draft' CHECK(status IN ('draft','active','completed','abandoned')), roster JSONB NOT NULL, battle_state JSONB, report JSONB, version INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), started_at TIMESTAMPTZ, completed_at TIMESTAMPTZ)",
+  "CREATE INDEX IF NOT EXISTS combat_operations_owner_idx ON combat_operations(commander_id,created_at DESC)",
+  "CREATE INDEX IF NOT EXISTS combat_operations_active_idx ON combat_operations(commander_id,status)"
 
 ];
 
