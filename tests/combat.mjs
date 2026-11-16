@@ -55,6 +55,31 @@ test('Every supported launcher rack follows BattleMech Manual cluster table (BMM
 
 test('Rear armor takes rear torso hits before structure',()=>{const g=game(),u=g.units[0],front=u.armor.CT;g.damage(u,'CT',3,{rear:true});assert.equal(u.rear.CT,4);assert.equal(u.armor.CT,front);assert.equal(u.structure.CT,18);});
 test('Destroyed torso destroys attached arm and ammunition',()=>{const g=game(),u=g.units[0];g.destroyLocation(u,'RT');assert.equal(u.structure.RA,0);assert.equal(u.weapons[0].destroyed,true);assert.equal(u.weapons[1].ammo,0);});
+
+test('MechWarrior consciousness rolls increase after each wound (BMM p.58)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ g.wound(u,2);
+ assert.equal(u.pilotWounds,2);assert.equal(u.unconscious,false);
+ const checks=g.phaseRolls.filter(r=>r.kind.includes('Сознание'));
+ assert.equal(checks.length,2);assert.equal(checks[0].target,3);assert.equal(checks[1].target,5);
+});
+test('Failed first consciousness check stops later checks, not physical wounds (BMM p.58)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>0;
+ g.wound(u,2);
+ assert.equal(u.pilotWounds,2);assert.equal(u.unconscious,true);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Сознание')).length,1);
+});
+test('Later pilot wounds do not reroll while unconscious (BMM p.58)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>0;g.wound(u,1);
+ assert.equal(u.unconscious,true);g.wound(u,2);
+ assert.equal(u.pilotWounds,3);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Сознание')).length,1);
+});
+test('Sixth wound kills pilot without making a consciousness check (BMM p.58)',()=>{
+ const g=game(),u=g.units[0];u.pilotWounds=5;g.rng=()=>.99;g.wound(u,1);
+ assert.equal(u.dead,true);assert.equal(u.pilotWounds,6);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Сознание')).length,0);
+});
 test('Ammo explosion bypasses armor and wounds pilot twice',()=>{const g=game(),u=g.units[0];u.bins[0].shots=1;const a=u.armor.RT;g.explode(u,u.bins[0]);assert.equal(u.structure.RT,3);assert.equal(u.armor.RT,a);assert.equal(u.pilotWounds,2);});
 test('A damaged gyro reduces stability, not base walking MP',()=>{const g=game(),u=g.units[0];u.gyroHits=1;assert.equal(g.psrMod(u),3);assert.equal(g.mp(u),5);u.actuators.LL.hip=true;assert.equal(g.mp(u),3);});
 test('Heat reduces walk and derived run',()=>{const g=game(),u=g.units[0];u.heat=10;assert.equal(g.mp(u),3);assert.equal(g.mp(u,'run'),5);});
