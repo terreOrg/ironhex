@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 1,
+  "bookId": "bmm-corrected-6th-2022",
+  "source": "Auditable child requirements of rules/battlemech-manual.json",
+  "statusDefinitions": {
+    "tested_case": "The named test covers this individual requirement, not the whole topic.",
+    "known_missing": "Gap requiring implementation and deterministic tests.",
+    "verified": "Independently audited implementation and complete edge-case tests."
+  },
+  "requirements": [
+    {
+      "id": "bmm-req-001",
+      "topicId": "bmm-p014-facing",
+      "page": 14,
+      "statement": "One MP is spent per changed hexside; over-budget turns fail.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Facing changes cost one MP per hexside and reject over-budget or invalid turns"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-002",
+      "topicId": "bmm-p019-standing-up",
+      "page": 19,
+      "statement": "A one-legged prone BattleMech can attempt to stand despite being unable to run.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "A one-legged prone BattleMech may attempt to stand even though it cannot run (BMM p.45)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-003",
+      "topicId": "bmm-p019-movement-in-water",
+      "page": 19,
+      "statement": "Jumping into water uses the correct unmodified landing PSR.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Jump landing in water uses an unmodified PSR regardless of depth (BMM p.19)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-004",
+      "topicId": "bmm-p030-specialized-attacks",
+      "page": 30,
+      "statement": "Head-aimed shots substitute the special targeting modifier for the immobile bonus.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Head aimed shot replaces immobile bonus with +3 (BMM p.30)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-005",
+      "topicId": "bmm-p031-ammunition-expenditure",
+      "page": 31,
+      "statement": "Explicit ammunition-bin choices are honored when another shot uses shared ammo.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Automatic shared-ammo shot preserves a later explicitly reserved magazine (BMM ammo expenditure)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-006",
+      "topicId": "bmm-p035-charge-attacks",
+      "page": 35,
+      "statement": "Damage from a charge uses actual moved hexes.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Charge distance uses moved hexes, not shortest hex distance (BMM p.35)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-007",
+      "topicId": "bmm-p035-physical-attacks-and-water",
+      "page": 35,
+      "statement": "Physical attacks underwater deal halved damage.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Underwater punches, kicks and hatchet hits deal half damage rounded down (BMM pp.35,65)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-008",
+      "topicId": "bmm-p044-head-destruction",
+      "page": 44,
+      "statement": "Head destruction is lethal to the pilot.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Head destruction kills the pilot rather than only disabling the unit (BMM p.44)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-009",
+      "topicId": "bmm-p046-applying-critical-hits",
+      "page": 46,
+      "statement": "Critical-hit transfer distinguishes the current phase from prior phases.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Last critical slot hit this phase does not transfer later criticals (BMM p.46)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-010",
+      "topicId": "bmm-p047-ammunition",
+      "page": 47,
+      "statement": "Internal ammunition explosions bypass external armor and wound the pilot.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammo explosion bypasses armor and wounds pilot twice"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-011",
+      "topicId": "bmm-p050-building-up-heat",
+      "page": 50,
+      "statement": "Outside heat input is capped independently of self-generated heat.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "External heat never exceeds 15 per turn even with repeated hits (BMM p.50)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-012",
+      "topicId": "bmm-p052-shutdown",
+      "page": 52,
+      "statement": "The initial involuntary reactor-shutdown PSR may succeed.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "First involuntary reactor shutdown PSR can succeed (BMM p.52)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-013",
+      "topicId": "bmm-p052-ammunition",
+      "page": 52,
+      "statement": "Overheat ammunition-avoidance target numbers rise with heat.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammo explosion avoidance uses the highest heat threshold reached (BMM p.52)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-014",
+      "topicId": "bmm-p058-damaging-a-mechwarrior",
+      "page": 58,
+      "statement": "Each wound immediately updates and checks consciousness.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "MechWarrior consciousness rolls increase after each wound (BMM p.58)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-015",
+      "topicId": "bmm-p058-dumping-ammunition",
+      "page": 58,
+      "statement": "Ammo being dumped is unavailable to fire but remains physically present.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammunition being dumped remains in the bin but cannot be fired (BMM p.58)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-016",
+      "topicId": "bmm-p064-attacking-underwater",
+      "page": 64,
+      "statement": "Supported submerged weapons use rulebook underwater range brackets.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Underwater ranges match every supported BMM energy-weapon table row (p.65)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-017",
+      "topicId": "bmm-p065-hull-integrity-and-breaches",
+      "page": 65,
+      "statement": "Submerged hull damage can breach a location on a 10+ roll.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Underwater armor damage can breach a leg location on a roll of 10+ (BMM p.65)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-018",
+      "topicId": "bmm-p118-storage-equipment-case",
+      "page": 118,
+      "statement": "CASE prevents overflow transfer of internal explosion damage.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE vents an ammo explosion after RT is destroyed; pilot still suffers feedback (BMM p.47)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-019",
+      "topicId": "bmm-p020-skidding",
+      "page": 20,
+      "statement": "Implement surface-dependent skid triggers and resolution.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-020",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "Implement CASE II and its distinct containment behavior.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-021",
+      "topicId": "bmm-p118-anti-missile-system-ams",
+      "page": 118,
+      "statement": "Implement AMS ammunition expenditure and interception resolution.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-022",
+      "topicId": "bmm-p112-ecm-suites",
+      "page": 112,
+      "statement": "Implement ECM suppression and overlapping field interactions.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-023",
+      "topicId": "bmm-p114-targeting-computer",
+      "page": 114,
+      "statement": "Implement targeting computer construction and aiming interactions.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-024",
+      "topicId": "bmm-p082-hidden-mechs",
+      "page": 82,
+      "statement": "Implement hidden-unit deployment, detection and reveal rules.",
+      "status": "known_missing",
+      "evidence": []
+    }
+  ]
+}
