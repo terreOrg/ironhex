@@ -444,3 +444,21 @@ confirm actual weapon declaration, enumerate damage to each hip,
 test destroyed/flooded legs and saved hip critical slots, and check
 biped regression. Requirement `bmm-req-085` is **tested_case**
 until full quad physical/damage round-trip certification.
+
+### Quad hip criticals (printed p.48)
+
+The critical-hit resolver now treats **all four** quad legs as leg
+locations for phase-end Piloting Skill Rolls. Previously, a hip
+critical in LA or RA updated the actuator flag but failed to enqueue
+the required PSR because the handler recognized only LL/RL.
+The corrected rule uses chassis-aware leg classification and
+preserves the original biped behavior. A deterministic integration
+test forces a hip-slot critical in each of the four legs, one by one,
+checking the slot and actuator damage, queued PSR, remaining Walking
+and Running MP, and loss of prone firing bonus.
+
+One, two and three Quad hip criticals reduce Walking MP from 5 to 3
+(and Running MP from 8 to 5), while **all four** reduce both to zero
+without treating the Quad as immobile (BMM p.48). Full critical
+damage timing, new criticals in the same leg, and advanced mobility
+interaction remain unverified, so `bmm-req-090` is `tested_case`.

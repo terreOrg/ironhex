@@ -1330,11 +1330,24 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Quad hip critical hits alter prone fire, speed and movement status, including four hips critically hit.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         48
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.30,45,48: hip damage and leg loss revoke quad prone-fire bonuses"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.48: criticals in all four quad hips trigger PSRs and reduce walking MP"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.48: biped retains hip PSR behavior after Quad critical-hit integration"
+        }
+      ]
     },
     {
       "id": "bmm-req-091",

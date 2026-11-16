@@ -1266,3 +1266,45 @@ test('BMM pp.30,45,48: hip damage and leg loss revoke quad prone-fire bonuses',(
  assert.equal(g.preview(u.id,target.id,0).mods.prone,2,
   'Biped retains normal prone firing penalty');
 });
+
+test('BMM p.48: criticals in all four quad hips trigger PSRs and reduce walking MP',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(built.unit));
+ u.q=0;u.r=0;u.prone=false;u.moveMode='stand';u.heat=0;
+ assert.equal(g.mp(u,'walk'),5);
+ assert.equal(g.mp(u,'run'),8);
+ assert.equal(g.mobile(u),true);
+ const expectedWalk=[3,3,3,0],expectedRun=[5,5,5,0];
+ const locations=['LA','RA','LL','RL'];
+ for(let i=0;i<locations.length;i++){
+  const leg=locations[i];
+  const seq=[.5,.5,0]; // 2D6=8 (one critical), then slot 1 (hip)
+  g.rng=()=>seq.shift()??.5;
+  g.phaseRolls=[];
+  const prior=u.psrs.length;
+  g.criticalHit(u,leg);
+  assert.equal(u.crit[leg][0],true,'Hip critical slot '+leg);
+  assert.equal(u.actuators[leg].hip,true,'Hip actuator state '+leg);
+  assert.equal(u.psrs.length,prior+1,'PSR for '+leg+' hip critical');
+  assert.equal(u.psrs.at(-1).reason,'Актуатор '+leg);
+  assert.equal(g.mp(u,'walk'),expectedWalk[i],'Walk after '+(i+1)+' hip criticals');
+  assert.equal(g.mp(u,'run'),expectedRun[i],'Run after '+(i+1)+' hip criticals');
+  assert.equal(quadProneFireBonus(u),false);
+  assert.equal(g.mobile(u),true,'Even four destroyed hips do not make the Quad immobile');
+ }
+ assert.equal(g.mp(u,'walk'),0);
+ assert.equal(g.mp(u,'run'),0);
+});
+
+test('BMM p.48: biped retains hip PSR behavior after Quad critical-hit integration',()=>{
+ const g=flatGame(),u=g.units[0];
+ u.config='Biped';u.psrs=[];u.actuators.LL.hip=false;
+ const seq=[.5,.5,0];
+ g.rng=()=>seq.shift()??.5;g.phaseRolls=[];
+ g.criticalHit(u,'LL');
+ assert.equal(u.actuators.LL.hip,true);
+ assert.equal(u.psrs.at(-1).reason,'Актуатор LL');
+ assert.equal(g.mp(u,'walk'),Math.ceil(u.walk/2));
+});
