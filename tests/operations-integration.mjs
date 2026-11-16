@@ -29,6 +29,27 @@ async function account(prefix){
 }
 
 const owner=await account('OpA'),other=await account('OpB');
+assert.equal((await req('/api/v1/economy')).status,401);
+assert.equal((await req('/api/v1/economy/purchase',{
+  method:'POST',cookie:owner.cookie,origin:false,
+  body:{sku:'armor_patch',quantity:1}})).status,403);
+assert.equal((await req('/api/v1/economy/purchase',{
+  method:'POST',cookie:owner.cookie,
+  body:{sku:'armor_patch',quantity:0}})).status,422);
+const initialWallet=await req('/api/v1/economy',{cookie:owner.cookie});
+assert.equal(initialWallet.status,200);
+assert.equal(initialWallet.data.balance,150000);
+assert.equal(initialWallet.data.ledger.length,1);
+assert.equal(initialWallet.data.ledger[0].amount,150000);
+assert.equal((await req('/api/v1/economy',{cookie:other.cookie})).data.balance,150000);
+const purchased=await req('/api/v1/economy/purchase',{
+  method:'POST',cookie:owner.cookie,body:{sku:'armor_patch',quantity:1}});
+assert.equal(purchased.status,200,JSON.stringify(purchased.data));
+assert.equal(purchased.data.item.spent,900);
+assert.equal((await req('/api/v1/economy',{cookie:owner.cookie})).data.balance,149100);
+assert.equal((await req('/api/v1/economy',{cookie:other.cookie})).data.stock.armor_patch||0,0);
+assert.equal((await req('/api/v1/economy/repair',{method:'POST',
+  cookie:owner.cookie,body:{mechId:'not-a-mech'}})).status,422);
 assert.equal((await req('/api/v1/operations')).status,401);
 assert.equal((await req('/api/v1/operations',{method:'POST',body:{mechIds:[]}})).status,401);
 assert.equal((await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
@@ -58,11 +79,12 @@ const assignment=await req('/api/v1/hangar/'+mechId+'/pilot',{
 });
 assert.equal(assignment.status,200);
 const create=await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
-  body:{title:'Патруль северной границы',mechIds:[mechId]}});
+  body:{title:'Патруль северной границы',mechIds:[mechId],contractId:'intercept'}});
 assert.equal(create.status,201,JSON.stringify(create.data));
 const op=create.data.item;
 const id=op.id;
 assert.equal(op.status,'draft');
+assert.equal(op.contractId,'intercept');
 assert.equal(op.version,0);
 assert.equal(op.roster.length,1);
 assert.equal(op.roster[0].pilot.id,pilotId);
@@ -114,6 +136,20 @@ assert(state.report.log.length>0);
 assert.equal(state.report.rewards.length,1);
 assert.equal(state.report.rewards[0].pilotId,pilotId);
 assert(state.report.rewards[0].experience>0);
+assert.equal(state.report.creditReward, state.report.result==='victory'?56000:
+  state.report.result==='draw'?28000:11200);
+const afterMissionWallet=await req('/api/v1/economy',{cookie:owner.cookie});
+assert.equal(afterMissionWallet.status,200);
+assert.equal(afterMissionWallet.data.balance,149100+state.report.creditReward);
+assert.equal(afterMissionWallet.data.ledger[0].amount,state.report.creditReward);
+const quote=afterMissionWallet.data.repairs.find(item=>item.mechId===mechId);
+assert(quote);
+assert.equal(quote.armorDamage,state.report.rewards[0].armorLost);
+assert.equal(quote.structureDamage,state.report.rewards[0].structureLost);
+assert.equal(quote.wrecked,state.report.rewards[0].destroyed);
+assert.equal((await req('/api/v1/economy/repair',{
+  method:'POST',cookie:other.cookie,body:{mechId}})).status,404,
+  'Rival commanders must not repair another hangar');
 assert.equal(state.report.equipmentNote.includes('пока'),true);
 const persisted=await req('/api/v1/operations/'+id,{cookie:owner.cookie});
 assert.equal(persisted.status,200);
@@ -130,6 +166,20 @@ assert.equal(history.data.items.length,1);
 assert.equal(history.data.items[0].experience,state.report.rewards[0].experience);
 assert.equal(history.data.items[0].mechChassis,example.name);
 
+if(quote.needsRepair){
+  const blocked=await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
+    body:{title:'Без ремонта',mechIds:[mechId]}});
+  assert.equal(blocked.status,409,'Damaged mechs cannot start contracts');
+  const paid=await req('/api/v1/economy/repair',{method:'POST',
+    cookie:owner.cookie,body:{mechId}});
+  assert.equal(paid.status,200,JSON.stringify(paid.data));
+  assert.equal(paid.data.item.spent,quote.creditCost);
+  const fixed=await req('/api/v1/economy',{cookie:owner.cookie});
+  assert.equal(fixed.data.balance,149100+state.report.creditReward-quote.creditCost);
+  assert.equal(fixed.data.repairs.find(m=>m.mechId===mechId).needsRepair,false);
+  assert.equal((await req('/api/v1/economy/repair',{method:'POST',cookie:owner.cookie,
+    body:{mechId}})).status,409,'Repairs must not debit twice');
+}
 const extra=await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
   body:{title:'Отменённая операция',mechIds:[mechId]}});
 assert.equal(extra.status,201);
