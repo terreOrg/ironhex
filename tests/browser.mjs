@@ -454,7 +454,6 @@ test('Mobile headquarters uses a scrollable compact command rail without clipped
       });
       assert.equal(result.navDirection,'row');
       assert(result.contentWidth>260);
-      console.log('MOBILE_VIEWPORT_DIMENSIONS',JSON.stringify(result));
       assert(result.scrollWidth<=result.width+2,
         'Content should not overflow the mobile viewport');
       assert(result.navScroll>result.navVisible,'Navigation should scroll horizontally');
