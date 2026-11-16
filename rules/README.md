@@ -93,3 +93,14 @@ are rerolled to determine the affected location; a second roll of 2 does not
 cause another through-armor critical. Partial cover forces a covered leg
 location to reroll. Five explicit combat cases are tracked above; this
 heading is **tested_subset**, not certified fully verified.
+
+### Automatic Clan CASE (TechManual p.58)
+
+Clan-designated units now receive standard CASE-style ammunition-explosion
+containment automatically, without adding tonnage or critical slots. The
+special-case CASE II installed in the same location takes precedence. Four
+combat tests cover these distinctions. MechLab explicitly refuses a Clan
+technology-base request until Clan construction masses, equipment tables and
+MTF parsing have their own verified implementation, preventing silent
+Inner Sphere stand-ins. The broader Clan construction requirement remains
+`known_missing`.
