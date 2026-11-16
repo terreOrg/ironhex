@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures,QUAD_PUNCH_LOCATIONS,QUAD_KICK_LOCATIONS,quadProneFireBonus} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures,QUAD_PUNCH_LOCATIONS,QUAD_KICK_LOCATIONS,quadProneFireBonus,quadImmobileDueToLegLoss} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
@@ -1362,4 +1362,42 @@ test('BMM p.45: side torso destroying quad front leg triggers real falling damag
  assert.equal(g.log.filter(line=>String(line).includes('упал:')).length,1,
   'Exactly one real fall for recursively destroyed front leg');
  assert.equal(g.mp(u,'walk'),4);
+});
+
+test('BMM pp.45,48: only loss of all four quad legs makes a zero-MP quad immobile',()=>{
+ const g=flatGame(),t=g.units[2],u=g.units[0];
+ u.q=0;u.r=0;u.facing=0;
+ t.q=2;t.r=0;t.config='Quad';t.moveMode='stand';
+ t.distanceMoved=0;t.skidded=false;t.prone=false;t.dead=false;
+ u.weapons=[{name:'Medium Laser',heat:3,damage:5,min:0,
+  ranges:[3,6,9],ammo:null,location:'CT',rear:false,destroyed:false}];
+ assert.equal(quadImmobileDueToLegLoss(t),false);
+ assert.equal(g.targetMovementModifier(t),0);
+ for(const leg of ['LA','RA','LL']){
+  t.structure[leg]=0;
+  assert.equal(quadImmobileDueToLegLoss(t),false,leg);
+  assert.equal(g.targetMovementModifier(t),0,'Three lost legs not immobile');
+ }
+ assert.equal(g.preview(u.id,t.id,0,{aim:'CT'}).legal,false,
+  'Cannot aim at a Quad with only three destroyed legs');
+ t.structure.RL=0;
+ assert.equal(quadImmobileDueToLegLoss(t),true);
+ assert.equal(g.mobile(t),true,'An operational immobile Quad can still attack');
+ assert.equal(g.targetMovementModifier(t),-4,'Immobile target to-hit modifier');
+ const aimed=g.preview(u.id,t.id,0,{aim:'CT'});
+ assert.equal(aimed.legal,true,aimed.reason);
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert.equal(g.declareFire(u.id,[{index:0,target:t.id,aim:'CT'}]).ok,true,
+  'Aim declaration must respect the same immobility check as preview');
+ for(const leg of ['LA','RA','LL','RL'])t.structure[leg]=t.maxStructure[leg];
+ for(const leg of ['LA','RA','LL','RL'])t.actuators[leg].hip=true;
+ assert.equal(g.mp(t,'walk'),0,'Four hip hits leave zero walking MP');
+ assert.equal(quadImmobileDueToLegLoss(t),false,
+  'Four hip hits are not equivalent to four destroyed legs');
+ assert.equal(g.targetMovementModifier(t),0);
+ assert.equal(g.preview(u.id,t.id,0,{aim:'CT'}).legal,false);
+ t.config='Biped';
+ assert.equal(quadImmobileDueToLegLoss(t),false);
+ t.structure.LL=0;t.structure.RL=0;
+ assert.equal(quadImmobileDueToLegLoss(t),false,'Biped all-leg loss is not immobile');
 });

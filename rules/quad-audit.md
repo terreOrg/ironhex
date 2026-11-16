@@ -484,3 +484,21 @@ reduction, and a real fall from LT removal.
 two/three/four leg losses, jumping after losing a leg, immobility
 when all four are lost and phase-edge collision timing are still
 required. The strict sequential cursor does not advance.
+
+### Four destroyed legs versus four hip criticals (printed pp.45,48)
+
+A Quad becomes **immobile** specifically on destruction of
+all four legs. The distinction is mechanically significant:
+a Quad with three destroyed legs has 0 ground MP but is
+not immobile, and a Quad with four hip criticals also has
+0 MP but is **not** immobile. These three states now differ
+in ranged target-movement modifiers and whether attackers
+may declare aimed shots against an immobile target. The
+engine retains `mobile(u)` for a conscious operational
+unit so an immobile Quad is not erroneously barred from
+weapon fire. A regression test covers 0..4 lost legs, the
+four-hip case, a biped with two lost legs, and the actual
+aimed-shot declaration pipeline.
+
+`bmm-req-089` remains `tested_case` while other
+leg-loss effects and combined pilot rolls are audited.

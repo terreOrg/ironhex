@@ -1335,6 +1335,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.45: side torso destroying quad front leg triggers real falling damage once"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.45,48: only loss of all four quad legs makes a zero-MP quad immobile"
         }
       ]
     },
