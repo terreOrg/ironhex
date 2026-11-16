@@ -719,6 +719,199 @@
       "statement": "Skid interruption rules resolve compound water/building/elevation hexes and multihex building basements in correct rulebook precedence.",
       "status": "known_missing",
       "evidence": []
+    },
+    {
+      "id": "bmm-req-057",
+      "topicId": "bmm-p007-dice",
+      "page": 7,
+      "statement": "Each standard 2D6 roll consists of exactly two six-sided faces and their sum.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.7: each 2D6 roll uses two independent six-sided results and their sum"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-058",
+      "topicId": "bmm-p007-dice",
+      "page": 7,
+      "statement": "An explicit 1D6 rolls exactly one six-sided die, not two.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.7: 1D6 uses exactly one die across all six faces"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-059",
+      "topicId": "bmm-p006-target-number",
+      "page": 6,
+      "statement": "A roll equal to its target number succeeds, target numbers of 2 or lower always succeed, and 13 or higher always fail with 2D6.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: equal target succeeds; target <=2 always succeeds; 13+ fails"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-060",
+      "topicId": "bmm-p006-modified-target-number",
+      "page": 6,
+      "statement": "The engine displays the actual calculated modified target number (including values below 2), while probabilities use the automatic success/failure bounds.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: ranged and physical preview preserve an un-clamped modified TN"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-061",
+      "topicId": "bmm-p006-target",
+      "page": 6,
+      "statement": "Friendly BattleMechs are illegal direct targets for ranged and physical attacks.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: a friendly BattleMech cannot be directly targeted"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-062",
+      "topicId": "bmm-p009-skills",
+      "page": 9,
+      "statement": "Ordinary Inner Sphere MechWarriors default to Gunnery 4 / Piloting 5.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: ordinary IS MechWarriors start at Gunnery 4 / Piloting 5"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-063",
+      "topicId": "bmm-p009-skills",
+      "page": 9,
+      "statement": "Ordinary Clan MechWarriors default to Gunnery 3 / Piloting 4, unless a pilot explicitly overrides these values.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: default Clan skill ratings are Gunnery 3 / Piloting 4"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-064",
+      "topicId": "bmm-p009-skills",
+      "page": 9,
+      "statement": "Ranged attacks use the Gunnery base target number while physical attacks use Piloting.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: ranged attacks use Gunnery; physical attacks use Piloting"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-065",
+      "topicId": "bmm-p010-initiative-phase",
+      "page": 10,
+      "statement": "Both sides roll 2D6; tied results are rerolled until one side obtains the higher total.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.10: initiative rerolls 101 consecutive ties and honors the higher 2D6"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-066",
+      "topicId": "bmm-p010-initiative-phase",
+      "page": 10,
+      "statement": "The higher initiative roll wins, and the losing side acts first in the Movement Phase.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.10: either team can win and the losing side moves first"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-067",
+      "topicId": "bmm-p012-unequal-numbers-of-mechs",
+      "page": 12,
+      "statement": "Unequal remaining forces use the book's 2:1 and 3:1 alternating declaration batches.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.12: initiative batches honor 2:1 and 3:1 force ratios"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-068",
+      "topicId": "bmm-p010-sequence-of-play",
+      "page": 10,
+      "statement": "The turn sequence is Initiative, Movement, Weapon Attack, Physical Attack, Heat and End, without skipping unresolved selections.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.10-12: normal turns advance through exactly six ordered phases"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-069",
+      "topicId": "bmm-p010-movement-phase",
+      "page": 10,
+      "statement": "A shutdown or unconscious BattleMech can consume a movement selection without changing position.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.10: a shutdown or unconscious unit still consumes a movement selection"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-070",
+      "topicId": "bmm-p005-four-legged-mech",
+      "page": 5,
+      "statement": "Support quad BattleMechs' four leg locations, mobility, facing, weapon arcs and physical attack restrictions, not just biped models.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-071",
+      "topicId": "bmm-p012-victory-conditions",
+      "page": 12,
+      "statement": "Declare a draw when the last surviving BattleMechs on opposing sides cannot move and lack any means to damage each other, without premature termination on temporary shutdown.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-072",
+      "topicId": "bmm-p010-initiative-phase",
+      "page": 10,
+      "statement": "Handle an unbounded series of initiative ties exactly per rulebook, or prove that a finite RNG safety cap cannot reject a legitimate valid dice sequence.",
+      "status": "known_missing",
+      "evidence": []
     }
   ]
 }
