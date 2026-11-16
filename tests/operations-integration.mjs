@@ -94,7 +94,7 @@ assert.equal(op.version,0);
 assert.equal(op.roster.length,1);
 assert.equal(op.roster[0].pilot.id,pilotId);
 assert.equal(op.roster[0].pilot.gunnery,4);
-assert.equal(op.roster[0].chassis,example.name);
+assert.equal(op.roster[0].chassis,'Griffin GRF-1M');
 assert.equal(JSON.stringify(op).includes('rngState'),false,
   'Private randomness must not be returned');
 assert.equal((await req('/api/v1/operations',{cookie:other.cookie})).data.items.length,0);
@@ -117,7 +117,7 @@ assert.equal(state.status,'active');
 assert.equal(state.version,1);
 assert.equal(state.state.round,1);
 assert.equal(state.state.units.length,4);
-assert.equal(state.state.units[0].name,example.name);
+assert.equal(state.state.units[0].name,'Griffin GRF-1M');
 assert.equal((await req('/api/v1/operations/'+id+'/launch',
   {method:'POST',cookie:owner.cookie})).status,409);
 assert.equal((await req('/api/v1/operations/'+id+'/advance',
