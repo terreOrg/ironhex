@@ -591,7 +591,7 @@ test('Commander catalog supports combined mass filters and opens a complete Mech
       await page.locator('#hub-market-button').click();
       await page.locator('#economy-mechs .economy-name').waitFor({state:'visible'});
       await page.locator('#economy-mechs .economy-name').click();
-      await page.locator('#economy-detail-dialog[open] h2').waitFor({state:'visible'});
+      await page.locator('#economy-detail-dialog[open] h2').filter({hasText:'Griffin GRF-1M'}).waitFor({state:'visible'});
       assert.match(await page.locator('#economy-detail-dialog').textContent(),/Griffin GRF-1M/);
       assert.match(await page.locator('#economy-detail-dialog').textContent(),/275 Fusion/);
       assert.match(await page.locator('#economy-detail-dialog').textContent(),/LRM 20/);
@@ -603,15 +603,27 @@ test('Commander catalog supports combined mass filters and opens a complete Mech
       await page.locator('#economy-weight-class').selectOption('medium');
       await page.locator('#economy-tonnage-min').selectOption('50');
       await page.locator('#economy-tonnage-max').selectOption('60');
+      const filteredReply=page.waitForResponse(response=>{
+        const u=new URL(response.url());
+        return u.pathname==='/api/v1/economy/mechs'&&
+          u.searchParams.get('weightClass')==='medium'&&
+          u.searchParams.get('tonnageMin')==='50'&&
+          u.searchParams.get('tonnageMax')==='60'&&
+          u.searchParams.get('sort')==='tonnage';
+      });
       await page.locator('#economy-sort').selectOption('tonnage');
-      await page.waitForFunction(()=>document.querySelector('#economy-archive-summary')
-        ?.textContent.includes('найдено'));
-      await page.waitForTimeout(400);
+      await filteredReply;
       assert(calls.some(c=>c.weightClass==='medium'&&c.tonnageMin==='50'&&
         c.tonnageMax==='60'&&c.sort==='tonnage'),
         'The complete set of filters must reach the server');
+      const resetReply=page.waitForResponse(response=>{
+        const u=new URL(response.url());
+        return u.pathname==='/api/v1/economy/mechs'&&
+          u.searchParams.get('weightClass')===''&&
+          u.searchParams.get('tonnageMin')==='';
+      });
       await page.locator('#economy-reset-filters').click();
-      await page.waitForTimeout(200);
+      await resetReply;
       assert.equal(await page.locator('#economy-tonnage-min').inputValue(),'');
       assert.equal(await page.locator('#economy-weight-class').inputValue(),'');
       assert(calls.some(c=>c.tonnageMin===''&&c.weightClass===''));
