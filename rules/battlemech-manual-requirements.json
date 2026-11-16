@@ -1375,12 +1375,25 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "A quad with no destroyed legs receives the -2 modifier to Piloting Skill Rolls made to avoid falling.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         53,
         54
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.53: exact Quad -2 fall-avoidance PSR target depends on four surviving legs"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.53: deferred Quad end-phase PSRs also apply -2, never to standing rolls"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.44,53: Quad PSR avoids biped lost-leg penalties and uses -2 only for fall avoidance"
+        }
+      ]
     },
     {
       "id": "bmm-req-092",

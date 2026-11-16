@@ -518,3 +518,15 @@ torso-mounted jump jet and 2D6=8, checking that intact landing
 succeeds without a new PSR, either front or rear missing-leg
 landing fails against TN10, and two-leg loss does not double
 count. `bmm-req-089` remains `tested_case`.
+
+### Quad fall-avoidance PSR -2 (printed p.53)
+
+Added a deterministic end-to-end PSR timing and target-number
+matrix beyond the existing pure modifier checks. An intact Quad
+with Piloting 5 avoids a fall on 3+, not 5+. Losing any one leg
+removes this -2 bonus, so 4 fails and 5 succeeds; a hip critical
+on an intact Quad raises the effective target back to 5. Biped
+PSRs remain unchanged. The deferred end-of-phase PSR path is
+also covered, including the removal of the -2 benefit after
+destroying a leg. `bmm-req-091` is `tested_case` pending
+full GitHub CI confirmation, not prematurely `verified`.

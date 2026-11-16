@@ -1437,3 +1437,57 @@ test('BMM p.45: a Quad with one missing leg must make the +5 landing PSR',()=>{
  assert.equal(rear.g.move(0,1,0,'jump').ok,true);
  assert.equal(rear.u.prone,true,'The same rule also applies to missing rear legs');
 });
+
+test('BMM p.53: exact Quad -2 fall-avoidance PSR target depends on four surviving legs',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(built.unit));
+ u.piloting=5;u.prone=false;u.unconscious=false;u.dead=false;
+ let falls=0;
+ g.fall=(mech,levels,target)=>{assert.equal(mech,u);falls++;u.prone=true;};
+ const attempt=(total,expectedTN,expectedSuccess)=>{
+  const a=Math.max(1,total-6),b=total-a,dice=[(a-.5)/6,(b-.5)/6];
+  g.rng=()=>dice.shift()??.5;
+  g.phaseRolls=[];u.prone=false;
+  const result=g.psr(u,0,'Quad fall avoidance',true);
+  assert.equal(g.phaseRolls.at(-1).target,expectedTN,'PSR TN');
+  assert.equal(result,expectedSuccess,'Roll '+total+' for TN '+expectedTN);
+ };
+ attempt(2,3,false);
+ attempt(3,3,true);
+ u.structure.RL=0;
+ attempt(4,5,false);
+ attempt(5,5,true);
+ u.structure.RL=u.maxStructure.RL;
+ u.actuators.LA.hip=true;
+ attempt(4,5,false); // hip +2 cancels intact Quad -2
+ attempt(5,5,true);
+ u.actuators.LA.hip=false;
+ u.config='Biped';
+ attempt(4,5,false);
+ attempt(5,5,true);
+ assert.equal(falls,4,'Failure count follows exact modified TNs');
+});
+
+test('BMM p.53: deferred Quad end-phase PSRs also apply -2, never to standing rolls',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(built.unit));
+ for(const other of g.units.slice(1))other.dead=true;
+ u.piloting=5;u.dead=false;u.prone=false;u.unconscious=false;u.psrs=[];
+ let fell=0;g.fall=actor=>{assert.equal(actor,u);fell++;actor.prone=true;};
+ const roll=(a,b)=>{
+  const d=[(a-.5)/6,(b-.5)/6];g.rng=()=>d.shift()??.5;
+ };
+ u.psrs.push({modifier:0,reason:'Terrain'});
+ roll(1,2);g.phaseRolls=[];g.endPSR();
+ assert.equal(g.phaseRolls.at(-1).target,3,'Intact Quad end-phase fall TN is 5-2');
+ assert.equal(fell,0);
+ u.structure.LA=0;u.psrs.push({modifier:0,reason:'Terrain'});
+ roll(1,2);g.phaseRolls=[];g.endPSR();
+ assert.equal(g.phaseRolls.at(-1).target,5,'No -2 when one leg is destroyed');
+ assert.equal(fell,1);
+ assert.deepEqual(u.psrs,[]);
+});
