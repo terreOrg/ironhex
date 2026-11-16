@@ -188,6 +188,22 @@ test('Destroyed hip or entire leg replaces same-leg PSR actuator modifiers (BMM 
  assert.equal(g.psrMod(u),6);
 });
 test('Cold shutdown reactor restarts',()=>{const g=game(),u=g.units[0];u.shutdown=true;u.heat=5;g.heatPhase();assert.equal(u.shutdown,false);assert.equal(u.heat,0);});
+
+test('A one-legged prone BattleMech may attempt to stand even though it cannot run (BMM p.45)',()=>{
+ const g=game(),u=g.units[0];u.structure.LL=0;u.prone=true;g.rng=()=>.99;
+ acting(g,0,'move');assert.equal(g.mp(u,'run'),0);
+ const result=g.stand(0);assert(result.ok,result.error);
+ assert.equal(u.prone,false);assert.equal(u.moveMode,'run');assert.equal(u.spent,2);
+});
+test('A one-legged BattleMech gets one stand attempt per turn (BMM p.45)',()=>{
+ const g=game(),u=g.units[0];u.structure.LL=0;u.prone=true;u.piloting=10;g.rng=()=>0;
+ acting(g,0,'move');assert(g.stand(0).ok);assert.equal(u.prone,true);
+ assert.equal(u.standAttempts,1);assert.equal(g.stand(0).ok,false);
+});
+test('A missing leg plus both missing arms forbids standing (BMM p.19)',()=>{
+ const g=game(),u=g.units[0];u.structure.LL=0;u.structure.LA=0;u.structure.RA=0;u.prone=true;
+ acting(g,0,'move');assert.equal(g.stand(0).ok,false);
+});
 test('Destroyed gyro prevents standing',()=>{const g=game(),u=g.units[0];acting(g,0,'move');u.prone=true;u.gyroHits=2;assert.equal(g.stand(0).ok,false);});
 
 test('Charge distance uses moved hexes, not shortest hex distance (BMM p.35)',()=>{
