@@ -14,7 +14,7 @@ export function createPool(env=process.env) {
   });
 }
 
-// Schema only: not yet exposed as unauthenticated mutable API endpoints.
+// Idempotent bootstrap and additive migrations. No public unauthenticated mutations.
 const schema = [
 `CREATE TABLE IF NOT EXISTS commanders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
