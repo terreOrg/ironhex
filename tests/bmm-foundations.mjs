@@ -1624,3 +1624,45 @@ test('BMM p.83: two-point mount only faces forward or rear; no quirk implies no 
  assert.equal(g.setDirectionalTorsoMount(u.id,0,3).ok,true,
   'Two-point version is available to bipeds');
 });
+
+test('BMM p.83: Quad 3-point turret quirk constructs and validates actual torso weapon',()=>{
+ const config={...example,config:'Quad',jump:0,sinks:10,
+  equipment:[{type:'Medium Laser',location:'CT',slot:11}],
+  quirks:{extendedTorsoTwist:true,directionalTorsoMounts:[
+   {location:'CT',points:3,facing:0,weaponIndices:[0]}]}};
+ assert(construct(config).errors.length>0,'Ordinary public Quad construction still fails closed');
+ const built=construct(config,{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const u=built.unit;
+ assert.equal(u.quirks.extendedTorsoTwist,true);
+ assert.deepEqual(u.directionalTorsoMounts,[{location:'CT',points:3,
+  facing:0,weaponIndices:[0],locked:false}]);
+ assert.equal(u.weapons[0].location,'CT');
+ const wrong=[
+  {...config.quirks,directionalTorsoMounts:[{location:'CT',points:3,facing:6,weaponIndices:[0]}]},
+  {...config.quirks,directionalTorsoMounts:[{location:'CT',points:3,facing:0,weaponIndices:[1]}]},
+  {...config.quirks,directionalTorsoMounts:[{location:'LT',points:3,facing:0,weaponIndices:[0]}]},
+  {...config.quirks,directionalTorsoMounts:[{location:'CT',points:2,facing:1,weaponIndices:[0]}]},
+  {...config.quirks,directionalTorsoMounts:[{location:'CT',points:3,facing:0,weaponIndices:[0,0]}]},
+  {...config.quirks,unknown:true},'extendedTorsoTwist',[]
+ ];
+ for(const quirks of wrong){
+  const error=construct({...config,quirks},{auditQuad:true});
+  assert(error.errors.length>0,'Illegal quirk input must be rejected');
+ }
+ const biped={...config,config:'Biped'};
+ assert(construct(biped).errors.some(x=>x.includes('направленная установка')),
+  'Three-point turret is Quad only');
+});
+
+test('BMM p.83: tactical server validates 360-degree turret rotation command',()=>{
+ const command=validateTacticalOrder({type:'turret',version:1,id:0,mount:0,facing:5});
+ assert.equal(command.facing,5);
+ for(const value of [-1,6,0.5,NaN])
+  assert.throws(()=>validateTacticalOrder({
+   type:'turret',version:1,id:0,mount:0,facing:value}),/invalid_command/);
+ assert.throws(()=>validateTacticalOrder({
+  type:'turret',version:1,id:0,mount:4,facing:0}),/invalid_command/);
+ const ext=validateTacticalOrder({type:'twist',version:1,id:0,twist:2});
+ assert.equal(ext.twist,2,'Server accepts BMM Extended Torso Twist before engine limit check');
+});

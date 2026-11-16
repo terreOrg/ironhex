@@ -579,3 +579,23 @@ integration with validated construction, network tactical
 commands, restricted equipment, multiple mounts and
 persistent campaign snapshots remains to be completed.
 `bmm-req-094` is `tested_case`, not verified.
+
+### Directional mount construction and tactical order
+
+The diagnostic constructor now accepts an explicit optional
+`quirks` object with an Extended Torso Twist boolean and
+`directionalTorsoMounts` entries. It verifies actual equipment
+placement, unique torso mounts and weapon ownership, valid
+front/rear or 360-degree starting facing, and the Quad-only
+three-point restriction. It rejects malformed or duplicate
+configurations. Crucially, normal public Quad designs remain
+blocked until the entire Quad rule set passes verification.
+
+The versioned tactical-order API accepts validated
+`type:'turret'` orders with mount index and 0..5 facing,
+which dispatch to the already implemented combat action;
+it also accepts the extended biped torso-twist limit of two.
+The API does **not** change the local movement sequence,
+engine-only illegal orders still fail closed, and the state is
+serializable for persistence. Other optional mount restrictions
+and equipment-catalog gaps remain for final verification.

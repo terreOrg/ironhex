@@ -1,7 +1,7 @@
 import {AuthError} from './auth.mjs';
 const fields={
   move:['id','q','r','mode','lateral'],rotate:['id','delta'],
-  stand:['id','facing','minimum','mode'],drop:['id'],hold:['id'],twist:['id','twist'],
+  stand:['id','facing','minimum','mode'],drop:['id'],hold:['id'],twist:['id','twist'],turret:['id','mount','facing'],
   fire:['id','shots'],physical:['id','target','attack','limb'],
   club:['id'],charge:['id','target','attack'],minimum:['id'],
   shutdown:['id'],dump:['id','bin'],flip:['id','enabled'],brace:['id','limb'],
@@ -31,7 +31,8 @@ export function validateTacticalOrder(b){
     rotate:()=>[-1,1].includes(b.delta),stand:()=> (b.facing===undefined||int(b.facing,0,5))&&
       (b.minimum===undefined||typeof b.minimum==='boolean')&&
       (b.mode===undefined||['walk','run'].includes(b.mode)),drop:()=>true,hold:()=>true,
-    twist:()=>int(b.twist,-1,1),
+    twist:()=>int(b.twist,-2,2),
+    turret:()=>int(b.mount,0,2)&&int(b.facing,0,5),
     fire:()=>Array.isArray(b.shots)&&b.shots.length<=32&&
       b.shots.every(shot)&&new Set(b.shots.map(x=>x.index)).size===b.shots.length,
     physical:()=>int(b.target,0,3)&&
@@ -93,6 +94,7 @@ export function runTacticalOrder(game,body){
       case 'drop':r=game.drop(id);break;
       case 'hold':r=game.hold(id);break;
       case 'twist':r=game.twist(id,b.twist);break;
+      case 'turret':r=game.setDirectionalTorsoMount(id,b.mount,b.facing);break;
       case 'fire':r=game.declareFire(id,b.shots);break;
       case 'physical':r=game.declarePhysical(id,b.target,b.attack,b.limb);break;
       case 'club':r=game.takeClub(id);break;

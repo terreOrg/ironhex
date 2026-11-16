@@ -1453,6 +1453,14 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.83: two-point mount only faces forward or rear; no quirk implies no turret"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.83: Quad 3-point turret quirk constructs and validates actual torso weapon"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.83: tactical server validates 360-degree turret rotation command"
         }
       ]
     }

@@ -39,6 +39,14 @@ export const EQUIPMENT=WEAPON_NAMES;
 export function construct(c,{auditQuad=false}={}){
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
  const chassisConfig=c.config??'Biped';
+ const quirks=c.quirks||{};
+ if(c.quirks!==undefined&&(
+   !quirks||typeof quirks!=='object'||Array.isArray(quirks)||
+   Object.keys(quirks).some(k=>!['extendedTorsoTwist','directionalTorsoMounts'].includes(k))||
+   (quirks.extendedTorsoTwist!==undefined&&typeof quirks.extendedTorsoTwist!=='boolean')||
+   (quirks.directionalTorsoMounts!==undefined&&!Array.isArray(quirks.directionalTorsoMounts))))
+  errors.push('Неизвестные параметры особенностей шасси.');
+
  if(!isBattleMechConfiguration(chassisConfig))
    errors.push('Конфигурация не является двуногим или четырёхногим BattleMech.');
  else if(chassisConfig==='Quad'&&!auditQuad)
@@ -98,8 +106,40 @@ export function construct(c,{auditQuad=false}={}){
      if(!w.ammo)errors.push(w.name+': нужен боезапас.');
    }
  });
+ // Optional BMM p.83 directional mounts are design attributes, not
+ // phantom weapons. Validate every referenced actual installed gun.
+ const mountInputs=Array.isArray(quirks.directionalTorsoMounts)?
+  quirks.directionalTorsoMounts:[];
+ const usedMountLocations=new Set(),usedMountWeapons=new Set();
+ const directionalTorsoMounts=[];
+ if(mountInputs.length>3)errors.push('Возможны не более трёх установок в торсе.');
+ for(const m of mountInputs){
+  if(!m||typeof m!=='object'||Array.isArray(m)||
+     Object.keys(m).some(k=>!['location','points','facing','weaponIndices'].includes(k))||
+     !['CT','LT','RT'].includes(m.location)||
+     usedMountLocations.has(m.location)||
+     ![2,3].includes(m.points)||
+     (m.points===3&&chassisConfig!=='Quad')||
+     !Number.isInteger(m.facing)||m.facing<0||m.facing>5||
+     (m.points===2&&![0,3].includes(m.facing))||
+     !Array.isArray(m.weaponIndices)||!m.weaponIndices.length||
+     new Set(m.weaponIndices).size!==m.weaponIndices.length||
+     m.weaponIndices.some(i=>!Number.isInteger(i)||i<0||
+       i>=weapons.length||usedMountWeapons.has(i)||
+       weapons[i].location!==m.location||
+       ['Heavy Gauss Rifle','Improved Heavy Gauss Rifle'].includes(weapons[i].name))){
+   errors.push('Некорректная направленная установка торса.');
+   continue;
+  }
+  usedMountLocations.add(m.location);
+  for(const wi of m.weaponIndices)usedMountWeapons.add(wi);
+  directionalTorsoMounts.push({location:m.location,points:m.points,
+   facing:m.facing,weaponIndices:[...m.weaponIndices],locked:false});
+ }
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
  return {errors,total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,
+  ...(c.quirks?{quirks:{extendedTorsoTwist:quirks.extendedTorsoTwist===true},
+    directionalTorsoMounts}:{}),
   ...(quadLayout?{actuators:Object.fromEntries(
     Object.keys(QUAD_LEG_LOCATIONS).map(loc=>[loc,
       {hip:false,upper:false,lower:false,foot:false}]))}:{}),
