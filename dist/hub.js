@@ -23,6 +23,20 @@ function create() {
   initializeWorkspace();
   installOperationUI(root);
   root.querySelector('#hub-battle').onclick=()=>openSection('battle');
+  window.addEventListener('ironhex:open-3d-operation',event=>{
+    const id=event.detail?.id;
+    if(typeof id==='string'&&/^[0-9a-f-]{36}$/i.test(id))
+      openSection('battle',{src:'index.html?battle=1&operation='+encodeURIComponent(id)});
+  });
+  window.addEventListener('message',event=>{
+    if(event.origin!==location.origin||
+       event.source!==root.querySelector('#hub-battle-frame')?.contentWindow||
+       event.data?.type!=='ironhex:operation-report')return;
+    const id=event.data.id;
+    if(typeof id!=='string'||!/^[0-9a-f-]{36}$/i.test(id))return;
+    openSection('campaigns');
+    import('./operation-ui.js').then(mod=>mod.openOperationReport(id));
+  });
   root.querySelector('#hub-profile-button').onclick=()=>onProfile?.();
   root.querySelector('#hub-hangar-button').onclick=()=>{
     openSection('hangar');

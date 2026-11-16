@@ -28,6 +28,7 @@ async function request(url,method='GET',body){
   if(!response.ok)throw Error(errors[data.error]||data.error||'HTTP '+response.status);
   return data;
 }
+function launch3D(id){window.dispatchEvent(new CustomEvent('ironhex:open-3d-operation',{detail:{id}}));}
 const outcomeLabels={victory:'ПОБЕДА',defeat:'ПОРАЖЕНИЕ',draw:'НИЧЬЯ'};
 const stateLabels={draft:'ПОДГОТОВКА',active:'В БОЮ',completed:'ЗАВЕРШЕНА',abandoned:'ПРЕРВАНА'};
 let root,opened=null,busy=false;
@@ -104,7 +105,8 @@ function renderOperation(op){
   }
   panel.append(roster);
   if(op.status==='draft'){
-    panel.append(E('p','op-info',
+    panel.append(E('p','op-info',op.controlMode==='interactive'?
+      'После запуска откроется 3D-поле боя. Все команды проверяет сервер.':
       'Состав зафиксирован. После запуска можно выполнять серверную симуляцию раунд за раундом.'));
     const begin=E('button','op-primary','НАЧАТЬ ОПЕРАЦИЮ');
     begin.onclick=()=>void command(op.id,'launch');
@@ -127,9 +129,16 @@ function renderOperation(op){
       }
       panel.append(units);
     }
-    const advance=E('button','op-primary','ПРОВЕСТИ СЛЕДУЮЩИЙ РАУНД');
-    advance.onclick=()=>void command(op.id,'advance');
-    panel.append(advance);
+    if(op.controlMode==='interactive'){
+      const open=E('button','op-primary','ПРОДОЛЖИТЬ В 3D');
+      open.type='button';
+      open.onclick=()=>launch3D(op.id);
+      panel.append(open);
+    }else{
+      const advance=E('button','op-primary','ПРОВЕСТИ СЛЕДУЮЩИЙ РАУНД');
+      advance.onclick=()=>void command(op.id,'advance');
+      panel.append(advance);
+    }
     panel.append(E('p','op-info',
       'Сервер определяет движение, стрельбу, броски кубиков и урон. Состояние раунда сохраняется.'));
     if(state?.log?.length){
@@ -194,7 +203,10 @@ async function command(id,action){
     await loadHistory();
     if(item.status==='completed'){
       message('Итог подтверждён сервером. Послужные списки мехвоинов обновлены.');
-    }else message('Состояние операции сохранено.');
+    }else{
+      message('Состояние операции сохранено.');
+      if(action==='launch'&&item.controlMode==='interactive')launch3D(item.id);
+    }
   }catch(e){message('Ошибка операции: '+e.message);}
   finally{setBusy(false);}
 }
@@ -230,13 +242,15 @@ export function installOperationUI(hubRoot){
     '<h3>ПОДГОТОВКА ОПЕРАЦИИ</h3>',
     '<p>Сформируйте отряд из одного или двух сохранённых мехов. Сервер проводит бой',
     'по раундам, сохраняет состояние и выдаёт подтверждённый рапорт.</p>',
-    '<p class="op-warning">Пока доступна серверная автоматическая симуляция. ',
-    'Интерактивные команды в 3D-бою ещё не синхронизированы с сервером.</p></div>',
+    '<p class="op-warning">В интерактивном режиме сервер проверяет приказы, кубики, повреждения и награды. ',
+    'Автоматический режим сохраняется отдельно для быстрых операций.</p></div>',
     '<div class="op-layout"><div class="op-main">',
     '<form id="op-create-form" class="op-create-form">',
     '<label>НАЗВАНИЕ ОПЕРАЦИИ<input name="title" minlength="3" maxlength="80" required',
     'value="Патруль приграничного сектора"></label>',
     '<p class="op-label">ВЫБЕРИТЕ ДО ДВУХ МЕХОВ ИЗ АНГАРА</p>',
+    '<label class="op-control-choice"><input type="checkbox" name="interactive" checked>',
+    ' ИНТЕРАКТИВНЫЙ 3D-БОЙ (СЕРВЕРНЫЙ РЕЖИМ)</label>',
     '<div id="op-mech-list" class="op-mech-list"></div>',
     '<button id="op-create" type="submit" class="op-primary">СОЗДАТЬ ОПЕРАЦИЮ</button>',
     '</form><section id="op-current" class="op-current" aria-label="Операция"></section></div>',
@@ -263,7 +277,8 @@ export function installOperationUI(hubRoot){
     setBusy(true);
     try{
       const {item}=await request('/api/v1/operations','POST',{
-        title:form.elements.title.value,mechIds
+        title:form.elements.title.value,mechIds,
+        mode:form.elements.interactive.checked?'interactive':'auto'
       });
       opened=item.id;
       renderOperation(item);
@@ -273,3 +288,5 @@ export function installOperationUI(hubRoot){
     finally{setBusy(false);}
   });
 }
+
+export function openOperationReport(id){opened=id;void viewOperation(id);}
