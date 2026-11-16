@@ -1,0 +1,12 @@
+{
+  "name": "@ironhex/engine",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./index.js",
+    "./engine": "./engine.js",
+    "./construction": "./construction.js",
+    "./fire-arcs": "./fire-arcs.js"
+  }
+}
