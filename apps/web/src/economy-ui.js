@@ -33,6 +33,7 @@ async function mutate(path,body){
   root.querySelectorAll('#hub-market-panel button').forEach(b=>b.disabled=true);
   try{
     const {item}=await request(path,'POST',body);
+    busy=false;
     await refreshEconomy();
     await refreshHangar();
     notice(path.endsWith('/purchase')?
