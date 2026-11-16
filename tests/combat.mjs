@@ -133,6 +133,51 @@ test('Surface shots at depth-1 target continue to be blocked only by leg water c
  assert.equal(out.location,'LT');assert.equal(out.damage,3);assert.equal(t.armor.LT,a-3);
 });
 
+
+test('Underwater armor damage can breach a leg location on a roll of 10+ (BMM p.65)',()=>{
+ const g=game(),u=g.units[0];Object.assign(g.tile(u.q,u.r),{type:'water',depth:1,height:-1});
+ g.rng=()=>.99;const old=u.armor.LL;g.damage(u,'LL',1);
+ assert.equal(u.armor.LL,old-1);assert.equal(g.isBreached(u,'LL'),true);
+ assert.equal(u.crit.LL.every(v=>v===false),true);
+ assert.equal(g.mp(u,'walk')<u.walk,true);
+});
+test('Underwater hull integrity stays intact on a 2D6 roll less than 10',()=>{
+ const g=game(),u=g.units[0];Object.assign(g.tile(u.q,u.r),{type:'water',depth:1,height:-1});
+ g.rng=()=>.5;g.damage(u,'RL',1);assert.equal(g.isBreached(u,'RL'),false);
+});
+test('A submerged location missing its armor breaches automatically without damage (BMM p.65)',()=>{
+ const g=game(),u=g.units[0];u.armor.RA=0;
+ Object.assign(g.tile(u.q,u.r),{type:'water',depth:2,height:-2});g.rng=()=>0;
+ g.checkExistingHullBreaches(u);
+ assert.equal(g.isBreached(u,'RA'),true);assert.equal(u.dead,false);
+ assert.equal(g.phaseRolls.some(r=>r.kind.includes('Герметичность')),false);
+});
+test('Flooded torso disables attached arm and weapons without critical slot marks',()=>{
+ const g=game(),u=g.units[0];g.breachLocation(u,'RT');
+ assert.equal(g.isBreached(u,'RT'),true);
+ assert.equal(g.isBreached(u,'RA'),true);
+ assert.equal(u.crit.RT.every(v=>!v),true);
+ u.q=0;u.r=0;u.facing=0;g.units[2].q=1;g.units[2].r=0;
+ assert.equal(g.preview(0,2,0).legal,false);
+ assert.equal(g.physicalPreview(0,2,'punch','RA').legal,false);
+});
+test('Flooded heat sinks and jets stop functioning without being marked critical',()=>{
+ const g=game(),u=g.units[0];const jumpBefore=g.mp(u,'jump');
+ const sinkBefore=u.sinks;u.pendingHeat=0;u.heat=12;
+ g.breachLocation(u,'LT');
+ assert.equal(g.mp(u,'jump')<jumpBefore,true);
+ assert.equal(g.floodedSlots(u,'jump')>0,true);
+ assert.equal(g.floodedSlots(u,'sink')>=0,true);
+ assert.equal(u.jumpLost,0);
+ assert.equal(u.sinks,sinkBefore);
+});
+test('A flooded head kills a pilot, while a flooded CT engine shuts down the mech',()=>{
+ const g=game(),u=g.units[0];g.breachLocation(u,'HD');
+ assert.equal(u.dead,true);assert.equal(u.pilotWounds,6);
+ const h=game(),v=h.units[0];h.breachLocation(v,'CT');
+ assert.equal(v.dead,true);assert.equal(h.effectiveEngineHits(v)>=3,true);
+});
+
 test('Underwater ranges match every supported BMM energy-weapon table row (p.65)',()=>{
  const rows={
  'Small Laser':[1,2,2],'Medium Laser':[2,4,6],'Large Laser':[3,6,9],
