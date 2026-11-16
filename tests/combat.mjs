@@ -35,6 +35,20 @@ test('Failed water landing falls the full water depth before halving damage (BMM
 test('Turn cannot advance while unit declarations remain',()=>{const g=game();acting(g,0,'move');assert.equal(g.nextPhase().ok,false);g.hold(0);assert(g.nextPhase().ok);assert.equal(g.phase,'fire');});
 test('Shared MG pool cannot declare two shots with one round',()=>{const g=game(),u=g.units[3],t=g.units[0];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.bins.find(b=>b.weapon===6).shots=1;g.syncAmmo(u);acting(g,3,'fire');assert.equal(g.declareFire(3,[{index:6,target:0},{index:7,target:0}]).ok,false);assert.equal(g.declarations.length,0);});
 
+
+test('Prone fire with both arms intact allows unbraced torso mounts (BMM p.30)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;u.prone=true;u.brace='LA';
+ assert(g.preview(0,2,1).legal);
+});
+test('Missing either arm prevents prone firing under standard rules (BMM p.30)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;u.prone=true;u.brace='LA';
+ u.structure.RA=0;assert.equal(g.preview(0,2,1).legal,false);
+});
+test('Prone bracing forbids split weapons occupying the braced arm (BMM p.30)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;u.prone=true;u.brace='LA';
+ u.weapons[1].locations=['RT','LA'];assert.equal(g.preview(0,2,1).legal,false);
+ u.weapons[1].locations=['RT'];assert(g.preview(0,2,1).legal);
+});
 test('Head aimed shot replaces immobile bonus with +3 (BMM p.30)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;u.gunnery=7;t.q=4;t.r=0;t.shutdown=true;
  const normal=g.preview(0,2,0),aimed=g.preview(0,2,0,{aim:'HD'});
