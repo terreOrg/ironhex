@@ -3,7 +3,7 @@
 The repository contains a **three-service** Docker Compose stack:
 
 - `ironhex-web`: non-root Nginx serving the existing BattleTech game
-- `ironhex-api`: Node.js 24 API (read-only while authentication is unfinished)
+- `ironhex-api`: Node.js 24 authenticated API for hangar, operations, payments and repair
 - `ironhex-db`: PostgreSQL 17 with persistent `ironhex-db-data` volume
 
 No explicit Compose networks are defined; Komodo manages the stack's default
@@ -90,7 +90,7 @@ From a device on the LAN (or VPN with local DNS), open:
 
 The game now includes account registration and a cockpit login button.
 Sessions and user profiles are persisted in PostgreSQL. Online gameplay,
-wallet balances, campaigns and market transactions are not yet ready.
+server-backed operations, a starter fixed-price C-Bills market and repairs are implemented; multiplayer and player-to-player trading are not.
 
 **Before using real passwords or inviting other players, enable HTTPS.**
 The original LAN-only `http://ironhex.lan` route is not encrypted. You can
@@ -168,8 +168,7 @@ and potentially deploy twice.
 The DB volume retains application schema across routine rebuilds. Back it up
 before upgrades and never use `docker compose down -v` on this stack.
 
-The API deliberately exposes **no mutating endpoints** until identity,
-authorization, idempotency and server-authoritative transactions are built.
+All mutation endpoints require authentication, same-origin JSON and owner scoping. Operations and economy commands use PostgreSQL transactions, account-level wallet locks and replay-safe payout references.
 The current game has local browser state only. Keep Ironhex limited to LAN/VPN
 unless you add authentication, rate limits, and more restrictive controls.
 
@@ -331,3 +330,23 @@ API endpoints:
 Stale versions, enemy commands and illegal actions are rejected. Once the combat ends, the database transaction records the result, creates a report, and awards pilot XP only once. The after-action report button returns to the operation archive. Saved operations can be resumed on a later visit.
 
 This release remains single-player versus AI. It does not implement multiplayer, repair charges, automatic hangar damage deductions, market inventory or contracts.
+
+## 11. Starter economy and contracts
+
+The first economy release is available in the existing command hub:
+
+- **ОПЕРАЦИИ**: choose one of three fixed server contracts before creating an operation. The opponent's Gunnery stat changes with difficulty.
+- **РЫНОК И РЕМОНТ**: view a C-Bills wallet and ledger, purchase repair supplies, and restore hangar mechs.
+- **АНГАР**: damaged mechs show a repair cost and cannot enter a new operation until fully repaired.
+
+Balances are integer C-Bills stored server-side. A commander receives one **150,000 C-Bills** starting grant upon first accessing the economy. Current contract victory pay is **32,000 / 56,000 / 92,000 C-Bills** for patrol / intercept / assault; draws pay 50% and defeats 20%. Payout and accumulated wear are recorded once when a server operation finishes, in the same transaction as the pilot XP and battle report. Abandoning an operation never grants payout.
+
+Repairs cost **125 C-Bills per missing armor point**, **650 per internal structure point**, plus **8,000** to restore a destroyed chassis. A purchased armor kit costs **900** and offsets up to **10 armor points** in the next full repair. A structure kit costs **2,500** and offsets up to **5 structure points**. Existing supply kits are automatically consumed first during full repair. Prices are fixed by the server and cannot be changed by the client.
+
+Authenticated same-origin API:
+- `GET /api/v1/economy` — balance, supplies, offered contracts, repair quotes, recent credit ledger
+- `POST /api/v1/economy/purchase` — `{"sku":"armor_patch","quantity":1}`
+- `POST /api/v1/economy/repair` — `{"mechId":"<owned UUID>"}`
+- `POST /api/v1/operations` — includes optional `contractId` (`patrol`, `intercept`, or `assault`)
+
+All purchases, payouts and repairs are committed inside PostgreSQL transactions. The client never supplies a price, balance, damage, result or payout. Wallets and inventory are account-scoped; operations with damaged mechs are rejected. The historical `market_listings` table is still only a future foundation: **player-to-player trades, live pricing, chassis construction costs, travel, ammunition expenses and marketplaces are not implemented**. This prototype still lets players construct new hangar designs without paying for production.
