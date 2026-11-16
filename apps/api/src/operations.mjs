@@ -4,6 +4,7 @@ import {construct} from '../../../packages/engine/construction.js';
 import {validateDesign} from './hangar.mjs';
 import {AuthError} from './auth.mjs';
 import {runTacticalOrder,publicSnapshot} from './server-combat.mjs';
+import {contractById,contractPayout,changeCredits} from './economy.mjs';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_ROUNDS=12;
@@ -11,7 +12,7 @@ const MAX_OPERATIONS=200;
 
 export function validateOperation(input) {
   if(!input||typeof input!=='object'||Array.isArray(input)||
-     Object.keys(input).some(k=>!['mechIds','title','mode'].includes(k))||
+     Object.keys(input).some(k=>!['mechIds','title','mode','contractId'].includes(k))||
      !Array.isArray(input.mechIds)||input.mechIds.length<1||input.mechIds.length>2||
      input.mechIds.some(id=>typeof id!=='string'||!UUID.test(id))||
      new Set(input.mechIds).size!==input.mechIds.length)
@@ -22,7 +23,9 @@ export function validateOperation(input) {
     throw new AuthError(422,'invalid_operation');
   const mode=input.mode??'auto';
   if(!['auto','interactive'].includes(mode))throw new AuthError(422,'invalid_operation');
-  return {title:title.trim(),mechIds:input.mechIds,mode};
+  const contractId=input.contractId??'patrol';
+  if(!contractById(contractId))throw new AuthError(422,'invalid_contract');
+  return {title:title.trim(),mechIds:input.mechIds,mode,contractId};
 }
 
 function sourceRng(seed) {
@@ -39,7 +42,7 @@ function sourceRng(seed) {
   };
 }
 
-function makeRuntime(roster,saved=null) {
+function makeRuntime(roster,saved=null,contractId='patrol') {
   const rng=sourceRng(saved?.rngState??(randomBytes(4).readUInt32LE(0)||1));
   const game=new Game({rng:()=>rng.next()});
   if(saved?.game){
@@ -63,6 +66,8 @@ function makeRuntime(roster,saved=null) {
       unit.id=i;
       unit.team=0;
     }
+    for(const enemy of game.units.filter(u=>u.team===1))
+      enemy.gunnery=contractById(contractId)?.enemyGunnery??4;
     game.note('Сервер открыл операцию. Состав и навыки пилотов зафиксированы.');
   }
   return {game,rng};
@@ -127,7 +132,7 @@ function performRound(game) {
   }
 }
 
-function buildReport(game,roster) {
+function buildReport(game,roster,contractId) {
   const result=game.winner===0?'victory':game.winner===1?'defeat':'draw';
   const units=summary(game).units;
   const rewards=roster.map((r,i)=>{
@@ -145,10 +150,11 @@ function buildReport(game,roster) {
     };
   });
   return {
-    result,rounds:Math.min(MAX_ROUNDS,game.round),
+    result,contractId,creditReward:contractPayout(contractId,result),
+    rounds:Math.min(MAX_ROUNDS,game.round),
     units,rewards,
     log:(game.log||[]).slice(-90).map(v=>String(v).slice(0,300)),
-    equipmentNote:'Повреждения зафиксированы в рапорте; ремонт и расход боеприпасов в ангаре пока не списываются.'
+    equipmentNote:'Повреждения внесены в ангар; ремонт оплачивается в службе снабжения. Расход боеприпасов пока не учитывается.'
   };
 }
 
@@ -161,7 +167,7 @@ function publicItem(row,{detail=false}={}){
   }));
   return {
     id:row.id,title:row.title,status:row.status,version:row.version,
-    controlMode:row.control_mode||'auto',
+    controlMode:row.control_mode||'auto',contractId:row.contract_id||'patrol',
     roster,createdAt:row.created_at,
     startedAt:row.started_at,completedAt:row.completed_at,
     state:detail&&row.battle_state?summary(row.battle_state.game):null,
@@ -175,7 +181,16 @@ export function createOperationStore(pool){
         const completed=runtime.game.winner!==null;
         let report=null;
         if(completed){
-          report=buildReport(runtime.game,row.roster);
+          report=buildReport(runtime.game,row.roster,row.contract_id);
+          await changeCredits(client,owner,report.creditReward,
+            'Контракт: '+row.title,'operation:'+id);
+          for(const reward of report.rewards){
+            await client.query(
+              'UPDATE hangar_mechs SET armor_damage=armor_damage+$3, '+
+              'structure_damage=structure_damage+$4,wrecked=wrecked OR $5 '+
+              'WHERE id=$1 AND commander_id=$2',
+              [reward.mechId,owner,reward.armorLost,reward.structureLost,reward.destroyed]);
+          }
           for(const reward of report.rewards){
             if(!reward.pilotId)continue;
             const result=await client.query(
@@ -243,23 +258,30 @@ export function createOperationStore(pool){
       return publicItem(result.rows[0],{detail:true});
     },
     async create(owner,input){
-      const {title,mechIds,mode}=validateOperation(input);
+      const {title,mechIds,mode,contractId}=validateOperation(input);
       const client=await pool.connect();
       try{
         await client.query('BEGIN');
+        await client.query('SELECT id FROM commanders WHERE id=$1 FOR UPDATE',[owner]);
         const current=await client.query(
-          'SELECT status FROM combat_operations WHERE commander_id=$1',[owner]);
+          'SELECT status,roster FROM combat_operations WHERE commander_id=$1',[owner]);
         if(current.rows.length>=MAX_OPERATIONS||
            current.rows.filter(r=>['draft','active'].includes(r.status)).length>=5)
           throw new AuthError(409,'operation_limit');
         const result=await client.query(
-          'SELECT m.id,m.chassis,m.state,m.pilot_id,p.callsign,p.gunnery,p.piloting '+
+          'SELECT m.id,m.chassis,m.state,m.armor_damage,m.structure_damage,m.wrecked, ' +
+          'm.pilot_id,p.callsign,p.gunnery,p.piloting '+
           'FROM hangar_mechs m LEFT JOIN mechwarrior_pilots p '+
           'ON p.id=m.pilot_id AND p.commander_id=m.commander_id '+
           'WHERE m.commander_id=$1 AND m.id=ANY($2::uuid[])',
           [owner,mechIds]);
         if(result.rows.length!==mechIds.length)
           throw new AuthError(422,'invalid_roster');
+        if(result.rows.some(r=>r.armor_damage>0||r.structure_damage>0||r.wrecked))
+          throw new AuthError(409,'mech_needs_repair');
+        if(current.rows.some(r=>['draft','active'].includes(r.status)&&
+          r.roster.some(entry=>mechIds.includes(entry.mechId))))
+          throw new AuthError(409,'mech_assigned_operation');
         const found=new Map(result.rows.map(r=>[r.id,r]));
         const roster=mechIds.map(id=>{
           const mech=found.get(id);
@@ -275,9 +297,9 @@ export function createOperationStore(pool){
           };
         });
         const inserted=await client.query(
-          'INSERT INTO combat_operations(commander_id,title,roster,control_mode) '+
-          'VALUES($1,$2,$3::jsonb,$4) RETURNING *',
-          [owner,title,JSON.stringify(roster),mode]);
+          'INSERT INTO combat_operations(commander_id,title,roster,control_mode,contract_id) '+
+          'VALUES($1,$2,$3::jsonb,$4,$5) RETURNING *',
+          [owner,title,JSON.stringify(roster),mode,contractId]);
         await client.query('COMMIT');
         return publicItem(inserted.rows[0],{detail:true});
       }catch(error){await client.query('ROLLBACK');throw error;}
@@ -286,7 +308,7 @@ export function createOperationStore(pool){
     launch(owner,id){
       return locked(id,owner,async(client,row)=>{
         if(row.status!=='draft')throw new AuthError(409,'operation_not_draft');
-        const runtime=makeRuntime(row.roster);
+        const runtime=makeRuntime(row.roster,null,row.contract_id);
         const state=capture(runtime);
         const updated=await client.query(
           'UPDATE combat_operations SET status=$3,battle_state=$4::jsonb, '+
