@@ -645,3 +645,66 @@ test('BMM p.15: explicit lateral shift respects elevation, heavy terrain and occ
  assert.equal(occupied.g.move(0,...DIRS[1],'walk',
   {lateral:'shift-left-forward'}).ok,false,'Cannot end a shift in occupied hex');
 });
+
+test('BMM p.19: intact Quad stands without a PSR, spends 2 MP and 1 heat, chooses facing',()=>{
+ const design=construct({...example,name:'Quad standing',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const create=()=>{
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(design.unit));
+  for(const other of g.units.slice(1))other.dead=true;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.prone=true;u.facing=0;u.spent=0;u.standAttempts=0;u.moveMode='stand';
+  g.phaseRolls=[];return {g,u};
+ };
+ const {g,u}=create();
+ assert.equal(validateTacticalOrder({type:'stand',version:1,id:0,facing:4}).facing,4);
+ assert.throws(()=>validateTacticalOrder({type:'stand',version:1,id:0,facing:6}),/invalid_command/);
+ assert.equal(g.stand(0,-1).ok,false,'Invalid facing must not be accepted');
+ assert.equal(u.prone,true);
+ const result=g.stand(0,4);
+ assert(result.ok,result.error);
+ assert.equal(u.prone,false);
+ assert.equal(u.facing,4,'Choosing new facing when standing is free');
+ assert.equal(u.spent,2,'Standing is 2 MP');
+ assert.equal(u.pendingHeat,1,'Standing always generates 1 heat');
+ assert.equal(u.standAttempts,1);
+ assert.equal(g.phaseRolls.length,0,'Intact quad has no standing PSR');
+ const biped=create();
+ biped.u.config='Biped';
+ const legacy=biped.g.stand(0);
+ assert(legacy.ok,legacy.error);
+ assert(biped.g.phaseRolls.some(x=>x.kind.includes('Подъём')),
+  'Biped standing must still make a PSR');
+});
+
+test('BMM pp.19,44: leg loss changes Quad standing attempts and roll requirement',()=>{
+ const design=construct({...example,name:'Quad damaged standing',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const create=()=>{
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(design.unit));
+  for(const other of g.units.slice(1))other.dead=true;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.prone=true;u.spent=0;u.standAttempts=0;u.moveMode='stand';
+  g.phaseRolls=[];g.rng=()=>.99;return {g,u};
+ };
+ const one=create();one.u.structure.LA=0;
+ assert(one.g.stand(0).ok);
+ assert(one.g.phaseRolls.some(x=>x.kind.includes('Подъём')),
+  'With one destroyed leg, a Quad must make a standing PSR');
+ const two=create();
+ two.u.structure.LA=0;two.u.structure.RA=0;
+ two.u.standAttempts=1;
+ assert.equal(two.g.stand(0).ok,false,'With only two legs, one attempt per turn');
+ two.u.standAttempts=0;
+ assert(two.g.stand(0).ok,'Two-leg Quad may attempt one running stand');
+ assert.equal(two.u.moveMode,'run');
+ assert.equal(two.u.spent,2);
+ assert(two.g.phaseRolls.some(x=>x.kind.includes('Подъём')));
+ const three=create();
+ three.u.structure.LA=0;three.u.structure.RA=0;three.u.structure.LL=0;
+ assert.equal(three.g.stand(0).ok,false,'Three destroyed legs prevent standing');
+});

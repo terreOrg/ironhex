@@ -293,7 +293,26 @@ export class Game extends Legacy{
   }
  }
 }u.distanceMoved=mode==='jump'?distance(u.moveStart,u):u.distanceMoved+path.length;this.note(`${u.name}: ${mode}, потрачено ${u.spent} MP.`);return {ok:true,path,from,to:{q:u.q,r:u.r},mode,rolls:[...this.phaseRolls]};}
- stand(id){const u=this.unit(id);if(!this.canAct(u)||!u.prone||!this.mobile(u)||u.gyroHits>=2||u.structure.LL+u.structure.RL===0)return fail('Мех не может встать');const oneLeg=!u.structure.LL||!u.structure.RL;if(oneLeg&&(!u.structure.LA&&!u.structure.RA||u.standAttempts))return fail('Подъём невозможен');const standingBudget=oneLeg?2:this.mp(u,'run');if(u.spent+2>standingBudget)return fail('Нужно 2 MP');this.phaseRolls=[];u.standAttempts++;u.spent+=2;u.pendingHeat++;u.moveMode=oneLeg||u.spent>this.mp(u,'walk')?'run':'walk';u.prone=false;this.actingId=id;this.psr(u,0,'Подъём',true);return {ok:true};}
+ stand(id,newFacing=null){const u=this.unit(id),quad=u?.config==='Quad';
+  const lost=quad?['LA','RA','LL','RL'].filter(l=>!u.structure[l]).length:0;
+  if(!this.canAct(u)||!u.prone||!this.mobile(u)||u.gyroHits>=2||
+    (quad?lost>=3:u.structure.LL+u.structure.RL===0))
+    return fail('Мех не может встать');
+  if(newFacing!==null&&(!Number.isInteger(newFacing)||newFacing<0||newFacing>5))
+    return fail('Неверное направление при подъёме');
+  const restricted=quad?lost===2:!u.structure.LL||!u.structure.RL;
+  if(restricted&&(quad?!!u.standAttempts:(!u.structure.LA&&!u.structure.RA||u.standAttempts)))
+    return fail('Подъём невозможен');
+  const standingBudget=restricted?2:this.mp(u,'run');
+  if(u.spent+2>standingBudget)return fail('Нужно 2 MP');
+  this.phaseRolls=[];u.standAttempts++;u.spent+=2;u.pendingHeat++;
+  u.moveMode=restricted||u.spent>this.mp(u,'walk')?'run':'walk';
+  u.prone=false;this.actingId=id;
+  // BMM p.19: a Quad with all four legs intact stands automatically.
+  const stood=quad&&lost===0||this.psr(u,0,'Подъём',true);
+  // The player chooses any new facing at no MP charge, but only on success.
+  if(stood&&newFacing!==null)u.facing=newFacing;
+  return {ok:true};}
  drop(id){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||u.prone)return fail('Нельзя лечь');u.prone=true;this.checkExistingHullBreaches(u);this.actingId=id;return {ok:true};}
  hold(id){const u=this.unit(id);if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(u.gyroHits||u.actuators.LL.hip||u.actuators.RL.hip)this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
  relative(a,b,f=a.facing){const x=Math.sqrt(3)*(b.q-a.q+(b.r-a.r)/2),y=-1.5*(b.r-a.r),v=Math.atan2(y,x)-f*Math.PI/3;return Math.atan2(Math.sin(v),Math.cos(v))*180/Math.PI;}

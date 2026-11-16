@@ -216,3 +216,21 @@ All four GitHub Actions checks passed for `2e93b1a`.
 
 The Quad heading remains `known_missing`, with standing,
 movement after leg loss, combat and remaining exceptions outstanding.
+
+## Quad standing — first implementation (bmm-req-082, BMM pp.19, 44)
+
+The tactical engine now distinguishes intact Quads from damaged
+ones when standing: all four legs intact means no standing PSR;
+one or more lost legs requires the usual PSR. With only two legs
+remaining, a Quad receives just one attempt per turn and counts
+as running; three lost legs block standing entirely. Standing
+still costs 2 MP and generates 1 heat. The standard right to select
+a new facing free of charge on successful standing is exposed as
+an optional, strictly validated `facing` value in the server
+tactical order.
+
+Deterministic tests cover intact Quad versus biped, one/two/three
+destroyed legs, repeated stand attempt denial, facing bounds,
+heat, MP and PSR emission. This **does not** yet certify all PSR
+modifiers or lost-leg speed effects (separate Quad requirements),
+so `bmm-req-082` remains `tested_case`.

@@ -1146,12 +1146,22 @@
       "id": "bmm-req-082",
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
-      "statement": "Quad standing ignores the usual Piloting Skill Roll while all legs remain intact; damaged-leg standing and two-leg attempts follow their exceptions.",
-      "status": "known_missing",
+      "statement": "Quad standing requires no PSR with all four legs intact, but requires a PSR after leg destruction; with only two legs it permits a single running stand attempt, while losing three prevents standing. Verified facing choice and movement/heat costs are required.",
+      "status": "tested_case",
       "sourcePages": [
-        19
+        19,
+        44
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.19: intact Quad stands without a PSR, spends 2 MP and 1 heat, chooses facing"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.19,44: leg loss changes Quad standing attempts and roll requirement"
+        }
+      ]
     },
     {
       "id": "bmm-req-083",
