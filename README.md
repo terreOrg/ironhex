@@ -8,7 +8,7 @@ cockpit UI, dice, mech record sheets and a construction tool.
 ## Rules audit and BattleMech Manual conformance
 
 [BattleMech Manual audit register](rules/README.md) tracks the corrected sixth
-printing (2022) in version control. It separates **326 table-of-contents topics**
+printing (2022) in version control. It separates **352 table-of-contents topics**
 from **24 granular requirements** with exact regression-test links.
 Passing one test never certifies a whole topic. Run
 `node --test tests/rules-registry.mjs` to verify the inventory and its links.
