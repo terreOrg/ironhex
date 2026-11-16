@@ -182,6 +182,46 @@ test('Chromium renders WebGL mechs and firing-sector controls', { timeout:120000
   });
 });
 
+
+test('Mobile 3D battlefield rotates on drag and zooms with a two-finger gesture',
+  {timeout:120000},async()=>{
+    await withPage('mobile-battle-gestures',{mobile:true,noWebGL:true},async page=>{
+      const hud=page.locator('.visor-reticle span');
+      const baseline=await hud.textContent();
+      assert(baseline.includes('AZIMUTH')&&baseline.includes('ZOOM 12.0'));
+      await page.evaluate(()=>{
+        const canvas=document.querySelector('#viewport canvas');
+        const send=(type,id,x,y)=>canvas.dispatchEvent(new PointerEvent(type,{
+          bubbles:true,pointerType:'touch',pointerId:id,isPrimary:id===1,
+          clientX:x,clientY:y,button:0,buttons:type==='pointerup'?0:1
+        }));
+        send('pointerdown',1,120,190);
+        send('pointermove',1,200,190);
+        send('pointerup',1,200,190);
+      });
+      const rotated=await hud.textContent();
+      assert.notEqual(rotated,baseline,'Dragging must rotate the camera');
+      await page.evaluate(()=>{
+        const canvas=document.querySelector('#viewport canvas');
+        const send=(type,id,x,y)=>canvas.dispatchEvent(new PointerEvent(type,{
+          bubbles:true,pointerType:'touch',pointerId:id,isPrimary:id===1,
+          clientX:x,clientY:y,button:0,buttons:type==='pointerup'?0:1
+        }));
+        send('pointerdown',1,110,200);
+        send('pointerdown',2,170,200);
+        send('pointermove',2,230,200);
+        send('pointerup',2,230,200);
+        send('pointerup',1,110,200);
+      });
+      const zoomed=await hud.textContent();
+      assert.notEqual(zoomed,rotated,'Pinching must change camera zoom');
+      assert(zoomed.includes('ZOOM 6.0'),'Pinch zoom level must be applied');
+      await page.locator('#resetcam').click();
+      assert.equal(await hud.textContent(),baseline,
+        'Reset must restore the original camera position and zoom');
+    });
+  });
+
 test('Record sheet and initiative dice do not leave a stuck dialog', { timeout:120000 }, async () => {
   await withPage('initiative',{ noWebGL:true },async page => {
     await page.locator('#sheet').click();

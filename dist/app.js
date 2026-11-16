@@ -43,7 +43,7 @@ function updateArcs(){const u=game.units[selected];if(arcWeapon!=='all'&&!u.weap
  $('#arcweapon').value=arcWeapon;$('#arcinfo').textContent=arcsEnabled?u.name+' · '+arcTiles.size+' гексов':'Секторы скрыты';$('#arclegend').hidden=!arcsEnabled;
 }
 $('#arctoggle').onclick=()=>{arcsEnabled=!arcsEnabled;updateArcs();};$('#arcweapon').onchange=()=>{arcWeapon=$('#arcweapon').value;updateArcs();};
-function resize(){const w=$('#viewport').clientWidth,h=$('#viewport').clientHeight;renderer.setSize(w,h);const a=w/h;camera.left=-zoom*a;camera.right=zoom*a;camera.top=zoom;camera.bottom=-zoom;camera.updateProjectionMatrix();}
+function resize(){const w=$('#viewport').clientWidth,h=$('#viewport').clientHeight;renderer.setSize(w,h);const a=w/h;camera.left=-zoom*a;camera.right=zoom*a;camera.top=zoom;camera.bottom=-zoom;camera.updateProjectionMatrix();const hud=$('.visor-reticle span');if(hud)hud.textContent='AZIMUTH '+((Math.round(angle*180/Math.PI)%360+360)%360)+'° · ZOOM '+zoom.toFixed(1);}
 function cam(){camera.position.set(Math.cos(angle)*23,23,Math.sin(angle)*23);camera.lookAt(0,0,0);camera.updateMatrixWorld();resize();}new ResizeObserver(resize).observe($('#viewport'));cam();
 const loader=new GLTFLoader();
 async function load(){try{const templates=await Promise.all(['aether-02.glb','atlas-09.glb'].map(f=>loader.loadAsync(f)));for(const u of game.units){let gltf=templates[u.id%2],model=clone(gltf.scene),box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),scale=(u.tonnage===65?2.25:2)/size.y;model.scale.setScalar(scale);model.position.y=-box.min.y*scale;const root=new THREE.Group();root.add(model);root.position.copy(world(u.q,u.r));root.position.y=groundY(u.q,u.r);root.rotation.y=u.team? -Math.PI/2:Math.PI/2;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});const disc=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.055,32),new THREE.MeshStandardMaterial({color:u.team?0xda7560:0xb8df6c,emissive:u.team?0x44211b:0x283b14,roughness:.4}));disc.position.y=.025;root.add(disc);const arrow=new THREE.Mesh(new THREE.ConeGeometry(.13,.4,3),new THREE.MeshBasicMaterial({color:u.team?0xffaa88:0xe0ff9a}));arrow.rotation.x=Math.PI/2;arrow.position.set(0,.08,.8);root.add(arrow);scene.add(root);const mixer=new THREE.AnimationMixer(model),actions={};for(const clip of gltf.animations)actions[clip.name]=mixer.clipAction(clip);const label=document.createElement('div');label.className='mechlabel'+(u.team?' red':'');label.textContent=`${u.id+1} / ${u.name.toUpperCase()}`;$('#labels').appendChild(label);records.set(u.id,{root,model,mixer,actions,label,state:null,dead:false});play(u.id,'Sentinel');}$('#loading').style.display='none';if(software)toast('WebGL недоступен: резервная тактическая карта. Для 3D включите аппаратное ускорение.');renderUI();}catch(e){$('#loading').innerHTML='Не удалось загрузить 3D-модели.<br>Обновите страницу для повторной загрузки.';console.error(e);}}
@@ -200,8 +200,53 @@ async function showRolls(rolls){for(const r of rolls||[])await animateRoll(r,PHA
 function chooseActive(){if(game.activeTeam!==null){const u=game.units.find(u=>game.canAct(u));if(u){selected=u.id;arcWeapon='all';mode=u.moveMode==='stand'?'walk':u.moveMode;}}target=null;weaponTargets={};weaponBins={};picked=new Set(game.units[selected].weapons.map((_,i)=>i));}
 async function pumpAI(){if(remoteMode||hotseat)return;while(game.activeTeam===1&&game.winner===null){const u=game.units.find(u=>game.canAct(u));if(!u)break;game.phaseRolls=[];if(game.phase==='move'){const r=game.aiMove(u.id);await animateMove(u.id,r);}else if(game.phase==='fire')game.aiAttack(u.id);else game.aiPhysical(u.id);await showRolls(game.phaseRolls);syncModels();}}
 async function action(fn,advance=false,order=null){if(remoteMode)return serverCommand(order);if(busy)return;game.phaseRolls=[];const r=fn();if(!r?.ok){toast(r?.error||'Приказ не выполнен');return;}if(game.units[selected].dead&&game.actingId===selected){game.hold(selected);advance=true;}busy=true;renderUI();await showRolls(game.phaseRolls);if(advance){await pumpAI();chooseActive();}busy=false;renderUI();}
-const ray=new THREE.Raycaster();const pointer=new THREE.Vector2();let down;
-renderer.domElement.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};});renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>12||busy)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);if(software){let coords=[...game.tiles].map(t=>({t,p:project(world(t.q,t.r).add(new THREE.Vector3(0,groundY(t.q,t.r),0)))}));coords.sort((a,b)=>Math.hypot(a.p.x-(e.clientX-rect.left),a.p.y-(e.clientY-rect.top))-Math.hypot(b.p.x-(e.clientX-rect.left),b.p.y-(e.clientY-rect.top)));const t=coords[0].t;let at=game.units.find(u=>!u.dead&&u.q===t.q&&u.r===t.r);if(at)selectUnit(at.id);else if(game.phase==='move'&&owned(game.units[selected]))doMove(t);return;}const objects=[...records.values()].map(r=>r.root);const hit=ray.intersectObjects(objects,true)[0];if(hit){let o=hit.object;while(o.parent&&o.parent!==scene)o=o.parent;const entry=[...records.entries()].find(([id,r])=>r.root===o);if(entry){selectUnit(entry[0]);return;}}const tilehit=ray.intersectObjects(tileMeshes)[0];if(tilehit){let t=tilehit.object.userData.tile;let at=game.units.find(u=>!u.dead&&u.q===t.q&&u.r===t.r);if(at){selectUnit(at.id);return;}if(game.phase==='move'&&owned(game.units[selected]))doMove(t);}});
+const ray=new THREE.Raycaster();const pointer=new THREE.Vector2();const activePointers=new Map();let gestureUsed=false,pinchDistance=null;
+function pickCanvas(e){if(busy)return;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);if(software){let coords=[...game.tiles].map(t=>({t,p:project(world(t.q,t.r).add(new THREE.Vector3(0,groundY(t.q,t.r),0)))}));coords.sort((a,b)=>Math.hypot(a.p.x-(e.clientX-rect.left),a.p.y-(e.clientY-rect.top))-Math.hypot(b.p.x-(e.clientX-rect.left),b.p.y-(e.clientY-rect.top)));const t=coords[0].t;let at=game.units.find(u=>!u.dead&&u.q===t.q&&u.r===t.r);if(at)selectUnit(at.id);else if(game.phase==='move'&&owned(game.units[selected]))doMove(t);return;}const objects=[...records.values()].map(r=>r.root);const hit=ray.intersectObjects(objects,true)[0];if(hit){let o=hit.object;while(o.parent&&o.parent!==scene)o=o.parent;const entry=[...records.entries()].find(([id,r])=>r.root===o);if(entry){selectUnit(entry[0]);return;}}const tilehit=ray.intersectObjects(tileMeshes)[0];if(tilehit){let t=tilehit.object.userData.tile;let at=game.units.find(u=>!u.dead&&u.q===t.q&&u.r===t.r);if(at){selectUnit(at.id);return;}if(game.phase==='move'&&owned(game.units[selected]))doMove(t);}}
+const gestureCanvas=renderer.domElement;
+function pointerDistance(){
+  const p=[...activePointers.values()];
+  return p.length===2?Math.hypot(p[0].lastX-p[1].lastX,p[0].lastY-p[1].lastY):null;
+}
+gestureCanvas.addEventListener('pointerdown',e=>{
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  if(activePointers.size===0)gestureUsed=false;
+  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY,lastX:e.clientX,lastY:e.clientY});
+  if(activePointers.size>1){gestureUsed=true;pinchDistance=pointerDistance();}
+  if(e.isTrusted&&gestureCanvas.setPointerCapture){
+    try{gestureCanvas.setPointerCapture(e.pointerId);}catch{}
+  }
+});
+gestureCanvas.addEventListener('pointermove',e=>{
+  const point=activePointers.get(e.pointerId);
+  if(!point)return;
+  const dx=e.clientX-point.lastX;
+  point.lastX=e.clientX;point.lastY=e.clientY;
+  if(activePointers.size===1){
+    if(Math.hypot(e.clientX-point.x,e.clientY-point.y)>9)gestureUsed=true;
+    if(gestureUsed&&dx){angle+=dx*.008;cam();}
+  }else if(activePointers.size===2){
+    const distance=pointerDistance();
+    if(distance&&pinchDistance){
+      zoom=THREE.MathUtils.clamp(zoom*pinchDistance/distance,5,20);
+      resize();
+    }
+    pinchDistance=distance;
+  }
+});
+gestureCanvas.addEventListener('pointerup',e=>{
+  const point=activePointers.get(e.pointerId);
+  if(!point)return;
+  const tap=activePointers.size===1&&!gestureUsed&&
+    Math.hypot(e.clientX-point.x,e.clientY-point.y)<=12;
+  activePointers.delete(e.pointerId);
+  pinchDistance=activePointers.size===2?pointerDistance():null;
+  if(tap)pickCanvas(e);
+});
+gestureCanvas.addEventListener('pointercancel',e=>{
+  activePointers.delete(e.pointerId);
+  pinchDistance=activePointers.size===2?pointerDistance():null;
+  gestureUsed=true;
+});
 renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();zoom=THREE.MathUtils.clamp(zoom+Math.sign(e.deltaY)*.8,5,20);resize();},{passive:false});
 async function animateMove(id,res){if(!res.ok||!res.path?.length)return;const rec=records.get(id);if(!rec)return;if(software){rec.root.position.copy(world(res.to.q,res.to.r));rec.root.position.y=groundY(res.to.q,res.to.r);await pause(250);return;}play(id,res.mode==='run'?'Run':'Walk');for(const p of res.path){let start=rec.root.position.clone(),end=world(p.q,p.r);end.y=groundY(p.q,p.r);rec.root.rotation.y=Math.atan2(end.x-start.x,end.z-start.z);await new Promise(resolve=>{effects.push({type:'move',rec,start,end,time:0,duration:res.mode==='jump'?.9:res.mode==='run'?.17:.24,jump:res.mode==='jump',resolve});});}play(id,'Sentinel');}
 async function doMove(t){if(remoteMode)return serverCommand({type:'move',id:selected,q:t.q,r:t.r,mode});if(busy)return;const id=selected,res=game.move(id,t.q,t.r,mode);if(!res.ok){toast(res.error);return;}busy=true;renderUI();await animateMove(id,res);await showRolls(res.rolls);if(game.units[id].dead){game.hold(id);await pumpAI();chooseActive();}busy=false;toast('Маршрут выполнен. Можно продолжить движение или подтвердить приказ.');renderUI();}
