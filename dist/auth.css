@@ -651,3 +651,14 @@ border:1px solid #9d6d57;border-radius:4px;padding:10px 13px;cursor:pointer;marg
 @media(max-width:1060px){.hub-root .op-layout{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:540px){.hub-root .op-intro,.hub-root .op-current,.hub-root .op-create-form,.hub-root .op-history{padding:13px}
 .hub-root .op-unit-roster,.hub-root .op-status-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Correct box sizing and mobile rail proportions after introducing Operations. */
+.hub-root .hub-main,.hub-root .hub-work-content{min-width:0}
+.hub-root .hub-workarea{box-sizing:border-box;max-width:100%}
+.hub-root .hub-frame{box-sizing:border-box}
+@media(max-width:700px){
+  .hub-root .hub-home-action{width:auto;min-width:117px;max-width:145px;flex:0 0 auto}
+  .hub-frame.hub-section-active .hub-main{max-width:100%;min-width:0}
+  .hub-frame.hub-section-active .hub-operations{box-sizing:border-box;max-width:100%;width:100%}
+  .hub-root .hub-workarea{width:100%;box-sizing:border-box}
+}
