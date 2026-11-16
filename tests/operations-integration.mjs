@@ -145,3 +145,92 @@ assert.equal((await req('/api/v1/pilots/'+pilotId,{cookie:owner.cookie}))
   .data.item.battles,1,'Abandoning an operation must not grant XP');
 
 console.log('Server operations passed: owner isolation, frozen roster, replay-safe rounds, validated result, rewards once, persistence and abort');
+
+
+// Interactive 3D uses the same PostgreSQL operation record, but the browser
+// cannot advance automatic rounds or forge enemy/hidden state.
+const interactiveCreated=await req('/api/v1/operations',{
+  method:'POST',cookie:owner.cookie,body:{
+    title:'Тактическая операция 3D',mechIds:[mechId],mode:'interactive'
+  }
+});
+assert.equal(interactiveCreated.status,201,JSON.stringify(interactiveCreated.data));
+const interactiveId=interactiveCreated.data.item.id;
+assert.equal(interactiveCreated.data.item.controlMode,'interactive');
+assert.equal((await req('/api/v1/operations/'+interactiveId+'/snapshot',
+  {cookie:other.cookie})).status,404,'A rival cannot view private game state');
+assert.equal((await req('/api/v1/operations/'+interactiveId+'/command',{
+  method:'POST',cookie:other.cookie,body:{type:'next',version:1}
+})).status,404);
+assert.equal((await req('/api/v1/operations/'+interactiveId+'/snapshot',
+  {cookie:owner.cookie})).status,200);
+const interactiveStarted=await req('/api/v1/operations/'+interactiveId+'/launch',{
+  method:'POST',cookie:owner.cookie
+});
+assert.equal(interactiveStarted.status,200);
+assert.equal(interactiveStarted.data.item.status,'active');
+assert.equal((await req('/api/v1/operations/'+interactiveId+'/advance',{
+  method:'POST',cookie:owner.cookie
+})).status,409,'An interactive battle cannot use automatic round reward endpoint');
+
+async function tactical(body,origin=true){
+  return req('/api/v1/operations/'+interactiveId+'/command',{
+    method:'POST',cookie:owner.cookie,origin,body
+  });
+}
+assert.equal((await tactical({type:'next',version:1,winner:0})).status,422);
+assert.equal((await tactical({type:'hold',id:2,version:1})).status,422);
+assert.equal((await tactical({type:'next',version:1},false)).status,403);
+assert.equal((await tactical({type:'next',version:999})).status,409);
+let snapshot=await req('/api/v1/operations/'+interactiveId+'/snapshot',{
+  cookie:owner.cookie
+});
+assert.equal(snapshot.status,200);
+assert.equal(snapshot.data.item.version,1);
+assert.equal(snapshot.data.item.game.phase,'initiative');
+assert.equal(JSON.stringify(snapshot.data).includes('rngState'),false,
+  'Random generator state must never be returned to the client');
+assert.equal(snapshot.data.item.game.units[0].name,example.name);
+
+let command=await tactical({type:'next',version:1});
+assert.equal(command.status,200,JSON.stringify(command.data));
+assert.equal(command.data.item.version,2);
+assert.equal(command.data.item.game.phase,'move');
+assert.equal(command.data.item.effect.type,'next');
+assert.equal((await tactical({type:'next',version:1})).status,409,
+  'Outdated concurrent commands must not override later state');
+assert.equal((await tactical({type:'next',version:2})).status,409,
+  'A phase cannot complete before the commander submits all orders');
+
+let game=command.data.item.game;
+let version=2;
+let moves=0;
+while(game.phase==='move'&&game.queue.length&&moves++<12){
+  assert.equal(game.activeTeam,0,'Opponent should act on the server, not in the client');
+  const id=game.units.find(u=>u.team===0&&!u.dead&&!u.moved)?.id;
+  assert.notEqual(id,undefined);
+  const turn=await tactical({type:'hold',id,version});
+  assert.equal(turn.status,200,'Interactive movement order rejected: '+JSON.stringify(turn.data));
+  version=turn.data.item.version;
+  game=turn.data.item.game;
+}
+assert(moves>0&&moves<12);
+assert.equal(game.queue.length,0);
+command=await tactical({type:'next',version});
+assert.equal(command.status,200,JSON.stringify(command.data));
+version=command.data.item.version;
+assert.equal(command.data.item.game.phase,'fire');
+const persistedInteractive=await req('/api/v1/operations/'+interactiveId+'/snapshot',{
+  cookie:owner.cookie
+});
+assert.equal(persistedInteractive.data.item.version,version);
+assert.equal(persistedInteractive.data.item.game.phase,'fire');
+assert.equal(JSON.stringify(persistedInteractive.data).includes('rngState'),false);
+assert.equal((await req('/api/v1/operations/'+interactiveId+'/abandon',{
+  method:'POST',cookie:owner.cookie
+})).status,200);
+assert.equal((await tactical({type:'next',version})).status,409);
+const stillOwner=await req('/api/v1/pilots/'+pilotId,{cookie:owner.cookie});
+assert.equal(stillOwner.data.item.battles,1,
+  'Abandoning interactive battle must not issue additional rewards');
+console.log('Interactive 3D protocol passed: private snapshots, enemy order rejection, version conflicts, server AI, phase persistence and abort');
