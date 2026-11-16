@@ -354,7 +354,7 @@ export class Game extends Legacy{
 }u.distanceMoved=mode==='jump'?distance(u.moveStart,u):u.distanceMoved+path.length;this.note(`${u.name}: ${mode}, потрачено ${u.spent} MP.`);return {ok:true,path,from,to:{q:u.q,r:u.r},mode,rolls:[...this.phaseRolls]};}
  stand(id,newFacing=null,options={}){const u=this.unit(id),quad=u?.config==='Quad';
   const lost=quad?['LA','RA','LL','RL'].filter(l=>!u.structure[l]).length:0;
-  if(!this.canAct(u)||!u.prone||!this.mobile(u)||u.gyroHits>=2||
+  if(this.phase!=='move'||!this.canAct(u)||!u.prone||!this.mobile(u)||u.gyroHits>=2||
     (quad?lost>=3:u.structure.LL+u.structure.RL===0))
     return fail('Мех не может встать');
   if(newFacing!==null&&(!Number.isInteger(newFacing)||newFacing<0||newFacing>5))

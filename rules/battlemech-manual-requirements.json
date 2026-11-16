@@ -1183,6 +1183,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM pp.16,19: Quad with exactly one available MP uses a single minimum stand"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.19: standing orders are rejected outside the Movement Phase"
         }
       ]
     },

@@ -813,7 +813,8 @@ test('BMM p.19: a failed two-leg Quad stand remains prone and cannot retry this 
 
 test('BMM pp.16,19: Quad with exactly one available MP uses a single minimum stand',()=>{
  const design=construct({...example,name:'Quad min stand',config:'Quad',walk:1,
-  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+  jump:0,sinks:10,equipment:Array.from({length:8},(_,i)=>(
+   {type:'sink',location:'LT',slot:i+1}))},{auditQuad:true});
  // 55t x 1 engine rating 55 is valid; the default armor/equipment still fits.
  assert.deepEqual(design.errors,[],design.errors.join('; '));
  const create=()=>{
@@ -855,4 +856,18 @@ test('BMM pp.16,19: Quad with exactly one available MP uses a single minimum sta
   'A single minimum stand cannot be retried');
  assert.throws(()=>validateTacticalOrder({type:'stand',version:1,id:0,
   minimum:'true'}),/invalid_command/);
+});
+
+test('BMM p.19: standing orders are rejected outside the Movement Phase',()=>{
+ const design=construct({...example,name:'Quad phase stand',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,design.unit);
+ u.prone=true;u.spent=0;u.standAttempts=0;
+ for(const phase of ['initiative','fire','physical','heat']){
+  g.phase=phase;g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  assert.equal(g.stand(0).ok,false,'No standing during '+phase);
+  assert.equal(u.prone,true);assert.equal(u.spent,0);
+ }
 });

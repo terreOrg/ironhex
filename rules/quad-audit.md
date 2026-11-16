@@ -289,3 +289,13 @@ the normal standing option when two or more MP are available.
 The successful facing remains free; the option is schema-validated.
 Tests cover one-MP Quad recovery after two legs destroyed, zero- and
 two-MP rejection and single-attempt limitation.
+
+### Corrected regression fixture and phase validation
+
+The initial Minimum Movement test failed CI because a 55-ton,
+55-rating engine includes only two integral heat sinks: the
+test fixture now places all eight required external heat sinks.
+This respects the construction rules instead of weakening
+validation to make a test pass. Standing also rejects orders
+outside the Movement Phase; the regression suite covers
+initiative, weapon, physical and heat phases.
