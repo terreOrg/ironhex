@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {Game} from '../dist/engine.js';
+import {Game,chargeTravelHexes,distance} from '../dist/engine.js';
 let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS',name);};
 function game(){const g=new Game({rng:()=>.5});for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});return g;}
 function acting(g,id,phase){g.phase=phase;g.activeTeam=g.units[id].team;g.queue=[g.activeTeam];g.actingId=null;}
@@ -111,6 +111,28 @@ test('Destroyed hip or entire leg replaces same-leg PSR actuator modifiers (BMM 
 });
 test('Cold shutdown reactor restarts',()=>{const g=game(),u=g.units[0];u.shutdown=true;u.heat=5;g.heatPhase();assert.equal(u.shutdown,false);assert.equal(u.heat,0);});
 test('Destroyed gyro prevents standing',()=>{const g=game(),u=g.units[0];acting(g,0,'move');u.prone=true;u.gyroHits=2;assert.equal(g.stand(0).ok,false);});
+
+test('Charge distance uses moved hexes, not shortest hex distance (BMM p.35)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2],start={q:-2,r:0};
+ Object.assign(u,{...start,facing:0});Object.assign(t,{q:1,r:1,moved:true});
+ const blocked=[[-2,-1],[-2,1],[-2,2],[-1,-2],[-1,3],[0,-2],[0,0],[0,1],[0,2],[1,3],[2,-1],[2,0],[3,0],[3,1]];
+ for(const [q,r] of blocked)Object.assign(g.tile(q,r),{height:4,surface:4});
+ acting(g,0,'move');assert(g.declareCharge(0,2).ok);
+ assert.equal(u.distanceMoved,4);assert.equal(distance(start,u),3);
+ assert.equal(u.charge.hexes,4);
+});
+test('Charge movement damage ignores hexes before last forward/backward reversal (BMM p.35)',()=>{
+ const path=[{q:1,r:0,facing:0},{q:0,r:0,facing:0},{q:-1,r:0,facing:0},{q:0,r:0,facing:0}];
+ assert.equal(chargeTravelHexes({q:0,r:0},path),1);
+ assert.equal(chargeTravelHexes({q:0,r:0},[{q:0,r:0,facing:1},{q:1,r:0,facing:0}]),1);
+});
+test('Walking charges are permitted, evasion and unknown charge types are rejected (BMM p.35)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=-2;u.r=0;u.facing=0;t.q=1;t.r=0;t.moved=true;
+ acting(g,0,'move');assert.equal(g.declareCharge(0,2,'charge','evade').ok,false);
+ assert.equal(g.declareCharge(0,2,'teleport','run').ok,false);
+ const r=g.declareCharge(0,2,'charge','walk');assert(r.ok,r.error);
+ assert.equal(u.moveMode,'walk');assert(u.charge.hexes>=1);
+});
 test('Charge declaration requires target movement complete',()=>{const g=game(),u=g.units[0],t=g.units[2];acting(g,0,'move');u.q=-2;u.r=0;u.facing=0;t.q=1;t.r=0;assert.equal(g.declareCharge(0,2).ok,false);t.moved=true;assert(g.declareCharge(0,2).ok);assert.equal(u.charge.type,'charge');assert.equal(g.preview(0,2,0).legal,false);});
 test('Dump completes at end of following turn',()=>{const g=game(),u=g.units[0];acting(g,0,'move');assert(g.orderDump(0,0).ok);g.endPhase();assert.equal(u.bins[0].shots,12);g.endPhase();assert.equal(u.bins[0].shots,0);});
 test('Flamer heat mode adds heat without armor damage',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.weapons[0]={name:'Flamer',damage:2,heat:3,ranges:[1,2,3],min:0,ammo:null,location:'RA',rack:0};acting(g,0,'fire');const before=JSON.stringify(t.armor);assert(g.declareFire(0,[{index:0,target:2,heatMode:true}]).ok);g.resolveFire();assert.equal(t.pendingHeat,2);assert.equal(JSON.stringify(t.armor),before);});
