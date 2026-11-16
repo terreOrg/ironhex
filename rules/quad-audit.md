@@ -372,3 +372,22 @@ separate Quad hit-location tables (`bmm-req-087`) and physical-attack
 partial-cover interactions (printed p.35) still need full integration.
 The current combat table used in isolated tests is an existing engine
 table and is not presented as an authoritative Quad hit-location table.
+
+### Quad hit-location tables (printed pp.33, 38–39)
+
+The ordinary 2D6 BattleMech Hit Location Table on p.33 labels each
+entry **Biped (Four-Legged)**: the numeric locations are shared;
+arm-location rows on a Quad denote front legs and regular leg rows
+denote rear legs. A separate 2D6 quad-normal table is *not* invented.
+The 1D6 Punch and Kick Location Tables on pp.38–39 **do have**
+four-legged columns. These are now implemented as explicit
+`QUAD_PUNCH_LOCATIONS` and `QUAD_KICK_LOCATIONS` mappings for
+left, front, rear and right attacks, including correct differences
+between a hit from the front versus a hit from the rear.
+
+A deterministic test exhaustively checks all 44 standard (2D6
+side/roll), 24 Quad punch and 24 Quad kick results (92 combinations),
+and checks biped physical-table regressions. This is
+`bmm-req-087: tested_case`, not verified: physical attack declaration
+constraints, cover interactions, rear kicks and critical-hit
+resolution require independent integration tests.

@@ -1274,14 +1274,19 @@
       "id": "bmm-req-087",
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
-      "statement": "Quad targets use the rulebook's quad hit-location and physical attack location tables instead of the biped tables.",
-      "status": "known_missing",
+      "statement": "Quad targets use the printed p.33 standard hit-location table with quad front/rear leg names and the distinct p.38-39 quad Kick and Punch Location Tables; full physical attack integration and damage side effects still need verification.",
+      "status": "tested_case",
       "sourcePages": [
         33,
         38,
         39
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.33,38-39: Quad hit, punch and kick locations match every table row"
+        }
+      ]
     },
     {
       "id": "bmm-req-088",

@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures,QUAD_PUNCH_LOCATIONS,QUAD_KICK_LOCATIONS} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
@@ -1055,4 +1055,65 @@ test('BMM p.26: quad normal cover and submerged-water cover suppress opposite lo
  choose(3);const visibleArm=g.hit(biped,5,'front','normal',null,true,false);
  assert.equal(visibleArm.location,'RA');
  assert.equal(visibleArm.damage,5,'Biped arm is not covered as a leg');
+});
+
+test('BMM pp.33,38-39: Quad hit, punch and kick locations match every table row',()=>{
+ const g=flatGame(),u=g.units[0];u.config='Quad';
+ const normal={
+  left:['LT','LL','LA','LA','LL','LT','CT','RT','RA','RL','HD'],
+  front:['CT','RA','RA','RL','RT','CT','LT','LL','LA','LA','HD'],
+  rear:['CT','RA','RA','RL','RT','CT','LT','LL','LA','LA','HD'],
+  right:['RT','RL','RA','RA','RL','RT','CT','LT','LA','LL','HD']
+ };
+ const punch={
+  left:['LT','LT','CT','LA','LL','HD'],
+  front:['LA','LT','CT','RT','RA','HD'],
+  rear:['LL','LT','CT','RT','RL','HD'],
+  right:['RT','RT','CT','RA','RL','HD']
+ };
+ const kick={
+  left:['LA','LA','LA','LL','LL','LL'],
+  front:['RA','RA','RA','LA','LA','LA'],
+  rear:['RL','RL','RL','LL','LL','LL'],
+  right:['RA','RA','RA','RL','RL','RL']
+ };
+ assert.deepEqual(QUAD_PUNCH_LOCATIONS,punch);
+ assert.deepEqual(QUAD_KICK_LOCATIONS,kick);
+ const observed=[];
+ g.damage=(unit,loc,amount)=>{observed.push({loc,amount});return [];};
+ const die=(face)=>{g.rng=()=>((face-.5)/6);g.phaseRolls=[];};
+ const sum=(roll)=>{
+  const first=roll<=7?1:roll-6,second=roll-first;
+  const ds=[(first-.5)/6,(second-.5)/6];
+  g.rng=()=>ds.shift()??.5;g.phaseRolls=[];
+ };
+ let checked=0;
+ for(const side of ['left','front','rear','right']){
+  for(let r=2;r<=12;r++){
+   sum(r);
+   const result=g.hit(u,5,side,'normal');
+   assert.equal(result.location,normal[side][r-2],side+' normal '+r);
+   checked++;
+  }
+  for(let face=1;face<=6;face++){
+   die(face);
+   assert.equal(g.hit(u,5,side,'punch').location,punch[side][face-1],
+    side+' punch '+face);
+   die(face);
+   assert.equal(g.hit(u,5,side,'kick').location,kick[side][face-1],
+    side+' kick '+face);
+   checked+=2;
+  }
+ }
+ assert.equal(checked,92);
+ assert.equal(observed.length,92);
+ u.config='Biped';
+ die(5);assert.equal(g.hit(u,5,'left','punch').location,'LA',
+  'Biped left punch table stays unchanged');
+ die(5);assert.equal(g.hit(u,5,'right','punch').location,'RA',
+  'Biped right punch table stays unchanged');
+ die(1);assert.equal(g.hit(u,5,'front','kick').location,'RL',
+  'Biped front kick table stays unchanged');
+ die(6);assert.equal(g.hit(u,5,'rear','kick').location,'LL',
+  'Biped rear kick table stays unchanged');
 });

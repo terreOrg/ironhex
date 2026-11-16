@@ -55,6 +55,21 @@ export const skidModifier=hexes=>{
 };
 const clusters=CLUSTER_HITS;
 const punch={front:['LA','LT','CT','RT','RA','HD'],rear:['LA','LT','CT','RT','RA','HD'],left:['LT','LT','CT','LA','LA','HD'],right:['RT','RT','CT','RA','RA','HD']};
+// BMM corrected 6th (2022), printed pp.38-39, Four-Legged columns.
+// Where the source lists Front/Rear pairs, the first value is used on a
+// front hit and the second on a rear hit. Values are d6 results 1..6.
+export const QUAD_PUNCH_LOCATIONS=Object.freeze({
+ left:Object.freeze(['LT','LT','CT','LA','LL','HD']),
+ front:Object.freeze(['LA','LT','CT','RT','RA','HD']),
+ rear:Object.freeze(['LL','LT','CT','RT','RL','HD']),
+ right:Object.freeze(['RT','RT','CT','RA','RL','HD'])
+});
+export const QUAD_KICK_LOCATIONS=Object.freeze({
+ left:Object.freeze(['LA','LA','LA','LL','LL','LL']),
+ front:Object.freeze(['RA','RA','RA','LA','LA','LA']),
+ rear:Object.freeze(['RL','RL','RL','LL','LL','LL']),
+ right:Object.freeze(['RA','RA','RA','RL','RL','RL'])
+});
 const conscious=[0,3,5,7,10,11,99], shut=h=>h>=30?99:h>=26?10:h>=22?8:h>=18?6:h>=14?4:0;
 const armor=[[9,20,20,20,14,14,18,18],[8,20,20,20,16,16,16,16],[9,23,18,18,16,16,16,16],[9,30,24,24,20,20,29,29]],rears=[[7,6,6],[8,6,6],[8,6,6],[11,6,6]];
 export const PHASES={initiative:'Инициатива',move:'Движение',fire:'Стрельба: декларации',physical:'Физические атаки',heat:'Нагрев',end:'Конец хода'};
@@ -430,8 +445,15 @@ export class Game extends Legacy{
  packets(u,amount,side='front',table='normal'){let total=amount;while(total>0&&!u.dead){const n=Math.min(5,total);this.hit(u,n,side,table);total-=n;}}
  hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){
  let loc,r,floatingTac=false;const obscured=l=>cover&&partialCoverObscures(u,l,underwaterCover);
- if(table==='punch'){r=this.d6('Локация · удар рукой');loc=punch[side][r-1];}
- else if(table==='kick'){r=this.d6('Локация · удар ногой');loc=side==='left'?'LL':side==='right'?'RL':r<=3?'RL':'LL';}
+ if(table==='punch'){
+  r=this.d6('Локация · удар рукой');
+  loc=(u.config==='Quad'?QUAD_PUNCH_LOCATIONS:punch)[side][r-1];
+ }
+ else if(table==='kick'){
+  r=this.d6('Локация · удар ногой');
+  loc=u.config==='Quad'?QUAD_KICK_LOCATIONS[side][r-1]:
+    side==='left'?'LL':side==='right'?'RL':r<=3?'RL':'LL';
+ }
  else{
   let attempts=0;
   do{
