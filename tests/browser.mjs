@@ -122,13 +122,11 @@ async function withPage(name, options, verify) {
         };
       });
     }
-    await page.goto(baseURL + (options.path || '/'), { waitUntil:'domcontentloaded' });
+    const path=options.path || (options.hub || options.unauthenticated ? '/' : '/index.html?battle=1');
+    await page.goto(baseURL+path,{waitUntil:'domcontentloaded'});
     if (!options.path && !options.unauthenticated) {
-      await page.locator('#hub-battle').waitFor({state:'visible',timeout:20000});
-      if (!options.hub) {
-        await page.locator('#hub-battle').click();
-        await loaded(page);
-      }
+      if(options.hub)await page.locator('#hub-battle').waitFor({state:'visible',timeout:20000});
+      else await loaded(page);
     }
     await verify(page);
     assert.deepEqual(errors, [], 'Uncaught browser JavaScript errors');
@@ -284,8 +282,11 @@ test('Guest sees the login/registration landing screen before the 3D game starts
       assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),false);
       assert.equal(await page.locator('#viewport canvas').count(),0);
       await page.locator('#hub-battle').click();
-      await loaded(page);
-      assert.equal(await page.locator('#viewport canvas').count(),1);
+      await page.locator('#hub-battle-frame').waitFor({state:'visible'});
+      const battle=page.frameLocator('#hub-battle-frame');
+      await battle.locator('#loading').waitFor({state:'hidden',timeout:60000});
+      assert.equal(await battle.locator('#viewport canvas').count(),1);
+      assert.equal(await page.locator('#viewport canvas').count(),0);
       await page.reload();
       await page.locator('#hub-battle').waitFor({state:'visible'});
       assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),false,
@@ -302,8 +303,8 @@ test('Commander login and logout return to the protected landing screen',
       await page.locator('#auth-login button[type=submit]').click();
       await page.locator('#hub-battle').waitFor({state:'visible'});
       await page.locator('#hub-battle').click();
-      await loaded(page);
-      await page.locator('#auth-trigger').click();
+      await page.locator('#hub-battle-frame').waitFor({state:'visible'});
+      await page.locator('#hub-profile-button').click();
       assert.equal(await page.locator('#auth-profile').isVisible(),true);
       await page.locator('#auth-logout').click();
       await page.locator('#auth-login').waitFor({state:'visible'});
@@ -339,9 +340,14 @@ test('Authenticated commander headquarters lists the hangar and routes to MechLa
         {timeout:12000}
       );
       assert.match(await page.locator('#hub-hangar-status').textContent(),/Ангар пуст/);
+      const workbox=await page.locator('#hub-workarea').boundingBox();
+      const railbox=await page.locator('.hub-operations').boundingBox();
+      assert(workbox.x>railbox.x+railbox.width-5,
+        'Section panel should open to the right of the command rail');
       await page.locator('#hub-hangar a[href="mechlab.html"]').click();
-      await page.waitForURL('**/mechlab.html');
-      await page.locator('#name').waitFor({state:'visible'});
+      await page.frameLocator('#hub-mechlab-frame').locator('#name').waitFor({state:'visible'});
+      assert.equal(await page.locator('#hub-work-title').textContent(),'Конструктор мехов');
+      assert.equal(new URL(page.url()).pathname,'/');
     });
   });
 
@@ -384,5 +390,71 @@ test('Personnel ID card renders portrait, serial, rank, and combat skills',
       assert.match(await page.locator('.pilot-id-card').textContent(),/IX-/);
       await page.locator('#hub-hangar-button').click();
       assert.equal(await page.locator('#hub-roster').isVisible(),false);
+    });
+  });
+
+
+test('Every headquarters menu section docks the cards left and renders centered content',
+  {timeout:120000},async()=>{
+    await withPage('commander-rail',{hub:true},async page=>{
+      const operations=page.locator('.hub-operations');
+      const homePos=await operations.boundingBox();
+      assert.equal(await page.locator('#hub-workarea').isVisible(),false);
+      assert.equal(await page.locator('#hub-home-button').isVisible(),false);
+      const examples=[
+        ['#hub-hangar-button','Ангар','#hub-hangar'],
+        ['#hub-pilots-button','Личный состав','#hub-roster'],
+        ['#hub-campaigns-button','Кампании','#hub-campaigns-panel'],
+        ['#hub-market-button','Рынок','#hub-market-panel'],
+        ['#hub-mechlab-button','Конструктор мехов','#hub-mechlab-panel'],
+        ['#hub-battle','Быстрый бой','#hub-battle-panel']
+      ];
+      for (const [button,title,panel] of examples) {
+        await page.locator(button).click();
+        await page.locator(panel).waitFor({state:'visible',timeout:15000});
+        assert.equal(await page.locator('#hub-work-title').textContent(),title);
+        assert.equal(await page.locator(button).getAttribute('aria-current'),'page');
+        assert.equal(await page.locator('#hub-home-button').isVisible(),true);
+        assert.equal(await page.locator('.hub-intro').isVisible(),false);
+        const work=await page.locator('#hub-workarea').boundingBox();
+        const docked=await operations.boundingBox();
+        assert(work.x > docked.x+docked.width-5,
+          title+': content must open to the right of the rail');
+        assert(docked.x < homePos.x - 90,
+          title+': navigation should move substantially left');
+      }
+      await page.frameLocator('#hub-battle-frame').locator('#loading')
+        .waitFor({state:'hidden',timeout:60000});
+      await page.locator('#hub-home-button').click();
+      assert.equal(await page.locator('#hub-workarea').isVisible(),false);
+      assert.equal(await page.locator('.hub-intro').isVisible(),true);
+      assert.equal(await page.locator('#hub-home-button').isVisible(),false);
+    });
+  });
+
+test('Mobile headquarters uses a scrollable compact command rail without clipped content',
+  {timeout:120000},async()=>{
+    await withPage('commander-mobile-rail',{hub:true,mobile:true},async page=>{
+      await page.locator('#hub-pilots-button').click();
+      await page.locator('#hub-roster').waitFor({state:'visible'});
+      const result=await page.evaluate(()=>{
+        const nav=document.querySelector('.hub-operations');
+        const main=document.querySelector('#hub-workarea');
+        return {
+          width:innerWidth,
+          scrollWidth:document.documentElement.scrollWidth,
+          navDirection:getComputedStyle(nav).flexDirection,
+          navScroll:nav.scrollWidth,
+          navVisible:nav.clientWidth,
+          contentWidth:main.getBoundingClientRect().width
+        };
+      });
+      assert.equal(result.navDirection,'row');
+      assert(result.contentWidth>260);
+      assert(result.scrollWidth<=result.width+2,
+        'Content should not overflow the mobile viewport');
+      assert(result.navScroll>result.navVisible,'Navigation should scroll horizontally');
+      await page.locator('#hub-home-button').click();
+      assert.equal(await page.locator('.hub-intro').isVisible(),true);
     });
   });
