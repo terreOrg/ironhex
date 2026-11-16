@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures,QUAD_PUNCH_LOCATIONS,QUAD_KICK_LOCATIONS,quadProneFireBonus,quadImmobileDueToLegLoss} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures,QUAD_PUNCH_LOCATIONS,QUAD_KICK_LOCATIONS,quadProneFireBonus,quadImmobileDueToLegLoss,BUILDING_ENTRY,buildingMovementPSRModifier,buildingImpactSide} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
@@ -1490,4 +1490,74 @@ test('BMM p.53: deferred Quad end-phase PSRs also apply -2, never to standing ro
  assert.equal(g.phaseRolls.at(-1).target,5,'No -2 when one leg is destroyed');
  assert.equal(fell,1);
  assert.deepEqual(u.psrs,[]);
+});
+
+test('BMM p.67: Quad lateral collision strikes its actual left/right side',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const cases=[
+  ['shift-left-forward',1,'left'],['shift-left-backward',2,'left'],
+  ['shift-right-forward',-1,'right'],['shift-right-backward',-2,'right']
+ ];
+ for(const [action,offset,expected] of cases){
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(built.unit));
+  u.q=0;u.r=0;u.facing=0;u.spent=0;u.moveMode='stand';u.moved=false;
+  for(const other of g.units.slice(1))other.dead=true;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  const d=DIRS[(offset+6)%6],q=d[0],r=d[1];
+  const tile=g.tile(q,r);tile.building={type:'medium',cf:31};
+  const packets=[];g.packets=(mech,damage,side)=>{
+   assert.equal(mech,u);packets.push({damage,side});
+  };
+  g.rng=()=>.01; // 2D6=2: fails Medium building PSR of 6
+  const moved=g.move(u.id,q,r,'walk',{lateral:action});
+  assert.equal(moved.ok,true,action+': '+moved.error);
+  assert.equal(u.facing,0,'Lateral movement retains facing');
+  assert.equal(u.spent,4,'1 base + 2 Medium building + 1 lateral MP');
+  assert.deepEqual(packets,[{damage:4,side:expected}],
+   'Collision on '+action+' takes damage on the '+expected+' side');
+  assert.equal(tile.building.cf,25,'Building always loses ceil(55/10)=6 CF');
+  assert.equal(u.prone,false,'Failed entry PSR does not cause a fall');
+  assert(g.phaseRolls.some(x=>x.kind?.includes('Вход в здание')&&x.target===6),
+   'Medium entry PSR is piloting 5 + 1 building type');
+ }
+});
+
+test('BMM p.67: building-entry PSR modifiers, damage and jump restriction',()=>{
+ assert.deepEqual(BUILDING_ENTRY,{
+  light:{mp:1,psr:0},medium:{mp:2,psr:1},
+  heavy:{mp:3,psr:2},hardened:{mp:4,psr:5}
+ });
+ for(const [hexes,want] of [[1,0],[2,0],[3,1],[4,1],[5,2],[6,2],
+  [7,3],[9,3],[10,4],[17,4],[18,5],[24,5],[25,6],[30,6]])
+  assert.equal(buildingMovementPSRModifier(hexes),want);
+ for(const invalid of [0,-1,NaN])
+  assert.throws(()=>buildingMovementPSRModifier(invalid));
+ for(let facing=0;facing<6;facing++){
+  const to=(offset)=>{
+   const d=DIRS[(facing+offset+6)%6];return {q:d[0],r:d[1]};
+  };
+  for(const offset of [0,1,2,3,4,5]){
+   const expected=offset===0?'front':offset===3?'rear':offset<=2?'left':'right';
+   assert.equal(buildingImpactSide(facing,{q:0,r:0},to(offset)),expected);
+  }
+ }
+ const built=construct({...example,config:'Quad',jump:1,sinks:10,
+  equipment:[{type:'jump',location:'CT',slot:11}]},{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(built.unit));u.q=0;u.r=0;u.facing=0;
+ for(const other of g.units.slice(1))other.dead=true;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ const tile=g.tile(1,0);tile.building={type:'light',cf:10};
+ assert.equal(g.reachable(u,'jump').some(p=>p.q===1&&p.r===0),false,
+  'Cannot jump directly into an occupied building interior');
+ let called=false;g.packets=()=>{called=true;};
+ g.rng=()=>.99;const moved=g.move(u.id,1,0,'walk');
+ assert.equal(moved.ok,true);
+ assert.equal(tile.building.cf,4);
+ assert.equal(called,false,'Successful building-entry PSR avoids mech damage');
+ assert.equal(u.prone,false);
+ assert(g.phaseRolls.some(x=>x.kind?.includes('Вход в здание')&&x.target===5));
 });

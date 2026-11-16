@@ -530,3 +530,29 @@ PSRs remain unchanged. The deferred end-of-phase PSR path is
 also covered, including the removal of the -2 benefit after
 destroying a leg. `bmm-req-091` is `tested_case` pending
 full GitHub CI confirmation, not prematurely `verified`.
+
+### Lateral Quad entry into buildings (printed p.67)
+
+Optional scenario hex metadata `tile.building={type,cf}` now supports
+**voluntary ground-level building entry only**, applying the printed
+Light/Medium/Heavy/Hardened additional MP and PSR modifiers,
+the movement-distance modifier, and the mandatory building CF
+damage regardless of the roll. A failed PSR deals
+`ceil(current CF/10)` to the entering 'Mech, and **does not
+cause a fall**. The hit side is calculated from the incoming
+movement step *relative to facing*, not simply "front". An intact
+Quad that shifts left/right forward/backward therefore takes damage
+on its correct left/right side without changing facing.
+
+Tests cover all four quad lateral shifts against a Medium building,
+the exact PSR, MP cost, collision damage and building CF reduction;
+they also exhaustively check six facings and their six possible
+incoming directions, all movement-distance modifier breakpoints,
+successful building entry, and denial of jumps directly into a
+building interior.
+
+**Limitations:** The world map does not yet populate any building
+hexes by default. Basements, roofs, collapse, voluntary entry from
+other levels and involuntary/skid entry remain unsupported. This is
+a focused compatibility path for `bmm-req-093: tested_case`, not
+a claim of full BMM Urban Combat compliance.

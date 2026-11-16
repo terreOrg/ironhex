@@ -89,6 +89,27 @@ export const QUAD_KICK_LOCATIONS=Object.freeze({
 });
 const conscious=[0,3,5,7,10,11,99], shut=h=>h>=30?99:h>=26?10:h>=22?8:h>=18?6:h>=14?4:0;
 const armor=[[9,20,20,20,14,14,18,18],[8,20,20,20,16,16,16,16],[9,23,18,18,16,16,16,16],[9,30,24,24,20,20,29,29]],rears=[[7,6,6],[8,6,6],[8,6,6],[11,6,6]];
+// BMM p.67, Moving into Buildings (ground-level-only support).
+// Building metadata is optional on a map hex: {type, cf}. Do not treat
+// this as support for basements, roof levels, collapse or involuntary entry.
+export const BUILDING_ENTRY=Object.freeze({
+ light:Object.freeze({mp:1,psr:0}),
+ medium:Object.freeze({mp:2,psr:1}),
+ heavy:Object.freeze({mp:3,psr:2}),
+ hardened:Object.freeze({mp:4,psr:5})
+});
+export function buildingMovementPSRModifier(hexes){
+ if(!Number.isFinite(hexes)||hexes<1)throw new RangeError('building_hex_count');
+ return hexes>=25?6:hexes>=18?5:hexes>=10?4:
+  hexes>=7?3:hexes>=5?2:hexes>=3?1:0;
+}
+export function buildingImpactSide(facing,from,to){
+ if(!Number.isInteger(facing)||facing<0||facing>5)throw new RangeError('building_facing');
+ const direction=DIRS.findIndex(d=>d[0]===to.q-from.q&&d[1]===to.r-from.r);
+ if(direction<0)throw new RangeError('building_impact_requires_adjacent_hex');
+ const offset=wrap(direction-facing);
+ return offset===0?'front':offset===3?'rear':offset<=2?'left':'right';
+}
 export const PHASES={initiative:'Инициатива',move:'Движение',fire:'Стрельба: декларации',physical:'Физические атаки',heat:'Нагрев',end:'Конец хода'};
 function clone(o){return structuredClone(o);}
 function roundHex(q,r){let s=-q-r,a=Math.round(q),b=Math.round(r),c=Math.round(s);if(Math.abs(a-q)>Math.abs(b-r)&&Math.abs(a-q)>Math.abs(c-s))a=-b-c;else if(Math.abs(b-r)>Math.abs(c-s))b=-a-c;return {q:a,r:b};}
@@ -228,8 +249,32 @@ export class Game extends Legacy{
  w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));
  return mode==='run'||mode==='evade'?(lost?0:Math.ceil(w*1.5)):w;
  }
- terrainCost(t){return (t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:t.depth?(t.depth===1?2:4):1)+(this.weather.night?1:0);}
- reachable(u,mode='walk'){u=this.unit(u);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];return this.tiles.filter(t=>!this.occupied(t.q,t.r,u.id)&&Math.max(1,distance(u,t))<=max&&this.jumpClear(u,t,max)).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
+ terrainCost(t){
+ const ground=t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:
+  t.depth?(t.depth===1?2:4):1;
+ const building=t.building?.cf>0?BUILDING_ENTRY[t.building.type]:null;
+ return ground+(building?.mp||0)+(this.weather.night?1:0);
+ }
+ resolveVoluntaryBuildingEntry(u,from,arrival,movedHexes){
+  const tile=this.tile(arrival.q,arrival.r),building=tile?.building;
+  if(!(building?.cf>0))return null;
+  const rule=BUILDING_ENTRY[building.type];
+  if(!rule)throw new Error('unsupported_building_type');
+  const side=buildingImpactSide(u.facing,from,arrival);
+  const tn=u.piloting+this.psrMod(u,false)+rule.psr+
+   buildingMovementPSRModifier(movedHexes);
+  // This is a collision check, not a fall-avoidance roll. A failed
+  // building entry PSR deals damage but NEVER makes the unit fall.
+  const success=this.roll(u.name+' · Вход в здание',tn)>=tn;
+  const cfBefore=building.cf,mechDamage=success?0:Math.ceil(cfBefore/10);
+  building.cf=Math.max(0,cfBefore-Math.ceil(u.tonnage/10));
+  if(mechDamage)this.packets(u,mechDamage,side);
+  this.note(`${u.name}: здание, ${success?'успех':'столкновение'}, ${side}, CF ${cfBefore}→${building.cf}.`);
+  return {success,side,targetNumber:tn,damage:mechDamage,
+    buildingDamage:cfBefore-building.cf};
+ }
+
+ reachable(u,mode='walk'){u=this.unit(u);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];return this.tiles.filter(t=>!(t.building?.cf>0)&&!this.occupied(t.q,t.r,u.id)&&Math.max(1,distance(u,t))<=max&&this.jumpClear(u,t,max)).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
  const lateralShifts=quadLateralDirections(u,mode);
  const actions=['left','right','forward','back',...lateralShifts.map(s=>s.action)];
  const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>!x.dead&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.prone))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
@@ -396,6 +441,9 @@ export class Game extends Legacy{
  if(moved){
   u.lastMovementDirection=DIRS.findIndex(d=>d[0]===u.q-oldQ&&d[1]===u.r-oldR);
   path.push({q:u.q,r:u.r});
+  this.resolveVoluntaryBuildingEntry(u,{q:oldQ,r:oldR},
+   {q:u.q,r:u.r},u.distanceMoved+path.length);
+  if(u.dead||u.moveEndedByLegLoss)break;
   this.checkExistingHullBreaches(u);if(u.dead||u.moveEndedByLegLoss)break;
   const t=this.tile(u.q,u.r);
   if(t.depth||t.type==='rubble'){

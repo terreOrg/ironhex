@@ -1417,11 +1417,20 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "A quad moving sideways into a building takes collision damage from the correct impact side.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         67
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.67: Quad lateral collision strikes its actual left/right side"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.67: building-entry PSR modifiers, damage and jump restriction"
+        }
+      ]
     },
     {
       "id": "bmm-req-094",
