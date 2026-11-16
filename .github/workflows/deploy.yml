@@ -4,10 +4,9 @@ name: Ironhex Deploy
 # Triggered by GitHub Actions on the self-hosted runner, not a public webhook.
 on:
   workflow_run:
+    # Trigger a single deploy check per main commit. The script waits for all three CI suites.
     workflows:
       - Ironhex CI
-      - Ironhex Browser E2E
-      - Ironhex Container Smoke
     branches: [main]
     types: [completed]
   workflow_dispatch:

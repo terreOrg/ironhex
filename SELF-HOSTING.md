@@ -123,11 +123,12 @@ Komodo Stack → Config → Webhooks:
    - `KOMODO_WEBHOOK_URL`: private exact `/listener/github/stack/.../deploy` URL
    - `KOMODO_WEBHOOK_SECRET`: same secret as the Komodo Stack field
 
-The workflow [Ironhex Deploy](.github/workflows/deploy.yml) is triggered on
-completion of any of the three CI workflows. It verifies the same `main`
-commit passed Ironhex CI, Ironhex Browser E2E and Ironhex Container Smoke,
-and only then sends a signed GitHub-compatible webhook from `jig` or `jog`
-over the server's local network. A later commit supersedes older runs.
+The workflow [Ironhex Deploy](.github/workflows/deploy.yml) is triggered once
+on successful completion of Ironhex CI for a `main` push. It waits up to
+eight minutes for the same commit to pass Ironhex Browser E2E and Ironhex
+Container Smoke, then sends one signed GitHub-compatible webhook from
+`jig` or `jog` over the server's local network. A later commit supersedes
+older runs. Manual workflow dispatch remains available.
 No GitHub → public inbound access to Komodo is needed.
 
 The webhook returns before a deployment necessarily finishes. Review Komodo

@@ -26,7 +26,7 @@ async function github(path) {
 
 let ready = false;
 let reason = 'unknown';
-for (let attempt = 0; attempt < 5; attempt++) {
+for (let attempt = 0; attempt < 60; attempt++) {
   const [branch, page] = await Promise.all([
     github('/repos/' + repository + '/git/ref/heads/main'),
     github('/repos/' + repository + '/actions/runs?event=push&head_sha=' + encodeURIComponent(sha) + '&per_page=100')
@@ -35,7 +35,7 @@ for (let attempt = 0; attempt < 5; attempt++) {
     sha, mainSha: branch.object.sha, runs: page.workflow_runs || []
   }));
   if (ready || reason === 'commit is no longer HEAD of main' || reason.includes('did not pass')) break;
-  if (attempt !== 4) await new Promise(resolve => setTimeout(resolve, 7000));
+  if (attempt !== 59) await new Promise(resolve => setTimeout(resolve, 8000));
 }
 console.log('Deployment gate: ' + reason);
 if (!ready) process.exit(0);
