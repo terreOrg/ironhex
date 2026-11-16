@@ -198,6 +198,20 @@ if(quote.needsRepair){
   assert.equal((await req('/api/v1/economy/repair',{method:'POST',cookie:owner.cookie,
     body:{mechId}})).status,409,'Repairs must not debit twice');
 }
+// The original combat test may legitimately destroy a cockpit or 3 engine
+// criticals. Verify that paid HULL repairs do not silently fix these faults.
+const postHull=(await req('/api/v1/hangar',{cookie:owner.cookie}))
+  .data.items.find(m=>m.id===mechId);
+assert.deepEqual(postHull.criticalDamage,state.report.rewards[0].criticalDamage,
+  'Hull repairs must never erase critical equipment damage');
+// For subsequent unrelated mission-protocol tests, reset the disposable CI
+// fixture directly. No production endpoint offers this free recovery.
+const cleanFixtureDb=createPool();
+try{
+  await cleanFixtureDb.query(
+    "UPDATE hangar_mechs SET critical_damage='{}'::jsonb WHERE id=$1",
+    [mechId]);
+}finally{await cleanFixtureDb.end();}
 const extra=await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
   body:{title:'Отменённая операция',mechIds:[mechId]}});
 assert.equal(extra.status,201);
