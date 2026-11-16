@@ -356,3 +356,19 @@ Two subrequirements `bmm-req-083` and `bmm-req-086` are now
 `tested_case`, not `verified`; directional torso mounts and
 complete battle integration are not certified. The sequential
 cursor remains at `bmm-p005-four-legged-mech`.
+
+### Four-legged partial cover and Depth 1 water (printed p.26)
+
+All Quad front/rear limb locations now count as legs for partial
+cover, including a standing Quad in Depth 1 water. For a shot from
+above water, a leg result hits the cover instead; from under water
+toward a standing Depth 1 target, only leg hits penetrate. The same
+rule controls aimed-location validation and underwater leg weapon
+classification; biped arm behavior remains unchanged. Tests verify
+all four Quad leg codes and explicit under/over-water hit results.
+
+`bmm-req-084` remains `tested_case`, **not verified**, because
+separate Quad hit-location tables (`bmm-req-087`) and physical-attack
+partial-cover interactions (printed p.35) still need full integration.
+The current combat table used in isolated tests is an existing engine
+table and is not presented as an authoritative Quad hit-location table.

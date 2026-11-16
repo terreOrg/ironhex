@@ -1220,12 +1220,21 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Quad front and rear leg hits interact correctly with partial cover, including Depth 1 water.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         26,
         35
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.26: partial cover protects all four quad legs and not biped arms"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.26: quad normal cover and submerged-water cover suppress opposite locations"
+        }
+      ]
     },
     {
       "id": "bmm-req-085",

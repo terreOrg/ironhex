@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,DIRS,mechLegLocation,partialCoverObscures} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
@@ -1006,4 +1006,53 @@ test('BMM pp.24-25: all quad leg weapons obey forward/rear arcs, never biped arm
  assert.equal(g.arc(u,sideL,{location:'LL',rear:false}),false,
   'Biped leg cannot use biped arm side arc');
  assert.equal(g.arc(u,sideR,{location:'RL',rear:false}),false);
+});
+
+test('BMM p.26: partial cover protects all four quad legs and not biped arms',()=>{
+ const quad={config:'Quad'},biped={config:'Biped'};
+ for(const loc of ['LA','RA','LL','RL']){
+  assert.equal(mechLegLocation(quad,loc),true,loc);
+  assert.equal(partialCoverObscures(quad,loc),true,'Quad '+loc+' is behind cover');
+  assert.equal(partialCoverObscures(quad,loc,true),false,
+   'Submerged attacker sees only exposed Quad leg '+loc);
+ }
+ for(const loc of ['HD','CT','LT','RT']){
+  assert.equal(mechLegLocation(quad,loc),false);
+  assert.equal(partialCoverObscures(quad,loc),false);
+  assert.equal(partialCoverObscures(quad,loc,true),true);
+ }
+ for(const loc of ['LA','RA']){
+  assert.equal(mechLegLocation(biped,loc),false);
+  assert.equal(partialCoverObscures(biped,loc),false);
+  assert.equal(partialCoverObscures(biped,loc,true),true);
+ }
+ for(const loc of ['LL','RL'])assert.equal(partialCoverObscures(biped,loc),true);
+});
+
+test('BMM p.26: quad normal cover and submerged-water cover suppress opposite locations',()=>{
+ const g=flatGame(),target=g.units[0];target.config='Quad';
+ const seen=[];g.damage=(u,loc,amount)=>{seen.push({loc,amount});return [];};
+ function choose(sum){
+  const first=sum<=7?1:sum-6,second=sum-first;
+  const dice=[(first-.5)/6,(second-.5)/6];
+  g.rng=()=>dice.shift()??.5;g.phaseRolls=[];
+ }
+ // These are controlled existing location-table results. Quad-specific
+ // location TABLES remain a separate unverified bmm-req-087.
+ const results=[['RA',3],['RL',5],['LL',9],['LA',10]];
+ for(const [loc,sum] of results){
+  choose(sum);const hidden=g.hit(target,5,'front','normal',null,true,false);
+  assert.equal(hidden.location,loc);assert.equal(hidden.damage,0);
+  assert.deepEqual(hidden.hits,[]);
+  choose(sum);const exposed=g.hit(target,5,'front','normal',null,true,true);
+  assert.equal(exposed.location,loc);assert.equal(exposed.damage,5);
+  assert.equal(seen.at(-1).loc,loc);
+ }
+ choose(7);const blockedCenter=g.hit(target,5,'front','normal',null,true,true);
+ assert.equal(blockedCenter.location,'CT');
+ assert.equal(blockedCenter.damage,0,'Underwater shooting hits cover above exposed legs');
+ const biped=g.units[1];biped.config='Biped';
+ choose(3);const visibleArm=g.hit(biped,5,'front','normal',null,true,false);
+ assert.equal(visibleArm.location,'RA');
+ assert.equal(visibleArm.damage,5,'Biped arm is not covered as a leg');
 });
