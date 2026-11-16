@@ -169,7 +169,7 @@ assert.equal(pilot.data.item.experience,state.report.rewards[0].experience);
 const history=await req('/api/v1/pilots/'+pilotId+'/history',{cookie:owner.cookie});
 assert.equal(history.data.items.length,1);
 assert.equal(history.data.items[0].experience,state.report.rewards[0].experience);
-assert.equal(history.data.items[0].mechChassis,example.name);
+assert.equal(history.data.items[0].mechChassis,'Griffin GRF-1M');
 
 if(quote.needsRepair){
   const blocked=await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
@@ -245,7 +245,7 @@ assert.equal(snapshot.data.item.version,1);
 assert.equal(snapshot.data.item.game.phase,'initiative');
 assert.equal(JSON.stringify(snapshot.data).includes('rngState'),false,
   'Random generator state must never be returned to the client');
-assert.equal(snapshot.data.item.game.units[0].name,example.name);
+assert.equal(snapshot.data.item.game.units[0].name,'Griffin GRF-1M');
 
 let command=await tactical({type:'next',version:1});
 assert.equal(command.status,200,JSON.stringify(command.data));
