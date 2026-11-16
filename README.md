@@ -7,7 +7,7 @@ cockpit UI, dice, mech record sheets and a construction tool.
 
 ## Rules audit and BattleMech Manual conformance
 
-[BattleMech Manual audit register](rules/README.md) tracks the corrected sixth
+[BattleMech Manual audit register](rules/README.md) and [pages 5–12 foundation audit](rules/foundations-audit.md) tracks the corrected sixth
 printing (2022) in version control. It separates **352 table-of-contents topics**
 from **24 granular requirements** with exact regression-test links.
 Passing one test never certifies a whole topic. Run

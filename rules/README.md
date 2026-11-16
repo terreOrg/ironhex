@@ -136,3 +136,22 @@ without another skid-per-hex packet for crossing open air. Four
 regression tests cover a one-level rise, a rise after sliding, and drops of
 2 and 4 levels. **Still missing:** accidental falls from above into occupied
 lower hexes, as well as combined basement/building/water edge cases.
+
+## Verified-first audit: pages 5–12
+
+The audit now starts at the **very beginning** of the printed BMM: introductory
+terms, dice, record-sheet conventions, MechWarrior skills, initiative,
+selections, turn order, and victory. Details and explicitly unresolved
+exceptions: [foundations audit](foundations-audit.md).
+
+The **Dice section (p.7)** is the first marked `verified`, backed by
+exhaustive 1D6 and 2D6 tests. Early-game target numbers, phase ordering,
+Gunnery/Piloting defaults, and unequal initiative batches are
+`tested_subset` until their cross-references are audited. Four-legged
+BattleMech support and stalemate draws are recorded as `known_missing`.
+
+The registry validator now rejects any `verified` heading unless **every
+child requirement is enumerated and also `verified`** with independently
+reviewed source, edge cases and exact automated evidence. Run
+`node --test tests/bmm-foundations.mjs tests/rules-registry.mjs` to audit
+this first batch, or `npm run rules:coverage` for current counts.

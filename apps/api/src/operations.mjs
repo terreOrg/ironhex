@@ -1,5 +1,5 @@
 import {randomBytes} from 'node:crypto';
-import {Game} from '../../../packages/engine/engine.js';
+import {Game,defaultMechWarriorSkills} from '../../../packages/engine/engine.js';
 import {construct} from '../../../packages/engine/construction.js';
 import {ammoBinsFor,normalizedAmmoState} from '../../../packages/engine/equipment.js';
 import {captureCriticalDamage,applyCriticalDamage,damagedComponents,normalizedCriticalDamage} from
@@ -67,8 +67,9 @@ function makeRuntime(roster,saved=null,contractId='patrol') {
       const stored=normalizedAmmoState(entry.config,entry.ammoState);
       for(const bin of unit.bins)bin.shots=stored[bin.location+':'+(bin.slot+1)]??bin.shots;
       game.syncAmmo(unit);
-      unit.gunnery=entry.pilot?.gunnery??4;
-      unit.piloting=entry.pilot?.piloting??5;
+      const defaults=defaultMechWarriorSkills(unit.techBase);
+      unit.gunnery=entry.pilot?.gunnery??defaults.gunnery;
+      unit.piloting=entry.pilot?.piloting??defaults.piloting;
       unit.pilotWounds=0;
       unit.dead=false;
       unit.id=i;
