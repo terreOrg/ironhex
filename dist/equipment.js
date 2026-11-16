@@ -81,7 +81,9 @@ export const FIXED_COMPONENTS=Object.freeze({
   sink:{kind:'thermal',name:'Single Heat Sink',supported:true,sold:true,
     price:2300,tons:1,slots:1,mechanic:'heat_dissipation'},
   hatchet:{kind:'physical',name:'Hatchet',supported:true,sold:true,
-    price:10000,mechanic:'melee'}
+    price:10000,mechanic:'melee'},
+  case:{kind:'defense',name:'CASE',supported:true,sold:true,
+    price:50000,tons:0.5,slots:1,mechanic:'explosion_containment'}
 });
 export const SYSTEM_ITEMS=Object.freeze(Object.entries(FIXED_COMPONENTS)
   .filter(([,item])=>item.supported&&item.sold)

@@ -14,6 +14,27 @@ d=c();d.tonnage=100;d.walk=3;d.jump=0;d.sinks=10;d.equipment=[{type:'AC/20',loca
 assert.deepEqual(construct(d).unit.weapons[0].locations,['RA','RT']);d.equipment[0].splitLocation='LL';assert(construct(d).errors.some(e=>e.includes('AC/20')));d.equipment[0].splitLocation='RT';d.equipment[0].type='AC/10';assert(construct(d).errors.some(e=>e.includes('8+ критических')));
 console.log('9 construction checks passed');
 
+const caseCfg={name:'CASE verification',tonnage:100,walk:3,jump:0,sinks:10,
+ armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},rear:{CT:0,LT:0,RT:0},
+ equipment:[{type:'LRM 10',location:'RT',slot:1},
+ {type:'ammo',location:'RT',slot:3,weapon:0,mass:1},
+ {type:'case',location:'RT',slot:4}]};
+const protectedMech=construct(caseCfg);
+assert.deepEqual(protectedMech.errors,[]);
+assert.equal(protectedMech.weights.case,0.5);
+assert.equal(protectedMech.unit.slots.RT[3],'case');
+const unprotectedCfg=structuredClone(caseCfg);unprotectedCfg.equipment.pop();
+assert.equal(protectedMech.total-construct(unprotectedCfg).total,0.5);
+for(const location of ['LA','RA','LL','RL','HD']){
+ const invalid=structuredClone(caseCfg);invalid.equipment[2].location=location;
+ assert(construct(invalid).errors.length>0,'CASE forbidden in '+location);
+}
+const duplicateCASE=structuredClone(caseCfg);
+duplicateCASE.equipment.push({type:'case',location:'RT',slot:5});
+assert(construct(duplicateCASE).errors.some(e=>e.includes('не более одной')));
+console.log('CASE construction, mass and locations verified');
+
+
 // Every weapon listed in the shared equipment registry must be constructible
 // and immediately usable in the combat engine. This is an integration contract,
 // not a substitute for weapon-specific rulebook conformance tests.

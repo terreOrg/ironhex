@@ -49,6 +49,14 @@ test('The single component registry supplies construction AND market stats',()=>
   assert.equal(bySku.has('weapon:Clan Gauss Rifle'),false,
     'Specialized ballistic rules must exist before offering Clan Gauss');
 });
+test('CASE is a marketable, BattleMech Manual sourced system with a combat implementation',()=>{
+ const item=EQUIPMENT_CATALOG.find(e=>e.sku==='system:case');
+ assert(item);assert.equal(item.price,50000);
+ assert.equal(item.tons,0.5);assert.equal(item.slots,1);
+ assert.equal(item.rulebook.status,'verified_supplement');
+ assert.equal(item.rulebook.book,'BattleMech Manual');
+ assert.deepEqual(outOfBookEquipment({equipment:[{type:'case',location:'RT',slot:4}]}),[]);
+});
 test('A purchased magazine stays empty until explicitly reloaded',()=>{
   const built=construct(example);
   assert.deepEqual(built.errors,[]);
