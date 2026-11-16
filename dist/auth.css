@@ -105,3 +105,58 @@ body.hub-open>.hub-root{display:block}
 #account-flow h3{font:800 20px system-ui;color:#d6efb2;margin:20px 0 12px}
 #account-flow p{color:#b7cbb7;font:12px/1.6 system-ui}
 #auth-verify-pending button{display:block;width:100%}
+
+.hub-roster{background:#12201b;border:1px solid #607b62;padding:22px;margin:4px 0 25px}
+.hub-roster[hidden],.pilot-history[hidden],#pilot-cancel[hidden]{display:none!important}
+#pilot-status{font:11px monospace;color:#c6dbbc}
+.pilot-roster-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:19px;margin:20px 0}
+.pilot-id-card{background:linear-gradient(128deg,#dce2d1,#a8bbaa 70%,#c2d0b9);
+color:#183026;border-radius:12px;border:2px solid #eaf0de;padding:13px 15px 12px;
+box-shadow:0 12px 24px #0008,inset 0 0 0 2px #667d67;position:relative;overflow:hidden}
+.pilot-id-card:before{content:"";position:absolute;inset:0;pointer-events:none;
+background:repeating-linear-gradient(120deg,transparent 0,transparent 18px,#ffffff18 19px,transparent 20px)}
+.pilot-id-top{display:flex;justify-content:space-between;gap:10px;align-items:center;
+border-bottom:2px solid #486552;padding-bottom:8px;font:11px monospace}
+.pilot-id-top span{background:#31563f;color:#eff5e7;padding:5px 8px;border-radius:3px;font-weight:bold}
+.pilot-id-body{display:grid;grid-template-columns:116px minmax(0,1fr);gap:13px;margin:12px 0}
+.pilot-id-photo{height:143px;background:#314c41;border:3px solid #e4ecdd;box-shadow:0 0 0 1px #5f8168}
+.pilot-id-photo svg{width:100%;height:100%;display:block}
+.pilot-id-details{display:flex;flex-direction:column;min-width:0}
+.pilot-id-details>small{font:9px monospace;letter-spacing:.6px;opacity:.75}
+.pilot-id-details h3{font:900 23px/1.1 system-ui;margin:4px 0;overflow-wrap:anywhere}
+.pilot-id-details p{font:11px/1.3 system-ui;margin:1px 0 8px;overflow-wrap:anywhere}
+.pilot-id-skills{display:flex;gap:6px;margin-top:auto}
+.pilot-id-skills>div{flex:1;min-width:0;border:1px solid #8b9c85;background:#e9ede087;padding:4px;text-align:center}
+.pilot-id-skills small{font:8px monospace;display:block}
+.pilot-id-skills strong{font:800 19px system-ui;display:block}
+.pilot-id-assigned{font:10px monospace;border-top:1px solid #99ab9a;padding-top:8px}
+.pilot-id-record{font:10px/1.6 monospace}
+.pilot-id-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;
+margin-top:9px;padding-top:8px;border-top:1px dashed #8b9c8b;font:10px monospace}
+.pilot-id-barcode{width:88px;height:22px;background:repeating-linear-gradient(90deg,#254435 0px,#254435 2px,transparent 2px,transparent 5px,#254435 5px,#254435 6px,transparent 6px,transparent 10px)}
+.pilot-id-actions{display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid #879a84;margin-top:10px;padding-top:10px;position:relative}
+.pilot-id-actions button{background:#31523c;color:#f0f6e6;border:1px solid #284330;
+cursor:pointer;padding:7px 9px;font:10px monospace}
+.pilot-id-actions .pilot-delete{background:#75473b}
+.pilot-editor{background:#23392c;border:1px solid #667d6a;padding:18px;margin-top:20px}
+.pilot-editor h3{font:800 18px system-ui;margin:0 0 14px;color:#e3efd3}
+.pilot-editor-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.pilot-editor-grid label{display:grid;gap:6px;color:#d0ddc6;font:10px monospace}
+.pilot-editor-grid input,.pilot-editor-grid select,.pilot-crew-picker select{width:100%;box-sizing:border-box;
+background:#101f19;color:#ebf5e4;border:1px solid #748c78;border-radius:3px;padding:10px;font:12px system-ui}
+.pilot-editor-actions{display:flex;gap:10px;margin-top:15px}
+.pilot-editor-actions button{background:#c1df99;color:#193423;border:1px solid #e1f1c7;
+cursor:pointer;padding:11px;font:700 11px monospace}
+.pilot-editor p{font:11px/1.6 system-ui;color:#b5c9b3}
+.pilot-history{background:#1a3025;border-left:4px solid #b4d58d;padding:15px}
+.pilot-crew-picker{display:grid;gap:5px;color:#c3d9bc;font:10px monospace;margin:9px 0}
+@media(max-width:520px){
+.pilot-roster-grid{grid-template-columns:minmax(0,1fr)}
+.pilot-editor-grid{grid-template-columns:1fr}
+.pilot-id-body{grid-template-columns:96px 1fr;gap:8px}
+.pilot-id-photo{height:122px}
+.pilot-id-card{padding:11px}
+.pilot-id-details h3{font-size:18px}
+.pilot-id-skills small{font-size:7px}
+.pilot-id-skills strong{font-size:16px}
+}
