@@ -104,3 +104,11 @@ for(const name of WEAPON_NAMES){
  integrated++;
 }
 console.log(integrated+' registered weapons passed construction-to-combat integration');
+
+const defaultTechBase=construct(example);
+assert.deepEqual(defaultTechBase.errors,[]);
+assert.equal(defaultTechBase.unit.techBase,'Inner Sphere');
+const rejectedClan=construct({...example,techBase:'Clan'});
+assert(rejectedClan.errors.some(e=>e.includes('Клановая технология')),
+ 'Do not silently create a Clan mech using Inner Sphere construction data');
+console.log('Clan tech-base construction safety gate verified');
