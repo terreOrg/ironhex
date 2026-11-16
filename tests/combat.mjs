@@ -253,6 +253,32 @@ test('Walking charges are permitted, evasion and unknown charge types are reject
  assert.equal(u.moveMode,'walk');assert(u.charge.hexes>=1);
 });
 test('Charge declaration requires target movement complete',()=>{const g=game(),u=g.units[0],t=g.units[2];acting(g,0,'move');u.q=-2;u.r=0;u.facing=0;t.q=1;t.r=0;assert.equal(g.declareCharge(0,2).ok,false);t.moved=true;assert(g.declareCharge(0,2).ok);assert.equal(u.charge.type,'charge');assert.equal(g.preview(0,2,0).legal,false);});
+
+test('Ammunition being dumped remains in the bin but cannot be fired (BMM p.58)',()=>{
+ const g=game(),u=g.units[0];const bin=u.bins[0],pool=bin.weapon;
+ assert.equal(u.weapons[pool].ammo,24);
+ u.dumping=[0];g.syncAmmo(u);
+ assert.equal(bin.shots,12);assert.equal(bin.destroyed,false);
+ assert.equal(u.weapons[pool].ammo,12);
+});
+test('Explicitly choosing a dumping bin for fire is rejected (BMM p.58)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;
+ u.dumping=[0];g.syncAmmo(u);
+ acting(g,0,'fire');
+ assert.equal(g.declareFire(0,[{index:1,target:2,bin:0}]).ok,false);
+ assert.equal(g.declareFire(0,[{index:1,target:2,bin:1}]).ok,true);
+});
+test('Rear torso strike ignites all actively dumped explosive ammunition bins (BMM p.58)',()=>{
+ const g=game(),u=g.units[0],attacker=g.units[2];
+ u.dumping=[0,1];attacker.q=2;attacker.r=0;g.rng=()=>.99;
+ g.declarations=[{id:2,shots:[{index:0,target:0,weapon:{name:'Test Laser',damage:1,heat:0,ammo:null},
+  preview:{targetNumber:2,side:'rear',cover:false},aim:null,bin:null,heatMode:false}]}];
+ g.hit=()=>({location:'CT',hits:[],damage:1});
+ g.resolveFire();
+ assert.equal(u.bins[0].shots,0);assert.equal(u.bins[1].shots,0);
+ assert.equal(u.bins[0].destroyed,true);assert.equal(u.bins[1].destroyed,true);
+});
+
 test('Dump completes at end of following turn',()=>{const g=game(),u=g.units[0];acting(g,0,'move');assert(g.orderDump(0,0).ok);g.endPhase();assert.equal(u.bins[0].shots,12);g.endPhase();assert.equal(u.bins[0].shots,0);});
 test('Flamer heat mode adds heat without armor damage',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.weapons[0]={name:'Flamer',damage:2,heat:3,ranges:[1,2,3],min:0,ammo:null,location:'RA',rack:0};acting(g,0,'fire');const before=JSON.stringify(t.armor);assert(g.declareFire(0,[{index:0,target:2,heatMode:true}]).ok);g.resolveFire();assert.equal(t.pendingHeat,2);assert.equal(JSON.stringify(t.armor),before);});
 test('Selected ammunition bin is decremented',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=-4;u.r=0;u.facing=0;t.q=4;t.r=0;acting(g,0,'fire');assert(g.declareFire(0,[{index:1,target:2,bin:1}]).ok);g.resolveFire();assert.equal(u.bins[0].shots,12);assert.equal(u.bins[1].shots,11);});
