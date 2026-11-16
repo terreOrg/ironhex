@@ -80,6 +80,7 @@ function createLimiter(max, windowMs) {
 export function createHttpServer({
   probeDatabase = async () => {},
   authStore = null,
+  hangarStore = null,
   publicOrigin = null,
   secureCookies = false
 } = {}) {
@@ -115,17 +116,38 @@ export function createHttpServer({
         },head);
       }
 
-      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar') {
+      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/')) {
         if (!authStore) return json(res,503,{error:'auth_unavailable'},head);
 
         if (path === '/api/v1/auth/me' && (method === 'GET' || head)) {
           const user = await authStore.currentUser(extractSession(req.headers.cookie));
           return json(res,200,{authenticated:!!user,user},head);
         }
-        if (path === '/api/v1/hangar' && (method === 'GET' || head)) {
+        if (path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/')) {
           const user = await authStore.currentUser(extractSession(req.headers.cookie));
           if (!user) return json(res,401,{error:'unauthorized'},head);
-          return json(res,200,{items:await authStore.hangar(user.id)},head);
+          if (!hangarStore) {
+            if (path === '/api/v1/hangar' && (method === 'GET' || head))
+              return json(res,200,{items:await authStore.hangar(user.id)},head);
+            return json(res,503,{error:'hangar_unavailable'},head);
+          }
+          if (path === '/api/v1/hangar' && (method === 'GET' || head))
+            return json(res,200,{items:await hangarStore.list(user.id)},head);
+          const id = path.startsWith('/api/v1/hangar/') ?
+            path.slice('/api/v1/hangar/'.length) : null;
+          if ((path === '/api/v1/hangar' && method === 'POST') ||
+              (id && ['PATCH','DELETE'].includes(method))) {
+            if (!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
+            if (method === 'DELETE') {
+              await hangarStore.remove(user.id,id);
+              return json(res,200,{ok:true});
+            }
+            const body = await readJson(req);
+            const item=method === 'POST' ?
+              await hangarStore.create(user.id,body) :
+              await hangarStore.update(user.id,id,body);
+            return json(res,method === 'POST' ? 201 : 200,{item});
+          }
         }
 
         if (['/api/v1/auth/register','/api/v1/auth/login','/api/v1/auth/logout'].includes(path) &&

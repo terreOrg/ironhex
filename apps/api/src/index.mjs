@@ -1,5 +1,6 @@
 import { createPool, initializeDatabase } from './db.mjs';
 import { createAuthStore } from './auth.mjs';
+import { createHangarStore } from './hangar.mjs';
 import { createHttpServer } from './http.mjs';
 
 const pool = createPool();
@@ -9,6 +10,7 @@ const port = Number(process.env.PORT || 3000);
 const server = createHttpServer({
   probeDatabase: async()=>{ await pool.query('SELECT 1'); },
   authStore: createAuthStore(pool),
+  hangarStore: createHangarStore(pool),
   publicOrigin: process.env.IRONHEX_PUBLIC_ORIGIN || null,
   secureCookies: process.env.IRONHEX_AUTH_COOKIE_SECURE === 'true'
 });
