@@ -15,7 +15,10 @@ const errors={
   operation_not_active:'Эта операция не активна.',
   operation_closed:'Операция уже закрыта.',
   unauthorized:'Необходимо войти в аккаунт.',
-  email_unverified:'Сначала подтвердите адрес электронной почты.'
+  email_unverified:'Сначала подтвердите адрес электронной почты.',
+  invalid_contract:'Выберите доступный контракт.',
+  mech_needs_repair:'Мех повреждён. Сначала отремонтируйте его на рынке.',
+  mech_assigned_operation:'Мех уже участвует в незакрытой операции.'
 };
 async function request(url,method='GET',body){
   const options={method,credentials:'same-origin',cache:'no-store'};
@@ -32,6 +35,7 @@ function launch3D(id){window.dispatchEvent(new CustomEvent('ironhex:open-3d-oper
 const outcomeLabels={victory:'ПОБЕДА',defeat:'ПОРАЖЕНИЕ',draw:'НИЧЬЯ'};
 const stateLabels={draft:'ПОДГОТОВКА',active:'В БОЮ',completed:'ЗАВЕРШЕНА',abandoned:'ПРЕРВАНА'};
 let root,opened=null,busy=false;
+let contracts=[];
 
 function message(text){
   const line=$(root,'#op-message');
@@ -55,6 +59,7 @@ function renderRoster(items,pilots){
     checkbox.type='checkbox';
     checkbox.name='mechId';
     checkbox.value=mech.id;
+    checkbox.disabled=!!(mech.armorDamage||mech.structureDamage||mech.wrecked);
     checkbox.addEventListener('change',()=>{
       const selected=[...box.querySelectorAll('input:checked')];
       if(selected.length>2) checkbox.checked=false;
@@ -64,7 +69,8 @@ function renderRoster(items,pilots){
     body.append(E('strong','',mech.chassis),
       E('small','',pilot?
         'Пилот: '+pilot.callsign+' · G'+pilot.gunnery+'/P'+pilot.piloting:
-        'Без назначенного пилота · XP не начисляется'));
+        'Без назначенного пилота · XP не начисляется'),
+      ...(checkbox.disabled?[E('small','op-warning','Неисправен — ремонт на рынке')]:[]));
     label.append(checkbox,body);
     box.append(label);
   }
@@ -92,7 +98,8 @@ function renderOperation(op){
   panel.replaceChildren();
   if(!op)return;
   panel.append(E('small','op-overline','ОПЕРАЦИЯ / '+(stateLabels[op.status]||op.status)),
-    E('h3','',op.title));
+    E('h3','',op.title),
+    E('small','', 'КОНТРАКТ: '+(contracts.find(c=>c.id===op.contractId)?.name||'Приграничный патруль')));
   const roster=E('div','op-unit-roster');
   for(const entry of op.roster){
     const cell=E('div','op-unit-card');
@@ -155,6 +162,8 @@ function renderOperation(op){
       E('p','op-phase','Боевое завершение · '+rep.rounds+' раундов'));
     const rewards=E('div','op-rewards');
     rewards.append(E('h4','','ПОСЛЕБОЕВОЙ РАПОРТ'));
+    if(Number.isInteger(rep.creditReward))rewards.append(E('p','op-credit-reward','ВЫПЛАТА: +'+rep.creditReward.toLocaleString('ru-RU')+' C-Bills'));
+
     for(const item of rep.rewards){
       const row=E('div','op-reward');
       row.append(E('strong','',item.chassis+
@@ -218,10 +227,19 @@ export async function refreshOperations(){
   if(!root||busy)return;
   message('Связь с оперативным архивом…');
   try{
-    const [hangar,pilots,history]=await Promise.all([
+    const [hangar,pilots,history,economy]=await Promise.all([
       request('/api/v1/hangar'),request('/api/v1/pilots'),
-      request('/api/v1/operations')
+      request('/api/v1/operations'),request('/api/v1/economy')
     ]);
+    contracts=economy.contracts||[];
+    const selector=$(root,'#op-contract');
+    const existing=selector.value;
+    selector.replaceChildren();
+    for(const contract of contracts){
+      const option=E('option','',contract.name+' · '+contract.victory.toLocaleString('ru-RU')+' C-Bills');
+      option.value=contract.id;selector.append(option);
+    }
+    if(contracts.some(c=>c.id===existing))selector.value=existing;
     renderRoster(hangar.items,pilots.items);
     renderList(history.items);
     message('Архив доступен. Выберите мехов для новой операции или откройте сохранённую.');
@@ -248,6 +266,8 @@ export function installOperationUI(hubRoot){
     '<form id="op-create-form" class="op-create-form">',
     '<label>НАЗВАНИЕ ОПЕРАЦИИ<input name="title" minlength="3" maxlength="80" required',
     'value="Патруль приграничного сектора"></label>',
+    '<label>КОНТРАКТ<select id="op-contract" name="contractId" aria-label="Контракт">',
+    '<option value="patrol">Приграничный патруль</option></select></label>',
     '<p class="op-label">ВЫБЕРИТЕ ДО ДВУХ МЕХОВ ИЗ АНГАРА</p>',
     '<label class="op-control-choice"><input type="checkbox" name="interactive" checked>',
     ' ИНТЕРАКТИВНЫЙ 3D-БОЙ (СЕРВЕРНЫЙ РЕЖИМ)</label>',
@@ -277,7 +297,7 @@ export function installOperationUI(hubRoot){
     setBusy(true);
     try{
       const {item}=await request('/api/v1/operations','POST',{
-        title:form.elements.title.value,mechIds,
+        title:form.elements.title.value,mechIds,contractId:form.elements.contractId.value,
         mode:form.elements.interactive.checked?'interactive':'auto'
       });
       opened=item.id;
