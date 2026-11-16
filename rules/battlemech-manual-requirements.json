@@ -662,9 +662,30 @@
       "id": "bmm-req-053",
       "topicId": "bmm-p068-skidding",
       "page": 68,
-      "statement": "Skidding terminates correctly at depth-1 water and falls/clashes from height changes.",
+      "statement": "Skidding into rising or falling hex levels applies all level-change collisions and falling damage as printed.",
       "status": "known_missing",
       "evidence": []
+    },
+    {
+      "id": "bmm-req-054",
+      "topicId": "bmm-p068-skidding",
+      "page": 70,
+      "statement": "When skidding into an unoccupied Depth 1+ water hex, the unit immediately stops and takes no additional skid damage for that water hex; existing submerged hull breaches are checked.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Entering depth-1 water ends skid without counting the water hex for damage (BMM p.70)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Depth-2 water in the first skid hex stops movement after fall damage only"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Entering water checks existing hull breaches after skid movement"
+        }
+      ]
     }
   ]
 }
