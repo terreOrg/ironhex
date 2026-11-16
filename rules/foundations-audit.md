@@ -14,7 +14,7 @@ pages, the whole chapter or the entire BMM have been implemented completely.
 | p.5 Introduction, Game Terms, Vs. Total Warfare | Informational / cross-references remain | Context and definitions, not a standalone combat mechanic. Cross-reference rule texts are not audited as complete. |
 | p.5 Four-Legged ’Mech | **Known missing** | BMM includes quadruped BattleMechs; current engine's arm/leg actuator and movement model is biped-specific. |
 | p.5 Optional Rules | Not fully audited | Rules labelled optional require pregame agreement. Some browser toggles exist; consistent agreement and every option still need review. |
-| p.6 Target Number | Tested subset | Central 2D6 resolver passes on equality; TN ≤2 always succeeds, TN ≥13 always fails. Individual base TNs for all combat maneuvers must still be audited. |
+| p.6 Target Number | **Verified** | The 2D6 inclusive threshold predicate, TN ≤2 auto-success and TN ≥13 auto-failure have been checked across **all 36 ordered results × 19 representative TN values = 684 comparisons**. Base target numbers for specific maneuvers are separately governed by their later rulebook chapters. |
 | p.6 Modified Target Number | Tested subset | Ranged, melee and skid collision previews now retain un-clamped computed TNs, including values below 2; success probability remains 100% at TN ≤2 and 0% above 12. |
 | p.6 Target | Tested subset | Friendly BattleMechs cannot be direct ranged or physical targets. Friendly damage via area effects remains unverified. |
 | p.6 Armor, Location, Slot and MP definitions | Not independently verified | Data structures exist, but separate verification is needed for rear armor, transfer, six/twelve slots and four-legged layouts. |
