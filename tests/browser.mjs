@@ -17,6 +17,36 @@ function serve(req,res) {
   let urlPath;
   try { urlPath = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
   catch { res.writeHead(400).end('Bad URL'); return; }
+  // A tiny same-origin authentication stub isolates the browser UI tests from PostgreSQL.
+  // The real registration/login flow is covered by container-smoke PostgreSQL tests.
+  if (urlPath.startsWith('/api/')) {
+    const authenticated = /(?:^|;\s*)ironhex_session=[a-f0-9]{64}(?:;|$)/.test(req.headers.cookie || '');
+    const commander = {id:'test-commander',handle:'TestCommander',email:'test@example.invalid'};
+    const reply = (status,body,cookie=null) => {
+      res.writeHead(status,{
+        'Content-Type':'application/json',
+        'Cache-Control':'no-store',
+        ...(cookie ? {'Set-Cookie': cookie} : {})
+      });
+      res.end(JSON.stringify(body));
+    };
+    if (req.method === 'GET' && urlPath === '/api/v1/auth/me')
+      return reply(200,{authenticated,user:authenticated?commander:null});
+    if (req.method === 'GET' && urlPath === '/api/v1/hangar')
+      return authenticated ? reply(200,{items:[]}) : reply(401,{error:'unauthorized'});
+    if (req.method === 'POST' && ['/api/v1/auth/login','/api/v1/auth/register'].includes(urlPath)) {
+      req.resume();
+      return reply(urlPath.endsWith('register') ? 201 : 200,
+        {authenticated:true,user:commander},
+        'ironhex_session='+'a'.repeat(64)+'; Path=/api/; HttpOnly; SameSite=Strict');
+    }
+    if (req.method === 'POST' && urlPath === '/api/v1/auth/logout') {
+      req.resume();
+      return reply(200,{ok:true},
+        'ironhex_session=; Path=/api/; HttpOnly; SameSite=Strict; Max-Age=0');
+    }
+    return reply(404,{error:'not_found'});
+  }
   const file = resolve(dist, '.' + (urlPath === '/' ? '/index.html' : urlPath));
   if (!file.startsWith(dist + sep)) { res.writeHead(403).end('Forbidden'); return; }
   const stream = createReadStream(file);
@@ -46,6 +76,12 @@ async function withPage(name, options, verify) {
   const context = await browser.newContext({
     viewport: options.mobile ? { width:390, height:844 } : { width:1440, height:900 }
   });
+  if (!options.unauthenticated) {
+    await context.addCookies([{
+      name:'ironhex_session', value:'a'.repeat(64),
+      url:baseURL + '/api/', httpOnly:true, sameSite:'Strict'
+    }]);
+  }
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -60,7 +96,7 @@ async function withPage(name, options, verify) {
       });
     }
     await page.goto(baseURL + (options.path || '/'), { waitUntil:'domcontentloaded' });
-    if (!options.path) await loaded(page);
+    if (!options.path && !options.unauthenticated) await loaded(page);
     await verify(page);
     assert.deepEqual(errors, [], 'Uncaught browser JavaScript errors');
   } catch(e) {
@@ -190,18 +226,64 @@ test('Mobile Canvas fallback keeps controls and dialogs accessible', { timeout:1
   });
 });
 
-test('Commander UI opens registration and login forms in the cockpit',
+test('Guest sees the login/registration landing screen before the 3D game starts',
   {timeout:120000},async()=>{
-    await withPage('auth-console',{noWebGL:true},async page=>{
-      await page.locator('#auth-trigger').click();
+    await withPage('auth-landing',{unauthenticated:true,noWebGL:true},async page=>{
+      await page.locator('#auth-login').waitFor({state:'visible'});
       assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),true);
+      assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('auth-locked')),true);
+      assert.equal(await page.locator('body > main').isVisible(),false);
+      assert.equal(await page.locator('#viewport canvas').count(),0,
+        'The battle engine must not start before authentication');
+      await page.keyboard.press('Escape');
+      assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),true,
+        'A guest must not close the access gate');
       await page.locator('#auth-tab-register').click();
       assert.equal(await page.locator('#auth-register').isVisible(),true);
       assert.equal(await page.locator('#auth-login').isVisible(),false);
-      assert.equal(await page.locator('#auth-register input[name=email]').getAttribute('type'),'email');
-      await page.locator('#auth-tab-login').click();
-      assert.equal(await page.locator('#auth-login').isVisible(),true);
-      await page.locator('#auth-close').click();
+      await page.locator('#auth-register input[name=handle]').fill('NewCommander');
+      await page.locator('#auth-register input[name=email]').fill('new@example.invalid');
+      await page.locator('#auth-register input[name=password]').fill('Private-Test-Password-2026!');
+      await page.locator('#auth-register input[name=confirm]').fill('Private-Test-Password-2026!');
+      await page.locator('#auth-register button[type=submit]').click();
+      await loaded(page);
+      assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('auth-locked')),false);
       assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),false);
+      assert.equal(await page.locator('#viewport canvas').count(),1);
+      await page.reload();
+      await loaded(page);
+      assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),false,
+        'An existing commander session should open the game automatically');
+    });
+  });
+
+test('Commander login and logout return to the protected landing screen',
+  {timeout:120000},async()=>{
+    await withPage('auth-logout',{unauthenticated:true,noWebGL:true},async page=>{
+      await page.locator('#auth-login').waitFor({state:'visible'});
+      await page.locator('#auth-login input[name=identity]').fill('TestCommander');
+      await page.locator('#auth-login input[name=password]').fill('Private-Test-Password-2026!');
+      await page.locator('#auth-login button[type=submit]').click();
+      await loaded(page);
+      await page.locator('#auth-trigger').click();
+      assert.equal(await page.locator('#auth-profile').isVisible(),true);
+      await page.locator('#auth-logout').click();
+      await page.locator('#auth-login').waitFor({state:'visible'});
+      assert.equal(await page.locator('#viewport canvas').count(),0,
+        'Logging out should unload the game before showing the login screen');
+    });
+  });
+
+test('Direct MechLab navigation also requires login',
+  {timeout:120000},async()=>{
+    await withPage('mechlab-guest',{path:'/mechlab.html',unauthenticated:true},async page=>{
+      await page.locator('#auth-login').waitFor({state:'visible'});
+      assert.equal(await page.locator('body > main').isVisible(),false);
+      assert.equal(await page.locator('#core').children().count(),0);
+      await page.locator('#auth-login input[name=identity]').fill('TestCommander');
+      await page.locator('#auth-login input[name=password]').fill('Private-Test-Password-2026!');
+      await page.locator('#auth-login button[type=submit]').click();
+      await page.locator('#name').waitFor({state:'visible'});
+      assert.equal(await page.locator('body > main').isVisible(),true);
     });
   });
