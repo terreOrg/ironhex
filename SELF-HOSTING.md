@@ -316,3 +316,18 @@ Concurrent attempts are serialized by PostgreSQL row locks. A completed
 operation cannot be advanced or rewarded again. Damage deductions, repair,
 contracts, travel, hiring, economy and full interactive server 3D commands
 are future work.
+
+
+## 10. Interactive server-controlled 3D battle
+
+Headquarters -> ОПЕРАЦИИ now includes the ИНТЕРАКТИВНЫЙ 3D-БОЙ mode, separate from the original local БЫСТРЫЙ БОЙ training mode. Choose one or two hangar mechs, optionally assign pilots, create and launch an operation. The tactical cockpit opens the animated 3D arena at index.html?battle=1&operation=<operation-id>.
+
+The client does not calculate authoritative dice, armor, damage, attacks or victories in this mode. Each move, rotation, fire declaration, physical attack, heat/phase transition, advanced command or hold is sent to the API with the operation version. The backend checks the authenticated commander, the phase, and the rules engine's legal moves. It also takes AI turns and commits the updated state, version and random seed to PostgreSQL. The browser then draws the confirmed state and plays movement and hit animations.
+
+API endpoints:
+- GET /api/v1/operations/{id}/snapshot: returns public state and current version, never the random generator state.
+- POST /api/v1/operations/{id}/command: accepts validated command type, version, and typed parameters only.
+
+Stale versions, enemy commands and illegal actions are rejected. Once the combat ends, the database transaction records the result, creates a report, and awards pilot XP only once. The after-action report button returns to the operation archive. Saved operations can be resumed on a later visit.
+
+This release remains single-player versus AI. It does not implement multiplayer, repair charges, automatic hangar damage deductions, market inventory or contracts.
