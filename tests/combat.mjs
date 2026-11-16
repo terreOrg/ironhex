@@ -473,7 +473,8 @@ test('Unmoved target may avoid an involuntary skidding charge with a PSR',()=>{
  u.q=0;u.r=0;t.q=1;t.r=0;t.moved=false;
  const result=g.resolveSkid(u,0,4,5);
  assert.equal(result.collision,true);assert.equal(t.q,1);assert.equal(t.r,0);
- assert.equal(u.q,0);assert.equal(u.r,0);
+ assert.equal(u.q,2);assert.equal(u.r,0);
+ assert.equal(u.skidCollisionPending,null);
  assert(g.phaseRolls.some(r=>r.kind.includes('Уклонение от скольжения')));
 });
 test('Failed involuntary skidding charge does not displace the target',()=>{
@@ -482,7 +483,60 @@ test('Failed involuntary skidding charge does not displace the target',()=>{
  u.q=0;u.r=0;t.q=1;t.r=0;t.moved=true;
  const result=g.resolveSkid(u,0,4,5);
  assert.equal(result.collision,true);
- assert.equal(t.q,1);assert.equal(t.r,0);assert.equal(u.q,0);
+ assert.equal(t.q,1);assert.equal(t.r,0);assert.equal(u.q,2);
+});
+
+
+test('Missed skid charge crosses defender hex and applies later damage (BMM p.71)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>0;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;t.q=1;t.r=0;t.moved=true;
+ const amounts=[],original=g.packets.bind(g);
+ g.packets=(unit,amount,...args)=>{if(unit===u)amounts.push(amount);return original(unit,amount,...args);};
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,3);assert.equal(u.q,3);assert.equal(u.r,0);
+ assert.equal(t.q,1);assert.equal(u.skidCollisionPending,null);
+ assert.deepEqual(amounts,[9,6]);
+ assert.deepEqual(result.path,[{q:1,r:0},{q:2,r:0},{q:3,r:0}]);
+});
+test('Missed charge in the last skid hex cannot leave overlapping mechs',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>0;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;t.q=1;t.r=0;t.moved=true;
+ const result=g.resolveSkid(u,0,2,5);
+ assert.equal(result.hexes,1);assert.equal(u.q,0);assert.equal(t.q,1);
+ assert.equal(u.skidCollisionPending,null);
+});
+test('Lethal collision damage destroys target and skid continues (BMM p.71)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>.99;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;t.q=1;t.r=0;t.moved=true;
+ const original=g.packets.bind(g);
+ // Isolate the continuation rule: assume a surviving attacker and a
+ // defender destroyed by the charge's damage grouping.
+ g.packets=(unit,amount,...args)=>{if(unit===t){t.dead=true;return;}
+   if(unit===u)return;return original(unit,amount,...args);};
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,3);assert.equal(t.dead,true);
+ assert.equal(u.q,3);assert.equal(u.r,0);assert.equal(u.skidCollisionPending,null);
+});
+test('Skid terrain cost excludes optional night walking surcharge',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.99;g.weather.night=true;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;g.tile(1,0).type='woods';
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,2);assert.equal(u.q,2);assert.equal(u.r,0);
+});
+test('Destroyed skidding attacker never resolves collision or retains pending impact',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>.99;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ u.q=0;u.r=0;t.q=1;t.r=0;t.moved=true;
+ g.fall=()=>{u.dead=true;u.prone=true;};
+ const result=g.resolveSkid(u,0,4,5);
+ assert.equal(result.collision,true);
+ assert.equal(u.dead,true);assert.equal(u.skidCollisionPending,null);
+ assert.equal(t.q,1);assert.equal(t.r,0);
+ assert.equal(g.phaseRolls.some(r=>r.kind.includes('Непреднамеренный таран')),false);
 });
 
 test('Skidding through difficult woods reduces sliding distance as specified in BMM p.68',()=>{

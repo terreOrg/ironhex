@@ -104,3 +104,15 @@ technology-base request until Clan construction masses, equipment tables and
 MTF parsing have their own verified implementation, preventing silent
 Inner Sphere stand-ins. The broader Clan construction requirement remains
 `known_missing`.
+
+### Skid continuation after a collision (BMM pp. 69–71)
+
+An unsuccessful involuntary charge no longer stops an ongoing skid. The
+engine tracks crossing an occupied hex without ending in an illegal
+same-hex overlap; fall and skid damage are resolved before the first
+collision, with further skid damage applied after that collision.
+Destroying the defender allows the skid to resume, while destroying the
+attacker ends it before any charge attack. The separate requirements for
+**defender-selected immediate dodge movement**, building damage and
+water/level interruptions remain `known_missing`. The Skidding heading
+is not yet `verified`.

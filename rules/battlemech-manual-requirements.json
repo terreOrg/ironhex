@@ -509,8 +509,17 @@
       "topicId": "bmm-p068-skidding",
       "page": 68,
       "statement": "Resolve remaining skid path when involuntary charge misses or defender successfully evades, without illegal overlapping positions.",
-      "status": "known_missing",
-      "evidence": []
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Missed skid charge crosses defender hex and applies later damage (BMM p.71)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Missed charge in the last skid hex cannot leave overlapping mechs"
+        }
+      ]
     },
     {
       "id": "bmm-req-042",
@@ -597,6 +606,65 @@
           "test": "Firing arcs include the exact ±60° and ±120° hex-direction boundaries"
         }
       ]
+    },
+    {
+      "id": "bmm-req-049",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Successful involuntary skid charge against a defender destroyed by collision damage continues into remaining skid hexes.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Lethal collision damage destroys target and skid continues (BMM p.71)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-050",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Damage for hexes after a skid collision resolves after that collision; the attacker must survive the initial fall before charging.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Missed skid charge crosses defender hex and applies later damage (BMM p.71)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Destroyed skidding attacker never resolves collision or retains pending impact"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-051",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skidding terrain penalties use underlying terrain movement cost, independent of a night walking MP surcharge.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid terrain cost excludes optional night walking surcharge"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-052",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "After successfully dodging an unintentional charge, the defender may immediately choose and resolve its full legal movement and cannot move again that phase.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-053",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skidding terminates correctly at depth-1 water and falls/clashes from height changes.",
+      "status": "known_missing",
+      "evidence": []
     }
   ]
 }
