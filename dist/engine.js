@@ -493,6 +493,17 @@ export class Game extends Legacy{
  relative(a,b,f=a.facing){const x=Math.sqrt(3)*(b.q-a.q+(b.r-a.r)/2),y=-1.5*(b.r-a.r),v=Math.atan2(y,x)-f*Math.PI/3;return Math.atan2(Math.sin(v),Math.cos(v))*180/Math.PI;}
  hitSide(u,a){const v=this.relative(u,a);return Math.abs(v)<=60.00001?'front':Math.abs(v)>=120-.00001?'rear':v>0?'left':'right';}
  arc(u,t,w){
+  // BMM p.83: a directional torso mount is a separately configured
+  // device attached to a specific installed weapon. The 3-point Quad
+  // version is a six-direction turret, while the 2-point version
+  // selects only forward or rear. Both rotate along with torso twist.
+  const wi=u.weapons?.indexOf(w);
+  const mount=wi>=0?u.directionalTorsoMounts?.find(m=>
+   m.weaponIndices?.includes(wi)&&['CT','LT','RT'].includes(m.location)):null;
+  if(mount){
+   const bearing=wrap(u.facing+mount.facing+(u.twist||0));
+   return Math.abs(this.relative(u,t,bearing))<=60.00001;
+  }
   const location=w.locations?.some(loc=>['CT','LT','RT','HD'].includes(loc))?'CT':w.location;
   // BMM p.24: quad front limbs are legs, not biped arms; only biped
   // arms receive the extra side-arc coverage. Leg arcs never twist.
@@ -518,6 +529,26 @@ export class Game extends Legacy{
       !u.structure[u.brace||'LA'])))
   reason='Оружие недоступно лёжа';else if(opts.aim&&!Object.hasOwn(LOCATIONS,opts.aim))reason='Неизвестная прицельная локация';else if(opts.aim&&this.mobile(t)&&!quadImmobileDueToLegLoss(t))reason='Прицельная стрельба только по обездвиженной цели';else if(opts.aim&&w.rack)reason='Кластерные ракеты нельзя использовать для прицельной стрельбы';else if(opts.aim&&los.cover&&partialCoverObscures(t,opts.aim,underwaterCover))reason='Локация скрыта частичным укрытием';
  const mods={gunnery:u.gunnery,attacker:{stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode]+(u.skidded?1:0),target:opts.aim==='HD'&&!this.mobile(t)?0:this.targetMovementModifier(t),terrain:los.woods,cover:opts.aim?0:los.cover?1:0,heat:[8,13,17,24].filter(h=>u.heat>=h).length,range:range<=ranges[0]?0:range<=ranges[1]?2:4,minimum:range<=w.min?w.min-range+1:0,weapon:w.toHit||0,sensor:u.sensorHits?2:0,arm:act?(act.shoulder?4:Number(act.upper)+Number(act.lower)):0,prone:u.prone&&!quadProneBonus?2:0,targetProne:t.prone?(range===1?-2:1):0,secondary:opts.secondary?(Math.abs(this.relative(u,t,wrap(u.facing+u.twist)))<=60?1:2):0,aim:opts.aim==='HD'?3:0,night:this.weather.night?Math.max(0,2-Math.floor(t.heat/20)):0,wind:this.weather.gale?(w.rack?2:w.ammo!==null?1:0):0};const targetNumber=Object.values(mods).reduce((a,b)=>a+b,0);let chance=0;for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)if(a+b>=targetNumber)chance++;return {legal:!reason,reason,range,blocked:los.blocked,cover:los.cover,underwaterCover,side:this.hitSide(t,u),mods,targetNumber,chance:reason?0:Math.round(chance/36*100)};}
+ setDirectionalTorsoMount(id,index,facing){
+  const u=this.unit(id),mount=u?.directionalTorsoMounts?.[index];
+  if(this.phase!=='fire'||!this.canAct(u)||u.prone||!mount||mount.locked||
+     !Number.isInteger(facing)||facing<0||facing>5||
+     (mount.points===2&&![0,3].includes(facing))||
+     (mount.points===3&&u.config!=='Quad')||
+     ![2,3].includes(mount.points))
+   return fail('Направленная установка торса недоступна');
+  mount.facing=facing;
+  return {ok:true,mount:index,facing};
+ }
+ checkDirectionalTorsoMountHit(u,loc){
+  for(const mount of u.directionalTorsoMounts||[]){
+   if(mount.location!==loc||mount.locked)continue;
+   if(this.roll(u.name+' · Повреждение турели',9)>=9){
+    mount.locked=true;
+    this.note(`${u.name}: турель ${loc} заблокирована в секторе ${mount.facing}.`);
+   }
+  }
+ }
  twist(id,value){const u=this.unit(id);const limit=u?.config==='Quad'?(u.quirks?.extendedTorsoTwist===true?1:0):(u?.quirks?.extendedTorsoTwist===true?2:1);if(this.phase!=='fire'||!this.canAct(u)||u.prone||!Number.isInteger(value)||Math.abs(value)>limit||(u.config==='Quad'&&limit===0))return fail('Разворот торса недоступен');u.twist=value;return {ok:true};}
  attack(id,target,indices,opts={}){return this.declareFire(id,indices.map(index=>({index,target,...opts})));}
  declareFire(id,assignments){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.unit(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:shots.length&&assignments[0].target!==a.target,aim:a.aim});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&this.mobile(t)&&!quadImmobileDueToLegLoss(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer'});}this.declarations.push({id,shots});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
@@ -569,13 +600,13 @@ export class Game extends Legacy{
   if(loc==='HD'||['LA','RA','LL','RL'].includes(loc)){
    a=Math.min(u.armor[loc],Math.ceil((u.maxArmor[loc]||0)/2));u.armor[loc]-=a;
   }else if(u.rear[loc]!==undefined){a=Math.min(u.rear[loc],rem);u.rear[loc]-=a;}
-  u.phaseDamage+=d+a;hits.push({location:loc,armor:a,structure:d});
+  u.phaseDamage+=d+a;hits.push({location:loc,armor:a,structure:d});if(a+d)this.checkDirectionalTorsoMountHit(u,loc);
   if(loc==='HD'&&d)this.wound(u,1);
   if(d)this.criticalHit(u,loc,false,true);
   if(!u.structure[loc])this.destroyLocation(u,loc);
   break;
  }
- const ar=rear&&u.rear[loc]!==undefined?u.rear:u.armor;const a=internal?0:Math.min(ar[loc],rem);ar[loc]-=a;rem-=a;const d=Math.min(u.structure[loc],rem);u.structure[loc]-=d;rem-=d;u.phaseDamage+=a+d;hits.push({location:loc,armor:a,structure:d});if(loc==='HD'&&a+d)this.wound(u,1);if(d)this.criticalHit(u,loc,!u.structure[loc]);if(a+d)this.checkHullIntegrity(u,loc);if(!u.structure[loc]){this.destroyLocation(u,loc);if(explosion&&this.hasCASE(u,loc))break;loc=transfer[loc];}else break;}if(tac&&!u.dead)this.criticalHit(u,u.structure[initial]?initial:transfer[initial]||initial,false);return hits;}
+ const ar=rear&&u.rear[loc]!==undefined?u.rear:u.armor;const a=internal?0:Math.min(ar[loc],rem);ar[loc]-=a;rem-=a;const d=Math.min(u.structure[loc],rem);u.structure[loc]-=d;rem-=d;u.phaseDamage+=a+d;hits.push({location:loc,armor:a,structure:d});if(a+d)this.checkDirectionalTorsoMountHit(u,loc);if(loc==='HD'&&a+d)this.wound(u,1);if(d)this.criticalHit(u,loc,!u.structure[loc]);if(a+d)this.checkHullIntegrity(u,loc);if(!u.structure[loc]){this.destroyLocation(u,loc);if(explosion&&this.hasCASE(u,loc))break;loc=transfer[loc];}else break;}if(tac&&!u.dead)this.criticalHit(u,u.structure[initial]?initial:transfer[initial]||initial,false);return hits;}
  destroyLocation(u,loc){
   if(!u.slots[loc])return;
   // A location can be destroyed recursively by side-torso loss and

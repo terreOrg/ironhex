@@ -1561,3 +1561,66 @@ test('BMM p.67: building-entry PSR modifiers, damage and jump restriction',()=>{
  assert.equal(u.prone,false);
  assert(g.phaseRolls.some(x=>x.kind?.includes('Вход в здание')&&x.target===5));
 });
+
+test('BMM p.83: Quad three-point Directional Torso Mount rotates 360 degrees and persists',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const g=flatGame(),u=g.units[0],target=g.units[2];
+ Object.assign(u,structuredClone(built.unit));
+ u.q=0;u.r=0;u.facing=0;u.prone=false;u.twist=0;
+ u.weapons=[{name:'Medium Laser',heat:3,damage:5,min:0,ranges:[3,6,9],
+  ammo:null,location:'CT',rear:false,destroyed:false}];
+ u.directionalTorsoMounts=[{location:'CT',weaponIndices:[0],points:3,facing:0,locked:false}];
+ target.q=-2;target.r=0;
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert.equal(g.arc(u,target,u.weapons[0]),false,'Default turret points forward');
+ for(const bearing of [1,2,3,4,5,0]){
+  assert.equal(g.setDirectionalTorsoMount(u.id,0,bearing).ok,true,
+   'Quad turret may rotate to each of six facings');
+  assert.equal(u.directionalTorsoMounts[0].facing,bearing);
+ }
+ assert.equal(g.setDirectionalTorsoMount(u.id,0,3).ok,true);
+ assert.equal(g.arc(u,target,u.weapons[0]),true,'Rear target in 3-point turret arc');
+ g.endPhase();
+ assert.equal(u.directionalTorsoMounts[0].facing,3,
+  'Directional mount facing persists beyond End Phase');
+ assert.equal(g.arc(u,target,u.weapons[0]),true);
+ for(const illegal of [-1,6,1.5,NaN])
+  assert.equal(g.setDirectionalTorsoMount(u.id,0,illegal).ok,false);
+});
+
+test('BMM p.83: torso hits lock directional mount on 9+, never on 8',()=>{
+ const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const g=flatGame(),u=g.units[0];Object.assign(u,structuredClone(built.unit));
+ u.q=0;u.r=0;u.facing=0;u.prone=false;
+ u.directionalTorsoMounts=[{location:'CT',weaponIndices:[],points:3,facing:3,locked:false}];
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ g.rng=()=>.5;g.phaseRolls=[]; // 2D6=8
+ g.damage(u,'CT',1);
+ assert.equal(u.directionalTorsoMounts[0].locked,false);
+ g.rng=()=>.75;g.phaseRolls=[]; // 2D6=10
+ g.damage(u,'CT',1);
+ assert.equal(u.directionalTorsoMounts[0].locked,true);
+ assert.equal(u.directionalTorsoMounts[0].facing,3);
+ assert.equal(g.setDirectionalTorsoMount(u.id,0,0).ok,false,
+  'Damaged mount stays permanently locked in its last facing');
+ assert.equal(g.phaseRolls.some(x=>x.kind?.includes('Повреждение турели')),true);
+});
+
+test('BMM p.83: two-point mount only faces forward or rear; no quirk implies no turret',()=>{
+ const g=flatGame(),u=g.units[0];
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ u.config='Quad';u.prone=false;u.directionalTorsoMounts=[];
+ assert.equal(g.setDirectionalTorsoMount(u.id,0,3).ok,false);
+ u.directionalTorsoMounts=[{location:'CT',weaponIndices:[],points:2,facing:0,locked:false}];
+ assert.equal(g.setDirectionalTorsoMount(u.id,0,3).ok,true);
+ for(const dir of [1,2,4,5])assert.equal(g.setDirectionalTorsoMount(u.id,0,dir).ok,false);
+ assert.equal(g.setDirectionalTorsoMount(u.id,0,0).ok,true);
+ u.config='Biped';u.directionalTorsoMounts[0].points=3;
+ assert.equal(g.setDirectionalTorsoMount(u.id,0,3).ok,false,
+  'Full 360 degree three-point turret is restricted to Quads');
+ u.directionalTorsoMounts[0].points=2;
+ assert.equal(g.setDirectionalTorsoMount(u.id,0,3).ok,true,
+  'Two-point version is available to bipeds');
+});

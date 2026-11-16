@@ -556,3 +556,26 @@ hexes by default. Basements, roofs, collapse, voluntary entry from
 other levels and involuntary/skid entry remain unsupported. This is
 a focused compatibility path for `bmm-req-093: tested_case`, not
 a claim of full BMM Urban Combat compliance.
+
+### Directional Torso Mount optional quirk (printed p.83)
+
+The game engine now supports explicitly configured per-unit
+`directionalTorsoMounts`, associated with exact weapon indices
+and one of CT/LT/RT. A 2-point mount can select front or rear,
+and a **Quad-only 3-point mount** can rotate freely to any of
+six hexside-facing directions. Its weapons use the chosen arc
+rather than the default torso arc and rotate with any current
+torso twist. Mount rotation is a Fire Phase action, and its
+facing **does not reset** in the End Phase.
+
+A hit on the mounted torso location triggers the 2D6 check
+in the book. On a result of 9+ the mount is locked in the
+current facing; on 8 or less it remains operational. Tests
+cover all six directions, two-point restrictions, quirk absence,
+persistence between turns, and both lock thresholds.
+
+This is explicitly **not full optional-quirk support**:
+integration with validated construction, network tactical
+commands, restricted equipment, multiple mounts and
+persistent campaign snapshots remains to be completed.
+`bmm-req-094` is `tested_case`, not verified.

@@ -1437,11 +1437,24 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Optional quad-only torso directional mounts and torso twist quirks change the permitted arcs only when selected.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         83
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.83: Quad three-point Directional Torso Mount rotates 360 degrees and persists"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.83: torso hits lock directional mount on 9+, never on 8"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.83: two-point mount only faces forward or rear; no quirk implies no turret"
+        }
+      ]
     }
   ]
 }
