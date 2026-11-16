@@ -43,7 +43,7 @@ jobs:
         run: |
           set -euo pipefail
           for file in tests/combat.mjs tests/construction.mjs \
-            tests/fire-arcs.mjs tests/api.mjs tests/auth.mjs \
+            tests/fire-arcs.mjs tests/api.mjs tests/economy.mjs tests/auth.mjs \
             tests/deploy-gate.mjs; do
             echo "::group::Testing $file"
             node --test "$file"
