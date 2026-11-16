@@ -150,9 +150,45 @@ export class Game extends Legacy{
   }
   return n;
  }
- mp(u,mode='walk'){u=this.unit(u);if(!this.mobile(u))return 0;if(mode==='jump')return Math.max(0,u.jump-u.jumpLost-this.floodedSlots(u,'jump'));if(mode==='evade'&&(!this.tacticalOptions?.evading||u.actuators.LL.hip||u.actuators.RL.hip||this.isBreached(u,'LL')||this.isBreached(u,'RL')))return 0;const lost=['LL','RL'].filter(l=>u.structure[l]===0).length;if(lost===2)return 0;let w=lost===1?1:u.walk;if(!lost){let hips=['LL','RL'].filter(l=>u.actuators[l].hip||this.isBreached(u,l)).length;w=hips===2?0:hips?Math.ceil(w/2):w;for(const l of ['LL','RL'])if(!u.actuators[l].hip&&!this.isBreached(u,l))w-=Number(u.actuators[l].upper)+Number(u.actuators[l].lower)+Number(u.actuators[l].foot);}w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));return mode==='run'||mode==='evade'?(lost?0:Math.ceil(w*1.5)):w;}
+ mp(u,mode='walk'){u=this.unit(u);if(!this.mobile(u))return 0;
+ const quad=u.config==='Quad',legs=quad?['LA','RA','LL','RL']:['LL','RL'];
+ const lost=legs.filter(l=>u.structure[l]===0).length;
+ if(mode==='jump'){
+  if(quad&&lost>=3)return 0;
+  return Math.max(0,u.jump-u.jumpLost-this.floodedSlots(u,'jump'));
+ }
+ if(mode==='evade'&&(!this.tacticalOptions?.evading||
+    legs.some(l=>u.actuators[l].hip||this.isBreached(u,l))))return 0;
+ if(quad){
+  // BMM p.44: first lost quad leg costs 1 walking MP and can
+  // still run. Two lost legs = one lost biped leg (walk 1, no run);
+  // three or more = zero ground MP. Quad front legs count as legs.
+  if(lost>=3)return 0;
+  let w=lost===2?1:u.walk-(lost===1?1:0);
+  const intact=legs.filter(l=>u.structure[l]>0);
+  const hips=intact.filter(l=>u.actuators[l].hip||this.isBreached(u,l)).length;
+  w=hips===4?0:hips?Math.ceil(w/2):w;
+  for(const l of intact){
+   const a=u.actuators[l];
+   if(!a.hip&&!this.isBreached(u,l))
+    w-=Number(a.upper)+Number(a.lower)+Number(a.foot);
+  }
+  w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));
+  return mode==='run'||mode==='evade'?(lost>=2?0:Math.ceil(w*1.5)):w;
+ }
+ if(lost===2)return 0;
+ let w=lost===1?1:u.walk;
+ if(!lost){
+  const hips=legs.filter(l=>u.actuators[l].hip||this.isBreached(u,l)).length;
+  w=hips===2?0:hips?Math.ceil(w/2):w;
+  for(const l of legs)if(!u.actuators[l].hip&&!this.isBreached(u,l))
+   w-=Number(u.actuators[l].upper)+Number(u.actuators[l].lower)+Number(u.actuators[l].foot);
+ }
+ w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));
+ return mode==='run'||mode==='evade'?(lost?0:Math.ceil(w*1.5)):w;
+ }
  terrainCost(t){return (t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:t.depth?(t.depth===1?2:4):1)+(this.weather.night?1:0);}
- reachable(u,mode='walk'){u=this.unit(u);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||u.actuators.LL.hip||u.actuators.RL.hip||this.isBreached(u,'LL')||this.isBreached(u,'RL')))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];return this.tiles.filter(t=>!this.occupied(t.q,t.r,u.id)&&Math.max(1,distance(u,t))<=max&&this.jumpClear(u,t,max)).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
+ reachable(u,mode='walk'){u=this.unit(u);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];return this.tiles.filter(t=>!this.occupied(t.q,t.r,u.id)&&Math.max(1,distance(u,t))<=max&&this.jumpClear(u,t,max)).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
  const lateralShifts=quadLateralDirections(u,mode);
  const actions=['left','right','forward','back',...lateralShifts.map(s=>s.action)];
  const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>!x.dead&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.prone))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
@@ -337,7 +373,7 @@ export class Game extends Legacy{
   if(stood&&newFacing!==null)u.facing=newFacing;
   return {ok:true};}
  drop(id){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||u.prone)return fail('Нельзя лечь');u.prone=true;this.checkExistingHullBreaches(u);this.actingId=id;return {ok:true};}
- hold(id){const u=this.unit(id);if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(u.gyroHits||u.actuators.LL.hip||u.actuators.RL.hip)this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
+ hold(id){const u=this.unit(id);if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(u.gyroHits||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip))this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
  relative(a,b,f=a.facing){const x=Math.sqrt(3)*(b.q-a.q+(b.r-a.r)/2),y=-1.5*(b.r-a.r),v=Math.atan2(y,x)-f*Math.PI/3;return Math.atan2(Math.sin(v),Math.cos(v))*180/Math.PI;}
  hitSide(u,a){const v=this.relative(u,a);return Math.abs(v)<=60.00001?'front':Math.abs(v)>=120-.00001?'rear':v>0?'left':'right';}
  arc(u,t,w){const location=w.locations?.some(loc=>['CT','LT','RT','HD'].includes(loc))?'CT':w.location;const a=this.relative(u,t,wrap(u.facing+(['LL','RL'].includes(location)?0:u.twist)+(w.rear||(u.flip&&['LA','RA'].includes(location))?3:0)));return location==='LA'&&!w.rear?a>=-60.00001&&a<=120.00001:location==='RA'&&!w.rear?a>=-120.00001&&a<=60.00001:Math.abs(a)<=60.00001;}

@@ -251,3 +251,21 @@ The standing test checks the exact 2D6 target after loss of a *rear*
 leg, the case that previously inherited a spurious biped +5 penalty.
 This is evidence for the standing requirement, but Quad movement
 speed / catastrophic leg loss still need independent checks.
+
+### Regression found in CI and corrected: lost rear leg blocked all standing
+
+GitHub Actions on `426bb30` caught a failed standing test
+(`Нужно 2 MP`). The root cause was the biped movement rule:
+destroying either rear leg had set running MP to zero, even for
+a quad with three intact legs. The Quad-specific movement branch
+now applies BMM p.44: first lost leg reduces Walking MP by 1,
+but running remains available; two lost legs produce 1 Walking
+MP and no running; three or more lost legs give 0 ground MP.
+The condition is symmetric for LA, RA, LL and RL. Biped movement
+is retained in its independent branch.
+
+Tests enumerate all four ways to lose the first leg and the next
+loss thresholds. This is necessary groundwork for correct Quad
+standing and other p.44 damage consequences; the subsection
+remains `tested_case`, not certified until all relevant exclusions
+and failure rolls are independently checked.

@@ -750,3 +750,34 @@ test('BMM pp.19,44,53: standing PSR does not include intact-quad fall modifier',
  assert(roll,'Standing on three quad legs must require a PSR');
  assert.equal(roll.target,u.piloting,'First lost quad leg is not biped +5 penalty');
 });
+
+test('BMM p.44: losing a single Quad leg reduces walking MP by one but preserves running',()=>{
+ const fixture=construct({...example,name:'Quad leg-loss speed',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(fixture.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,fixture.unit);
+ for(const other of g.units.slice(1))other.dead=true;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ u.q=0;u.r=0;u.moveMode='stand';u.spent=0;u.prone=false;
+ assert.equal(g.mp(u,'walk'),5);
+ assert.equal(g.mp(u,'run'),8);
+ for(const leg of ['LA','RA','LL','RL']){
+  u.structure[leg]=0;
+  assert.equal(g.mp(u,'walk'),4,'One lost '+leg+' costs -1 walking MP');
+  assert.equal(g.mp(u,'run'),6,'One lost '+leg+' still permits running');
+  assert(g.reachable(u,'run').length>0,'A single lost '+leg+' must not disable running');
+  u.structure[leg]=u.maxStructure[leg];
+ }
+ u.structure.LA=0;u.structure.RL=0;
+ assert.equal(g.mp(u,'walk'),1,'Two lost quad legs = one lost biped leg');
+ assert.equal(g.mp(u,'run'),0);
+ assert.deepEqual(g.reachable(u,'run'),[]);
+ u.structure.RA=0;
+ assert.equal(g.mp(u,'walk'),0,'Three lost quad legs = immobile on ground');
+ assert.equal(g.mp(u,'run'),0);
+ const b=flatGame(),biped=b.units[0];
+ biped.structure.LL=0;
+ assert.equal(b.mp(biped,'walk'),1);
+ assert.equal(b.mp(biped,'run'),0,'Biped one-leg running prohibition remains');
+});

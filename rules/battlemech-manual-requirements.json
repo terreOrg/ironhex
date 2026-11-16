@@ -1151,6 +1151,7 @@
       "sourcePages": [
         19,
         44,
+        48,
         53
       ],
       "evidence": [
@@ -1169,6 +1170,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM pp.19,44,53: standing PSR does not include intact-quad fall modifier"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.44: losing a single Quad leg reduces walking MP by one but preserves running"
         }
       ]
     },
