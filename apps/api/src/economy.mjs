@@ -1,6 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {AuthError} from './auth.mjs';
-import {MECH_OFFERS,showMechOffer,EQUIPMENT_CATALOG} from './market.mjs';
+import {MECH_OFFERS,showMechOffer,EQUIPMENT_CATALOG,searchMechCatalog} from './market.mjs';
 
 export const CONTRACTS=[
   {id:'patrol',name:'Приграничный патруль',victory:32000,enemyGunnery:4},
@@ -63,6 +63,7 @@ async function stockFor(client,owner){
 }
 export function createEconomyStore(pool){
   return {
+    browseMechs(options){return searchMechCatalog(options);},
     summary(owner){
       return inTransaction(pool,async c=>{
         const balance=await ensureWallet(c,owner);

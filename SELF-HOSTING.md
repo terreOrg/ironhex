@@ -353,10 +353,22 @@ All purchases, payouts and repairs are committed inside PostgreSQL transactions.
 
 ## 12. NPC BattleMech dealer, warehouse and MechLab
 
-The authenticated market now offers three 55-ton Griffin surplus variants for **48,000 / 62,000 / 76,000 C-Bills** and individual weapons using the engine's equipment catalog. All offers have static prices and unlimited NPC availability. An authenticated commander may purchase a licensed mech with `POST /api/v1/economy/mechs/purchase` and body `{"offerId":"griffin-standard"}`. The operation creates an owned, working hangar mech and writes a debit in the financial ledger atomically. Sending an unknown offer or caller-supplied price is rejected. The hangar limit is 50.
+The authenticated market now offers curated, technically imported BattleMechs from the MegaMek Data MTF catalog and individual weapons using the engine's equipment catalog. All offers have static prices and unlimited NPC availability. An authenticated commander may purchase a licensed mech with `POST /api/v1/economy/mechs/purchase` and body `{"offerId":"mm-grf-1m"}`. The operation creates an owned, working hangar mech and writes a debit in the financial ledger atomically. Sending an unknown offer or caller-supplied price is rejected. The hangar limit is 50.
 
 The existing `POST /api/v1/economy/purchase` also accepts weapon SKUs, for example `{"sku":"weapon:Medium Laser","quantity":1}`, and stores quantities in `commander_equipment`. The `GET /api/v1/economy` reply includes `mechOffers`, `equipmentStock` and weapon entries in `catalog`, alongside the previous wallet, supply kit, repair and contract fields.
 
 In MechLab, **licensed** hangar mechs can be refitted using the current `PATCH /api/v1/hangar/{id}` endpoint: the server compares old and new weapon counts, removes newly installed weapons from owned inventory, returns stripped weapons to the warehouse, and rejects insufficient stock. Engine rating, chassis mass, armor and factory-installed jump jets/heat sinks/hatchets are locked for these mechs; ammunition placement is not yet charged. Refitting damaged or mission-assigned mechs is blocked. Creating a free design, including **Save as new**, still works for training mode, but saves it with `market_owned=false` and does **not** qualify it for credited operations. Mechs in the database before this migration retain `market_owned=true` for compatibility.
 
 The NPC dealer is not a player auction, and the `market_listings` schema remains inactive. Prices are noncanonical prototype balancing figures; no selling, scarcity model, transit times, paid assembly, or ammunition accounting is implemented.
+
+## 13. MegaMek Data unit import
+
+The NPC dealer is now driven by MTF files under `data/megamek/meks/`; source commit and original paths are recorded in `data/megamek/manifest.json`. The data is provided by **The MegaMek Team** under **CC BY-NC-SA 4.0**, with license text, original notices and a modification summary in `data/megamek/`. This is an unofficial, noncommercial game and no MegaMek endorsement is implied.
+
+`apps/api/src/mtf.mjs` parses standard Inner Sphere biped unit files with supported technology only. It maps mass, walk/jump MP, engine, standard armor/rear armor, single heat sinks, mounted weapon locations and critical slots, and ammunition into the shared battle construction engine. It checks that the resulting unit has no construction errors before offering it. Unsupported/advanced equipment, configurations, or tech are excluded rather than inaccurately converted; import rejections can be inspected in `rejectedMtf` from `apps/api/src/market.mjs`. The import is **offline** from the bundled files: no production dependency on MekBay or GitHub API availability.
+
+MTF files do not provide final unit C-Bills purchase prices. Prices shown by IronHex are transparent game-balance approximations (mass and armament formula), **not canonical BattleTech values**. Full MekBay mechanics, unit BV, rare tech, live market movements and additional unit classes are future work.
+
+### Full index and server search
+
+`data/megamek/full-index.json` is a pinned file-path index of **4,305** MTF variants from MegaMek/mm-data. `GET /api/v1/economy/mechs?query=Atlas&page=1&available=0` is an authenticated, paginated (36 per page) read-only search. Results distinguish reference-only listings (`available=false`) from playable imported units (`available=true`). The default search includes both. Buying an unavailable unit is rejected because it has no valid offer ID. Do not describe all 4,305 source variants as playable yet. Standalone equipment and engine specification expansion is a separate future importer, sourced from MegaMek's GPL-licensed definitions where legally appropriate.

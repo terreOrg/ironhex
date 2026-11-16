@@ -42,3 +42,9 @@ to loopback. Database storage persists in a named volume.
 ## Licensed hangar and NPC market
 
 `market_owned` is true for pre-existing legacy saves and purchased NPC units, false for new free MechLab prototypes. Only licensed mechs are accepted by the campaign operation API. The fixed dealer validates its stock with the shared construction engine. A successful purchase debits the wallet and creates a hangar mech within one database transaction. Weapon parts bought from the same dealer live in `commander_equipment`. Licensed-mech PATCH requests compare weapon counts with the stored loadout, deduct additions and return removals under a PostgreSQL row lock; missing stock rolls the refit back. Prototypes retain the legacy free-design experience but cannot join rewarded missions. No inter-player transfers, crafting or auction matching are implemented yet.
+
+## MegaMek MTF source adapter
+
+The backend loads a pinned, local, CC BY-NC-SA 4.0 subset of MegaMek/mm-data via `apps/api/src/mtf.mjs`. It creates individually validated configurations instead of renaming one example mech. Every offer has an origin MTF and attribution link. Missing tech is rejected, not silently approximated. The API and imported snapshots use the same constructor as the tactical engine. This is a curated import and does not entail linking or copying MekBay's GPL code. Read `data/megamek/README.md` before redistributing the imported records.
+
+A separate `full-index.json` lets the market list all 4,305 source MTF paths with server pagination without downloading unsupported data or falsely assigning them game values. `available=false` entries are reference-only. MegaMek Java definitions for components have separate GPL licensing and are not bundled; later adapters must keep licenses and game mechanics distinct.

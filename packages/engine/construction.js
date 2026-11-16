@@ -27,7 +27,25 @@ export function construct(c){
  }
  if(jets!==jump)errors.push(`Разместите ${jump} прыжковых двигателей; размещено ${jets}.`);
  const needed=Math.max(0,sinks-Math.floor(rating/25));if(extSinks!==needed)errors.push(`Разместите ${needed} внешних теплоотводов; размещено ${extSinks}.`);
- weapons.forEach((w,i)=>{if(w.ammo!==null){w.ammo=bins.filter(b=>b.weapon===i).reduce((s,b)=>s+b.shots,0);if(!w.ammo)errors.push(w.name+': нужен боезапас.');}});
+ // Equal weapon types may draw from the same ammunition pool; MegaMek
+ // variants commonly share one bin between several autocannons or launchers.
+ const pools=new Map();
+ for(let i=0;i<weapons.length;i++){
+   const w=weapons[i];
+   if(w.ammo===null)continue;
+   if(!pools.has(w.name))pools.set(w.name,i);
+   w.shared=pools.get(w.name);
+ }
+ for(const bin of bins){
+   const master=weapons[bin.weapon]?.shared;
+   if(master!==undefined)bin.weapon=master;
+ }
+ weapons.forEach(w=>{
+   if(w.ammo!==null){
+     w.ammo=bins.filter(b=>b.weapon===w.shared).reduce((s,b)=>s+b.shots,0);
+     if(!w.ammo)errors.push(w.name+': нужен боезапас.');
+   }
+ });
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
  return {errors,total,weights,remaining:ton-total,rating,unit:{name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
 }

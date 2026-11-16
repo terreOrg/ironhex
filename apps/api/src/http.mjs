@@ -136,6 +136,13 @@ export function createHttpServer({
           if(!economyStore)return json(res,503,{error:'economy_unavailable'},head);
           if(path==='/api/v1/economy'&&(method==='GET'||head))
             return json(res,200,await economyStore.summary(user.id),head);
+          if(path==='/api/v1/economy/mechs'&&(method==='GET'||head)){
+            const url=new URL(req.url,'http://localhost');
+            const query=url.searchParams.get('query')||'';
+            const page=url.searchParams.get('page')||1;
+            const availableOnly=url.searchParams.get('available')==='1';
+            return json(res,200,economyStore.browseMechs({query,page,limit:36,availableOnly}),head);
+          }
           if(path==='/api/v1/economy/mechs/purchase'&&method==='POST'){
             if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
             return json(res,201,{item:await economyStore.buyMech(user.id,await readJson(req))},head);

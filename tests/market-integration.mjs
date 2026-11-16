@@ -26,16 +26,18 @@ const one=await account('MarketA'),other=await account('MarketB');
 const original=await req('/api/v1/economy',{cookie:one.cookie});
 assert.equal(original.status,200);
 assert.equal(original.data.balance,150000);
-assert(original.data.mechOffers.length>=3);
+assert(original.data.mechOffers.length>=6);
+const offer=original.data.mechOffers.find(x=>x.id==='mm-grf-1m');
+assert(offer,'Griffin GRF-1M must be imported from MegaMek Data');
 assert(original.data.catalog.some(c=>c.sku==='weapon:Medium Laser'));
 assert.equal((await req('/api/v1/economy/mechs/purchase',{
-  method:'POST',body:{offerId:'griffin-standard'}})).status,401);
+  method:'POST',body:{offerId:'mm-grf-1m'}})).status,401);
 assert.equal((await req('/api/v1/economy/mechs/purchase',{
   method:'POST',cookie:one.cookie,origin:false,
-  body:{offerId:'griffin-standard'}})).status,403);
+  body:{offerId:'mm-grf-1m'}})).status,403);
 assert.equal((await req('/api/v1/economy/mechs/purchase',{
   method:'POST',cookie:one.cookie,
-  body:{offerId:'griffin-standard',price:1}})).status,422);
+  body:{offerId:'mm-grf-1m',price:1}})).status,422);
 assert.equal((await req('/api/v1/economy/mechs/purchase',{
   method:'POST',cookie:one.cookie,body:{offerId:'not-listed'}})).status,422);
 const prototype=await req('/api/v1/hangar',{method:'POST',
@@ -49,19 +51,26 @@ const weapon=await req('/api/v1/economy/purchase',{method:'POST',
 assert.equal(weapon.status,200,JSON.stringify(weapon.data));
 assert.equal(weapon.data.item.spent,2500);
 const bought=await req('/api/v1/economy/mechs/purchase',{method:'POST',
-  cookie:one.cookie,body:{offerId:'griffin-standard'}});
+  cookie:one.cookie,body:{offerId:'mm-grf-1m'}});
 assert.equal(bought.status,201,JSON.stringify(bought.data));
-assert.equal(bought.data.item.spent,48000);
+assert.equal(bought.data.item.spent,offer.price);
 const mechId=bought.data.item.id;
 let wallet=await req('/api/v1/economy',{cookie:one.cookie});
-assert.equal(wallet.data.balance,99500);
+assert.equal(wallet.data.balance,150000-2500-offer.price);
 assert.equal(wallet.data.equipmentStock['Medium Laser'],1);
 assert.equal((await req('/api/v1/economy',{cookie:other.cookie}))
   .data.equipmentStock['Medium Laser']||0,0);
 assert.equal((await req('/api/v1/hangar',{cookie:one.cookie}))
   .data.items.find(m=>m.id===mechId).marketOwned,true);
-const modified=structuredClone(example);
-modified.equipment=modified.equipment.filter((_,index)=>index!==3);
+const boughtItem=(await req('/api/v1/hangar',{cookie:one.cookie})).data.items.find(x=>x.id===mechId);
+const purchasedConfig=structuredClone(boughtItem.state.config);
+assert.equal(purchasedConfig.name,'Griffin GRF-1M');
+assert.equal(purchasedConfig.walk,5);
+assert.equal(purchasedConfig.jump,5);
+assert(purchasedConfig.equipment.some(e=>e.type==='LRM 20'),
+  'Purchased Griffin must have its real MTF armament');
+const modified=structuredClone(purchasedConfig);
+modified.equipment=modified.equipment.filter(e=>e.type!=='LRM 20'&&e.type!=='ammo');
 modified.equipment.push({type:'Medium Laser',location:'LA',slot:5});
 let changed=await req('/api/v1/hangar/'+mechId,{method:'PATCH',
   cookie:one.cookie,body:{config:modified}});
@@ -83,7 +92,7 @@ const locked=await req('/api/v1/hangar/'+mechId,{method:'PATCH',
 assert.equal(locked.status,409,JSON.stringify(locked.data));
 assert.equal(locked.data.error,'factory_frame_locked');
 changed=await req('/api/v1/hangar/'+mechId,{method:'PATCH',
-  cookie:one.cookie,body:{config:example}});
+  cookie:one.cookie,body:{config:purchasedConfig}});
 assert.equal(changed.status,200,JSON.stringify(changed.data));
 wallet=await req('/api/v1/economy',{cookie:one.cookie});
 assert.equal(wallet.data.equipmentStock['Medium Laser'],1,

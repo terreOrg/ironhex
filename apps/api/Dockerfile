@@ -6,9 +6,11 @@ RUN cd /app/apps/api && npm install --omit=dev --ignore-scripts --no-audit --no-
 
 COPY packages/engine/ /app/packages/engine/
 COPY apps/api/src/ /app/apps/api/src/
+COPY data/megamek/ /app/data/megamek/
 COPY tests/auth-integration.mjs /app/tests/auth-integration.mjs
 COPY tests/auth-email-integration.mjs /app/tests/auth-email-integration.mjs
 COPY tests/operations-integration.mjs /app/tests/operations-integration.mjs
+COPY tests/market-integration.mjs /app/tests/market-integration.mjs
 
 WORKDIR /app/apps/api
 USER node

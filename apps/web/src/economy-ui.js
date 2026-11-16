@@ -14,7 +14,7 @@ const messages={
   invalid_mech_offer:'Модель отсутствует в каталоге.',
   hangar_full:'В ангаре нет свободных мест.'
 };
-let root=null,refreshHangar=()=>{},busy=false;
+let root=null,refreshHangar=()=>{},busy=false,catalogPage=1,catalogTimer=null,catalogSerial=0;
 async function request(path,method='GET',body){
   const res=await fetch(path,{
     method,credentials:'same-origin',cache:'no-store',
@@ -58,6 +58,27 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
     el('p','','Доход начисляется сервером после завершения операции. Заказы и ремонт оплачиваются из средств командира.'));
   const balance=el('div','economy-wallet');
   balance.id='economy-wallet';
+  const filter=el('input','economy-filter');
+  filter.id='economy-filter';
+  filter.type='search';
+  filter.placeholder='Найти меха или модификацию…';
+  filter.setAttribute('aria-label','Поиск меха на рынке');
+  filter.addEventListener('input',()=>{
+    catalogPage=1;
+    clearTimeout(catalogTimer);
+    catalogTimer=setTimeout(()=>void refreshMtfCatalog(),230);
+    const query=filter.value.trim().toLocaleLowerCase();
+    root.querySelectorAll('#economy-mechs .economy-mech-offer').forEach(card=>{
+      card.hidden=!card.dataset.search.includes(query);
+    });
+  });
+  const onlyAvailable=el('label','economy-toggle');
+  const availableBox=el('input','');availableBox.type='checkbox';availableBox.id='economy-available-only';
+  availableBox.onchange=()=>{catalogPage=1;void refreshMtfCatalog();};
+  onlyAvailable.append(availableBox,el('span','','Только доступные для покупки'));
+  const archiveSummary=el('p','op-message');archiveSummary.id='economy-archive-summary';
+  const archive=el('div','economy-mechs');archive.id='economy-archive';
+  const pager=el('div','economy-pager');pager.id='economy-pager';
   const mechs=el('div','economy-mechs');mechs.id='economy-mechs';
   const supplies=el('div','economy-supplies');supplies.id='economy-supplies';
   const inventory=el('div','economy-inventory');inventory.id='economy-inventory';
@@ -65,7 +86,11 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
   const ledger=el('div','economy-ledger');ledger.id='economy-ledger';
   const status=el('p','op-message');status.id='economy-message';
   status.setAttribute('role','status');
-  section.append(heading,balance,el('h3','economy-heading','ДИЛЕР БОЕВЫХ МЕХОВ'),mechs,
+  section.append(heading,balance,el('h3','economy-heading','ДИЛЕР БОЕВЫХ МЕХОВ'),
+    el('p','op-warning','Каталог: MegaMek Data, CC BY-NC-SA 4.0. Цены установлены для баланса IronHex, не являются официальными.'),
+    el('h4','economy-heading','ГОТОВЫЕ К ПОКУПКЕ'),mechs,
+    el('h4','economy-heading','ПОЛНЫЙ КАТАЛОГ MEGAMEK'),filter,onlyAvailable,
+    archiveSummary,archive,pager,
     el('h3','economy-heading','ВООРУЖЕНИЕ И РЕМОНТНЫЕ КОМПЛЕКТЫ'),supplies,
     el('h3','economy-heading','ОРУЖЕЙНЫЙ СКЛАД'),inventory,
     el('h3','economy-heading','РЕМОНТ АНГАРА'),repairs,
@@ -93,17 +118,28 @@ export async function refreshEconomy(){
     offers.replaceChildren();
     for(const offer of data.mechOffers||[]){
       const card=el('article','economy-item economy-mech-offer');
+      card.dataset.search=(offer.name+' '+offer.description).toLocaleLowerCase();
       const content=el('div','');
       content.append(el('strong','',offer.name),
         el('small','',offer.description),
+        el('small','',offer.era?'Год модели: '+offer.era+' · '+(offer.role||'BattleMech'):'BattleMech'),
         el('small','','Цена со склада дилера: '+money(offer.price)));
+      if(offer.sourceUrl){
+        const link=el('a','economy-source-link','Данные: MegaMek (CC BY-NC-SA 4.0)');
+        link.href=offer.sourceUrl;
+        link.target='_blank';
+        link.rel='noopener noreferrer';
+        content.append(link);
+      }
       const buy=el('button','op-primary','ПРИОБРЕСТИ МЕХА');
       buy.type='button';
       buy.onclick=()=>{
         if(confirm('Купить '+offer.name+' за '+money(offer.price)+'?'))
           void mutate('/api/v1/economy/mechs/purchase',{offerId:offer.id});
       };
-      card.append(content,buy);offers.append(card);
+      card.append(content,buy);
+      card.hidden=!card.dataset.search.includes(root.querySelector('#economy-filter').value.trim().toLocaleLowerCase());
+      offers.append(card);
     }
     if(!data.mechOffers?.length)offers.append(el('p','op-empty','Нет доступных предложений.'));
     const stored=root.querySelector('#economy-inventory');
@@ -166,5 +202,66 @@ export async function refreshEconomy(){
       log.append(line);
     }
     notice('Данные подтверждены сервером.');
+    void refreshMtfCatalog();
   }catch(e){notice('Служба снабжения недоступна: '+e.message);}
+}
+
+async function refreshMtfCatalog(){
+  if(!root)return;
+  const serial=++catalogSerial;
+  const query=root.querySelector('#economy-filter').value.trim();
+  const available=root.querySelector('#economy-available-only').checked;
+  const summary=root.querySelector('#economy-archive-summary');
+  const archive=root.querySelector('#economy-archive');
+  const pager=root.querySelector('#economy-pager');
+  summary.textContent='Поиск по полному каталогу…';
+  try{
+    const queryString=new URLSearchParams({query,page:String(catalogPage),
+      available:available?'1':'0'});
+    const data=await request('/api/v1/economy/mechs?'+queryString.toString());
+    if(serial!==catalogSerial)return;
+    summary.textContent='В каталоге '+data.total.toLocaleString('ru-RU')+
+      ' вариантов · поддерживаются движком '+data.available+
+      ' · найдено '+data.matches.toLocaleString('ru-RU');
+    archive.replaceChildren();
+    for(const item of data.items||[]){
+      const card=el('article','economy-item economy-mech-offer');
+      const content=el('div','');
+      content.append(el('strong','',item.name));
+      if(item.available){
+        content.append(el('small','',item.description||''),
+          el('small','',money(item.price)));
+      }else{
+        content.append(el('small','',
+          'Справочная запись. Эта модификация ещё не поддерживается боевым движком IronHex.'));
+      }
+      if(item.sourceUrl){
+        const link=el('a','economy-source-link','Исходная модель · MegaMek Data');
+        link.href=item.sourceUrl;
+        link.rel='noopener noreferrer';
+        link.target='_blank';
+        content.append(link);
+      }
+      card.append(content);
+      if(item.available){
+        const buy=el('button','op-primary','КУПИТЬ МЕХА');
+        buy.onclick=()=>{
+          if(confirm('Приобрести '+item.name+' за '+money(item.price)+'?'))
+            void mutate('/api/v1/economy/mechs/purchase',{offerId:item.offerId});
+        };
+        card.append(buy);
+      }
+      archive.append(card);
+    }
+    if(!data.items?.length)archive.append(el('p','op-empty','Ничего не найдено.'));
+    pager.replaceChildren();
+    const prev=el('button','op-secondary','НАЗАД');
+    prev.disabled=data.page<=1;
+    prev.onclick=()=>{catalogPage--;void refreshMtfCatalog();};
+    const label=el('span','','Страница '+data.page+' из '+Math.max(1,data.pages));
+    const next=el('button','op-secondary','ДАЛЕЕ');
+    next.disabled=data.page>=data.pages;
+    next.onclick=()=>{catalogPage++;void refreshMtfCatalog();};
+    pager.append(prev,label,next);
+  }catch(e){if(serial===catalogSerial)summary.textContent='Ошибка каталога: '+e.message;}
 }

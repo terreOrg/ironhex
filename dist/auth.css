@@ -704,3 +704,15 @@ color:#1d3223;font-weight:800;font-size:14px;padding:14px;cursor:pointer}
 .economy-inventory .economy-entry{padding:8px;border:1px solid #405b43;background:#1a291d}
 .economy-supplies{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
 @media(max-width:600px){.economy-mechs,.economy-supplies,.economy-inventory{grid-template-columns:1fr}}
+
+/* Imported BattleTech catalog search and source attributions. */
+.economy-filter{width:100%;max-width:550px;padding:10px 13px;margin-bottom:14px;border:1px solid #607456;background:#15241d;color:#f3f8e9;font-size:13px}
+.economy-source-link{display:inline-block;margin-top:9px;font-size:10px;color:#c3e8a1;text-decoration:underline}
+.economy-mech-offer[hidden]{display:none!important}
+
+.economy-toggle{display:flex;align-items:center;gap:8px;font-size:11px;color:#bdd6b6;margin:8px 0 14px}
+.economy-toggle input{accent-color:#bbdd7f}
+.economy-pager{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:14px;margin:16px 0 22px}
+.economy-pager span{font-size:11px;color:#b1c7a8}
+.economy-pager button{width:auto;min-width:92px}
+#economy-archive .economy-mech-offer{min-height:124px}

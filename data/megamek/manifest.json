@@ -1,0 +1,78 @@
+{
+  "sourceRepository": "https://github.com/MegaMek/mm-data",
+  "sourceRevision": "5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+  "license": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+  "licenseId": "CC-BY-NC-SA-4.0",
+  "entries": [
+    {
+      "file": "3025 CCE__Light__Locust LCT-1E2.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Light/Locust LCT-1E2.mtf",
+      "sourceBlob": "7f2b5345d341add6af401ae0db23cc47a5627675"
+    },
+    {
+      "file": "3025 CCE__Light__Javelin JVN-10U.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Light/Javelin JVN-10U.mtf",
+      "sourceBlob": "af98067dc0dd015ae88712d6d02d309412504c4a"
+    },
+    {
+      "file": "3025 CCE__Light__Jenner JR7-Y.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Light/Jenner JR7-Y.mtf",
+      "sourceBlob": "c9b4854d3cb8e326c4a4eb7a3ea143b592a1448c"
+    },
+    {
+      "file": "3025 CCE__Light__UrbanMech UM-R60R.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Light/UrbanMech UM-R60R.mtf",
+      "sourceBlob": "18e2be59a3737c68d650a304c7b2fa68f57de512"
+    },
+    {
+      "file": "3025 CCE__Medium__Griffin GRF-1M.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Medium/Griffin GRF-1M.mtf",
+      "sourceBlob": "dc3298882e0199152a62c9feaad20b55e9d0dbfd"
+    },
+    {
+      "file": "3025 CCE__Medium__Centurion CN9-K.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Medium/Centurion CN9-K.mtf",
+      "sourceBlob": "14608903a39c0c38d10bf18745ce0e6b28ad3297"
+    },
+    {
+      "file": "3025 CCE__Medium__Wolverine WVR-6D.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Medium/Wolverine WVR-6D.mtf",
+      "sourceBlob": "adff44cc0a9f177aac1dda3833f213b7f0d9cb39"
+    },
+    {
+      "file": "3025 CCE__Medium__Assassin ASN-22.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Medium/Assassin ASN-22.mtf",
+      "sourceBlob": "535954b5893ded8eabf41119b00f6ac7ab528b4a"
+    },
+    {
+      "file": "3025 CCE__Heavy__Marauder MAD-3J.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Heavy/Marauder MAD-3J.mtf",
+      "sourceBlob": "c3e56c71753958ce5eff5e1720d9aeff0d709c2d"
+    },
+    {
+      "file": "3025 CCE__Heavy__Warhammer WHM-6J.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Heavy/Warhammer WHM-6J.mtf",
+      "sourceBlob": "e5a88ffe88a4d65c4f5f6206b7540ac966d84f2b"
+    },
+    {
+      "file": "3025 CCE__Heavy__Archer ARC-2L.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Heavy/Archer ARC-2L.mtf",
+      "sourceBlob": "721f399b759160eaa2315147914881701f91d8fe"
+    },
+    {
+      "file": "3025 CCE__Heavy__Orion ON1-KA.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Heavy/Orion ON1-KA.mtf",
+      "sourceBlob": "60a731d169d00f17a42a4b75909ecf216ed83fb0"
+    },
+    {
+      "file": "3025 CCE__Assault__Banshee BNC-3S-X.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Assault/Banshee BNC-3S-X.mtf",
+      "sourceBlob": "95549e1975fc6be09e8b239350239b82328fbc9a"
+    },
+    {
+      "file": "3025 CCE__Assault__Atlas AS7-A.mtf",
+      "sourcePath": "data/mekfiles/meks/3025 CCE/Assault/Atlas AS7-A.mtf",
+      "sourceBlob": "c784a27169376c965ec857b259669425218e6f02"
+    }
+  ]
+}

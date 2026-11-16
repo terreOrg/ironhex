@@ -67,14 +67,14 @@ assert.equal((await req('/api/v1/operations',{method:'POST',
 })).status,422,'A commander cannot use another account’s hangar');
 
 const saved=await req('/api/v1/economy/mechs/purchase',{method:'POST',cookie:owner.cookie,
-  body:{offerId:'griffin-standard'}});
+  body:{offerId:'mm-grf-1m'}});
 assert.equal(saved.status,201,JSON.stringify(saved.data));
 const mechId=saved.data.item.id;
-assert.equal(saved.data.item.spent,48000);
+assert.equal(saved.data.item.spent,54000);
 const licensed=await req('/api/v1/hangar',{cookie:owner.cookie});
 assert.equal(licensed.data.items.find(m=>m.id===mechId).marketOwned,true);
 const afterProcurement=await req('/api/v1/economy',{cookie:owner.cookie});
-assert.equal(afterProcurement.data.balance,101100);
+assert.equal(afterProcurement.data.balance,95100);
 const registered=await req('/api/v1/pilots',{method:'POST',cookie:owner.cookie,
   body:{fullName:'Dana Vos',callsign:'Vega',faction:'mercenary',portrait:4}});
 assert.equal(registered.status,201,JSON.stringify(registered.data));
@@ -145,7 +145,7 @@ assert.equal(state.report.creditReward, state.report.result==='victory'?56000:
   state.report.result==='draw'?28000:11200);
 const afterMissionWallet=await req('/api/v1/economy',{cookie:owner.cookie});
 assert.equal(afterMissionWallet.status,200);
-assert.equal(afterMissionWallet.data.balance,101100+state.report.creditReward);
+assert.equal(afterMissionWallet.data.balance,95100+state.report.creditReward);
 assert.equal(afterMissionWallet.data.ledger[0].amount,state.report.creditReward);
 const quote=afterMissionWallet.data.repairs.find(item=>item.mechId===mechId);
 assert(quote);
@@ -180,7 +180,7 @@ if(quote.needsRepair){
   assert.equal(paid.status,200,JSON.stringify(paid.data));
   assert.equal(paid.data.item.spent,quote.creditCost);
   const fixed=await req('/api/v1/economy',{cookie:owner.cookie});
-  assert.equal(fixed.data.balance,101100+state.report.creditReward-quote.creditCost);
+  assert.equal(fixed.data.balance,95100+state.report.creditReward-quote.creditCost);
   assert.equal(fixed.data.repairs.find(m=>m.mechId===mechId).needsRepair,false);
   assert.equal((await req('/api/v1/economy/repair',{method:'POST',cookie:owner.cookie,
     body:{mechId}})).status,409,'Repairs must not debit twice');

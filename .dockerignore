@@ -5,6 +5,7 @@ tests/*
 !tests/auth-integration.mjs
 !tests/auth-email-integration.mjs
 !tests/operations-integration.mjs
+!tests/market-integration.mjs
 node_modules
 test-results
 *.log
