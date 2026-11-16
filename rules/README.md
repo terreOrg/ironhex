@@ -116,3 +116,12 @@ attacker ends it before any charge attack. The separate requirements for
 **defender-selected immediate dodge movement**, building damage and
 water/level interruptions remain `known_missing`. The Skidding heading
 is not yet `verified`.
+
+### Water interruption of a skid (BMM p.70)
+
+A skid into an unoccupied Depth 1+ water hex ends immediately, without
+charging an extra skid-damage packet for the water hex. Previously earned
+fall/slide damage resolves on the prior terrain, then the mech enters
+water and checks existing hull breaches. Three deterministic tests cover
+Depth 1, Depth 2 and hull-breach checks. Occupied-water interactions,
+height-change collisions and building impacts are still not verified.
