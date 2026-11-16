@@ -107,34 +107,50 @@ export class Game extends Legacy{
  const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of ['left','right','forward','back']){let q=p.q,r=p.r,f=p.facing,c=1;if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{if(action==='back'&&mode!=='walk')continue;const d=DIRS[wrap(f+(action==='back'?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>!x.dead&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.prone))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||action==='back'&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)&&(!ends.has(key(q,r))||ends.get(key(q,r)).cost>cost))ends.set(key(q,r),v);}}return [...ends.values()];}
  jumpClear(u,t,max){const n=distance(u,t),height=this.tile(u.q,u.r).height+max;for(let i=1;i<=n;i++){const p=roundHex(u.q+(t.q-u.q)*i/n,u.r+(t.r-u.r)*i/n),x=this.tile(p.q,p.r);if(x&&x.surface>height)return false;}return true;}
  isPaved(t){return !!t&&(t.paved===true||t.road===true||['pavement','road'].includes(t.type));}
+ skidTerrainCost(t){return t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:1;}
  resolveSkid(u,direction,moved,tn){
-  u.skidded=true;u.skidDirection=null;
+  u.skidded=true;u.skidDirection=null;u.skidCollisionPending=null;
   const falling=Math.ceil(u.tonnage/10),perHex=Math.ceil(falling/2);
-  let remaining=Math.ceil(moved/2),hexes=0;const path=[];
+  let remaining=Math.ceil(moved/2),hexes=0,unresolved=0,fallResolved=false,collided=false;
+  const path=[],d=DIRS[wrap(direction)];
+  let cursor={q:u.q,r:u.r},crossed=null;
+  const applySkidDamage=()=>{
+   if(u.dead)return;
+   if(!fallResolved){this.fall(u,0,tn,null,unresolved*perHex);fallResolved=true;}
+   else if(unresolved)this.packets(u,unresolved*perHex,u.lastFallSide||'front');
+   unresolved=0;
+  };
   while(remaining>0&&!u.dead){
-   const d=DIRS[wrap(direction)],q=u.q+d[0],r=u.r+d[1],t=this.tile(q,r);
-   if(!t){u.dead=true;this.note(u.name+': скольжение за край поля.');break;}
-   if(this.occupied(q,r,u.id)){
-    // Collision resolution must be separately linked to involuntary charge.
-    const target=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===q&&v.r===r);
-    u.skidCollisionPending={q,r,targetId:target?.id};
-    // Entering the collision hex counts for skid damage even if impact stops it.
-    hexes++;
+   const q=cursor.q+d[0],r=cursor.r+d[1],tile=this.tile(q,r);
+   if(!tile){u.dead=true;this.note(u.name+': скольжение за край поля.');break;}
+   hexes++;unresolved++;remaining-=this.skidTerrainCost(tile);
+   const target=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===q&&v.r===r);
+   if(target){
+    collided=true;u.skidCollisionPending={q,r,targetId:target.id};
     this.note(u.name+': столкновение во время скольжения.');
-    break;
+    applySkidDamage();
+    if(u.dead)break;
+    const result=this.resolveSkidCollision(u,target,direction,moved,{q,r});
+    u.skidCollisionPending=null;
+    if(result.hit){
+     if(crossed){path.push(crossed);crossed=null;}
+     path.push({q:u.q,r:u.r});cursor={q,r};
+     if(!result.continueSkid)break;
+    }else{
+     // BMM p.71: a missed involuntary charge does not end the skid.
+     // A skid may pass through an occupied hex only if it exits that hex.
+     crossed={q,r};cursor={q,r};
+    }
+    continue;
    }
-   u.q=q;u.r=r;path.push({q,r});hexes++;
-   remaining-=Math.max(1,this.terrainCost(t));
+   u.q=q;u.r=r;cursor={q,r};
+   if(crossed){path.push(crossed);crossed=null;}
+   path.push({q,r});
   }
   u.spent=this.mp(u,'run');
-  if(!u.dead)this.fall(u,0,tn,null,hexes*perHex);
-  const collision=u.skidCollisionPending;
-  if(collision&&!u.dead){
-   const target=this.unit(collision.targetId);
-   const result=this.resolveSkidCollision(u,target,direction,moved,collision);
-   if(result.hit)path.push({q:u.q,r:u.r});
-  }
-  return {path,hexes,damage:falling+hexes*perHex,collision:!!collision};
+  if(!u.dead)applySkidDamage();
+  if(crossed)this.note(u.name+': скольжение завершилось перед занятым гексом.');
+  return {path,hexes,damage:falling+hexes*perHex,collision:collided};
  }
  // Skidding damage is inflicted before any accidental collision/charge.
  // BMM 2022 p.69: +2 run, +1 skid, +3 involuntary charge.
@@ -158,7 +174,7 @@ export class Game extends Legacy{
   if(!t.dead)this.psr(t,2,'Таран при скольжении',true);
   this.note(u.name+': непреднамеренный таран, '+targetDamage+' урона цели и '+selfDamage+' себе.');
   u.skidCollisionPending=null;
-  return {hit:true,damage:targetDamage,selfDamage};
+  return {hit:true,continueSkid:t.dead,damage:targetDamage,selfDamage};
  }
  rotate(id,delta){const u=this.unit(id);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u))return fail('Разворот недоступен');const cost=Math.abs(delta);if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');if(u.moveMode!=='jump'){const mode=u.moveMode==='stand'?'walk':u.moveMode;if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');u.spent+=cost;u.moveMode=mode;}if(u.moveMode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)u.skidDirection=u.lastMovementDirection??u.facing;u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};}
  move(id,q,r,mode='walk'){const u=this.unit(id),dst=this.reachable(u,mode).find(t=>t.q===q&&t.r===r);if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});if(this.tile(q,r).depth){this.checkExistingHullBreaches(u);if(!u.dead)this.psr(u,0,'Посадка в воду',true,this.tile(q,r).depth);}else if(this.psrMod(u))this.psr(u,0,'Посадка',true);}else for(const p of dst.path){
@@ -204,7 +220,7 @@ export class Game extends Legacy{
  consciousness(u){while(u.consciousChecks>0&&!u.dead){u.consciousChecks--;if(!u.unconscious&&this.roll(u.name+' · Сознание',conscious[u.pilotWounds])<conscious[u.pilotWounds]){u.unconscious=true;this.note(`${u.name}: пилот без сознания.`);}}}
  psr(u,modifier,reason,immediate=false,fallLevels=0,shutdownCheck=false){if(u.dead||u.prone)return true;if(!immediate){u.psrs.push({modifier,reason});return true;}this.consciousness(u);const tn=u.piloting+this.psrMod(u)+modifier;if(u.unconscious||u.gyroHits>=2||(u.shutdown&&!shutdownCheck)||this.roll(u.name+' · '+reason,tn)<tn){this.fall(u,fallLevels,tn);return false;}return true;}
  endPSR(){for(const u of this.units){this.consciousness(u);if(u.phaseDamage>=20)u.psrs.push({modifier:1,reason:'20+ урона'});if(!u.dead&&!u.prone){const tn=u.piloting+this.psrMod(u)+u.psrs.reduce((s,p)=>s+p.modifier,0);for(const p of u.psrs){if(!this.mobile(u)||u.gyroHits>=2||p.reason==='Потеря ноги'||this.roll(u.name+' · '+p.reason,tn)<tn){this.fall(u,0,tn);break;}}}u.psrs=[];u.phaseDamage=0;}}
- fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0){if(u.dead||u.falling)return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(u.shutdown||u.unconscious||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);let damage=Math.ceil(u.tonnage/10)*(levels+1)+extraDamage;if(this.tile(u.q,u.r).depth)damage=Math.floor(damage/2);this.note(`${u.name} упал: ${damage} урона.`);this.packets(u,damage,side);u.falling=false;}
+ fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0){if(u.dead||u.falling)return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(u.shutdown||u.unconscious||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);let damage=Math.ceil(u.tonnage/10)*(levels+1)+extraDamage;if(this.tile(u.q,u.r).depth)damage=Math.floor(damage/2);this.note(`${u.name} упал: ${damage} урона.`);this.packets(u,damage,side);u.falling=false;}
  packets(u,amount,side='front',table='normal'){let total=amount;while(total>0&&!u.dead){const n=Math.min(5,total);this.hit(u,n,side,table);total-=n;}}
  hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){
  let loc,r,floatingTac=false;const obscured=l=>cover&&(underwaterCover?!['LL','RL'].includes(l):['LL','RL'].includes(l));
