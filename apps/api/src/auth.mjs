@@ -14,6 +14,14 @@ export class AuthError extends Error {
   }
 }
 
+export function validateNewPassword(password) {
+  if (typeof password !== 'string' || password.length < 12 ||
+      password.length > 128 || Buffer.byteLength(password,'utf8') > 256) {
+    throw new AuthError(400,'weak_password');
+  }
+  return password;
+}
+
 export function validateRegistration({ handle, email, password } = {}) {
   if (typeof handle !== 'string' || !/^[a-zA-Z0-9_-]{3,24}$/.test(handle.trim())) {
     throw new AuthError(400, 'invalid_handle');
@@ -22,10 +30,7 @@ export function validateRegistration({ handle, email, password } = {}) {
       !/^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
     throw new AuthError(400, 'invalid_email');
   }
-  if (typeof password !== 'string' || password.length < 12 ||
-      password.length > 128 || Buffer.byteLength(password, 'utf8') > 256) {
-    throw new AuthError(400, 'weak_password');
-  }
+  validateNewPassword(password);
   return { handle: handle.trim(), email: email.trim().toLowerCase(), password };
 }
 
@@ -75,16 +80,18 @@ export function extractSession(cookieHeader) {
   return token && /^[0-9a-f]{64}$/.test(token) ? token : null;
 }
 
-function publicUser(row) {
+function publicUser(row, requireVerifiedEmail = false) {
   return {
     id: row.id,
     handle: row.handle,
     email: row.email,
+    emailVerified: !!row.email_verified_at,
+    emailVerificationRequired: !!requireVerifiedEmail,
     createdAt: row.created_at
   };
 }
 
-export function createAuthStore(pool) {
+export function createAuthStore(pool,{requireVerifiedEmail=false}={}) {
   async function createSession(id) {
     const token = randomBytes(32).toString('hex');
     await pool.query(
@@ -112,7 +119,7 @@ export function createAuthStore(pool) {
           [row.id, email, email, encoded]
         );
         await client.query('COMMIT');
-        user = publicUser({...row,email});
+        user = publicUser({...row,email,email_verified_at:null},requireVerifiedEmail);
       } catch (error) {
         await client.query('ROLLBACK');
         if (error.code === '23505') throw new AuthError(409, 'account_exists');
@@ -131,7 +138,7 @@ export function createAuthStore(pool) {
         throw new AuthError(401, 'invalid_credentials');
       }
       const result = await pool.query(
-        'SELECT c.id,c.handle,c.created_at,a.email,a.password_hash FROM commander_credentials a ' +
+        'SELECT c.id,c.handle,c.created_at,a.email,a.email_verified_at,a.password_hash FROM commander_credentials a ' +
         'JOIN commanders c ON c.id=a.commander_id ' +
         'WHERE lower(c.handle)=$1 OR a.email_normalized=$1 LIMIT 1', [key]
       );
@@ -140,19 +147,19 @@ export function createAuthStore(pool) {
         throw new AuthError(401, 'invalid_credentials');
       }
       const token = await createSession(row.id);
-      return {user:publicUser(row),token};
+      return {user:publicUser(row,requireVerifiedEmail),token};
     },
 
     async currentUser(token) {
       if (!token) return null;
       const result = await pool.query(
-        'SELECT c.id,c.handle,c.created_at,a.email FROM commander_sessions s ' +
+        'SELECT c.id,c.handle,c.created_at,a.email,a.email_verified_at FROM commander_sessions s ' +
         'JOIN commanders c ON c.id=s.commander_id ' +
         'JOIN commander_credentials a ON a.commander_id=c.id ' +
         'WHERE s.token_hash=$1 AND s.expires_at>now()',
         [tokenHash(token)]
       );
-      return result.rows.length ? publicUser(result.rows[0]) : null;
+      return result.rows.length ? publicUser(result.rows[0],requireVerifiedEmail) : null;
     },
 
     async logout(token) {

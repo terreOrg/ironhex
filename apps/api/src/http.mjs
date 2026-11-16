@@ -81,11 +81,13 @@ export function createHttpServer({
   probeDatabase = async () => {},
   authStore = null,
   hangarStore = null,
+  accountFlows = null,
   publicOrigin = null,
   secureCookies = false
 } = {}) {
   const loginLimiter = createLimiter(8, 15 * 60_000);
   const registerLimiter = createLimiter(12, 60 * 60_000);
+  const emailLimiter = createLimiter(6, 60 * 60_000);
 
   return createServer(async (req,res) => {
     const method = req.method;
@@ -110,7 +112,7 @@ export function createHttpServer({
         return json(res,200,{
           apiVersion:1,
           modes:{ai:true,hotseat:true,multiplayer:false},
-          features:{database:true,accounts:!!authStore,hangar:!!authStore,
+          features:{database:true,accounts:!!authStore,hangar:!!authStore, emailDelivery:!!accountFlows?.emailAvailable,
             campaigns:false,market:false},
           combatAuthority:'browser'
         },head);
@@ -150,11 +152,33 @@ export function createHttpServer({
           }
         }
 
-        if (['/api/v1/auth/register','/api/v1/auth/login','/api/v1/auth/logout'].includes(path) &&
+        if (['/api/v1/auth/register','/api/v1/auth/login','/api/v1/auth/logout',
+          '/api/v1/auth/resend-verification','/api/v1/auth/verify-email',
+          '/api/v1/auth/request-reset','/api/v1/auth/reset-password'].includes(path) &&
             method === 'POST') {
           if (!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
           // A writable API endpoint must never run cross-site or accept form submissions.
           const body = await readJson(req);
+          if (['/api/v1/auth/resend-verification','/api/v1/auth/verify-email',
+                '/api/v1/auth/request-reset','/api/v1/auth/reset-password'].includes(path)) {
+            if (!accountFlows?.emailAvailable) throw new AuthError(503,'mail_unavailable');
+            const key = 'mail:' + req.socket.remoteAddress + ':' + path;
+            if (emailLimiter.blocked(key)) throw new AuthError(429,'rate_limited');
+            emailLimiter.fail(key);
+            if (path === '/api/v1/auth/resend-verification') {
+              const user = await authStore.currentUser(extractSession(req.headers.cookie));
+              if (!user) throw new AuthError(401,'unauthorized');
+              return json(res,200,await accountFlows.sendVerification(user.id));
+            }
+            if (path === '/api/v1/auth/verify-email')
+              return json(res,200,await accountFlows.verifyEmail(body.token));
+            if (path === '/api/v1/auth/request-reset')
+              return json(res,200,await accountFlows.requestReset(body.email));
+            const result = await accountFlows.resetPassword(body.token,body.password);
+            return json(res,200,result,false,{
+              'Set-Cookie':makeSessionCookie('',{secure:secureCookies,clear:true})
+            });
+          }
           if (path === '/api/v1/auth/logout') {
             await authStore.logout(extractSession(req.headers.cookie));
             return json(res,200,{ok:true},false,{
@@ -166,6 +190,11 @@ export function createHttpServer({
             if (registerLimiter.blocked(key)) throw new AuthError(429,'rate_limited');
             registerLimiter.fail(key);
             const {user,token} = await authStore.register(body);
+            // Registration remains usable if Brevo temporarily fails; resend is available.
+            if (accountFlows?.emailAvailable) {
+              try {await accountFlows.sendVerification(user.id);}
+              catch {console.warn('Ironhex verification mail delivery failed');}
+            }
             return json(res,201,{authenticated:true,user},false,{
               'Set-Cookie':makeSessionCookie(token,{secure:secureCookies})
             });

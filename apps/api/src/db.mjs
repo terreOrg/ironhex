@@ -59,7 +59,11 @@ const schema = [
   "CREATE UNIQUE INDEX IF NOT EXISTS commanders_handle_ci_idx ON commanders (lower(handle))",
   "CREATE TABLE IF NOT EXISTS commander_credentials (commander_id UUID PRIMARY KEY REFERENCES commanders(id) ON DELETE CASCADE, email TEXT NOT NULL, email_normalized TEXT NOT NULL UNIQUE, password_hash TEXT NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())",
   "CREATE TABLE IF NOT EXISTS commander_sessions (token_hash TEXT PRIMARY KEY CHECK (length(token_hash) = 64), commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), expires_at TIMESTAMPTZ NOT NULL)",
-  "CREATE INDEX IF NOT EXISTS commander_sessions_expires_idx ON commander_sessions(expires_at)"
+  "CREATE INDEX IF NOT EXISTS commander_sessions_expires_idx ON commander_sessions(expires_at)",
+  "ALTER TABLE commander_credentials ADD COLUMN IF NOT EXISTS email_verified_at TIMESTAMPTZ",
+  "CREATE TABLE IF NOT EXISTS commander_action_tokens (token_hash TEXT PRIMARY KEY CHECK(length(token_hash)=64), commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, purpose TEXT NOT NULL CHECK(purpose IN ('verify','reset')), expires_at TIMESTAMPTZ NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT now())",
+  "CREATE INDEX IF NOT EXISTS commander_action_tokens_lookup ON commander_action_tokens(commander_id,purpose)"
+
 ];
 
 export async function initializeDatabase(pool) {
