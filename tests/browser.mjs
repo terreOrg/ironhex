@@ -285,7 +285,9 @@ test('Guest sees the login/registration landing screen before the 3D game starts
       await page.locator('#hub-battle-frame').waitFor({state:'visible'});
       const battle=page.frameLocator('#hub-battle-frame');
       await battle.locator('#loading').waitFor({state:'hidden',timeout:60000});
-      assert.equal(await battle.locator('#viewport canvas').count(),1);
+      await battle.locator('#allies [data-unit]').first().waitFor({state:'visible',timeout:10000});
+      assert.equal(await battle.locator('#allies [data-unit]').count(),2,
+        'The tactical interface must open even when WebGL is unavailable');
       assert.equal(await page.locator('#viewport canvas').count(),0);
       await page.reload();
       await page.locator('#hub-battle').waitFor({state:'visible'});
