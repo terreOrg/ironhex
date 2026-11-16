@@ -46,11 +46,12 @@ To check the register locally:
 
 ```bash
 node --test tests/rules-registry.mjs
+npm run rules:coverage
 npm run test:unit
 node scripts/build-web.mjs --check
 ```
 
-CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) executes the registry tests on each push to `main`.
+CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) executes the registry tests and prints the report on each push to `main`. `node scripts/rules-coverage.mjs --json` emits a machine-readable report; `--missing` lists known gaps; `--require-complete` deliberately exits nonzero until every section and requirement has been fully audited.
 
 ## Immediate gaps
 
