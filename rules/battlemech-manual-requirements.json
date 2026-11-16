@@ -662,9 +662,26 @@
       "id": "bmm-req-053",
       "topicId": "bmm-p068-skidding",
       "page": 68,
-      "statement": "Skidding into rising or falling hex levels applies all level-change collisions and falling damage as printed.",
-      "status": "known_missing",
-      "evidence": []
+      "statement": "An unoccupied rising hex stops a skid with frontal level-impact damage; an unoccupied drop of at least two levels ends in an accidental fall without extra skid damage for the air hex.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid into a one-level rise stops before obstacle and resolves frontal crash (BMM p.71)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid into higher level after one ordinary hex applies prior skid damage before impact"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Two-level cliff ends skid with normal fall damage but no skid damage for air hex"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Four-level cliff applies falling damage for five times normal tonnage damage (BMM p.70)"
+        }
+      ]
     },
     {
       "id": "bmm-req-054",
@@ -686,6 +703,22 @@
           "test": "Entering water checks existing hull breaches after skid movement"
         }
       ]
+    },
+    {
+      "id": "bmm-req-055",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "A skidding BattleMech falling by two or more levels onto another BattleMech resolves accidental fall from above, its target damage and the required displacement.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-056",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skid interruption rules resolve compound water/building/elevation hexes and multihex building basements in correct rulebook precedence.",
+      "status": "known_missing",
+      "evidence": []
     }
   ]
 }

@@ -521,6 +521,48 @@ test('Lethal collision damage destroys target and skid continues (BMM p.71)',()=
  assert.equal(u.q,3);assert.equal(u.r,0);assert.equal(u.skidCollisionPending,null);
 });
 
+
+test('Skid into a one-level rise stops before obstacle and resolves frontal crash (BMM p.71)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+ u.q=0;u.r=0;g.tile(1,0).height=1;
+ const amounts=[],original=g.packets.bind(g);
+ g.packets=(unit,dmg,side,...other)=>{if(unit===u)amounts.push({dmg,side});return original(unit,dmg,side,...other);};
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,0);
+ assert.equal(result.damage,Math.ceil(u.tonnage/10)+Math.ceil(u.tonnage/20));
+ assert.equal(u.q,0);assert.equal(u.r,0);
+ assert.equal(amounts[0].dmg,6);assert.equal(amounts[1].dmg,3);
+ assert.equal(amounts[1].side,'front');
+});
+test('Skid into higher level after one ordinary hex applies prior skid damage before impact',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+ u.q=0;u.r=0;g.tile(2,0).height=1;
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,1);assert.equal(u.q,1);assert.equal(u.r,0);
+ assert.equal(result.damage,12);
+});
+test('Two-level cliff ends skid with normal fall damage but no skid damage for air hex',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+ u.q=0;u.r=0;g.tile(1,0).height=-2;
+ const packets=[],original=g.packets.bind(g);
+ g.packets=(unit,dmg,...rest)=>{if(unit===u)packets.push(dmg);return original(unit,dmg,...rest);};
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,1);assert.equal(u.q,1);assert.equal(u.r,0);
+ assert.equal(result.damage,24);
+ assert.deepEqual(packets,[6,18]);
+});
+test('Four-level cliff applies falling damage for five times normal tonnage damage (BMM p.70)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+ u.q=0;u.r=0;g.tile(1,0).height=-4;
+ const result=g.resolveSkid(u,0,6,5);
+ assert.equal(result.hexes,1);assert.equal(result.damage,36);
+ assert.equal(u.q,1);assert.equal(u.r,0);
+});
+
 test('Entering depth-1 water ends skid without counting the water hex for damage (BMM p.70)',()=>{
  const g=game(),u=g.units[0];g.rng=()=>.5;
  for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
