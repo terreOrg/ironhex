@@ -3502,8 +3502,25 @@
         {
           "file": "tests/combat.mjs",
           "test": "CASE vents an ammo explosion after RT is destroyed; pilot still suffers feedback (BMM p.47)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Clan BattleMechs receive automatic CASE in torso without slots or mass (TechManual p.58)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Clan automatic CASE protects arm explosions before they reach side torso"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Standard Inner Sphere BattleMechs still need explicit CASE for blast containment"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Clan CASE II protection takes precedence over automatic Clan CASE"
         }
-      ]
+      ],
+      "note": "Automatic free Clan CASE resolved by combat engine for Clan-designated BattleMechs. Clan MechLab tech-base construction and source-specific equipment validation remain separate known missing requirements."
     },
     {
       "id": "bmm-p119-case-ii",
