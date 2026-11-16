@@ -40,6 +40,20 @@ function serve(req,res) {
         {authenticated:true,user:commander},
         'ironhex_session='+'a'.repeat(64)+'; Path=/api/; HttpOnly; SameSite=Strict');
     }
+    if (req.method === 'POST' && urlPath === '/api/v1/auth/request-reset') {
+      req.resume();return reply(200,{ok:true});
+    }
+    if (req.method === 'POST' && urlPath === '/api/v1/auth/reset-password') {
+      req.resume();
+      return reply(200,{ok:true},
+        'ironhex_session=; Path=/api/; HttpOnly; SameSite=Strict; Max-Age=0');
+    }
+    if (req.method === 'POST' && urlPath === '/api/v1/auth/verify-email') {
+      req.resume();return reply(200,{ok:true});
+    }
+    if (req.method === 'POST' && urlPath === '/api/v1/auth/resend-verification') {
+      req.resume();return reply(200,{ok:true});
+    }
     if (req.method === 'POST' && urlPath === '/api/v1/auth/logout') {
       req.resume();
       return reply(200,{ok:true},
@@ -312,5 +326,25 @@ test('Authenticated commander headquarters lists the hangar and routes to MechLa
       await page.locator('#hub-hangar a[href="mechlab.html"]').click();
       await page.waitForURL('**/mechlab.html');
       await page.locator('#name').waitFor({state:'visible'});
+    });
+  });
+
+
+test('Password recovery opens from login and accepts a one-time link',
+  {timeout:120000},async()=>{
+    await withPage('password-recovery',{unauthenticated:true},async page=>{
+      await page.locator('#auth-login').waitFor({state:'visible'});
+      await page.locator('#auth-forgot-link').click();
+      await page.locator('#auth-forgot input[name=email]').fill('test@example.invalid');
+      await page.locator('#auth-forgot button[type=submit]').click();
+      await page.getByText('Если этот адрес зарегистрирован').waitFor();
+      await page.goto(baseURL+'/#reset='+'a'.repeat(64));
+      await page.locator('#auth-new-password').waitFor({state:'visible'});
+      await page.locator('#auth-new-password input[name=password]').fill('Another-Long-Pass-2026!');
+      await page.locator('#auth-new-password input[name=confirm]').fill('Another-Long-Pass-2026!');
+      await page.locator('#auth-new-password button[type=submit]').click();
+      await page.getByText('Пароль изменён.').waitFor();
+      assert.equal(await page.locator('#auth-login').isVisible(),true);
+      assert.equal(new URL(page.url()).hash,'');
     });
   });

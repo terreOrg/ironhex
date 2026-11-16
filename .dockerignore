@@ -3,6 +3,7 @@
 .openai
 tests/*
 !tests/auth-integration.mjs
+!tests/auth-email-integration.mjs
 node_modules
 test-results
 *.log
