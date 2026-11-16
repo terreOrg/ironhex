@@ -26,6 +26,65 @@ test('Critical hits in destroyed sections do not transfer to intact torsos (BMM 
  assert.equal(u.crit.CT.filter(Boolean).length,0);
 });
 
+
+test('CASE II torso vents ammo explosion through rear armor, with only one internal hit (BMM p.119)',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
+ u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case2';u.crit.RT=Array(12).fill(false);
+ bin.shots=1;
+ const before={rear:u.rear.RT,struct:u.structure.RT,ct:u.structure.CT,front:u.armor.RT};
+ g.explode(u,bin);
+ assert.equal(u.structure.RT,before.struct-1);
+ assert.equal(u.rear.RT,Math.max(0,before.rear-9));
+ assert.equal(u.structure.CT,before.ct);
+ assert.equal(u.armor.RT,before.front);
+ assert.equal(u.pilotWounds,2);
+});
+test('CASE II limb loses up to half original armor and only one structure point (BMM p.119)',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
+ bin.location='LA';bin.shots=1;
+ u.slots.LA=Array(12).fill(null);u.slots.LA[0]='case2';u.crit.LA=Array(12).fill(false);
+ const struct=u.structure.LA,armor=u.armor.LA,ct=u.structure.CT;
+ g.explode(u,bin);
+ assert.equal(u.structure.LA,struct-1);
+ assert.equal(u.armor.LA,armor-Math.min(armor,Math.ceil(u.maxArmor.LA/2)));
+ assert.equal(u.structure.CT,ct);
+});
+test('CASE II head loses one structure and half starting head armor (BMM p.119)',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
+ bin.location='HD';bin.shots=1;
+ u.slots.HD[3]='case2';const before=u.structure.HD,armor=u.armor.HD;
+ g.explode(u,bin);
+ assert.equal(u.structure.HD,before-1);
+ assert.equal(u.armor.HD,armor-Math.ceil(u.maxArmor.HD/2));
+ assert.equal(u.pilotWounds,3);
+});
+test('CASE II suppresses explosion-generated criticals on secondary roll 8+ (BMM p.119)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case2';u.slots.RT[1]='sink';
+ u.crit.RT=Array(12).fill(false);
+ g.damage(u,'RT',4,{internal:true,explosion:true});
+ assert.equal(u.crit.RT[0],false);assert.equal(u.crit.RT[1],false);
+ assert.equal(u.structure.RT,u.maxStructure.RT-1);
+});
+test('CASE II explosion critical takes effect if confirmation roll is below 8',()=>{
+ const g=game(),u=g.units[0];let vals=[.5,.5,.17,.17,.17];
+ g.rng=()=>vals.shift()??.17;
+ u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case2';u.slots.RT[1]='sink';
+ u.crit.RT=Array(12).fill(false);
+ g.damage(u,'RT',4,{internal:true,explosion:true});
+ assert.equal(u.crit.RT[0],false);assert.equal(u.crit.RT[1],true);
+});
+test('CASE II has inapplicable crit slots and does not prevent ordinary damage transfer',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case2';u.slots.RT[1]='sink';
+ u.crit.RT=Array(12).fill(false);
+ g.criticalHit(u,'RT');
+ assert.equal(u.crit.RT[0],false);assert.equal(u.crit.RT[1],true);
+ u.armor.RT=0;u.structure.RT=1;const ct=u.armor.CT;
+ g.damage(u,'RT',3);
+ assert.equal(u.armor.CT,ct-2);
+});
+
 test('CASE vents an ammo explosion after RT is destroyed; pilot still suffers feedback (BMM p.47)',()=>{
  const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
  u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case';u.crit.RT=Array(12).fill(false);
