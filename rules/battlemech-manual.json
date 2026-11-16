@@ -2290,7 +2290,7 @@
       "kind": "topic",
       "optional": false,
       "status": "known_missing",
-      "note": "Basic skids, missed and lethal charge continuation, and Depth 1+ water interruption are tested. Building collisions, level-change collisions, and defender-selected dodge movement remain missing; section not verified.",
+      "note": "Core skidding, water, ordinary rise impacts and unoccupied cliff drops are tested. Fall-from-above into occupied lower hex, defender-chosen dodge movement and building collisions remain missing. Never mark verified on these tests alone.",
       "evidence": [
         {
           "file": "tests/combat.mjs",
@@ -2367,6 +2367,22 @@
         {
           "file": "tests/combat.mjs",
           "test": "Entering water checks existing hull breaches after skid movement"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid into a one-level rise stops before obstacle and resolves frontal crash (BMM p.71)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid into higher level after one ordinary hex applies prior skid damage before impact"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Two-level cliff ends skid with normal fall damage but no skid damage for air hex"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Four-level cliff applies falling damage for five times normal tonnage damage (BMM p.70)"
         }
       ]
     },
