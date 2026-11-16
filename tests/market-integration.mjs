@@ -97,7 +97,7 @@ assert.equal(changed.status,200,JSON.stringify(changed.data));
 wallet=await req('/api/v1/economy',{cookie:one.cookie});
 assert.equal(wallet.data.equipmentStock['Medium Laser'],1,
   'Uninstalled laser should return to warehouse without duplication');
-assert.equal(wallet.data.balance,99500,
+assert.equal(wallet.data.balance,150000-2500-offer.price,
   'Refitting inventory alone should not create new money');
 const license=await req('/api/v1/operations',{method:'POST',
   cookie:one.cookie,body:{title:'Оплаченный контракт',mechIds:[mechId]}});
