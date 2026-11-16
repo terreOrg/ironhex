@@ -3,6 +3,7 @@ import {weaponCounts} from './market.mjs';
 import {ammoBinsFor,normalizedAmmoState,systemCounts} from '../../../packages/engine/equipment.js';
 import {normalizedCriticalDamage,damagedComponents} from
   '../../../packages/engine/component-damage.js';
+import {outOfBookEquipment} from '../../../packages/engine/rulebook.js';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -29,6 +30,8 @@ export function validateDesign(input) {
       !Number.isFinite(result.remaining) || result.remaining < -0.001) {
     throw new AuthError(422,'invalid_design');
   }
+  if(outOfBookEquipment(c).length)
+    throw new AuthError(422,'unsupported_rulebook_equipment');
   const callsign = input.callsign == null || input.callsign === '' ? null : input.callsign;
   if (callsign != null && (typeof callsign !== 'string' ||
       callsign.trim().length > 40 || callsign.trim().length < 1 ||

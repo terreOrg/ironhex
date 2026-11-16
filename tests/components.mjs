@@ -5,17 +5,24 @@ import {Game} from '../packages/engine/engine.js';
 import {WEAPON_NAMES,WEAPON_SPECS,AMMO_PACKS,ammoPack,
   ammoBinsFor,normalizedAmmoState,FIXED_COMPONENTS} from '../packages/engine/equipment.js';
 import {EQUIPMENT_CATALOG} from '../apps/api/src/market.mjs';
+import {BASE_WEAPONS,isBaseWeapon,equipmentRulebook,outOfBookEquipment} from '../packages/engine/rulebook.js';
 import {applyCriticalDamage,captureCriticalDamage,damagedComponents,
   normalizedCriticalDamage} from '../packages/engine/component-damage.js';
 
 test('The single component registry supplies construction AND market stats',()=>{
   assert.deepEqual(EQUIPMENT,WEAPON_NAMES);
   const bySku=new Map(EQUIPMENT_CATALOG.map(item=>[item.sku,item]));
-  assert.equal(bySku.size,WEAPON_NAMES.length+
-    Object.keys(AMMO_PACKS).length+Object.keys(FIXED_COMPONENTS).length);
+  assert.equal(bySku.size,BASE_WEAPONS.length+
+    BASE_WEAPONS.filter(name=>WEAPON_SPECS[name].roundsPerTon>0).length+
+    Object.keys(FIXED_COMPONENTS).length);
   for(const name of WEAPON_NAMES){
     const spec=WEAPON_SPECS[name],product=bySku.get(spec.id);
-    assert(product,'Missing market entry for engine weapon '+name);
+    if(!isBaseWeapon(name)){
+      assert.equal(product,undefined,'Supplemental equipment must not be sold in AGoAC: '+name);
+      continue;
+    }
+    assert(product,'Missing AGoAC market entry '+name);
+    assert.equal(product.rulebook.status,'verified_base');
     assert.equal(product.price,spec.price);
     assert.equal(product.damage,spec.damage);
     assert.equal(product.heat,spec.heat);
@@ -35,10 +42,10 @@ test('The single component registry supplies construction AND market stats',()=>
   assert.equal(bySku.get('system:sink').price,FIXED_COMPONENTS.sink.price);
   assert.equal(FIXED_COMPONENTS.hatchet.sold,true);
   assert.equal(bySku.get('system:hatchet').price,FIXED_COMPONENTS.hatchet.price);
-  assert.equal(bySku.has('weapon:ER PPC'),true,
-    'Inner Sphere ER PPC has full direct-fire combat mechanics');
-  assert.equal(bySku.has('weapon:Clan ER PPC'),true,
-    'Clan ER PPC uses the combat engine directly');
+  assert.equal(bySku.has('weapon:ER PPC'),false,
+    'ER PPC requires an official supplemental rulebook');
+  assert.equal(bySku.has('weapon:Clan ER PPC'),false,
+    'Clan ER PPC is outside the base-book ruleset');
   assert.equal(bySku.has('weapon:Clan Gauss Rifle'),false,
     'Specialized ballistic rules must exist before offering Clan Gauss');
 });
@@ -216,8 +223,8 @@ test('Clan energy and pulse weapons share the combat and market specification',(
     const result=construct(cfg);
     assert.deepEqual(result.errors,[],name);
     assert.equal(result.unit.weapons[0].toHit,spec.accuracyModifier);
-    assert(EQUIPMENT_CATALOG.some(item=>
-      item.sku==='weapon:'+name&&item.price===spec.price));
+    assert(!EQUIPMENT_CATALOG.some(item=>item.sku==='weapon:'+name),
+      'Advanced definitions are retained but not marketable in the base rules');
   }
 });
 test('Pulse targeting uses an actual -2 hit modifier in tactical probability',()=>{

@@ -3,6 +3,7 @@ import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {EQUIPMENT,construct,LOCS} from '../../../packages/engine/construction.js';
 import {importMtf} from './mtf.mjs';
+import {outOfBookEquipment} from '../../../packages/engine/rulebook.js';
 
 // Pinned, locally bundled MegaMek Data snapshot; the live game never
 // makes an outbound HTTP request when a player opens the market.
@@ -14,6 +15,8 @@ for(const entry of sourceManifest.entries){
   try{
     const content=readFileSync(join(base,'meks',entry.file),'utf8');
     const offer=importMtf(content,{sourcePath:entry.sourcePath});
+    if(outOfBookEquipment(offer.config).length)
+      throw new Error('requires_supplemental_rules');
     if(MECH_OFFERS.some(item=>item.id===offer.id))
       throw new Error('duplicate_variant');
     offer.sourceUrl=sourceManifest.sourceRepository+'/blob/'+
@@ -170,16 +173,18 @@ export const showMechOffer=offer=>({
 // Merchandise is generated from the *same* rules definitions as combat.
 export {WEAPON_SPECS} from '../../../packages/engine/equipment.js';
 import {WEAPON_SPECS,WEAPON_NAMES,AMMO_PACKS,SYSTEM_ITEMS} from '../../../packages/engine/equipment.js';
+import {BASE_WEAPONS,BASE_RULEBOOK,equipmentRulebook,isBaseWeapon} from '../../../packages/engine/rulebook.js';
 export const EQUIPMENT_CATALOG=[
-  ...WEAPON_NAMES.map(name=>{
+  ...BASE_WEAPONS.map(name=>{
     const item=WEAPON_SPECS[name];
     return {sku:item.id,name:item.name,price:item.price,kind:'weapon',
       tons:item.tons,slots:item.slots,heat:item.heat,damage:item.damage,
       ranges:item.ranges,roundsPerTon:item.roundsPerTon,
-      introYear:item.introYear,techBase:item.techBase,accuracyModifier:item.accuracyModifier};
+      introYear:item.introYear,techBase:item.techBase,accuracyModifier:item.accuracyModifier,
+      rulebook:equipmentRulebook(name)};
   }),
-  ...Object.values(AMMO_PACKS).map(pack=>({...pack})),
-  ...SYSTEM_ITEMS.map(item=>({...item}))
+  ...Object.values(AMMO_PACKS).filter(pack=>isBaseWeapon(pack.weapon)).map(pack=>({...pack,rulebook:{status:'verified_base',book:BASE_RULEBOOK.title,page:55}})),
+  ...SYSTEM_ITEMS.map(item=>({...item,rulebook:{status:'verified_base',book:BASE_RULEBOOK.title,page:item.type==='hatchet'?55:53}}))
 ];
 export const weaponName=sku=>typeof sku==='string'&&sku.startsWith('weapon:')&&
   Object.hasOwn(WEAPON_SPECS,sku.slice(7))?sku.slice(7):null;

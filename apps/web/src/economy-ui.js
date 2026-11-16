@@ -164,11 +164,13 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
   const status=el('p','op-message');status.id='economy-message';
   status.setAttribute('role','status');
   section.append(heading,balance,el('h3','economy-heading','ДИЛЕР БОЕВЫХ МЕХОВ'),
-    el('p','op-warning','Каталог: MegaMek Data, CC BY-NC-SA 4.0. Цены установлены для баланса IronHex, не являются официальными.'),
+    el('p','op-warning','Правила боя и конструирования: BattleTech: A Game of Armored Combat (2018), стр. 55. В базовой продаже только 17 типов оружия из этой книги. ER/Pulse/Clan и другие технологии требуют дополнительных книг.'),
+    el('p','op-warning','Данные мехов: MegaMek Data (CC BY-NC-SA 4.0). Цены C-Bills и снабжение — правила кампании IronHex, а не официальная таблица цен BattleTech.'),
     el('h4','economy-heading','ГОТОВЫЕ К ПОКУПКЕ'),mechs,
     el('h4','economy-heading','ПОЛНЫЙ КАТАЛОГ MEGAMEK'),filter,onlyAvailable,
     filters,reset,filterHint,archiveSummary,archive,pager,
-    el('h3','economy-heading','ВООРУЖЕНИЕ, СИСТЕМЫ, БОЕПРИПАСЫ И РЕМОНТ'),supplies,
+    el('h3','economy-heading','ВООРУЖЕНИЕ, СИСТЕМЫ, БОЕПРИПАСЫ И РЕМОНТ'),
+    el('p','economy-filter-hint','Справочник: A Game of Armored Combat, стр. 55 (параметры оружия). Цена, оплата ремонта и запасных частей являются экономикой кампании.'),supplies,
     el('h3','economy-heading','ОРУЖЕЙНЫЙ СКЛАД'),inventory,
     el('h3','economy-heading','БОЕПРИПАСЫ И ПЕРЕЗАРЯДКА'),magazines,
     el('h3','economy-heading','ПОВРЕЖДЁННЫЕ КОМПОНЕНТЫ'),parts,

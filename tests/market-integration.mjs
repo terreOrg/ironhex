@@ -30,6 +30,21 @@ assert(original.data.mechOffers.length>=6);
 const offer=original.data.mechOffers.find(x=>x.id==='mm-grf-1m');
 assert(offer,'Griffin GRF-1M must be imported from MegaMek Data');
 assert(original.data.catalog.some(c=>c.sku==='weapon:Medium Laser'));
+assert.equal(original.data.catalog.filter(c=>c.kind==='weapon').length,17);
+assert(!original.data.catalog.some(c=>c.sku==='weapon:ER PPC'));
+assert(!original.data.catalog.some(c=>c.sku==='weapon:Clan ER PPC'));
+assert.equal((await req('/api/v1/economy/purchase',{
+  method:'POST',cookie:one.cookie,body:{sku:'weapon:ER PPC',quantity:1}
+})).status,422,'The box-rule market must not sell advanced weapons');
+const outOfBookDesign=structuredClone(example);
+outOfBookDesign.equipment[0].type='ER PPC';
+assert.deepEqual(construct(outOfBookDesign).errors,[]);
+const blockedPrototype=await req('/api/v1/hangar',{
+  method:'POST',cookie:one.cookie,body:{config:outOfBookDesign}
+});
+assert.equal(blockedPrototype.status,422);
+assert.equal(blockedPrototype.data.error,'unsupported_rulebook_equipment');
+
 assert.equal((await req('/api/v1/economy/mechs/purchase',{
   method:'POST',body:{offerId:'mm-grf-1m'}})).status,401);
 assert.equal((await req('/api/v1/economy/mechs/purchase',{
