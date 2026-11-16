@@ -57,6 +57,24 @@ test('CASE is a marketable, BattleMech Manual sourced system with a combat imple
  assert.equal(item.rulebook.book,'BattleMech Manual');
  assert.deepEqual(outOfBookEquipment({equipment:[{type:'case',location:'RT',slot:4}]}),[]);
 });
+
+test('CASE inapplicable slots cannot become persisted critical damage',()=>{
+ const config=structuredClone(example);
+ config.tonnage=100;config.walk=3;config.jump=0;config.sinks=10;
+ config.equipment=[{type:'case',location:'RT',slot:1}];
+ const result=construct(config);
+ assert.deepEqual(result.errors,[]);
+ const unit=result.unit;
+ assert.equal(unit.slots.RT[0],'case');
+ assert.deepEqual(normalizedCriticalDamage(config,{RT:[0]}),{});
+ unit.crit.RT[0]=true;
+ assert.deepEqual(captureCriticalDamage(unit),{});
+ unit.crit.RT[0]=false;
+ applyCriticalDamage(unit,{RT:[0]});
+ assert.equal(unit.crit.RT[0],false);
+ assert.deepEqual(damagedComponents(config,{RT:[0]}),[]);
+});
+
 test('A purchased magazine stays empty until explicitly reloaded',()=>{
   const built=construct(example);
   assert.deepEqual(built.errors,[]);

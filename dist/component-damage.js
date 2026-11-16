@@ -16,7 +16,7 @@ export function normalizedCriticalDamage(config,raw={}){
     const rows=built.unit.slots[loc]||[];
     const values=Array.isArray(raw?.[loc])?raw[loc]:[];
     const unique=[...new Set(values.filter(index=>
-      Number.isInteger(index)&&index>=0&&index<rows.length&&rows[index]))]
+      Number.isInteger(index)&&index>=0&&index<rows.length&&rows[index]&&rows[index]!=='case'))]
       .sort((a,b)=>a-b);
     if(unique.length)result[loc]=unique;
   }
@@ -28,7 +28,7 @@ export function captureCriticalDamage(unit){
     const damaged=[];
     const slots=unit.slots?.[loc]||[];
     slots.forEach((entry,index)=>{
-      if(entry&&unit.crit?.[loc]?.[index])damaged.push(index);
+      if(entry&&entry!=='case'&&unit.crit?.[loc]?.[index])damaged.push(index);
     });
     if(damaged.length)out[loc]=damaged;
   }
@@ -102,7 +102,7 @@ export function applyCriticalDamage(unit,raw={}){
   for(const loc of LOCS){
     const slots=unit.slots?.[loc]||[];
     allowed[loc]=new Set((Array.isArray(raw?.[loc])?raw[loc]:[])
-      .filter(index=>Number.isInteger(index)&&index>=0&&index<slots.length&&slots[index]));
+      .filter(index=>Number.isInteger(index)&&index>=0&&index<slots.length&&slots[index]&&slots[index]!=='case'));
   }
   unit.engineHits=0;unit.gyroHits=0;unit.sensorHits=0;
   unit.sinksLost=0;unit.jumpLost=0;unit.lifeSupport=false;
