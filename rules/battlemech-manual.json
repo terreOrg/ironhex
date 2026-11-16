@@ -6,12 +6,12 @@
     "edition": "Corrected sixth printing, 2022",
     "publisher": "Catalyst Game Labs",
     "pageNumbering": "printed",
-    "provenance": "User-uploaded PDF; inventory derived from its printed table of contents."
+    "provenance": "User-uploaded PDF; 326 headings extracted directly from the printed table of contents (pp. 2–3)."
   },
   "scope": {
     "battlemechsOnly": true,
     "includeOptionalRules": true,
-    "disclaimer": "Contents-level inventory, NOT an exhaustive paragraph-by-paragraph audit or a certification of full rules compliance."
+    "disclaimer": "Heading-level inventory, not yet a paragraph-by-paragraph audit; linked tests only prove particular scenarios, never 100% coverage."
   },
   "statusDefinitions": {
     "not_audited": "Indexed; implementation and tests have not been individually audited.",
@@ -3183,60 +3183,6 @@
       "page": 119,
       "chapter": "Special equipment",
       "kind": "topic",
-      "optional": false,
-      "status": "not_audited"
-    },
-    {
-      "id": "bmm-p120-weapons-equipment-tables",
-      "title": "WEAPONS & EQUIPMENT TABLES",
-      "page": 120,
-      "chapter": "Reference tables",
-      "kind": "reference",
-      "optional": false,
-      "status": "not_audited"
-    },
-    {
-      "id": "bmm-p129-combat-reference-tables",
-      "title": "COMBAT REFERENCE TABLES",
-      "page": 129,
-      "chapter": "Reference tables",
-      "kind": "reference",
-      "optional": false,
-      "status": "not_audited"
-    },
-    {
-      "id": "bmm-p130-damage-reference-tables",
-      "title": "DAMAGE REFERENCE TABLES",
-      "page": 130,
-      "chapter": "Reference tables",
-      "kind": "reference",
-      "optional": false,
-      "status": "not_audited"
-    },
-    {
-      "id": "bmm-p131-heat-reference-tables",
-      "title": "HEAT REFERENCE TABLES",
-      "page": 131,
-      "chapter": "Reference tables",
-      "kind": "reference",
-      "optional": false,
-      "status": "not_audited"
-    },
-    {
-      "id": "bmm-p132-other-actions-reference-tables",
-      "title": "OTHER ACTIONS REFERENCE TABLES",
-      "page": 132,
-      "chapter": "Reference tables",
-      "kind": "reference",
-      "optional": false,
-      "status": "not_audited"
-    },
-    {
-      "id": "bmm-p132-special-case-reference-tables",
-      "title": "SPECIAL-CASE REFERENCE TABLES",
-      "page": 132,
-      "chapter": "Reference tables",
-      "kind": "reference",
       "optional": false,
       "status": "not_audited"
     }
