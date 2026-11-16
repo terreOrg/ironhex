@@ -3,17 +3,6 @@ name: Ironhex Container Smoke
 on:
   push:
     branches: [main]
-    paths:
-      - Dockerfile
-      - 'apps/api/**'
-      - 'apps/web/**'
-      - 'packages/engine/**'
-      - 'scripts/build-web.mjs'
-      - nginx.conf
-      - compose.yaml
-      - .dockerignore
-      - 'dist/**'
-      - '.github/workflows/container-smoke.yml'
   workflow_dispatch:
 
 permissions:

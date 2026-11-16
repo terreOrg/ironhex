@@ -53,6 +53,8 @@ jobs:
             file: tests/fire-arcs.mjs
           - suite: api
             file: tests/api.mjs
+          - suite: deployment-gate
+            file: tests/deploy-gate.mjs
     steps:
       - name: Check out source
         uses: actions/checkout@v4

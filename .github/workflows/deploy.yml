@@ -1,0 +1,45 @@
+name: Ironhex Deploy
+
+# Deploy only after all three workflows have passed for the same main commit.
+# Triggered by GitHub Actions on the self-hosted runner, not a public webhook.
+on:
+  workflow_run:
+    workflows:
+      - Ironhex CI
+      - Ironhex Browser E2E
+      - Ironhex Container Smoke
+    branches: [main]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: ironhex-deploy-main
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Gate checks and trigger local Komodo
+    if: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 10
+    steps:
+      - name: Checkout trusted main branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Install Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Verify all CI results and trigger private Komodo webhook
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          KOMODO_WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_URL }}
+          KOMODO_WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
+        run: node scripts/deploy-after-ci.mjs

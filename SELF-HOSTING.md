@@ -19,7 +19,7 @@ network. Caddy stays on the host as a systemd service.
 | Repository | `terreOrg/ironhex` |
 | Branch | `main` |
 | Compose file | `compose.yaml` |
-| Build on deploy | **Enabled** |
+| Pre Build Images | **Enabled** |
 
 In **Stack environment variables**, set a long random password:
 
@@ -102,7 +102,47 @@ A future automated deployment can be triggered locally by GitHub Actions
 on `jig`/`jog` after tests succeed. Do not publicly expose Komodo just
 to receive webhooks.
 
-## 5. Persistence and security
+## 5. Automatic deployment only after tests pass
+
+Komodo Stack → Config → Webhooks:
+
+1. Enable the webhook and **Force Deploy** (so `dist/`, JavaScript and GLB
+   changes trigger a rebuild, not just changes to `compose.yaml`).
+2. Set a **unique Stack Webhook Secret**, generated locally with
+   `openssl rand -hex 32`. Do not reuse the PostgreSQL password or any
+   Caddy credentials.
+3. Copy the **GitHub Stack /deploy webhook URL**, using the exact stack ID
+   or name shown in Komodo. The URL must be reachable from the same CentOS
+   host where the `jig` and `jog` runners run.
+4. Prefer loopback, for example change *only the hostname and scheme*
+   in the URL to `http://127.0.0.1:9120` **if the Komodo Core port
+   is actually published there**. Otherwise use the existing internal
+   HTTPS Komodo URL. Never expose Komodo to the public Internet.
+5. Under GitHub repository → Settings → Secrets and variables → Actions,
+   create two **repository secrets**:
+   - `KOMODO_WEBHOOK_URL`: private exact `/listener/github/stack/.../deploy` URL
+   - `KOMODO_WEBHOOK_SECRET`: same secret as the Komodo Stack field
+
+The workflow [Ironhex Deploy](.github/workflows/deploy.yml) is triggered on
+completion of any of the three CI workflows. It verifies the same `main`
+commit passed Ironhex CI, Ironhex Browser E2E and Ironhex Container Smoke,
+and only then sends a signed GitHub-compatible webhook from `jig` or `jog`
+over the server's local network. A later commit supersedes older runs.
+No GitHub → public inbound access to Komodo is needed.
+
+The webhook returns before a deployment necessarily finishes. Review Komodo
+execution logs and check `/health` after it completes. GitHub Actions logs
+show whether Komodo accepted the request, not necessarily whether the new
+containers eventually became healthy.
+
+The two secrets must be set before auto-deploy is enabled. Until then, the
+workflow logs an explicit warning and skips deployment.
+
+Do **not** also configure the same direct GitHub push webhook in the
+GitHub repo's Settings → Webhooks: it would deploy *before tests pass*
+and potentially deploy twice.
+
+## 6. Persistence and security
 
 The DB volume retains application schema across routine rebuilds. Back it up
 before upgrades and never use `docker compose down -v` on this stack.
