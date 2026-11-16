@@ -5,7 +5,7 @@ const fields={
   fire:['id','shots'],physical:['id','target','attack','limb'],
   club:['id'],charge:['id','target','attack'],minimum:['id'],
   shutdown:['id'],dump:['id','bin'],flip:['id','enabled'],brace:['id','limb'],
-  next:[],weather:['night','gale']
+  next:[],weather:['night','gale','standingStill','evading']
 };
 const int=(x,a,b)=>Number.isInteger(x)&&x>=a&&x<=b;
 const shot=x=>x&&typeof x==='object'&&!Array.isArray(x)&&
@@ -21,8 +21,10 @@ export function validateTacticalOrder(b){
     throw new AuthError(422,'invalid_command');
   const ok={
     next:()=>true,
-    weather:()=>typeof b.night==='boolean'&&typeof b.gale==='boolean',
-    move:()=>int(b.q,-6,6)&&int(b.r,-6,6)&&['walk','run','jump'].includes(b.mode),
+    weather:()=>typeof b.night==='boolean'&&typeof b.gale==='boolean'&&
+      (b.standingStill===undefined||typeof b.standingStill==='boolean')&&
+      (b.evading===undefined||typeof b.evading==='boolean'),
+    move:()=>int(b.q,-6,6)&&int(b.r,-6,6)&&['walk','run','jump','evade'].includes(b.mode),
     rotate:()=>[-1,1].includes(b.delta),stand:()=>true,drop:()=>true,hold:()=>true,
     twist:()=>int(b.twist,-1,1),
     fire:()=>Array.isArray(b.shots)&&b.shots.length<=32&&
@@ -72,7 +74,9 @@ export function runTacticalOrder(game,body){
     r=game.nextPhase();
   }else if(type==='weather'){
     if(game.phase!=='initiative'||game.round!==1)throw new AuthError(409,'weather_locked');
-    game.weather={night:b.night,gale:b.gale};r={ok:true};
+    game.weather={night:b.night,gale:b.gale};
+    game.tacticalOptions={standingStill:!!b.standingStill,evading:!!b.evading};
+    r={ok:true};
   }else{
     if(!game.units[id]||game.units[id].team!==0||!game.canAct(game.units[id]))
       throw new AuthError(409,'not_your_turn');

@@ -106,3 +106,19 @@ The **default, enforced campaign profile** now uses the printed *BattleTech: A G
 The additional ER, Pulse and Clan definitions remain in the source and internal engine as **unreleased supplementary support**, not evidence that the AGoAC book includes those systems. They are **not** purchasable through the default market; any existing advanced saved design cannot be used for new standard contracts until a separately implemented rule supplement is available. Existing paid inventory is not deleted, so user-owned records survive the transition.
 
 **Scope disclaimer:** IronHex's C-Bills market, contract payouts, repairs and progression are **game-specific campaign mechanics**, not rules claimed to come from *A Game of Armored Combat*. Full book compliance for all tactical edge cases has not been independently certified; the dedicated source-backed regression suite will expand as discrepancies are resolved.
+
+## Tactical Operations: Advanced Rules (corrected fourth printing, 2020)
+
+The user-supplied 2020 optional-rules supplement is now indexed in
+[`docs/rules-compliance-tactical-operations-2020.md`](docs/rules-compliance-tactical-operations-2020.md).
+The supplement explicitly makes its special rules **optional**. Its first
+verified BattleMech-only implementations are **Expanded Standing Still**
+(p. 16: -1 to attackers if no MP expended, not cumulative with Immobile)
+and **Evading** (pp. 16–17: running MP and intact hips, +1 to be hit,
+no attacks/spotting, +2 heat on top of running, loses benefit when prone).
+Both are **off by default** in AGoAC; toggle them before the first
+initiative roll in quick battles or authenticated server operations.
+The options affect actual engine hit numbers, movement, heat and order
+validation and are recorded in server battle snapshots. The rulebook PDF
+is not redistributed with the repository. All remaining TO:AR options
+remain **not implemented** or **partial** until separately tested.
