@@ -2260,7 +2260,7 @@
       "kind": "topic",
       "optional": false,
       "status": "known_missing",
-      "note": "Partial skid movement, PSR, fall/slide damage, terrain and combat modifiers tested. Full unintentional-charge collision, displacement and buildings still missing.",
+      "note": "Basic skid PSR, slide damage and involuntary charge on hit are tested. Miss/avoidance continuation and collisions with buildings require further resolution; status stays known_missing.",
       "evidence": [
         {
           "file": "tests/combat.mjs",
@@ -2293,6 +2293,18 @@
         {
           "file": "tests/combat.mjs",
           "test": "Skid off the mapsheet destroys the mech rather than leaving invalid coordinates"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid collision resolves fall first, then involuntary charge and target displacement (BMM p.69)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Unmoved target may avoid an involuntary skidding charge with a PSR"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Failed involuntary skidding charge does not displace the target"
         }
       ]
     },
