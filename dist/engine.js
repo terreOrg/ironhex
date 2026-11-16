@@ -129,7 +129,7 @@ export class Game extends Legacy{
     collided=true;u.skidCollisionPending={q,r,targetId:target.id};
     this.note(u.name+': столкновение во время скольжения.');
     applySkidDamage();
-    if(u.dead)break;
+    if(u.dead){u.skidCollisionPending=null;break;}
     const result=this.resolveSkidCollision(u,target,direction,moved,{q,r});
     u.skidCollisionPending=null;
     if(result.hit){
