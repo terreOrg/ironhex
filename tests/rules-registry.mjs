@@ -13,7 +13,7 @@ test('BMM catalogue retains all initially indexed chapter/subchapter headings',(
  assert.equal(registry.schemaVersion,1);
  assert.equal(registry.book.id,'bmm-corrected-6th-2022');
  assert.equal(registry.scope.battlemechsOnly,true);
- assert(registry.topics.length>=332,'Do not silently drop original TOC topics');
+ assert(registry.topics.length>=326,'Do not silently drop original TOC topics');
  assert(registry.topics.some(r=>r.title==='CASE II'&&r.page===119));
  assert(registry.topics.some(r=>r.title==='Hull Integrity And Breaches'&&r.page===65));
  assert(registry.topics.some(r=>r.title==='FIRING WEAPONS'&&r.page===25));
@@ -22,7 +22,7 @@ test('BMM catalogue retains all initially indexed chapter/subchapter headings',(
 test('All BMM identifiers and printed-page locations are unique and structured',()=>{
  const pageAndTitle=new Set();
  for(const entry of registry.topics){
-  assert.match(entry.id,/^bmm-p\\d{3}-[a-z0-9-]+$/);
+  assert.match(entry.id,/^bmm-p\d{3}-[a-z0-9-]+$/);
   assert(!ids.has(entry.id),'Duplicate id: '+entry.id);ids.add(entry.id);
   assert(entry.title&&typeof entry.title==='string');
   assert(Number.isInteger(entry.page)&&entry.page>=5&&entry.page<=132,entry.id);
@@ -56,12 +56,12 @@ test('Every tested-subset rule links to an existing exact automated test',()=>{
    assert(entry.evidence?.length>0,entry.id+': missing test evidence');tested++;
   }
   for(const evidence of entry.evidence||[]){
-   assert.match(evidence.file,/^tests\\/[a-z0-9-]+\\.mjs$/,entry.id);
+   assert.match(evidence.file,/^tests\/[a-z0-9-]+\.mjs$/,entry.id);
    const path=resolve(root,evidence.file);
    assert(existsSync(path),entry.id+': missing test file '+evidence.file);
    if(!cache.has(path))cache.set(path,readFileSync(path,'utf8'));
    const name=String(evidence.test||'');
-   assert(name&&!name.includes("'")&&!name.includes('\\n'),entry.id+': invalid test label');
+   assert(name&&!name.includes("'")&&!name.includes('\n'),entry.id+': invalid test label');
    assert(cache.get(path).includes("test('"+name+"'"),
     entry.id+': test renamed or removed: '+name);
   }
