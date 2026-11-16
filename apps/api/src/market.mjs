@@ -184,7 +184,9 @@ export const EQUIPMENT_CATALOG=[
       rulebook:equipmentRulebook(name)};
   }),
   ...Object.values(AMMO_PACKS).filter(pack=>isBaseWeapon(pack.weapon)).map(pack=>({...pack,rulebook:{status:'verified_base',book:BASE_RULEBOOK.title,page:55}})),
-  ...SYSTEM_ITEMS.map(item=>({...item,rulebook:{status:'verified_base',book:BASE_RULEBOOK.title,page:item.type==='hatchet'?55:53}}))
+  ...SYSTEM_ITEMS.map(item=>({...item,rulebook:item.type==='case'?
+    {status:'verified_supplement',book:'BattleMech Manual',page:118}:
+    {status:'verified_base',book:BASE_RULEBOOK.title,page:item.type==='hatchet'?55:53}}))
 ];
 export const weaponName=sku=>typeof sku==='string'&&sku.startsWith('weapon:')&&
   Object.hasOwn(WEAPON_SPECS,sku.slice(7))?sku.slice(7):null;
