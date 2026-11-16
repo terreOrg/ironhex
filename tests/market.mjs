@@ -6,6 +6,7 @@ import {join} from 'node:path';
 import {construct} from '../packages/engine/construction.js';
 import {MECH_OFFERS,rejectedMtf,sourceManifest,totalMtfRecords,searchMechCatalog,getMechDetails,mechWeightClass} from '../apps/api/src/market.mjs';
 import {importMtf} from '../apps/api/src/mtf.mjs';
+import {validateDesign} from '../apps/api/src/hangar.mjs';
 const base=fileURLToPath(new URL('../data/megamek/meks/',import.meta.url));
 
 test('MegaMek importer admits only verified, distinct Standard Inner Sphere designs',()=>{
@@ -139,4 +140,13 @@ test('BMM p.5: MTF importer distinguishes unsupported quads from non-BattleMechs
     /unsupported_mtf:quad_not_implemented/);
   assert.throws(()=>importMtf(raw.replace(/^Config:Biped$/m,'Config:Vehicle')),
     /unsupported_mtf:not_battlemech/);
+});
+
+test('BMM p.5: hangar accepts explicit biped MTF designs but rejects unsupported quads',()=>{
+  const griffin=MECH_OFFERS.find(x=>x.id==='mm-grf-1m');
+  assert(griffin);
+  assert.equal(griffin.config.config,'Biped');
+  assert.doesNotThrow(()=>validateDesign({config:griffin.config}));
+  assert.throws(()=>validateDesign({config:{...griffin.config,config:'Quad'}}),
+    /invalid_design|Четырёхногие|unsupported/);
 });

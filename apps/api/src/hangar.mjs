@@ -7,13 +7,14 @@ import {outOfBookEquipment} from '../../../packages/engine/rulebook.js';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const allowed = new Set(['name','tonnage','walk','jump','sinks','armor','rear','equipment','removeActuators']);
+const allowed = new Set(['name','config','tonnage','walk','jump','sinks','armor','rear','equipment','removeActuators']);
 
 export function validateDesign(input) {
   const c = input?.config;
   if (!c || typeof c !== 'object' || Array.isArray(c) ||
       !Object.keys(c).every(key=>allowed.has(key)) ||
       typeof c.name !== 'string' || c.name.trim().length < 1 || c.name.trim().length > 30 ||
+      (c.config !== undefined && !['Biped','Quad'].includes(c.config)) ||
       !Array.isArray(c.equipment) || c.equipment.length > 80 ||
       c.equipment.some(e=>!e||typeof e!=='object'||Array.isArray(e)) ||
       !c.armor || typeof c.armor !== 'object' || Array.isArray(c.armor) ||
