@@ -44,7 +44,7 @@ jobs:
           set -euo pipefail
           for file in tests/combat.mjs tests/construction.mjs \
             tests/fire-arcs.mjs tests/api.mjs tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs tests/auth.mjs \
-            tests/deploy-gate.mjs; do
+            tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs; do
             echo "::group::Testing $file"
             node --test "$file"
             echo "::endgroup::"
