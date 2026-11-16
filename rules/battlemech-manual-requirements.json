@@ -1199,12 +1199,21 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Quads cannot torso-twist unless a separately enabled qualifying optional quirk explicitly grants it.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         25,
         83
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.25,30,83: extended torso twist explicitly grants only normal quad twist"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.30: quad front and rear leg firing arcs ignore torso twist"
+        }
+      ]
     },
     {
       "id": "bmm-req-084",
@@ -1235,13 +1244,22 @@
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
       "statement": "Quad weapon location and facing produce legal forward, side, rear and leg-weapon firing arcs.",
-      "status": "known_missing",
+      "status": "tested_case",
       "sourcePages": [
         24,
         25,
         30
       ],
-      "evidence": []
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.24-25: all quad leg weapons obey forward/rear arcs, never biped arm side arcs"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.30: quad front and rear leg firing arcs ignore torso twist"
+        }
+      ]
     },
     {
       "id": "bmm-req-087",

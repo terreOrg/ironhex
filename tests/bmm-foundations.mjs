@@ -965,3 +965,41 @@ test('BMM p.30: quad front and rear leg firing arcs ignore torso twist',()=>{
  }
  assert.equal(changed,true,'torso arc changes under twist');
 });
+
+test('BMM pp.24-25: all quad leg weapons obey forward/rear arcs, never biped arm side arcs',()=>{
+ const g=flatGame(),u=g.units[0];u.q=0;u.r=0;u.facing=0;u.twist=0;
+ const rays=DIRS.map(([q,r])=>({q,r}));
+ const at=degrees=>rays.find(p=>Math.abs(g.relative(u,p)-degrees)<.001);
+ const front=at(0),sideL=at(120),sideR=at(-120),rear=rays.find(p=>
+  Math.abs(Math.abs(g.relative(u,p))-180)<.001);
+ assert(front&&sideL&&sideR&&rear,'All four firing regions have a neighboring hex');
+ u.config='Quad';u.quirks={extendedTorsoTwist:true};
+ for(const loc of ['LA','RA','LL','RL']){
+  const gun={location:loc,rear:false},reverse={location:loc,rear:true};
+  assert.equal(g.arc(u,front,gun),true,'quad '+loc+' forward');
+  for(const side of [sideL,sideR])
+   assert.equal(g.arc(u,side,gun),false,'quad '+loc+' no side firing');
+  assert.equal(g.arc(u,rear,gun),false,'quad '+loc+' no standard rear firing');
+  assert.equal(g.arc(u,rear,reverse),true,'quad '+loc+' rear-mounted gun');
+  assert.equal(g.arc(u,front,reverse),false,'quad '+loc+' rear mount not forward');
+  for(const side of [sideL,sideR])
+   assert.equal(g.arc(u,side,reverse),false,'quad '+loc+' rear mount no side');
+ }
+ g.phase='fire';g.activeTeam=u.team;
+ assert.equal(g.twist(u.id,1).ok,true);
+ assert.equal(g.arc(u,sideL,{location:'CT',rear:false}),true,
+  'Twisted quad torso gains the shifted forward arc');
+ for(const loc of ['LA','RA','LL','RL']){
+  assert.equal(g.arc(u,sideL,{location:loc,rear:false}),false,
+   'Quad leg '+loc+' does not gain torso-twisted side coverage');
+  assert.equal(g.arc(u,front,{location:loc,rear:false}),true);
+ }
+ u.config='Biped';u.twist=0;u.quirks={};
+ assert.equal(g.arc(u,sideL,{location:'LA',rear:false}),true,
+  'Biped left arm retains its side arc');
+ assert.equal(g.arc(u,sideR,{location:'RA',rear:false}),true,
+  'Biped right arm retains its side arc');
+ assert.equal(g.arc(u,sideL,{location:'LL',rear:false}),false,
+  'Biped leg cannot use biped arm side arc');
+ assert.equal(g.arc(u,sideR,{location:'RL',rear:false}),false);
+});

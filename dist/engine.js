@@ -392,7 +392,19 @@ export class Game extends Legacy{
  hold(id){const u=this.unit(id);if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(u.gyroHits||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip))this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
  relative(a,b,f=a.facing){const x=Math.sqrt(3)*(b.q-a.q+(b.r-a.r)/2),y=-1.5*(b.r-a.r),v=Math.atan2(y,x)-f*Math.PI/3;return Math.atan2(Math.sin(v),Math.cos(v))*180/Math.PI;}
  hitSide(u,a){const v=this.relative(u,a);return Math.abs(v)<=60.00001?'front':Math.abs(v)>=120-.00001?'rear':v>0?'left':'right';}
- arc(u,t,w){const location=w.locations?.some(loc=>['CT','LT','RT','HD'].includes(loc))?'CT':w.location;const leg= u.config==='Quad'?['LA','RA','LL','RL'].includes(location):['LL','RL'].includes(location);const a=this.relative(u,t,wrap(u.facing+(leg?0:u.twist)+(w.rear||(u.config!=='Quad'&&u.flip&&['LA','RA'].includes(location))?3:0)));return location==='LA'&&!w.rear?a>=-60.00001&&a<=120.00001:location==='RA'&&!w.rear?a>=-120.00001&&a<=60.00001:Math.abs(a)<=60.00001;}
+ arc(u,t,w){
+  const location=w.locations?.some(loc=>['CT','LT','RT','HD'].includes(loc))?'CT':w.location;
+  // BMM p.24: quad front limbs are legs, not biped arms; only biped
+  // arms receive the extra side-arc coverage. Leg arcs never twist.
+  const bipedArm=u.config!=='Quad'&&['LA','RA'].includes(location);
+  const leg=['LL','RL'].includes(location)||(u.config==='Quad'&&['LA','RA'].includes(location));
+  const reversed=!!w.rear||(bipedArm&&!!u.flip);
+  const a=this.relative(u,t,wrap(u.facing+(leg?0:u.twist)+(reversed?3:0)));
+  if(reversed)return Math.abs(a)<=60.00001;
+  if(bipedArm)return location==='LA'?a>=-60.00001&&a<=120.00001:
+    a>=-120.00001&&a<=60.00001;
+  return Math.abs(a)<=60.00001;
+ }
  los(a,b,underwaterWeapon=null){a=this.unit(a);b=this.unit(b);const n=distance(a,b),ta=this.tile(a.q,a.r),tb=this.tile(b.q,b.r),subA=underwaterWeapon===null?ta.depth>=(a.prone?1:2):underwaterWeapon,subB=tb.depth>=(b.prone?1:2)||(subA&&tb.depth===1&&!b.prone);if(subA!==subB)return {woods:0,blocked:true,cover:false};let woods=0,blocked=false,cover=tb.depth===1&&!b.prone,seen=new Set();const ah=ta.height+(a.prone?1:2),bh=tb.height+(b.prone?1:2);for(let i=1;i<=n;i++){const p=roundHex(a.q+(b.q-a.q)*i/n,a.r+(b.r-a.r)*i/n),t=this.tile(p.q,p.r);if(!t||seen.has(key(p.q,p.r)))continue;seen.add(key(p.q,p.r));const h=ah+(bh-ah)*i/n;if(i<n&&t.height>=h)blocked=true;if(i===n-1&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;if((t.type==='woods'||t.type==='heavy')&&(i===n||t.height+2>=h))woods+=t.type==='heavy'?2:1;}return {woods,blocked:blocked||woods>=3,cover};}
  tmm(u){const d=u.distanceMoved;return (d>=25?6:d>=18?5:d>=10?4:d>=7?3:d>=5?2:d>=3?1:0)+(u.moveMode==='jump'?1:0);}
  targetMovementModifier(t){return !this.mobile(t)?-4:this.tmm(t)+(t.skidded?2:0)+(this.tacticalOptions?.standingStill&&t.spent===0?-1:0)+(this.tacticalOptions?.evading&&t.moveMode==='evade'&&!t.prone?1:0);}

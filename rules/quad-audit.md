@@ -335,3 +335,24 @@ arcs while torso weapons follow torso twist. The AI respects the same
 limits. Tests cover absent/false/true flags, invalid twist magnitudes,
 biped compatibility, leg arcs and torso arcs. Directional Torso Mount
 remains unimplemented, so full optional-quirk coverage is still open.
+
+### Quad front-leg firing arcs, verified against pp.24–25
+
+A targeted code review found that earlier Quad arc support froze the
+front legs when the torso twisted but still granted them biped **arm**
+side arcs, incorrectly allowing front-leg weapons to shoot around the
+flank. The new arc calculation explicitly identifies biped arms and
+treats **all four Quad limbs** as legs. Front-mounted leg weapons use
+only the forward arc; rear-mounted leg weapons use only the rear arc.
+A Quad's torso twist (only when its optional Extended Torso Twist
+quirk is enabled) shifts torso weapons but **never** leg weapons.
+Biped left/right arm side arcs are unchanged. A deterministic regression
+enumerates the four legs and all forward, left, right, and rear firing
+directions, plus rear-mounted weapons and the optional torso twist.
+The first known case of this bug existed despite previously passing
+tests which only checked that an arc did not *change* upon torso twist.
+
+Two subrequirements `bmm-req-083` and `bmm-req-086` are now
+`tested_case`, not `verified`; directional torso mounts and
+complete battle integration are not certified. The sequential
+cursor remains at `bmm-p005-four-legged-mech`.
