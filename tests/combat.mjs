@@ -152,6 +152,18 @@ test('A submerged location missing its armor breaches automatically without dama
  assert.equal(g.isBreached(u,'RA'),true);assert.equal(u.dead,false);
  assert.equal(g.phaseRolls.some(r=>r.kind.includes('Герметичность')),false);
 });
+
+test('A flooded magazine stays physically live but cannot feed weapons',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.bins[0].location='LT';
+ const before=u.bins[0].shots;g.breachLocation(u,'LT');
+ assert.equal(u.bins[0].shots,before);
+ assert.equal(u.bins[0].destroyed,false);
+ assert.equal(u.weapons[1].ammo,u.bins[1].shots);
+ u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;
+ acting(g,0,'fire');assert.equal(g.declareFire(0,[{index:1,target:2,bin:0}]).ok,false);
+ assert.equal(g.declareFire(0,[{index:1,target:2,bin:1}]).ok,true);
+});
+
 test('Flooded torso disables attached arm and weapons without critical slot marks',()=>{
  const g=game(),u=g.units[0];g.breachLocation(u,'RT');
  assert.equal(g.isBreached(u,'RT'),true);
