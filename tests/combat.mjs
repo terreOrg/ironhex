@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {Game,chargeTravelHexes,distance} from '../dist/engine.js';
+import {Game,chargeTravelHexes,distance,CLUSTER_HITS} from '../dist/engine.js';
 let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS',name);};
 function game(){const g=new Game({rng:()=>.5});for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});return g;}
 function acting(g,id,phase){g.phase=phase;g.activeTeam=g.units[id].team;g.queue=[g.activeTeam];g.actingId=null;}
@@ -35,6 +35,24 @@ test('Head destruction kills the pilot rather than only disabling the unit (BMM 
  const g=game(),u=g.units[0];g.destroyLocation(u,'HD');
  assert.equal(u.dead,true);assert.equal(u.pilotWounds,6);
 });
+
+test('Every supported launcher rack follows BattleMech Manual cluster table (BMM p.33)',()=>{
+ const expected={
+  2:[1,1,1,1,1,1,2,2,2,2,2],
+  4:[1,2,2,2,2,3,3,3,3,4,4],
+  5:[1,2,2,3,3,3,3,4,4,5,5],
+  6:[2,2,3,3,4,4,4,5,5,6,6],
+  10:[3,3,4,6,6,6,6,8,8,10,10],
+  15:[5,5,6,9,9,9,9,12,12,15,15],
+  20:[6,6,9,12,12,12,12,16,16,20,20]
+ };
+ assert.equal(Object.keys(CLUSTER_HITS).length,7);
+ for(const [rack,rolls] of Object.entries(expected)){
+  for(let i=0;i<11;i++)assert.equal(CLUSTER_HITS[rack][i],rolls[i],
+   'rack '+rack+', 2D6 '+(i+2));
+ }
+});
+
 test('Rear armor takes rear torso hits before structure',()=>{const g=game(),u=g.units[0],front=u.armor.CT;g.damage(u,'CT',3,{rear:true});assert.equal(u.rear.CT,4);assert.equal(u.armor.CT,front);assert.equal(u.structure.CT,18);});
 test('Destroyed torso destroys attached arm and ammunition',()=>{const g=game(),u=g.units[0];g.destroyLocation(u,'RT');assert.equal(u.structure.RA,0);assert.equal(u.weapons[0].destroyed,true);assert.equal(u.weapons[1].ammo,0);});
 test('Ammo explosion bypasses armor and wounds pilot twice',()=>{const g=game(),u=g.units[0];u.bins[0].shots=1;const a=u.armor.RT;g.explode(u,u.bins[0]);assert.equal(u.structure.RT,3);assert.equal(u.armor.RT,a);assert.equal(u.pilotWounds,2);});
