@@ -111,7 +111,7 @@ export class Game extends Legacy{
  resolveSkid(u,direction,moved,tn){
   u.skidded=true;u.skidDirection=null;u.skidCollisionPending=null;
   const falling=Math.ceil(u.tonnage/10),perHex=Math.ceil(falling/2);
-  let remaining=Math.ceil(moved/2),hexes=0,damageHexes=0,unresolved=0,fallResolved=false,collided=false;
+  let remaining=Math.ceil(moved/2),hexes=0,damageHexes=0,levelDamage=0,unresolved=0,fallResolved=false,collided=false;
   const path=[],d=DIRS[wrap(direction)];
   let cursor={q:u.q,r:u.r},crossed=null;
   const applySkidDamage=()=>{
@@ -123,6 +123,32 @@ export class Game extends Legacy{
   while(remaining>0&&!u.dead){
    const q=cursor.q+d[0],r=cursor.r+d[1],tile=this.tile(q,r);
    if(!tile){u.dead=true;this.note(u.name+': скольжение за край поля.');break;}
+   const oldTile=this.tile(cursor.q,cursor.r);
+   if(tile.height>oldTile.height){
+    // BMM p.71: level rise is an obstacle, not a legal skid hex.
+    // Resolve previous slide packets before the front-facing crash.
+    applySkidDamage();
+    if(!u.dead){
+     const impact=Math.ceil(u.tonnage/20);
+     this.packets(u,impact,'front');levelDamage+=impact;
+     this.note(u.name+': скольжение остановилось при столкновении с подъёмом.');
+    }
+    break;
+   }
+   if(oldTile.height-tile.height>=2&&!this.occupied(q,r,u.id)&&!tile.depth){
+    // BMM p.70: a drop of two or more levels ends the skid in the
+    // lower hex. Entering open air does not incur skid-per-hex damage.
+    applySkidDamage();
+    if(u.dead)break;
+    const drop=oldTile.height-tile.height;
+    u.q=q;u.r=r;cursor={q,r};hexes++;remaining=0;
+    if(crossed){path.push(crossed);crossed=null;}
+    path.push({q,r});
+    levelDamage+=Math.ceil(u.tonnage/10)*(drop+1);
+    this.fall(u,drop);
+    this.note(u.name+': скольжение закончилось падением с высоты '+drop+'.');
+    break;
+   }
    if(tile.depth>=1&&!this.occupied(q,r,u.id)){
     // BMM p.70: entering Depth 1+ water immediately stops the skid.
     // No additional skid damage is taken for this water hex. Apply
@@ -163,7 +189,7 @@ export class Game extends Legacy{
   u.spent=this.mp(u,'run');
   if(!u.dead)applySkidDamage();
   if(crossed)this.note(u.name+': скольжение завершилось перед занятым гексом.');
-  return {path,hexes,damage:falling+damageHexes*perHex,collision:collided};
+  return {path,hexes,damage:falling+damageHexes*perHex+levelDamage,collision:collided};
  }
  // Skidding damage is inflicted before any accidental collision/charge.
  // BMM 2022 p.69: +2 run, +1 skid, +3 involuntary charge.
