@@ -9,5 +9,5 @@ d=c();d.jump=6;assert(construct(d).errors.length);
 d=c();d.equipment.pop();assert(construct(d).errors.some(e=>e.includes('теплоотводов')));
 d=c();d.equipment.push({type:'ammo',location:'LT',slot:3,weapon:99,mass:1});assert(construct(d).errors.some(e=>e.includes('ссылаться')));
 d=c();d.tonnage=100;d.walk=3;d.jump=0;d.sinks=10;d.equipment=[{type:'AC/20',location:'RA',slot:5,splitLocation:'RT',splitSlot:1,splitCount:8},{type:'ammo',location:'LT',slot:1,weapon:0,mass:1},{type:'hatchet',location:'LA',slot:5}];assert.deepEqual(construct(d).errors,[]);assert.equal(construct(d).unit.hatchets.length,1);assert.equal(construct(d).unit.slots.RT[1],'w:0');
-d.equipment[0].splitLocation='LL';assert(construct(d).errors.some(e=>e.includes('AC/20')));
+assert.deepEqual(construct(d).unit.weapons[0].locations,['RA','RT']);d.equipment[0].splitLocation='LL';assert(construct(d).errors.some(e=>e.includes('AC/20')));d.equipment[0].splitLocation='RT';d.equipment[0].type='AC/10';assert(construct(d).errors.some(e=>e.includes('8+ критических')));
 console.log('9 construction checks passed');
