@@ -970,9 +970,13 @@ test('BMM pp.24-25: all quad leg weapons obey forward/rear arcs, never biped arm
  const g=flatGame(),u=g.units[0];u.q=0;u.r=0;u.facing=0;u.twist=0;
  const rays=DIRS.map(([q,r])=>({q,r}));
  const at=degrees=>rays.find(p=>Math.abs(g.relative(u,p)-degrees)<.001);
- const front=at(0),sideL=at(120),sideR=at(-120),rear=rays.find(p=>
+ // Choose true side-only rays, not the +/-120 degree boundary shared
+ // by the rulebook's adjacent rear-arc hexside coverage.
+ const front=at(0),sideL={q:1,r:-2},sideR={q:-1,r:2},rear=rays.find(p=>
   Math.abs(Math.abs(g.relative(u,p))-180)<.001);
- assert(front&&sideL&&sideR&&rear,'All four firing regions have a neighboring hex');
+ assert(front&&sideL&&sideR&&rear,'All four firing regions have valid target hexes');
+ assert.equal(Math.round(g.relative(u,sideL)),90);
+ assert.equal(Math.round(g.relative(u,sideR)),-90);
  u.config='Quad';u.quirks={extendedTorsoTwist:true};
  for(const loc of ['LA','RA','LL','RL']){
   const gun={location:loc,rear:false},reverse={location:loc,rear:true};
