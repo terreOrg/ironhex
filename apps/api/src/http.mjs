@@ -139,14 +139,18 @@ export function createHttpServer({
             if(!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
             return json(res,201,{item:await operationStore.create(user.id,await readJson(req))});
           }
-          const match=/^\/api\/v1\/operations\/([^/]+)(?:\/(launch|advance|abandon))?$/.exec(path);
+          const match=/^\/api\/v1\/operations\/([^/]+)(?:\/(launch|advance|abandon|snapshot|command))?$/.exec(path);
           if(match){
             const [,id,command]=match;
             if(!command&&(method==='GET'||head))
               return json(res,200,{item:await operationStore.get(user.id,id)},head);
-            if(command&&method==='POST'){
+            if(command==='snapshot'&&(method==='GET'||head))
+              return json(res,200,{item:await operationStore.snapshot(user.id,id)},head);
+            if(command&&method==='POST'&&command!=='snapshot'){
               if(!sameOrigin(req,publicOrigin)) throw new AuthError(403,'invalid_origin');
               const body=await readJson(req);
+              if(command==='command')
+                return json(res,200,{item:await operationStore.command(user.id,id,body)},head);
               if(Object.keys(body).length)throw new AuthError(422,'invalid_operation');
               return json(res,200,{item:await operationStore[command](user.id,id)},head);
             }
