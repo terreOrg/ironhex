@@ -125,3 +125,14 @@ fall/slide damage resolves on the prior terrain, then the mech enters
 water and checks existing hull breaches. Three deterministic tests cover
 Depth 1, Depth 2 and hull-breach checks. Occupied-water interactions,
 height-change collisions and building impacts are still not verified.
+
+### Skid elevation interruptions (BMM pp.70–71)
+
+A skid stops before a higher-level obstruction and applies an extra frontal
+impact packet of one point per 20 tons (rounded up), after earlier fall and
+slide damage. An unoccupied cliff drop of two or more levels interrupts the
+skid, moves the unit to the lower hex and adds standard falling damage
+without another skid-per-hex packet for crossing open air. Four
+regression tests cover a one-level rise, a rise after sliding, and drops of
+2 and 4 levels. **Still missing:** accidental falls from above into occupied
+lower hexes, as well as combined basement/building/water edge cases.
