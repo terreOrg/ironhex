@@ -86,3 +86,15 @@ arm-actuator removal and rejection of hatchets in front legs.
 
 This does not verify bmm-req-080 yet because the normal game engine,
 records, damage and campaign do not support the design.
+
+### Quad leg hardpoint validation
+
+The diagnostic constructor now treats both front legs as true legs
+for standard jump-jet placement (see BMM p.19 example of leg-mounted
+jets). Unlike a biped, it can mount a standard jump jet in slot 5 of
+LA or RA; the rear legs LL and RL keep the same rule. Conversely,
+quad front legs **cannot** be exploited as biped arms for split
+torso/arm weapons. Deterministic tests cover all four legs, a
+biped-arm rejection and a split-weapon rejection. Normal quad
+deployment remains disabled; `bmm-req-080` is still `tested_case`,
+not fully verified.

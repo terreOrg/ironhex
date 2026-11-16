@@ -1042,7 +1042,7 @@
       "id": "bmm-req-080",
       "topicId": "bmm-p005-four-legged-mech",
       "page": 5,
-      "statement": "Quad structural topology identifies four leg locations, each with leg-sized internal structure and six critical slots containing leg actuators; full quad construction and combat are not yet supported.",
+      "statement": "Quad structural topology identifies front/rear leg locations, leg-sized internal structure, six critical slots with leg actuators, and correct leg-mounted weapon/jump-jet restrictions; full quad construction and combat remain unsupported.",
       "status": "tested_case",
       "sourcePages": [
         5,
@@ -1057,6 +1057,14 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.5 quad layout is inspectable but cannot enter unsupported battles"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp. 5,19: audit-only quad jump jets fit front or rear legs, not biped arms"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.5 quad front legs cannot split a biped arm/torso weapon"
         }
       ]
     },

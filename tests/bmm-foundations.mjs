@@ -329,3 +329,32 @@ test('BMM p.5: audit-only Quad construction uses four true leg systems',()=>{
  assert(hatchet.errors.some(x=>x.includes('Топор')));
  assert.equal(construct(auditFixture).unit,undefined,'Experiment must not change the standard default');
 });
+
+test('BMM pp. 5,19: audit-only quad jump jets fit front or rear legs, not biped arms',()=>{
+ const fixture={...example,name:'Quad jump topology',config:'Quad',
+  jump:1,sinks:10,equipment:[]};
+ for(const leg of ['LA','RA','LL','RL']){
+  const config={...fixture,equipment:[{type:'jump',location:leg,slot:5}]};
+  const q=construct(config,{auditQuad:true});
+  assert.deepEqual(q.errors,[],leg+': '+q.errors.join('; '));
+  assert.equal(q.unit.slots[leg][4],'jump');
+  assert.equal(q.unit.jump,1);
+  const blocked=construct(config);
+  assert(blocked.errors.length>0);
+  assert.equal(blocked.unit,undefined);
+ }
+ const biped=construct({...fixture,config:'Biped',equipment:[
+  {type:'jump',location:'LA',slot:5}]});
+ assert(biped.errors.some(x=>x.includes('Прыжковые двигатели')),
+  'A biped arm must not become a leg for jump-jet placement');
+});
+
+test('BMM p.5 quad front legs cannot split a biped arm/torso weapon',()=>{
+ const fixture={...example,name:'Quad split topology',config:'Quad',
+  jump:0,sinks:10,equipment:[{type:'AC/20',location:'LT',slot:1,
+   splitLocation:'LA',splitCount:4}]};
+ const result=construct(fixture,{auditQuad:true});
+ assert(result.errors.some(x=>x.includes('Quad leg cannot split critical slots')),
+  'Front leg must not be treated as an arm for split critical slots');
+ assert.equal(construct(fixture).unit,undefined);
+});
