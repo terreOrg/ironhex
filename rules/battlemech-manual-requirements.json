@@ -1339,6 +1339,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM pp.45,48: only loss of all four quad legs makes a zero-MP quad immobile"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.45: a Quad with one missing leg must make the +5 landing PSR"
         }
       ]
     },

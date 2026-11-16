@@ -368,7 +368,18 @@ export class Game extends Legacy{
   dst={q,r,facing:u.facing,cost,
     path:[{q,r,facing:u.facing,cost,lateral:shift.backward?'backward':'forward'}]};
  }
- if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});if(this.tile(q,r).depth){this.checkExistingHullBreaches(u);if(!u.dead)this.psr(u,0,'Посадка в воду',true,this.tile(q,r).depth);}else if(this.psrMod(u))this.psr(u,0,'Посадка',true);}else for(const p of dst.path){
+ if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});// BMM p.45: losing the first Quad leg adds +5 to the landing
+ // PSR even though this damage does not itself add +5 to normal
+ // Quad PSR modifiers. Two lost legs already contribute +5 via
+ // psrMod (the one-legged biped equivalent), so do not double count.
+ const firstQuadLegLost=u.config==='Quad'&&
+  ['LA','RA','LL','RL'].filter(loc=>u.structure[loc]===0).length===1;
+ const landingModifier=firstQuadLegLost?5:0;
+ if(this.tile(q,r).depth){
+  this.checkExistingHullBreaches(u);
+  if(!u.dead)this.psr(u,landingModifier,'Посадка в воду',true,this.tile(q,r).depth);
+ }else if(landingModifier||this.psrMod(u))
+  this.psr(u,landingModifier,'Посадка',true);}else for(const p of dst.path){
  const moved=u.q!==p.q||u.r!==p.r;
  if(!moved&&p.facing!==u.facing&&mode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)
   u.skidDirection=u.lastMovementDirection??u.facing;

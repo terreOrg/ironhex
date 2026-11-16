@@ -1401,3 +1401,39 @@ test('BMM pp.45,48: only loss of all four quad legs makes a zero-MP quad immobil
  t.structure.LL=0;t.structure.RL=0;
  assert.equal(quadImmobileDueToLegLoss(t),false,'Biped all-leg loss is not immobile');
 });
+
+test('BMM p.45: a Quad with one missing leg must make the +5 landing PSR',()=>{
+ const base=construct({...example,config:'Quad',jump:1,sinks:10,
+  equipment:[{type:'jump',location:'CT',slot:11}]},{auditQuad:true});
+ assert.deepEqual(base.errors,[],base.errors.join('; '));
+ const make=()=>{
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(base.unit));
+  u.q=0;u.r=0;u.facing=0;u.prone=false;u.proneAtStart=false;
+  u.spent=0;u.moveMode='stand';u.moved=false;u.moveEndedByLegLoss=false;
+  for(const other of g.units.slice(1))other.dead=true;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  return {g,u};
+ };
+ const intact=make();
+ intact.g.rng=()=>.5;
+ assert.equal(intact.g.move(0,1,0,'jump').ok,true);
+ assert.equal(intact.u.prone,false,'Intact quad does not roll simply for jumping');
+ const lost=make();
+ lost.u.structure.LA=0;lost.g.rng=()=>.5; // 2D6=8: succeeds at 5, fails at 10
+ assert.equal(lost.g.move(0,1,0,'jump').ok,true);
+ assert.equal(lost.u.prone,true,'Loss of a front leg forces the +5 landing check');
+ assert(lost.g.phaseRolls.some(x=>x.kind?.includes('Посадка')&&x.target===10),
+  'The landing roll must use piloting 5 + 5');
+ const second=make();
+ second.u.structure.LA=0;second.u.structure.RA=0;
+ second.g.rng=()=>.5;
+ assert.equal(second.g.move(0,1,0,'jump').ok,true);
+ assert.equal(second.u.prone,true,'Two lost legs still trigger a landing check');
+ assert(second.g.phaseRolls.some(x=>x.kind?.includes('Посадка')&&x.target===10),
+  'Two lost legs already add +5 through ordinary PSR modifiers, not +10');
+ const rear=make();
+ rear.u.structure.RL=0;rear.g.rng=()=>.5;
+ assert.equal(rear.g.move(0,1,0,'jump').ok,true);
+ assert.equal(rear.u.prone,true,'The same rule also applies to missing rear legs');
+});

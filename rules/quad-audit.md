@@ -502,3 +502,19 @@ aimed-shot declaration pipeline.
 
 `bmm-req-089` remains `tested_case` while other
 leg-loss effects and combined pilot rolls are audited.
+
+### Jumping after loss of a Quad leg (printed p.45)
+
+Landing from a jump now checks the special **+5 PSR modifier**
+for a Quad with exactly one destroyed leg, regardless of which
+of the four legs was lost. A normal intact Quad does not acquire
+this extra landing roll. With two lost legs, the inherited one-legged
+biped-equivalent PSR modifier is already +5, so the new rule does
+**not** double-count it to +10. The modifier is applied to water
+landings as well as ordinary landings.
+
+A deterministic movement-phase test uses a valid Quad with a
+torso-mounted jump jet and 2D6=8, checking that intact landing
+succeeds without a new PSR, either front or rear missing-leg
+landing fails against TN10, and two-leg loss does not double
+count. `bmm-req-089` remains `tested_case`.
