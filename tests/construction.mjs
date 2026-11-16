@@ -34,6 +34,29 @@ duplicateCASE.equipment.push({type:'case',location:'RT',slot:5});
 assert(construct(duplicateCASE).errors.some(e=>e.includes('не более одной')));
 console.log('CASE construction, mass and locations verified');
 
+const case2Config=structuredClone(caseCfg);
+case2Config.equipment[2]={type:'case2',location:'RT',slot:4};
+const case2Mech=construct(case2Config);
+assert.deepEqual(case2Mech.errors,[]);
+assert.equal(case2Mech.unit.slots.RT[3],'case2');
+assert.equal(case2Mech.weights.case,1);
+assert.equal(case2Mech.total-construct(unprotectedCfg).total,1);
+for(const [location,slot] of [['LA',5],['LL',5],['HD',4]]){
+ const candidate=structuredClone(case2Config);
+ candidate.equipment[2]={type:'case2',location,slot};
+ const result=construct(candidate);
+ assert.deepEqual(result.errors,[],'CASE II legal in '+location);
+ assert.equal(result.unit.slots[location][slot-1],'case2');
+}
+let incompatible=structuredClone(case2Config);
+incompatible.equipment.push({type:'case',location:'RT',slot:5});
+assert(construct(incompatible).errors.some(e=>e.includes('не более одной')));
+incompatible=structuredClone(caseCfg);
+incompatible.equipment.push({type:'case2',location:'RT',slot:5});
+assert(construct(incompatible).errors.some(e=>e.includes('не более одной')));
+console.log('CASE II installation, weight and CASE compatibility verified');
+
+
 
 // Every weapon listed in the shared equipment registry must be constructible
 // and immediately usable in the combat engine. This is an integration contract,
