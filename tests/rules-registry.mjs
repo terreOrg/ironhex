@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const registry=JSON.parse(readFileSync(resolve(root,'rules/battlemech-manual.json'),'utf8'));
+const details=JSON.parse(readFileSync(resolve(root,'rules/battlemech-manual-requirements.json'),'utf8'));
 const statuses=new Set(['not_audited','tested_subset','known_missing','verified']);
 const ids=new Set();
 
@@ -75,4 +76,41 @@ test('Coverage report counts all statuses; unreviewed is never shown as passed',
  assert.equal(Object.values(tally).reduce((a,b)=>a+b,0),registry.topics.length);
  console.log('BattleMech Manual coverage: '+JSON.stringify(tally));
  console.log('Note: tested_subset does NOT mean a section is fully compliant.');
+});
+
+test('Granular requirements reference printed section ids and real tests',()=>{
+ assert.equal(details.schemaVersion,1);
+ assert.equal(details.bookId,registry.book.id);
+ assert(details.requirements.length>=24);
+ const parentById=new Map(registry.topics.map(t=>[t.id,t]));
+ const keys=new Set();
+ for(const item of details.requirements){
+  assert.match(item.id,/^bmm-req-\d{3}$/);
+  assert(!keys.has(item.id),'Duplicate requirement '+item.id);keys.add(item.id);
+  const parent=parentById.get(item.topicId);
+  assert(parent,'Orphan requirement '+item.id+' -> '+item.topicId);
+  assert.equal(item.page,parent.page,item.id);
+  assert(item.statement&&typeof item.statement==='string',item.id);
+  assert(['tested_case','known_missing','verified'].includes(item.status),item.id);
+  if(item.status==='tested_case'||item.status==='verified')
+   assert(item.evidence?.length>0,item.id+' must link a test');
+  for(const source of item.evidence||[]){
+   assert.match(source.file,/^tests\/[a-z0-9-]+\.mjs$/,item.id);
+   const file=resolve(root,source.file);
+   assert(existsSync(file),item.id+' missing file '+source.file);
+   const content=readFileSync(file,'utf8');
+   assert(content.includes("test('"+source.test+"'"),item.id+' missing test '+source.test);
+  }
+  if(item.status==='verified')
+   assert(item.audit?.sourceChecked&&item.audit?.edgeCasesChecked,item.id);
+ }
+});
+
+test('Coverage baselines cannot be confused with full book certification',()=>{
+ const totals=registry.topics.reduce((o,t)=>(o[t.status]=(o[t.status]||0)+1,o),{});
+ assert.equal(totals.verified||0,0,'Initial inventory does not certify complete sections');
+ assert((totals.not_audited||0)>200,'Unreviewed sections must remain visible');
+ console.log('BMM topic audit: '+JSON.stringify(totals));
+ const granular=details.requirements.reduce((o,t)=>(o[t.status]=(o[t.status]||0)+1,o),{});
+ console.log('BMM granular requirement audit: '+JSON.stringify(granular));
 });
