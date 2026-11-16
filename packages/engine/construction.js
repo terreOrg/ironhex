@@ -36,12 +36,12 @@ export function quadStructuralLayout(tonnage){
  return {config:'Quad',structure,slots,legLocations:{...QUAD_LEG_LOCATIONS}};
 }
 export const EQUIPMENT=WEAPON_NAMES;
-export function construct(c){
+export function construct(c,{auditQuad=false}={}){
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
  const chassisConfig=c.config??'Biped';
  if(!isBattleMechConfiguration(chassisConfig))
    errors.push('Конфигурация не является двуногим или четырёхногим BattleMech.');
- else if(chassisConfig==='Quad')
+ else if(chassisConfig==='Quad'&&!auditQuad)
    errors.push('Четырёхногие BattleMech пока не поддерживаются: нельзя применять правила двуногого меха.');
  if(techBase!=='Inner Sphere'&&techBase!=='IS')errors.push('Клановая технология ещё не поддерживается конструктором; сначала реализуйте её массы, критические слоты и ограничения.');
  if(!Number.isInteger(ton)||ton<20||ton>100||ton%5)errors.push('Масса: 20–100 тонн с шагом 5.');
@@ -52,15 +52,19 @@ export function construct(c){
  // construction tests. Quad imports and hangar admission still fail closed.
  if(errors.length)return {errors,...(chassisConfig==='Quad'&&Number.isInteger(ton)&&ton>=20&&ton<=100&&ton%5===0?
   {quadLayout:quadStructuralLayout(ton)}:{})};
- const st=structures[(ton-20)/5],structure=Object.fromEntries(LOCS.map((l,i)=>[l,[3,st[0],st[1],st[1],st[2],st[2],st[3],st[3]][i]]));
+ const quadLayout=chassisConfig==='Quad'?quadStructuralLayout(ton):null;
+ const st=structures[(ton-20)/5],structure=quadLayout?quadLayout.structure:
+  Object.fromEntries(LOCS.map((l,i)=>[l,[3,st[0],st[1],st[1],st[2],st[2],st[3],st[3]][i]]));
  const armor={},rear={};for(const l of LOCS){armor[l]=Number(c.armor?.[l]??0);if(!Number.isInteger(armor[l])||armor[l]<0)errors.push(l+': броня должна быть целой и неотрицательной.');if(['CT','LT','RT'].includes(l)){rear[l]=Number(c.rear?.[l]??0);if(!Number.isInteger(rear[l])||rear[l]<0)errors.push(l+': кормовая броня должна быть целой и неотрицательной.');}if(armor[l]+(rear[l]||0)>(l==='HD'?9:2*structure[l]))errors.push(l+': превышен предел брони.');}
- const slots={HD:['life','sensors','cockpit',null,'sensors','life'],CT:['engine','engine','engine','gyro','gyro','gyro','gyro','engine','engine','engine',null,null],LT:Array(12).fill(null),RT:Array(12).fill(null),LA:['shoulder','upper','lower','hand',...Array(8).fill(null)],RA:['shoulder','upper','lower','hand',...Array(8).fill(null)],LL:['hip','upper','lower','foot',null,null],RL:['hip','upper','lower','foot',null,null]};
- for(const l of ['LA','RA'])if(c.removeActuators?.includes(l)){slots[l][2]=null;slots[l][3]=null;}
+ const slots=quadLayout?quadLayout.slots:{HD:['life','sensors','cockpit',null,'sensors','life'],CT:['engine','engine','engine','gyro','gyro','gyro','gyro','engine','engine','engine',null,null],LT:Array(12).fill(null),RT:Array(12).fill(null),LA:['shoulder','upper','lower','hand',...Array(8).fill(null)],RA:['shoulder','upper','lower','hand',...Array(8).fill(null)],LL:['hip','upper','lower','foot',null,null],RL:['hip','upper','lower','foot',null,null]};
+ if(quadLayout&&c.removeActuators?.length)
+  errors.push('Quad leg actuators must not be removed through biped arm settings.');
+ else for(const l of ['LA','RA'])if(c.removeActuators?.includes(l)){slots[l][2]=null;slots[l][3]=null;}
  const weights={structure:ton/10,engine:masses[(rating-20)/5],gyro:Math.ceil(rating/100),cockpit:3,sinks:sinks-10,case:0,armor:Math.ceil([...Object.values(armor),...Object.values(rear)].reduce((a,b)=>a+b,0)/8)/2,jump:jump*(ton<=55?.5:ton<=85?1:2),weapons:0,ammo:0};
  const weapons=[],bins=[],hatchets=[];let extSinks=0,jets=0;
  function place(l,start,n,value){const a=slots[l],i=Number(start)-1;if(!a||!Number.isInteger(i)||i<0||i+n>a.length||a.slice(i,i+n).some(Boolean)){errors.push(`${l} ${start}: ${n} слот(а) заняты или вне секции.`);return false;}for(let k=0;k<n;k++)a[i+k]=value;return true;}
  for(const e of c.equipment||[]){const l=e.location;
- if(e.type==='hatchet'){const n=Math.ceil(ton/15);weights.weapons+=n;if(!['LA','RA'].includes(l)||slots[l]?.[2]!=='lower')errors.push('Топор требует руки с нижним актуатором.');if(place(l,e.slot,n,'hatchet'))hatchets.push({location:l,slots:n});}
+ if(e.type==='hatchet'){const n=Math.ceil(ton/15);weights.weapons+=n;if(quadLayout||!['LA','RA'].includes(l)||slots[l]?.[2]!=='lower')errors.push('Топор требует руки двуногого меха с нижним актуатором.');else if(place(l,e.slot,n,'hatchet'))hatchets.push({location:l,slots:n});}
  else if(e.type==='jump'){jets++;if(!['CT','LT','RT','LL','RL'].includes(l))errors.push('Прыжковые двигатели: только торс/ноги.');place(l,e.slot,1,'jump');}
  else if(e.type==='sink'){extSinks++;place(l,e.slot,1,'sink');}
  else if(e.type==='case'){if(!['CT','LT','RT'].includes(l)){errors.push('CASE: только торс Внутренней Сферы.');continue;}if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE: не более одной системы на секцию '+l+'.');continue;}if(place(l,e.slot,1,'case'))weights.case+=0.5;}

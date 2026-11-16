@@ -72,3 +72,17 @@ unit or import/sell a quad. This is `tested_case` for bmm-req-080,
 **not verified**: weapon installation, integration with critical hits,
 MTF parsing, record sheets, and movement remain missing.
 The strict cursor remains at `bmm-p005-four-legged-mech`.
+
+### Audit-only constructor integration
+
+`construct(config,{auditQuad:true})` now builds a **non-deployable
+diagnostic unit** with the correct quad front/rear leg structure, slots
+and critical arrays. This deliberately requires an explicit internal
+flag. Ordinary `construct(config)` still rejects quads, and
+`validateDesign`, MTF import, the market and campaign continue to
+deny them. Tests cover the blocked normal path, internal structure
+(55 ton comparison), a front-leg weapon's actual location, no biped
+arm-actuator removal and rejection of hatchets in front legs.
+
+This does not verify bmm-req-080 yet because the normal game engine,
+records, damage and campaign do not support the design.

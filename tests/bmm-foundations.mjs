@@ -302,3 +302,30 @@ test('BMM p.5 quad layout is inspectable but cannot enter unsupported battles',(
  assert.equal(result.quadLayout.structure.LA,result.quadLayout.structure.LL);
  assert.equal(construct(example).unit.config,'Biped');
 });
+
+test('BMM p.5: audit-only Quad construction uses four true leg systems',()=>{
+ const auditFixture={...example,name:'Quad topology audit',config:'Quad',
+  jump:0,sinks:10,equipment:[],removeActuators:undefined};
+ const blocked=construct(auditFixture);
+ assert(blocked.errors.length>0);
+ assert.equal(blocked.unit,undefined,'Public constructor defaults to fail-closed');
+ const built=construct(auditFixture,{auditQuad:true});
+ assert.deepEqual(built.errors,[],built.errors.join('; '));
+ const u=built.unit;
+ assert.equal(u.config,'Quad');
+ assert.equal(u.structure.LA,13,'The 55 ton front leg has leg, not arm structure');
+ for(const leg of ['LA','RA','LL','RL']){
+  assert.deepEqual(u.slots[leg],['hip','upper','lower','foot',null,null]);
+  assert.equal(u.crit[leg].length,6);
+  assert.equal(u.maxStructure[leg],13);
+ }
+ const illegal=construct({...auditFixture,removeActuators:['LA']},{auditQuad:true});
+ assert(illegal.errors.some(x=>x.includes('Quad leg actuators')));
+ const weaponInLeg=construct({...auditFixture,equipment:[{type:'Medium Laser',location:'RA',slot:5}]},
+  {auditQuad:true});
+ assert.deepEqual(weaponInLeg.errors,[],weaponInLeg.errors.join('; '));
+ assert.equal(weaponInLeg.unit.weapons[0].location,'RA');
+ const hatchet=construct({...auditFixture,equipment:[{type:'hatchet',location:'LA',slot:5}]},{auditQuad:true});
+ assert(hatchet.errors.some(x=>x.includes('Топор')));
+ assert.equal(construct(auditFixture).unit,undefined,'Experiment must not change the standard default');
+});
