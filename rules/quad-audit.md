@@ -299,3 +299,17 @@ This respects the construction rules instead of weakening
 validation to make a test pass. Standing also rejects orders
 outside the Movement Phase; the regression suite covers
 initiative, weapon, physical and heat phases.
+
+### Walking-versus-running declaration on a stand
+
+The printed p.19 rule requires a mech starting prone to declare
+Walking or Running movement before attempting to stand.
+`stand(...,{mode:'walk'|'run'})` now preserves that declaration:
+the chosen MP budget is enforced, movement type cannot switch
+after it has already been selected, standing after a jump is
+blocked, and running versus walking heat is charged correctly
+when the movement selection completes. When absent, the existing
+single-command UI chooses an allowed mode for backward
+compatibility. For a two-legged Quad and minimum stands, running
+is mandatory, so an explicit Walking declaration is invalid.
+Validation and deterministic heat tests cover all cases.

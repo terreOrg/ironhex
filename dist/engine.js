@@ -359,6 +359,9 @@ export class Game extends Legacy{
     return fail('Мех не может встать');
   if(newFacing!==null&&(!Number.isInteger(newFacing)||newFacing<0||newFacing>5))
     return fail('Неверное направление при подъёме');
+  if(u.moveMode==='jump')return fail('Нельзя встать в ход с прыжком');
+  if(options?.mode!==undefined&&!['walk','run'].includes(options.mode))
+    return fail('Неверный режим движения при подъёме');
   const restricted=quad?lost===2:!u.structure.LL||!u.structure.RL;
   if(restricted&&(quad?!!u.standAttempts:(!u.structure.LA&&!u.structure.RA||u.standAttempts)))
     return fail('Подъём невозможен');
@@ -368,10 +371,17 @@ export class Game extends Legacy{
   const available=Math.max(this.mp(u,'walk'),this.mp(u,'run'));
   if(minimum&&(u.spent!==0||u.standAttempts!==0||available!==1))
     return fail('Минимальный подъём требует ровно 1 доступный MP и одну попытку');
-  const standingBudget=restricted?2:this.mp(u,'run');
+  const committed=['walk','run'].includes(u.moveMode)?u.moveMode:null;
+  const selected=minimum||restricted?'run':options?.mode??committed??
+    (u.spent+2<=this.mp(u,'walk')?'walk':'run');
+  if((minimum||restricted)&&options?.mode==='walk')
+    return fail('Минимальный и двухногий подъём считаются бегом');
+  if(committed&&options?.mode&&options.mode!==committed)
+    return fail('Нельзя сменить объявленный режим движения');
+  const standingBudget=restricted?2:this.mp(u,selected);
   if(!minimum&&u.spent+2>standingBudget)return fail('Нужно 2 MP');
   this.phaseRolls=[];u.standAttempts++;u.spent+=minimum?1:2;u.pendingHeat++;
-  u.moveMode=minimum||restricted||u.spent>this.mp(u,'walk')?'run':'walk';
+  u.moveMode=selected;
   u.prone=false;this.actingId=id;
   // BMM p.19: a Quad with all four legs intact stands automatically.
   const stood=quad&&lost===0||this.psr(u,0,'Подъём',true);

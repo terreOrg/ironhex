@@ -1187,6 +1187,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.19: standing orders are rejected outside the Movement Phase"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.19: declared walk/run controls Quad standing budget and later movement heat"
         }
       ]
     },

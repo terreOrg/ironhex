@@ -871,3 +871,44 @@ test('BMM p.19: standing orders are rejected outside the Movement Phase',()=>{
   assert.equal(u.prone,true);assert.equal(u.spent,0);
  }
 });
+
+test('BMM p.19: declared walk/run controls Quad standing budget and later movement heat',()=>{
+ const built=construct({...example,name:'Quad declared stand',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const fresh=()=>{
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(built.unit));
+  for(const other of g.units.slice(1))other.dead=true;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.prone=true;u.spent=0;u.standAttempts=0;u.moveMode='stand';
+  return {g,u};
+ };
+ const walker=fresh();
+ const order=validateTacticalOrder({type:'stand',version:1,id:0,mode:'walk'});
+ assert.equal(order.mode,'walk');
+ assert(walker.g.stand(0,null,{mode:'walk'}).ok);
+ assert.equal(walker.u.moveMode,'walk');
+ assert.equal(walker.u.spent,2);
+ walker.g.hold(0);
+ assert.equal(walker.u.pendingHeat,2,'Standing 1 heat + walking 1 heat');
+ const runner=fresh();
+ assert(runner.g.stand(0,null,{mode:'run'}).ok);
+ assert.equal(runner.u.moveMode,'run');
+ runner.g.hold(0);
+ assert.equal(runner.u.pendingHeat,3,'Standing 1 heat + running 2 heat');
+ const committed=fresh();
+ committed.u.moveMode='walk';
+ assert.equal(committed.g.stand(0,null,{mode:'run'}).ok,false,
+  'Already selected Walking MP cannot change to Running MP mid-phase');
+ const jumper=fresh();
+ jumper.u.moveMode='jump';
+ assert.equal(jumper.g.stand(0).ok,false,
+  'No stand in a Movement Phase that has already used jump movement');
+ const restricted=fresh();
+ restricted.u.structure.LA=0;restricted.u.structure.RA=0;
+ assert.equal(restricted.g.stand(0,null,{mode:'walk'}).ok,false,
+  'Two surviving legs must always treat standing as running');
+ assert.throws(()=>validateTacticalOrder({
+  type:'stand',version:1,id:0,mode:'jump'}),/invalid_command/);
+});
