@@ -45,13 +45,32 @@ export const AMMO_PACKS=Object.freeze(Object.fromEntries(
     return [name,Object.freeze(pack)];
   })
 ));
-// All three systems are implemented in construction / combat, but until
-// refit and replacement are priced they are *not* market inventory items.
+// These physical systems already affect movement, dissipation and melee
+// combat. Their item counts are now transactionally controlled on refits.
 export const FIXED_COMPONENTS=Object.freeze({
-  jump:{kind:'mobility',name:'Jump Jet',supported:true,sold:false,mechanic:'jump_mp'},
-  sink:{kind:'thermal',name:'Single Heat Sink',supported:true,sold:false,mechanic:'heat_dissipation'},
-  hatchet:{kind:'physical',name:'Hatchet',supported:true,sold:false,mechanic:'melee'}
+  jump:{kind:'mobility',name:'Jump Jet',supported:true,sold:true,
+    price:3500,slots:1,mechanic:'jump_mp'},
+  sink:{kind:'thermal',name:'Single Heat Sink',supported:true,sold:true,
+    price:2300,tons:1,slots:1,mechanic:'heat_dissipation'},
+  hatchet:{kind:'physical',name:'Hatchet',supported:true,sold:true,
+    price:10000,mechanic:'melee'}
 });
+export const SYSTEM_ITEMS=Object.freeze(Object.entries(FIXED_COMPONENTS)
+  .filter(([,item])=>item.supported&&item.sold)
+  .map(([type,item])=>Object.freeze({
+    sku:'system:'+type,type,name:item.name,price:item.price,
+    kind:'system',mechanic:item.mechanic,slots:item.slots??null,
+    tons:item.tons??null
+  })));
+export function systemCounts(config){
+  const result=new Map();
+  for(const item of config?.equipment||[]){
+    if(!FIXED_COMPONENTS[item.type]?.supported)continue;
+    const key='system:'+item.type;
+    result.set(key,(result.get(key)||0)+1);
+  }
+  return result;
+}
 export const weaponSpec=name=>WEAPON_SPECS[name]||null;
 export const ammoPack=name=>AMMO_PACKS[name]||null;
 export function ammoBinsFor(config){

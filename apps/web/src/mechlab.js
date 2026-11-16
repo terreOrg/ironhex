@@ -1,4 +1,5 @@
 import {construct,example,EQUIPMENT,LOCS} from './construction.js';
+import {ammoBinsFor} from './equipment.js';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let currentHangarId=new URL(location.href).searchParams.get('mech');
 let marketOwned=false,installedConfig=null,equipmentStock={};
@@ -9,7 +10,7 @@ function draw(){
  for(const l of ['LA','RA'])$('#remove'+l).checked=!!c.removeActuators?.includes(l);
  let wi=0;$('#equipment').innerHTML=c.equipment.map((e,i)=>`<tr data-row="${i}"><td>${EQUIPMENT.includes(e.type)?'<small>Оружие №'+wi+++'</small><br>':''}<select data-key="type" aria-label="Оборудование ${i+1}">${[...EQUIPMENT,'ammo','jump','sink','hatchet'].map(t=>`<option ${e.type===t?'selected':''} value="${t}">${({ammo:'Боезапас',jump:'Прыжковый двигатель',sink:'Теплоотвод',hatchet:'Топор'})[t]||t}</option>`).join('')}</select></td><td><select data-key="location" aria-label="Секция ${i+1}">${LOCS.map(l=>`<option ${e.location===l?'selected':''}>${l}</option>`).join('')}</select></td><td><input type="number" min="1" max="12" data-key="slot" aria-label="Слот ${i+1}" value="${e.slot}"></td><td>${e.type==='ammo'?`<label>№ оружия<input type="number" min="0" data-key="weapon" value="${e.weapon??0}"></label><label>Тонны<select data-key="mass"><option value="1">1</option><option value="0.5" ${e.mass===.5?'selected':''}>0,5 (MG)</option></select></label>`:EQUIPMENT.includes(e.type)?`<label><input type="checkbox" data-key="rear" ${e.rear?'checked':''}> Назад</label>${e.type==='AC/20'?`<label>Вторая секция<select data-key="splitLocation"><option value="">Без разделения</option>${['CT','LT','RT','LA','RA'].map(l=>`<option ${e.splitLocation===l?'selected':''}>${l}</option>`).join('')}</select></label><label>Слотов в первой<input type="number" min="1" max="9" data-key="splitCount" value="${e.splitCount??5}"></label><label>Слот во второй<input type="number" min="1" max="12" data-key="splitSlot" value="${e.splitSlot??1}"></label>`:''}`:'—'}</td><td><button data-del="${i}" aria-label="Удалить строку ${i+1}">×</button></td></tr>`).join('');
  $('#equipment').onchange=ev=>{read();if(ev.target.dataset.key==='type')draw();else check();};$('#equipment').onclick=ev=>{if(ev.target.dataset.del!==undefined){read();c.equipment.splice(+ev.target.dataset.del,1);draw();}};$('#core').onchange=()=>{read();check();};$('#armor').onchange=()=>{read();check();};for(const l of ['LA','RA'])$('#remove'+l).onchange=()=>{read();check();};
- for(const id of ['tonnage','walk','jump','sinks'])
+ for(const id of ['tonnage','walk'])
    $('#'+id).disabled=marketOwned;
  for(const element of document.querySelectorAll('#armor input'))
    element.disabled=marketOwned;
@@ -63,7 +64,8 @@ async function saveToHangar(copy=false) {
     if(!response.ok) throw Error(
       ({invalid_design:'Недопустимая конструкция',hangar_full:'Ангар заполнен',
         unauthorized:'Необходимо войти в аккаунт',
-        insufficient_equipment:'Недостаточно оружия на складе. Приобретите его на рынке.',
+        insufficient_equipment:'Недостаточно оружия или систем на складе. Приобретите оборудование на рынке.',
+        insufficient_ammo:'Нужен совместимый комплект боеприпасов на складе.',
         factory_frame_locked:'У купленного меха нельзя менять базовый каркас, двигатель, броню или штатные системы.',
         mech_assigned_operation:'Мех уже назначен на активную операцию.',
         mech_needs_repair:'Перед переоборудованием отремонтируйте меха.'})[data.error]||data.error||'HTTP '+response.status
@@ -83,10 +85,12 @@ async function saveToHangar(copy=false) {
 $('#save-hangar').onclick=()=>void saveToHangar();
 $('#save-copy').onclick=()=>void saveToHangar(true);
 void loadFromHangar().then(refreshWarehouse);
-function countWeapons(config){
+function countComponents(config){
   const counts={};
   for(const item of config?.equipment||[]){
-    if(EQUIPMENT.includes(item.type))counts[item.type]=(counts[item.type]||0)+1;
+    const key=EQUIPMENT.includes(item.type)?item.type:
+      ['jump','sink','hatchet'].includes(item.type)?'system:'+item.type:null;
+    if(key)counts[key]=(counts[key]||0)+1;
   }
   return counts;
 }
@@ -94,7 +98,7 @@ function renderWarehouse(){
   const info=$('#warehouse-status'),stock=$('#warehouse-stock'),ownership=$('#ownership-status');
   if(!info||!stock||!ownership)return;
   ownership.textContent=marketOwned?
-    'БОЕВОЙ МЕХ · Приобретённая машина. Для переоборудования нужно оружие со склада. Изменение базовой платформы запрещено.':
+    'БОЕВОЙ МЕХ · Приобретённая машина. Оружие, теплоотводы, прыжковые двигатели и топоры списываются со склада; базовая платформа и броня фиксированы.':
     'УЧЕБНЫЙ ПРОТОТИП · Конструктор и быстрый бой бесплатны; для контрактов нужен купленный мех.';
   const available=Object.entries(equipmentStock).filter(([,n])=>n>0);
   stock.replaceChildren();
@@ -109,16 +113,28 @@ function renderWarehouse(){
     info.textContent='Оружейный склад используется только для переоборудования купленных мехов.';
     return;
   }
-  const old=countWeapons(installedConfig),next=countWeapons(c);
+  const old=countComponents(installedConfig),next=countComponents(c);
   const needed=Object.entries(next).filter(([name,amount])=>
     amount>(old[name]||0)).map(([name,amount])=>({
       name,count:amount-(old[name]||0),stock:equipmentStock[name]||0
     }));
-  const missing=needed.filter(item=>item.count>item.stock);
+  const oldBins=new Map(ammoBinsFor(installedConfig).map(bin=>[bin.key,bin]));
+  const newAmmo=ammoBinsFor(c).filter(bin=>{
+    const existing=oldBins.get(bin.key);
+    return !existing||existing.weapon!==bin.weapon||existing.capacity!==bin.capacity;
+  }).map(bin=>({name:'ammo:'+bin.weapon,count:1,
+    stock:equipmentStock['ammo:'+bin.weapon]||0}));
+  const newAmmoTotals=new Map();
+  for(const bin of newAmmo)newAmmoTotals.set(bin.name,(newAmmoTotals.get(bin.name)||0)+1);
+  const magazines=[...newAmmoTotals].map(([name,count])=>({
+    name,count,stock:equipmentStock[name]||0
+  }));
+  const allNeeded=[...needed,...magazines];
+  const missing=allNeeded.filter(item=>item.count>item.stock);
   info.textContent=missing.length?
     'НЕДОСТАТОЧНО НА СКЛАДЕ: '+missing.map(x=>x.name+' ×'+(x.count-x.stock)).join(', ')+
       '. Сначала купите вооружение на рынке.':
-    needed.length?'Потребуется со склада: '+needed.map(x=>x.name+' ×'+x.count).join(', ')+
+    allNeeded.length?'Потребуется со склада: '+allNeeded.map(x=>x.name+' ×'+x.count).join(', ')+
       '. Снятое оружие вернётся на склад.':
       'Новое оружие не требуется. Снятые орудия возвращаются на склад. Боезапас пока не оплачивается.';
 }

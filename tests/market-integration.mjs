@@ -120,6 +120,63 @@ modified.equipment.push({type:'Medium Laser',location:'LA',slot:5});
 let changed=await req('/api/v1/hangar/'+mechId,{method:'PATCH',
   cookie:one.cookie,body:{config:modified}});
 assert.equal(changed.status,200,JSON.stringify(changed.data));
+// Installed heat sinks affect the combat heat phase and are paid refits.
+const freeSlot=Object.entries(construct(modified).unit.slots)
+  .flatMap(([location,slots])=>slots.map((value,index)=>({
+    location,slot:index+1,value
+  }))).find(x=>x.value===null&&['LT','RT','LA','RA'].includes(x.location));
+assert(freeSlot,'Need space for a single additional heat sink');
+const withSink=structuredClone(modified);
+withSink.sinks++;
+withSink.equipment.push({type:'sink',location:freeSlot.location,slot:freeSlot.slot});
+assert.deepEqual(construct(withSink).errors,[]);
+const freeSystem=await req('/api/v1/hangar/'+mechId,{
+  method:'PATCH',cookie:one.cookie,body:{config:withSink}
+});
+assert.equal(freeSystem.status,409);
+assert.equal(freeSystem.data.error,'insufficient_equipment');
+const sinkListing=(await req('/api/v1/economy',{cookie:one.cookie})).data.catalog
+  .find(x=>x.sku==='system:sink');
+assert(sinkListing&&sinkListing.price>0);
+const sinkPurchase=await req('/api/v1/economy/purchase',{
+  method:'POST',cookie:one.cookie,body:{sku:'system:sink',quantity:1}
+});
+assert.equal(sinkPurchase.status,200);
+let heatRefit=await req('/api/v1/hangar/'+mechId,{
+  method:'PATCH',cookie:one.cookie,body:{config:withSink}
+});
+assert.equal(heatRefit.status,200,JSON.stringify(heatRefit.data));
+assert.equal(construct(heatRefit.data.item.state.config).unit.sinks,
+  modified.sinks+1);
+assert.equal((await req('/api/v1/economy',{cookie:one.cookie}))
+  .data.equipmentStock['system:sink'],0);
+heatRefit=await req('/api/v1/hangar/'+mechId,{
+  method:'PATCH',cookie:one.cookie,body:{config:modified}
+});
+assert.equal(heatRefit.status,200);
+assert.equal((await req('/api/v1/economy',{cookie:one.cookie}))
+  .data.equipmentStock['system:sink'],1,
+  'Removed heat sink must return to the physical warehouse');
+
+// Jump jets affect MP directly. Removing one returns the item; installing
+// it back consumes that stock instead of fabricating another jet.
+const fewerJets=structuredClone(modified);
+fewerJets.jump--;
+fewerJets.equipment.splice(fewerJets.equipment.findIndex(e=>e.type==='jump'),1);
+assert.deepEqual(construct(fewerJets).errors,[]);
+const slow=await req('/api/v1/hangar/'+mechId,{
+  method:'PATCH',cookie:one.cookie,body:{config:fewerJets}
+});
+assert.equal(slow.status,200);
+assert.equal(construct(slow.data.item.state.config).unit.jump,modified.jump-1);
+assert.equal((await req('/api/v1/economy',{cookie:one.cookie}))
+  .data.equipmentStock['system:jump'],1);
+const fast=await req('/api/v1/hangar/'+mechId,{
+  method:'PATCH',cookie:one.cookie,body:{config:modified}
+});
+assert.equal(fast.status,200);
+assert.equal((await req('/api/v1/economy',{cookie:one.cookie}))
+  .data.equipmentStock['system:jump'],0);
 wallet=await req('/api/v1/economy',{cookie:one.cookie});
 assert.equal(wallet.data.equipmentStock['Medium Laser'],0,'Weapon must leave warehouse');
 assert.equal((await req('/api/v1/hangar/'+mechId,{method:'PATCH',
@@ -136,14 +193,35 @@ const locked=await req('/api/v1/hangar/'+mechId,{method:'PATCH',
   cookie:one.cookie,body:{config:altered}});
 assert.equal(locked.status,409,JSON.stringify(locked.data));
 assert.equal(locked.data.error,'factory_frame_locked');
+// Returning the original LRM loadout adds real magazine bins. The
+// operation must charge each compatible pack first.
+const bins=purchasedConfig.equipment.filter(e=>e.type==='ammo');
+const guns=purchasedConfig.equipment.filter(e=>
+  !['ammo','jump','sink','hatchet'].includes(e.type));
+const required=new Map();
+for(const bin of bins){
+  const sku='ammo:'+guns[bin.weapon].type;
+  required.set(sku,(required.get(sku)||0)+1);
+}
+const ammoCatalog=(await req('/api/v1/economy',{cookie:one.cookie})).data.catalog;
+let ammoCost=0;
+for(const [sku,quantity] of required){
+  const item=ammoCatalog.find(x=>x.sku===sku);
+  assert(item,'No ammo market listing for '+sku);
+  const supply=await req('/api/v1/economy/purchase',{
+    method:'POST',cookie:one.cookie,body:{sku,quantity}
+  });
+  assert.equal(supply.status,200,JSON.stringify(supply.data));
+  ammoCost+=item.price*quantity;
+}
 changed=await req('/api/v1/hangar/'+mechId,{method:'PATCH',
   cookie:one.cookie,body:{config:purchasedConfig}});
 assert.equal(changed.status,200,JSON.stringify(changed.data));
 wallet=await req('/api/v1/economy',{cookie:one.cookie});
 assert.equal(wallet.data.equipmentStock['Medium Laser'],1,
   'Uninstalled laser should return to warehouse without duplication');
-assert.equal(wallet.data.balance,150000-2500-offer.price,
-  'Refitting inventory alone should not create new money');
+assert.equal(wallet.data.balance,150000-2500-offer.price-sinkListing.price-ammoCost,
+  'Weapon and system refits charge purchased parts, not hidden fees');
 const license=await req('/api/v1/operations',{method:'POST',
   cookie:one.cookie,body:{title:'Оплаченный контракт',mechIds:[mechId]}});
 assert.equal(license.status,201,JSON.stringify(license.data));

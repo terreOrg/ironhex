@@ -52,3 +52,11 @@ test('Ammo packs are server-owned, listed only for supported firearms',()=>{
   assert(!ammo.some(x=>x.sku==='ammo:PPC'));
   assert(!EQUIPMENT_CATALOG.some(x=>x.sku==='weapon:ER PPC'));
 });
+
+test('Physical equipment is purchasable only where combat mechanics already exist',()=>{
+  const systems=EQUIPMENT_CATALOG.filter(x=>x.kind==='system');
+  assert.deepEqual(systems.map(x=>x.sku).sort(),
+    ['system:hatchet','system:jump','system:sink']);
+  assert(systems.every(x=>Number.isSafeInteger(x.price)&&x.price>0));
+  assert(!EQUIPMENT_CATALOG.some(x=>x.sku==='system:ecm'));
+});

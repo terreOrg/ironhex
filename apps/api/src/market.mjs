@@ -169,7 +169,7 @@ export const showMechOffer=offer=>({
 
 // Merchandise is generated from the *same* rules definitions as combat.
 export {WEAPON_SPECS} from '../../../packages/engine/equipment.js';
-import {WEAPON_SPECS,WEAPON_NAMES,AMMO_PACKS} from '../../../packages/engine/equipment.js';
+import {WEAPON_SPECS,WEAPON_NAMES,AMMO_PACKS,SYSTEM_ITEMS} from '../../../packages/engine/equipment.js';
 export const EQUIPMENT_CATALOG=[
   ...WEAPON_NAMES.map(name=>{
     const item=WEAPON_SPECS[name];
@@ -177,7 +177,8 @@ export const EQUIPMENT_CATALOG=[
       tons:item.tons,slots:item.slots,heat:item.heat,damage:item.damage,
       ranges:item.ranges,roundsPerTon:item.roundsPerTon};
   }),
-  ...Object.values(AMMO_PACKS).map(pack=>({...pack}))
+  ...Object.values(AMMO_PACKS).map(pack=>({...pack})),
+  ...SYSTEM_ITEMS.map(item=>({...item}))
 ];
 export const weaponName=sku=>typeof sku==='string'&&sku.startsWith('weapon:')&&
   Object.hasOwn(WEAPON_SPECS,sku.slice(7))?sku.slice(7):null;

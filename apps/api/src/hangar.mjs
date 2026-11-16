@@ -1,6 +1,6 @@
 import { construct } from '../../../packages/engine/construction.js';
 import {weaponCounts} from './market.mjs';
-import {ammoBinsFor,normalizedAmmoState} from '../../../packages/engine/equipment.js';
+import {ammoBinsFor,normalizedAmmoState,systemCounts} from '../../../packages/engine/equipment.js';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -93,21 +93,18 @@ export function createHangarStore(pool) {
             throw new AuthError(409,'mech_needs_repair');
           const old=row.state.config,now=design.state.config;
           const same=(l,r)=>JSON.stringify(l)===JSON.stringify(r);
-          for(const key of ['tonnage','walk','jump','sinks','armor','rear']){
+          for(const key of ['tonnage','walk','armor','rear']){
             if(!same(old[key],now[key]))
               throw new AuthError(409,'factory_frame_locked');
           }
           if(!same([...(old.removeActuators||[])].sort(),
                    [...(now.removeActuators||[])].sort()))
             throw new AuthError(409,'factory_frame_locked');
-          // Installed jump jets, heat sinks and hatchets stay part of the
-          // purchased frame. Ammunition bins remain free in this release.
-          const fixed=x=>(x.equipment||[])
-            .filter(e=>['jump','sink','hatchet'].includes(e.type))
-            .map(e=>[e.type,e.location,e.slot].join(':')).sort();
-          if(!same(fixed(old),fixed(now)))
-            throw new AuthError(409,'factory_frame_locked');
-          const previous=weaponCounts(old),next=weaponCounts(now);
+          // The shared combat registry models jump MP, cooling and hatchet
+          // attacks. Count those real systems alongside weapons so refits
+          // must spend/return owned components, never conjure them for free.
+          const previous=new Map([...weaponCounts(old),...systemCounts(old)]);
+          const next=new Map([...weaponCounts(now),...systemCounts(now)]);
           for(const name of new Set([...previous.keys(),...next.keys()])){
             const delta=(next.get(name)||0)-(previous.get(name)||0);
             if(delta>0){

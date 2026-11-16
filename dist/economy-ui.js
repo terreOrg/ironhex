@@ -160,7 +160,7 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
     el('h4','economy-heading','ГОТОВЫЕ К ПОКУПКЕ'),mechs,
     el('h4','economy-heading','ПОЛНЫЙ КАТАЛОГ MEGAMEK'),filter,onlyAvailable,
     filters,reset,filterHint,archiveSummary,archive,pager,
-    el('h3','economy-heading','ВООРУЖЕНИЕ И РЕМОНТНЫЕ КОМПЛЕКТЫ'),supplies,
+    el('h3','economy-heading','ВООРУЖЕНИЕ, СИСТЕМЫ, БОЕПРИПАСЫ И РЕМОНТ'),supplies,
     el('h3','economy-heading','ОРУЖЕЙНЫЙ СКЛАД'),inventory,
     el('h3','economy-heading','БОЕПРИПАСЫ И ПЕРЕЗАРЯДКА'),magazines,
     el('h3','economy-heading','РЕМОНТ АНГАРА'),repairs,
@@ -236,7 +236,7 @@ export async function refreshEconomy(){
       text.append(el('strong','',entry.name),
         el('small','','Цена: '+money(entry.price)+' · На складе: '+
           (entry.kind==='weapon'?(data.equipmentStock?.[entry.name]||0):
-            entry.kind==='ammo'?(data.equipmentStock?.[entry.sku]||0):
+            ['ammo','system'].includes(entry.kind)?(data.equipmentStock?.[entry.sku]||0):
             (data.stock?.[entry.sku]||0))));
       const buy=el('button','op-primary','КУПИТЬ');
       buy.type='button';

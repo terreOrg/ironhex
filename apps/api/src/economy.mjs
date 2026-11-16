@@ -106,12 +106,12 @@ export function createEconomyStore(pool){
       return inTransaction(pool,async c=>{
         await changeCredits(c,owner,-item.price*body.quantity,
           'Закупка: '+item.name,'supply:'+randomUUID());
-        const isWeapon=item.kind==='weapon'||item.kind==='ammo';
+        const isWeapon=['weapon','ammo','system'].includes(item.kind);
         const result=isWeapon?await c.query(
           'INSERT INTO commander_equipment(commander_id,equipment_type,quantity) '+
           'VALUES($1,$2,$3) ON CONFLICT(commander_id,equipment_type) DO UPDATE SET '+
           'quantity=commander_equipment.quantity+EXCLUDED.quantity RETURNING quantity',
-          [owner,item.kind==='ammo'?item.sku:item.name,body.quantity]):await c.query(
+          [owner,item.kind==='weapon'?item.name:item.sku,body.quantity]):await c.query(
           'INSERT INTO commander_supplies(commander_id,sku,quantity) '+
           'VALUES($1,$2,$3) ON CONFLICT(commander_id,sku) DO UPDATE SET '+
           'quantity=commander_supplies.quantity+EXCLUDED.quantity RETURNING quantity',
