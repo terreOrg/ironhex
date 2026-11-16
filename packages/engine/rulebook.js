@@ -22,7 +22,7 @@ export function outOfBookEquipment(config){
   return [...new Set((config?.equipment||[])
     .map(item=>item?.type)
     .filter(type=>type&&type!=='ammo'&&
-      !['jump','sink','hatchet'].includes(type)&&!approved.has(type)))];
+      !['jump','sink','hatchet','case'].includes(type)&&!approved.has(type)))];
 }
 // BattleMech Manual and TechManual cover supplementary technology. Keep
 // advanced definitions for continued engineering work, but do not silently
