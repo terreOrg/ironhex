@@ -406,7 +406,7 @@ test('Every headquarters menu section docks the cards left and renders centered 
       const examples=[
         ['#hub-hangar-button','Ангар','#hub-hangar'],
         ['#hub-pilots-button','Личный состав','#hub-roster'],
-        ['#hub-campaigns-button','Кампании','#hub-campaigns-panel'],
+        ['#hub-campaigns-button','Боевые операции','#hub-campaigns-panel'],
         ['#hub-market-button','Рынок','#hub-market-panel'],
         ['#hub-mechlab-button','Конструктор мехов','#hub-mechlab-panel'],
         ['#hub-battle','Быстрый бой','#hub-battle-panel']
@@ -458,5 +458,68 @@ test('Mobile headquarters uses a scrollable compact command rail without clipped
       assert(result.navScroll>result.navVisible,'Navigation should scroll horizontally');
       await page.locator('#hub-home-button').click();
       assert.equal(await page.locator('.hub-intro').isVisible(),true);
+    });
+  });
+
+
+test('Operation briefing creates a roster and displays a trusted after-action report',
+  {timeout:120000},async()=>{
+    await withPage('operations-briefing',{hub:true},async page=>{
+      const mechId='11111111-1111-4111-8111-111111111111';
+      const opId='22222222-2222-4222-8222-222222222222';
+      const roster=[{mechId,chassis:'Griffin 1N',tonnage:55,pilot:null}];
+      let operation=null,version=0;
+      const json=(route,status,body)=>route.fulfill({status,
+        contentType:'application/json',body:JSON.stringify(body)});
+      await page.route('**/api/v1/hangar',route=>json(route,200,{
+        items:[{id:mechId,chassis:'Griffin 1N',
+          state:{config:{tonnage:55}},pilotId:null}]
+      }));
+      await page.route('**/api/v1/operations**',async route=>{
+        const request=route.request();
+        const {pathname}=new URL(request.url());
+        const method=request.method();
+        if(pathname==='/api/v1/operations'&&method==='GET')
+          return json(route,200,{items:operation?[operation]:[]});
+        if(pathname==='/api/v1/operations'&&method==='POST'){
+          const body=request.postDataJSON();
+          assert.deepEqual(body.mechIds,[mechId]);
+          operation={id:opId,title:body.title,status:'draft',version:0,
+            roster,state:null,report:null,result:null};
+          return json(route,201,{item:operation});
+        }
+        if(pathname==='/api/v1/operations/'+opId&&method==='GET')
+          return json(route,200,{item:operation});
+        if(pathname.endsWith('/launch')&&method==='POST'){
+          operation={...operation,status:'active',version:++version,
+            state:{round:1,phase:'initiative',units:[],log:[]}};
+          return json(route,200,{item:operation});
+        }
+        if(pathname.endsWith('/advance')&&method==='POST'){
+          operation={...operation,status:'completed',version:++version,
+            state:{round:2,phase:'end',units:[],log:['Победа']},
+            report:{result:'victory',rounds:1,log:['Победа'],
+              rewards:[{mechId,chassis:'Griffin 1N',pilotId:null,callsign:null,
+                experience:0,wounds:0,destroyed:false,
+                armorLost:2,structureLost:0}],
+              equipmentNote:'Ремонт пока недоступен.'}};
+          return json(route,200,{item:operation});
+        }
+        return json(route,404,{error:'not_found'});
+      });
+      await page.locator('#hub-campaigns-button').click();
+      await page.locator('#op-create-form').waitFor({state:'visible'});
+      await page.locator('#op-mech-list input[name=mechId]').check();
+      await page.locator('#op-create').click();
+      await page.locator('#op-current .op-overline').waitFor({state:'visible'});
+      assert.match(await page.locator('#op-current').textContent(),/ПОДГОТОВКА/);
+      await page.getByRole('button',{name:'НАЧАТЬ ОПЕРАЦИЮ'}).click();
+      await page.getByRole('button',{name:'ПРОВЕСТИ СЛЕДУЮЩИЙ РАУНД'}).waitFor();
+      await page.getByRole('button',{name:'ПРОВЕСТИ СЛЕДУЮЩИЙ РАУНД'}).click();
+      await page.locator('.op-outcome.victory').waitFor({state:'visible'});
+      assert.match(await page.locator('#op-current').textContent(),/ПОСЛЕБОЕВОЙ РАПОРТ/);
+      assert.match(await page.locator('#op-current').textContent(),/Броня −2/);
+      await page.locator('.op-history-entry').first().click();
+      await page.locator('.op-outcome.victory').waitFor({state:'visible'});
     });
   });

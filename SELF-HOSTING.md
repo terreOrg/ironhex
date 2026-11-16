@@ -274,3 +274,45 @@ Experience, victories, kills, wounds and ranks are read-only in this release:
 no API permits users to award themselves XP or fake battles. A future
 server-side combat referee will record verifiable battle results and handle
 pilot advancement and campaign rosters.
+
+
+## 9. Persistent server battle operations (first release)
+
+The **ОПЕРАЦИИ** menu in headquarters is the first campaign-ready
+server-mode mission board, separate from the existing **БЫСТРЫЙ БОЙ**
+browser-controlled 3D training game.
+
+1. In the hangar, save one or two BattleTech-legal designs and optionally
+   assign pilots. Open **ОПЕРАЦИИ** and select 1–2 saved mechs.
+2. The server freezes the selected chassis and pilot skills in a PostgreSQL
+   mission draft. Other commanders cannot read or modify it.
+3. Start the operation and advance one round per click. The API uses
+   `packages/engine/engine.js` to simulate movement, initiative, firing,
+   physical attacks, heat and damage **on the server** against two AI mechs.
+   Each request persists the state and random generator position.
+4. Completed operations produce a saved report with winner, rounds,
+   damage, pilot wounds and battle log. Awards are calculated exclusively
+   by the server and granted once, inside the database transaction.
+5. The report is linked to the pilot's service record. Experience and
+   rank update; the currently active hangar design is not automatically
+   changed by damage. Stopping an operation grants no XP.
+6. Automatic resolution ends in a draw after at most 12 rounds. It is
+   intended as a campaign-operation prototype, **not yet an interactive
+   server-authoritative version of the full 3D skirmish**. The existing
+   quick battle continues to use local browser simulation and cannot
+   grant verified XP or generate official campaign reports.
+
+The endpoints are same-origin, cookie-authenticated, PostgreSQL owner-scoped:
+
+- `GET/POST /api/v1/operations` — list/create operations
+- `GET /api/v1/operations/{id}` — retrieve a saved draft, round or report
+- `POST /api/v1/operations/{id}/launch` — lock a draft into an active battle
+- `POST /api/v1/operations/{id}/advance` — simulate exactly one server round
+- `POST /api/v1/operations/{id}/abandon` — close without rewards
+
+All mutations require Origin and JSON {} for commands without parameters.
+Clients cannot submit winner, arbitrary dice, damage, rank or XP.
+Concurrent attempts are serialized by PostgreSQL row locks. A completed
+operation cannot be advanced or rewarded again. Damage deductions, repair,
+contracts, travel, hiring, economy and full interactive server 3D commands
+are future work.
