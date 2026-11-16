@@ -68,6 +68,20 @@ test('Turn cannot advance while unit declarations remain',()=>{const g=game();ac
 test('Shared MG pool cannot declare two shots with one round',()=>{const g=game(),u=g.units[3],t=g.units[0];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.bins.find(b=>b.weapon===6).shots=1;g.syncAmmo(u);acting(g,3,'fire');assert.equal(g.declareFire(3,[{index:6,target:0},{index:7,target:0}]).ok,false);assert.equal(g.declarations.length,0);});
 
 
+
+test('Split torso-arm weapon uses restrictive torso firing arc (TechManual p.57)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=-1;t.r=1;
+ const gun={...u.weapons[0],location:'RA',rear:false,locations:['RA','RT']};
+ assert.equal(g.arc(u,t,{...gun,locations:undefined}),true);
+ assert.equal(g.arc(u,t,gun),false);
+});
+test('Fire from split torso-arm weapon occupies both mounts for later physical attacks (TechManual p.57)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ u.weapons[0].locations=['RA','RT'];acting(g,0,'fire');
+ assert(g.declareFire(0,[{index:0,target:2}]).ok);g.resolveFire();
+ assert(u.firedLocations.includes('RA'));assert(u.firedLocations.includes('RT'));
+ assert.equal(g.physicalPreview(0,2,'punch','RA').legal,false);
+});
 test('Prone fire with both arms intact allows unbraced torso mounts (BMM p.30)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;u.prone=true;u.brace='LA';
  assert(g.preview(0,2,1).legal);
