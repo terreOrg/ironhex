@@ -36,7 +36,48 @@ test('Turn cannot advance while unit declarations remain',()=>{const g=game();ac
 test('Shared MG pool cannot declare two shots with one round',()=>{const g=game(),u=g.units[3],t=g.units[0];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.bins.find(b=>b.weapon===6).shots=1;g.syncAmmo(u);acting(g,3,'fire');assert.equal(g.declareFire(3,[{index:6,target:0},{index:7,target:0}]).ok,false);assert.equal(g.declarations.length,0);});
 test('Declared shot survives destruction of shooter',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;acting(g,0,'fire');assert(g.declareFire(0,[{index:0,target:2}]).ok);u.dead=true;g.resolveFire();assert.equal(g.resolution.length,1);assert.equal(u.pendingHeat,10);});
 test('Two punches declare two independent attack rolls',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;acting(g,0,'physical');assert(g.declarePhysical(0,2,'punch','both').ok);assert.equal(g.physicalDeclarations.length,2);g.resolvePhysical();assert.equal(g.resolution.length,2);});
-test('Shutdown PSR can succeed rather than automatic fall',()=>{const g=game(),u=g.units[0];g.rng=()=>.99;u.shutdown=true;assert(g.psr(u,3,'Shutdown',true));assert.equal(u.prone,false);});
+test('First involuntary reactor shutdown PSR can succeed (BMM p.52)',()=>{const g=game(),u=g.units[0];g.rng=()=>.99;u.heat=30;u.sinks=0;g.heatPhase();assert.equal(u.shutdown,true);assert.equal(u.prone,false);});
+
+test('Failed initial heat shutdown PSR causes fall and automatic pilot injury (BMM pp.52,54)',()=>{
+ const g=game(),u=g.units[0];u.heat=30;u.sinks=0;u.piloting=9;g.rng=()=>.5;
+ g.heatPhase();assert.equal(u.shutdown,true);assert.equal(u.prone,true);
+ assert.equal(u.pilotWounds,1);
+});
+test('Any subsequent PSR after reactor shutdown fails automatically (BMM p.53)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;u.shutdown=true;
+ assert.equal(g.psr(u,0,'Другой манёвр',true),false);
+ assert.equal(u.prone,true);assert.equal(u.pilotWounds,1);
+});
+test('Voluntary shutdown occurs in End Phase without causing a PSR (BMM p.52)',()=>{
+ const g=game(),u=g.units[0];u.shutdownNext=true;g.endPhase();
+ assert.equal(u.shutdown,true);assert.equal(u.voluntaryShutdown,true);
+ assert.equal(u.prone,false);assert.equal(u.pilotWounds,0);
+});
+test('Voluntary shutdown persists across Heat Phase and restarts only when ordered at End Phase',()=>{
+ const g=game(),u=g.units[0];u.shutdownNext=true;g.endPhase();
+ g.heatPhase();assert.equal(u.shutdown,true);
+ acting(g,0,'move');assert(g.orderShutdown(0).ok);g.endPhase();
+ assert.equal(u.shutdown,false);assert.equal(u.voluntaryShutdown,false);
+});
+test('Voluntary reactor restart is forbidden at heat 30+ (BMM p.52)',()=>{
+ const g=game(),u=g.units[0];u.shutdownNext=true;g.endPhase();
+ u.heat=30;u.sinks=0;acting(g,0,'move');assert(g.orderShutdown(0).ok);
+ g.endPhase();assert.equal(u.shutdown,true);assert.equal(u.voluntaryShutdown,true);
+});
+test('Losing one leg permits walking but not ordinary running or evasion (BMM p.45)',()=>{
+ const g=game(),u=g.units[0];u.structure.LL=0;
+ assert.equal(g.mp(u,'walk'),1);assert.equal(g.mp(u,'run'),0);
+ acting(g,0,'move');assert.equal(g.reachable(u,'run').length,0);
+ assert.equal(g.reachable(u,'evade').length,0);
+ assert(g.minimumMove(0).ok);assert.equal(u.spent,1);
+});
+test('Destroyed hip or entire leg replaces same-leg PSR actuator modifiers (BMM p.54)',()=>{
+ const g=game(),u=g.units[0];
+ Object.assign(u.actuators.LL,{hip:true,upper:true,lower:true,foot:true});
+ assert.equal(g.psrMod(u),2);
+ u.structure.LL=0;u.actuators.RL.upper=true;
+ assert.equal(g.psrMod(u),6);
+});
 test('Cold shutdown reactor restarts',()=>{const g=game(),u=g.units[0];u.shutdown=true;u.heat=5;g.heatPhase();assert.equal(u.shutdown,false);assert.equal(u.heat,0);});
 test('Destroyed gyro prevents standing',()=>{const g=game(),u=g.units[0];acting(g,0,'move');u.prone=true;u.gyroHits=2;assert.equal(g.stand(0).ok,false);});
 test('Charge declaration requires target movement complete',()=>{const g=game(),u=g.units[0],t=g.units[2];acting(g,0,'move');u.q=-2;u.r=0;u.facing=0;t.q=1;t.r=0;assert.equal(g.declareCharge(0,2).ok,false);t.moved=true;assert(g.declareCharge(0,2).ok);assert.equal(u.charge.type,'charge');assert.equal(g.preview(0,2,0).legal,false);});
