@@ -53,3 +53,6 @@ The models are visual proxies, not canonical depictions.
 See `dist/ASSET-LICENSE.md` and `dist/LICENSES/` for bundled asset credits
 and licensing. BattleTech names and rules remain the property of their
 respective owners; this project is not affiliated with or endorsed by them.
+
+
+The standalone battlefield and MechLab now require an authenticated commander session before their JavaScript modules load. Visiting the site without a valid session opens the full-screen commander login / registration console first. An API outage blocks entry rather than falling back to anonymous gameplay. Static game assets remain publicly downloadable; the access gate is a UI restriction, not an authorization boundary for static files.
