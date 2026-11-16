@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {construct,example} from '../dist/construction.js';
+const r=construct(example);assert.deepEqual(r.errors,[]);assert.equal(r.total,55);assert.equal(r.rating,275);assert.equal(r.unit.weapons[1].ammo,24);
+const c=()=>structuredClone(example);
+let d=c();d.tonnage=50;assert(construct(d).errors.some(e=>e.includes('массы')));
+d=c();d.equipment[0].slot=1;assert(construct(d).errors.some(e=>e.includes('заняты')));
+d=c();d.armor.HD=10;assert(construct(d).errors.some(e=>e.includes('HD')));
+d=c();d.jump=6;assert(construct(d).errors.length);
+d=c();d.equipment.pop();assert(construct(d).errors.some(e=>e.includes('теплоотводов')));
+d=c();d.equipment.push({type:'ammo',location:'LT',slot:3,weapon:99,mass:1});assert(construct(d).errors.some(e=>e.includes('ссылаться')));
+d=c();d.tonnage=100;d.walk=3;d.jump=0;d.sinks=10;d.equipment=[{type:'AC/20',location:'RA',slot:5,splitLocation:'RT',splitSlot:1,splitCount:8},{type:'ammo',location:'LT',slot:1,weapon:0,mass:1},{type:'hatchet',location:'LA',slot:5}];assert.deepEqual(construct(d).errors,[]);assert.equal(construct(d).unit.hatchets.length,1);assert.equal(construct(d).unit.slots.RT[1],'w:0');
+d.equipment[0].splitLocation='LL';assert(construct(d).errors.some(e=>e.includes('AC/20')));
+console.log('9 construction checks passed');

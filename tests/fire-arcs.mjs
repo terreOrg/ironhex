@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import {Game} from '../dist/engine.js';
+import {firingArcTiles} from '../dist/fire-arcs.js';
+const g=new Game(),u=g.units[0];u.q=0;u.r=0;u.facing=0;u.twist=0;
+let tiles=firingArcTiles(g,u,[0]);assert(tiles.has('3,0'));assert(!tiles.has('-3,0'));assert(!tiles.has('0,0'));
+u.facing=3;tiles=firingArcTiles(g,u,[0]);assert(tiles.has('-3,0'));assert(!tiles.has('3,0'));
+u.facing=0;const before=[...firingArcTiles(g,u,[1]).keys()];u.twist=1;assert.notDeepEqual([...firingArcTiles(g,u,[1]).keys()],before);
+u.weapons[0].destroyed=true;assert.equal(firingArcTiles(g,u,[0]).size,0);u.weapons[0].destroyed=false;u.weapons[1].ammo=0;assert.equal(firingArcTiles(g,u,[1]).size,0);
+assert.equal(firingArcTiles(g,u,[]).size,0);u.dead=true;assert.equal(firingArcTiles(g,u,[0]).size,0);
+console.log('PASS: facing, torso twist, destroyed weapons, ammunition and empty selections');
