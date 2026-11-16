@@ -1,0 +1,22 @@
+name: ironhex
+
+services:
+  ironhex:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ironhex:local
+    pull_policy: build
+    container_name: ironhex
+    restart: unless-stopped
+
+    # Caddy runs on the host; no direct LAN/WAN exposure from Docker.
+    ports:
+      - "127.0.0.1:${IRONHEX_PORT:-18088}:8080"
+
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m
