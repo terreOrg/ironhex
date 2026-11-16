@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,locationNameForMech} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
@@ -425,4 +425,38 @@ test('BMM pp.5,45: quad front/rear leg criticals preserve their six physical slo
   item.kind==='weapon'));
  assert.deepEqual(damagedComponents(config,sanitized),[],
   'Unimplemented quad maintenance is not exposed in the public economy');
+});
+
+test('BMM pp.5,33: combat hit labels use quad front-leg names and distinct biped arms',()=>{
+ const config={...example,name:'Quad hit topology',config:'Quad',
+  jump:0,sinks:10,equipment:[]};
+ const built=construct(config,{auditQuad:true});
+ assert.deepEqual(built.errors,[]);
+ const game=flatGame(),target=game.units[0];
+ Object.assign(target,built.unit);
+ assert.equal(target.config,'Quad');
+ for(const [location,label] of [
+  ['LA','Левая передняя нога'],['RA','Правая передняя нога'],
+  ['LL','Левая задняя нога'],['RL','Правая задняя нога']
+ ])assert.equal(locationNameForMech(target,location),label);
+ const hits=[];
+ game.damage=(unit,location,amount,options)=>{
+  hits.push({location,amount});
+  return [];
+ };
+ // Printed p.33 Front/Rear column, roll 4 -> right front leg, roll 11 -> left front leg.
+ for(const [first,second,expected,label] of [
+  [2,2,'RA','Правая передняя нога'],
+  [5,6,'LA','Левая передняя нога']
+ ]){
+  const dice=[(first-.5)/6,(second-.5)/6];
+  game.rng=()=>dice.shift();
+  const result=game.hit(target,5,'front');
+  assert.equal(result.location,expected);
+  assert.equal(hits.at(-1).location,expected);
+  assert(game.phaseRolls.at(-1).result.includes(label));
+ }
+ target.config='Biped';
+ assert.equal(locationNameForMech(target,'RA'),'Правая рука');
+ assert.equal(locationNameForMech(target,'LA'),'Левая рука');
 });

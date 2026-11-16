@@ -1,5 +1,12 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
 export {LOCATIONS,DIRS,distance};
+const quadLegNames=Object.freeze({
+ LA:'Левая передняя нога',RA:'Правая передняя нога',
+ LL:'Левая задняя нога',RL:'Правая задняя нога'
+});
+export function locationNameForMech(mech,loc){
+ return (mech?.config==='Quad'&&quadLegNames[loc])||LOCATIONS[loc]||loc;
+}
 const wrap=n=>(n%6+6)%6, key=(q,r)=>q+','+r, fail=error=>({ok:false,error});
 const transfer={LA:'LT',RA:'RT',LL:'LT',RL:'RT',LT:'CT',RT:'CT'};
 const front=['CT','RA','RA','RL','RT','CT','LT','LL','LA','LA','HD'],left=['LT','LL','LA','LA','LL','LT','CT','RT','RA','RL','HD'],right=['RT','RL','RA','RA','RL','RT','CT','LT','LA','LL','HD'];
@@ -289,7 +296,7 @@ export class Game extends Legacy{
    attempts++;
   }while(aim&&obscured(loc)&&attempts<100);
  }
- this.phaseRolls.at(-1).result=LOCATIONS[loc]+(obscured(loc)?' · укрытие':` · ${amount} урона`);
+ this.phaseRolls.at(-1).result=locationNameForMech(u,loc)+(obscured(loc)?' · укрытие':` · ${amount} урона`);
  if(obscured(loc))return {location:loc,hits:[],damage:0};
  return {location:loc,hits:this.damage(u,loc,amount,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}),damage:amount};
 }
@@ -308,7 +315,7 @@ export class Game extends Legacy{
   break;
  }
  const ar=rear&&u.rear[loc]!==undefined?u.rear:u.armor;const a=internal?0:Math.min(ar[loc],rem);ar[loc]-=a;rem-=a;const d=Math.min(u.structure[loc],rem);u.structure[loc]-=d;rem-=d;u.phaseDamage+=a+d;hits.push({location:loc,armor:a,structure:d});if(loc==='HD'&&a+d)this.wound(u,1);if(d)this.criticalHit(u,loc,!u.structure[loc]);if(a+d)this.checkHullIntegrity(u,loc);if(!u.structure[loc]){this.destroyLocation(u,loc);if(explosion&&this.hasCASE(u,loc))break;loc=transfer[loc];}else break;}if(tac&&!u.dead)this.criticalHit(u,u.structure[initial]?initial:transfer[initial]||initial,false);return hits;}
- destroyLocation(u,loc){if(!u.slots[loc])return;u.structure[loc]=0;u.armor[loc]=0;for(const b of u.bins)if(b.location===loc){b.destroyed=true;b.shots=0;}this.syncAmmo(u);if(u.rear[loc]!==undefined)u.rear[loc]=0;u.slots[loc].forEach((s,i)=>{if(u.crit[loc][i])return;u.crit[loc][i]=true;if(s==='sink')u.sinksLost++;if(s==='jump')u.jumpLost++;});u.weapons.filter(w=>w.location===loc||w.locations?.includes(loc)).forEach(w=>w.destroyed=true);if(loc==='HD'||loc==='CT'){u.dead=true;if(loc==='HD')u.pilotWounds=6;this.note(`${u.name}: ${LOCATIONS[loc]} уничтожен.`);}if(loc==='LT'||loc==='RT')this.destroyLocation(u,loc==='LT'?'LA':'RA');if(loc==='LL'||loc==='RL')u.psrs.push({modifier:0,reason:'Потеря ноги'});}
+ destroyLocation(u,loc){if(!u.slots[loc])return;u.structure[loc]=0;u.armor[loc]=0;for(const b of u.bins)if(b.location===loc){b.destroyed=true;b.shots=0;}this.syncAmmo(u);if(u.rear[loc]!==undefined)u.rear[loc]=0;u.slots[loc].forEach((s,i)=>{if(u.crit[loc][i])return;u.crit[loc][i]=true;if(s==='sink')u.sinksLost++;if(s==='jump')u.jumpLost++;});u.weapons.filter(w=>w.location===loc||w.locations?.includes(loc)).forEach(w=>w.destroyed=true);if(loc==='HD'||loc==='CT'){u.dead=true;if(loc==='HD')u.pilotWounds=6;this.note(`${u.name}: ${locationNameForMech(u,loc)} уничтожен.`);}if(loc==='LT'||loc==='RT')this.destroyLocation(u,loc==='LT'?'LA':'RA');if(loc==='LL'||loc==='RL')u.psrs.push({modifier:0,reason:'Потеря ноги'});}
  // CASE has an inapplicable critical slot and vents explosion overflow.
  hasCASE(u,loc){return !!u.slots?.[loc]?.includes('case')||u.techBase==='Clan'&&Object.hasOwn(u.slots||{},loc);}
  hasCASEII(u,loc){return !!u.slots?.[loc]?.includes('case2');}

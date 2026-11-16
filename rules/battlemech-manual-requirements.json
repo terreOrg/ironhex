@@ -1073,6 +1073,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM pp.5,45: quad front/rear leg criticals preserve their six physical slots"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.5,33: combat hit labels use quad front-leg names and distinct biped arms"
         }
       ]
     },

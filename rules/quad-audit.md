@@ -129,3 +129,14 @@ A deterministic test checks occupied/unoccupied slots, duplicate and
 invalid critical indices, all four actuator maps, damage capture and
 repair descriptors. This closes a previously untested persistence
 portion of `bmm-req-080`. **The overall Quad topic stays open.**
+
+### Combat-location vocabulary check (printed pp.5, 33)
+
+The shared combat engine now prints **front/rear leg names** instead
+of biped-arm names when resolving hit locations for Quad diagnostic
+units. Regression tests check both Quad front-leg entries from the
+printed Front/Rear column (2D6 rolls 4 and 11), and ensure Biped
+arm names are unaffected. This validates the geometry-to-location
+handoff for the current structural requirement, but does not certify
+Quad-specific combat consequences such as leg destruction or
+falling. Those remain separate known-missing requirements.
