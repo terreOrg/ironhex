@@ -46,6 +46,10 @@ function serve(req,res) {
       browserPilots.push(item);
       return reply(201,{item});
     }
+    if (req.method === 'GET' && urlPath === '/api/v1/economy')
+      return authenticated?reply(200,{balance:150000,stock:{},catalog:[],repairs:[],
+        ledger:[],contracts:[{id:'patrol',name:'Приграничный патруль',victory:32000}]}) :
+        reply(401,{error:'unauthorized'});
     if (req.method === 'GET' && urlPath === '/api/v1/hangar')
       return authenticated ? reply(200,{items:[]}) : reply(401,{error:'unauthorized'});
     if (req.method === 'POST' && ['/api/v1/auth/login','/api/v1/auth/register'].includes(urlPath)) {
