@@ -49,3 +49,6 @@ jobs:
             node --test "$file"
             echo "::endgroup::"
           done
+
+      - name: Publish rulebook coverage audit to job log
+        run: node scripts/rules-coverage.mjs --json
