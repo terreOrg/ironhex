@@ -1,4 +1,5 @@
 import {installPilotUI,crewPicker} from './pilot-ui.js';
+import {installOperationUI,refreshOperations} from './operation-ui.js';
 // Main menu and hangar are only initialized after authentication.
 let root, onBattle, onProfile;
 const E=(tag,cls,txt)=>{
@@ -20,6 +21,7 @@ function create() {
   document.body.append(root);
   installPilotUI(root,openSection);
   initializeWorkspace();
+  installOperationUI(root);
   root.querySelector('#hub-battle').onclick=()=>openSection('battle');
   root.querySelector('#hub-profile-button').onclick=()=>onProfile?.();
   root.querySelector('#hub-hangar-button').onclick=()=>{
@@ -94,8 +96,8 @@ const SECTION_INFO={
     detail:'Проверка массы, брони, вооружения и критических слотов.'},
   pilots:{code:'PERSONNEL / 04',title:'Личный состав',
     detail:'Удостоверения, позывные, квалификация и послужной список.'},
-  campaigns:{code:'CAMPAIGN OPERATIONS / 05',title:'Кампании',
-    detail:'Будущая система контрактов, путешествий и развития подразделения.'},
+  campaigns:{code:'SERVER OPERATIONS / 05',title:'Боевые операции',
+    detail:'Подготовка отряда, серверная симуляция, сохранение раундов и рапорты.'},
   market:{code:'LOGISTICS / 06',title:'Рынок',
     detail:'Будущая система закупок, ремонта и торговли.'}
 };
@@ -226,6 +228,7 @@ export function openSection(section,{src}={}){
     root.querySelector('#hub-work-code').textContent=info.code;
     root.querySelector('#hub-work-title').textContent=info.title;
     root.querySelector('#hub-work-description').textContent=info.detail;
+    if(section==='campaigns')void refreshOperations();
     if(section==='battle'||section==='mechlab'){
       const iframe=root.querySelector('#hub-'+section+'-frame');
       const address=src||(section==='battle'?'index.html?battle=1':'mechlab.html');
