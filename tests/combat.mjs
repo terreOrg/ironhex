@@ -3,6 +3,38 @@ import {Game,chargeTravelHexes,distance} from '../dist/engine.js';
 let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS',name);};
 function game(){const g=new Game({rng:()=>.5});for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});return g;}
 function acting(g,id,phase){g.phase=phase;g.activeTeam=g.units[id].team;g.queue=[g.activeTeam];g.actingId=null;}
+
+test('Last critical slot hit this phase does not transfer later criticals (BMM p.46)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;g.phase='fire';
+ u.slots.LT=Array(12).fill(null);u.slots.LT[0]='sink';u.crit.LT=Array(12).fill(false);
+ const startCT=u.crit.CT.filter(Boolean).length;
+ g.criticalHit(u,'LT');assert.equal(u.crit.LT[0],true);
+ g.criticalHit(u,'LT');assert.equal(u.crit.CT.filter(Boolean).length,startCT);
+ g.phase='physical';g.criticalHit(u,'LT');
+ assert.equal(u.crit.CT.filter(Boolean).length,startCT+1);
+});
+test('Critical hits can transfer through multiple previously emptied locations (BMM p.46)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ u.slots.LA=Array(12).fill(null);u.slots.LT=Array(12).fill(null);
+ g.criticalHit(u,'LA');
+ assert.equal(u.crit.CT.filter(Boolean).length,1);
+});
+test('Critical hits in destroyed sections do not transfer to intact torsos (BMM p.46)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.5;
+ u.slots.LT=Array(12).fill(null);
+ g.criticalHit(u,'LT',true);
+ assert.equal(u.crit.CT.filter(Boolean).length,0);
+});
+test('Ammunition explosion that destroys center torso kills pilot (BMM p.44)',()=>{
+ const g=game(),u=g.units[0],bin=u.bins.find(b=>b.location==='RT');
+ assert(bin);bin.shots=5;u.structure.RT=1;u.structure.CT=1;
+ g.explode(u,bin);
+ assert.equal(u.structure.CT,0);assert.equal(u.dead,true);assert.equal(u.pilotWounds,6);
+});
+test('Head destruction kills the pilot rather than only disabling the unit (BMM p.44)',()=>{
+ const g=game(),u=g.units[0];g.destroyLocation(u,'HD');
+ assert.equal(u.dead,true);assert.equal(u.pilotWounds,6);
+});
 test('Rear armor takes rear torso hits before structure',()=>{const g=game(),u=g.units[0],front=u.armor.CT;g.damage(u,'CT',3,{rear:true});assert.equal(u.rear.CT,4);assert.equal(u.armor.CT,front);assert.equal(u.structure.CT,18);});
 test('Destroyed torso destroys attached arm and ammunition',()=>{const g=game(),u=g.units[0];g.destroyLocation(u,'RT');assert.equal(u.structure.RA,0);assert.equal(u.weapons[0].destroyed,true);assert.equal(u.weapons[1].ammo,0);});
 test('Ammo explosion bypasses armor and wounds pilot twice',()=>{const g=game(),u=g.units[0];u.bins[0].shots=1;const a=u.armor.RT;g.explode(u,u.bins[0]);assert.equal(u.structure.RT,3);assert.equal(u.armor.RT,a);assert.equal(u.pilotWounds,2);});
