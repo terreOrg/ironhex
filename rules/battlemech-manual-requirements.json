@@ -1122,6 +1122,14 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.15: destroyed quad leg disables all lateral shifts; bipeds never gain them"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.15: explicit lateral order preserves Quad facing, validates all four direction names"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.15: explicit lateral shift respects elevation, heavy terrain and occupancy"
         }
       ]
     },

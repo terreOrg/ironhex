@@ -4,6 +4,7 @@ import {Game,defaultMechWarriorSkills,locationNameForMech,quadLateralDirections,
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {normalizedCriticalDamage,applyCriticalDamage,captureCriticalDamage,damagedComponents} from '../dist/component-damage.js';
+import {validateTacticalOrder} from '../apps/api/src/server-combat.mjs';
 
 const flatGame=()=>{
  const game=new Game({rng:()=>.5});
@@ -569,4 +570,78 @@ test('BMM p.15: destroyed quad leg disables all lateral shifts; bipeds never gai
  u.config='Biped';
  assert.deepEqual(quadLateralDirections(u,'walk'),[]);
  assert(g.reachable(u,'walk').every(dest=>dest.path.every(step=>!step.lateral)));
+});
+
+test('BMM p.15: explicit lateral order preserves Quad facing, validates all four direction names',()=>{
+ const design=construct({...example,name:'Quad explicit shift',config:'Quad',
+   jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const createGame=()=>{
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(design.unit));
+  for(const other of g.units.slice(1))other.dead=true;
+  u.q=0;u.r=0;u.facing=0;u.spent=0;u.moveMode='stand';
+  g.phase='move';g.queue=[u.team];g.activeTeam=u.team;g.actingId=null;
+  return {g,u};
+ };
+ for(const [direction,offset,mode] of [
+  ['shift-left-forward',1,'walk'],
+  ['shift-right-forward',5,'run'],
+  ['shift-left-backward',2,'walk'],
+  ['shift-right-backward',4,'walk']
+ ]){
+  const {g,u}=createGame(),[q,r]=DIRS[offset];
+  const order={type:'move',version:1,id:0,q,r,mode,lateral:direction};
+  assert.equal(validateTacticalOrder(order).lateral,direction);
+  const out=g.move(u.id,q,r,mode,{lateral:direction});
+  assert(out.ok,direction+': '+out.error);
+  assert.equal(out.to.q,q);assert.equal(out.to.r,r);
+  assert.equal(u.facing,0,direction+' must retain facing');
+  assert.equal(u.spent,2,direction+' must cost exactly 2 MP on clear level terrain');
+ }
+ const {g,u}=createGame();
+ assert.equal(g.move(u.id,...DIRS[2],'run',{lateral:'shift-left-backward'}).ok,false,
+  'Rearward shift must not use running MP');
+ assert.equal(g.move(u.id,...DIRS[1],'walk',{lateral:'shift-right-forward'}).ok,false,
+  'Shift direction may not be spoofed with an adjacent destination');
+ assert.equal(g.move(u.id,0,0,'walk',{lateral:'shift-left-forward'}).ok,false,
+  'A lateral move may not stand still');
+ u.structure.LA=0;
+ assert.equal(g.move(u.id,...DIRS[1],'walk',{lateral:'shift-left-forward'}).ok,false,
+  'An injured quad must not use lateral shifts');
+ u.structure.LA=u.maxStructure.LA;u.config='Biped';
+ assert.equal(g.move(u.id,...DIRS[1],'walk',{lateral:'shift-left-forward'}).ok,false,
+  'Biped must never use explicit Quad-only movement');
+ assert.throws(()=>validateTacticalOrder({type:'move',version:1,id:0,
+   q:1,r:-1,mode:'walk',lateral:'teleport'}),/invalid_command/);
+});
+
+test('BMM p.15: explicit lateral shift respects elevation, heavy terrain and occupancy',()=>{
+ const design=construct({...example,name:'Quad explicit terrain',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const make=()=>{
+  const g=flatGame(),u=g.units[0];
+  Object.assign(u,structuredClone(design.unit));
+  for(const other of g.units.slice(1))other.dead=true;
+  u.q=0;u.r=0;u.facing=0;u.spent=0;u.moveMode='stand';
+  g.phase='move';g.queue=[u.team];g.activeTeam=u.team;g.actingId=null;
+  return {g,u};
+ };
+ const terrain=make(),dest=terrain.g.tile(...DIRS[1]);
+ dest.type='heavy';
+ const shift=terrain.g.move(0,...DIRS[1],'walk',{lateral:'shift-left-forward'});
+ assert(shift.ok,shift.error);
+ assert.equal(terrain.u.spent,4,'Heavy woods 3 MP + lateral surcharge 1');
+ const blocked=make();blocked.g.tile(...DIRS[2]).height=1;
+ assert.equal(blocked.g.move(0,...DIRS[2],'walk',
+  {lateral:'shift-left-backward'}).ok,false,'No backward change in elevation');
+ const climbed=make();climbed.g.tile(...DIRS[1]).height=1;
+ const ascent=climbed.g.move(0,...DIRS[1],'walk',{lateral:'shift-left-forward'});
+ assert(ascent.ok,ascent.error);
+ assert.equal(climbed.u.spent,3,'Forward-side ascent costs terrain 1 + height 1 + shift 1');
+ const occupied=make();occupied.g.units[1].dead=false;
+ occupied.g.units[1].q=DIRS[1][0];occupied.g.units[1].r=DIRS[1][1];
+ assert.equal(occupied.g.move(0,...DIRS[1],'walk',
+  {lateral:'shift-left-forward'}).ok,false,'Cannot end a shift in occupied hex');
 });

@@ -186,3 +186,19 @@ Three tests cover four directions, facing retention and execution,
 walk-versus-run restrictions, height changes, heavy-woods terrain
 costs and all four destroyed-leg variants. The parent Quad heading
 remains `known_missing` until the complete Quad rule set is verified.
+
+### Explicit player-selected lateral orders
+
+Added a validated optional `lateral` field to server tactical
+`move` commands, and a corresponding `Game.move(...,{lateral})`
+path. This makes the four directions explicitly selectable even if
+the default shortest-path algorithm prefers a facing change and a
+different route. The command reuses normal phase/turn constraints,
+movement budget, occupancy, terrain and elevation restrictions.
+Input direction/destination mismatches, invalid strings, missing
+legs and biped chassis are rejected.
+
+Regression tests cover each of the four directions, walking and
+running, explicit facing retention, rearward running denial,
+no backward level changes, terrain/elevation MP surcharge,
+occupied target hexes and command schema validation.

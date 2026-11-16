@@ -249,7 +249,26 @@ export class Game extends Legacy{
   return {hit:true,continueSkid:t.dead,damage:targetDamage,selfDamage};
  }
  rotate(id,delta){const u=this.unit(id);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u))return fail('Разворот недоступен');const cost=Math.abs(delta);if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');if(u.moveMode!=='jump'){const mode=u.moveMode==='stand'?'walk':u.moveMode;if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');u.spent+=cost;u.moveMode=mode;}if(u.moveMode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)u.skidDirection=u.lastMovementDirection??u.facing;u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};}
- move(id,q,r,mode='walk'){const u=this.unit(id),dst=this.reachable(u,mode).find(t=>t.q===q&&t.r===r);if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});if(this.tile(q,r).depth){this.checkExistingHullBreaches(u);if(!u.dead)this.psr(u,0,'Посадка в воду',true,this.tile(q,r).depth);}else if(this.psrMod(u))this.psr(u,0,'Посадка',true);}else for(const p of dst.path){
+ move(id,q,r,mode='walk',options={}){const u=this.unit(id),routes=this.reachable(u,mode);
+ let dst=routes.find(t=>t.q===q&&t.r===r);
+ if(options?.lateral!==undefined){
+  // Explicit BMM p.15 lateral choice must remain legal even when an
+  // alternate rotated path to the same hex has a lower total MP cost.
+  const shift=quadLateralDirections(u,mode).find(s=>s.action===options.lateral);
+  const dir=shift&&DIRS[wrap(u.facing+shift.offset)];
+  const fromTile=this.tile(u.q,u.r),toTile=this.tile(q,r);
+  const delta=fromTile&&toTile?toTile.height-fromTile.height:99;
+  const occupied=this.occupied(q,r,u.id);
+  const valid=routes.length&&shift&&dir&&u.q+dir[0]===q&&u.r+dir[1]===r&&
+    toTile&&!occupied&&Math.abs(delta)<=2&&(!shift.backward||delta===0)&&
+    (!['run','evade'].includes(mode)||!toTile.depth);
+  if(!valid)return fail('Нелегальное боковое смещение');
+  const cost=this.terrainCost(toTile)+Math.abs(delta)+1;
+  if(cost+u.spent>this.mp(u,mode))return fail('Недостаточно MP для бокового смещения');
+  dst={q,r,facing:u.facing,cost,
+    path:[{q,r,facing:u.facing,cost,lateral:shift.backward?'backward':'forward'}]};
+ }
+ if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});if(this.tile(q,r).depth){this.checkExistingHullBreaches(u);if(!u.dead)this.psr(u,0,'Посадка в воду',true,this.tile(q,r).depth);}else if(this.psrMod(u))this.psr(u,0,'Посадка',true);}else for(const p of dst.path){
  const moved=u.q!==p.q||u.r!==p.r;
  if(!moved&&p.facing!==u.facing&&mode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)
   u.skidDirection=u.lastMovementDirection??u.facing;
