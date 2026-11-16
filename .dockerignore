@@ -1,0 +1,10 @@
+.git
+.github
+.openai
+tests
+node_modules
+test-results
+*.log
+*.md
+!dist/ASSET-LICENSE.md
+!dist/LICENSES/**
