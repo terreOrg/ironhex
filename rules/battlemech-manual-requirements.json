@@ -383,6 +383,100 @@
       "statement": "Skidding into buildings requires building collisions and structural damage.",
       "status": "known_missing",
       "evidence": []
+    },
+    {
+      "id": "bmm-req-033",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "CASE II reduces an ammunition explosion to one structural damage point in a protected torso, venting the remainder into rear armor.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II torso vents ammo explosion through rear armor, with only one internal hit (BMM p.119)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-034",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "CASE II in a limb removes up to half of its starting armor after one structural hit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II limb loses up to half original armor and only one structure point (BMM p.119)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-035",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "CASE II in a head removes half the initial head armor (rounded up) and inflicts one structural hit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II head loses one structure and half starting head armor (BMM p.119)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-036",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "Explosion-generated critical hits with CASE II are separately negated when the confirmation roll is 8 or higher.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II suppresses explosion-generated criticals on secondary roll 8+ (BMM p.119)"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-037",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "A confirmed CASE II critical hit below 8 is still applied.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II explosion critical takes effect if confirmation roll is below 8"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-038",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "CASE II is an inapplicable critical slot and leaves ordinary damage transfer untouched.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II has inapplicable crit slots and does not prevent ordinary damage transfer"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-039",
+      "topicId": "bmm-p119-case-ii",
+      "page": 119,
+      "statement": "Clan CASE II uses distinct 0.5-ton construction specifications and Clan technology-base restrictions.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-040",
+      "topicId": "bmm-p118-storage-equipment-case",
+      "page": 118,
+      "statement": "Automatic weightless critical-slot-free standard Clan CASE protection applies to all explosive locations of a Clan BattleMech.",
+      "status": "known_missing",
+      "evidence": []
     }
   ]
 }
