@@ -1308,7 +1308,30 @@
       "chapter": "Damage and criticals",
       "kind": "topic",
       "optional": true,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating criticals is opt-in; default location 2 stays in torso (BMM p.45)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating critical relocates hit and TAC from initial 2 (BMM p.45)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating critical second 2 loses TAC and stays side torso (BMM p.45)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Partial cover rerolls floating critical results for hidden legs (BMM p.45)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Floating criticals does not apply to punch and kick tables"
+        }
+      ],
+      "note": "Optional BMM p.45 floating criticals implemented in normal hit resolution and exposed as an initiative-locked toggle; all listed scenarios tested, but chapter not yet certified fully verified."
     },
     {
       "id": "bmm-p045-torso-destruction",

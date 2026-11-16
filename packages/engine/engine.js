@@ -47,7 +47,7 @@ export function chargeTravelHexes(start,path){
  return count;
 }
 export class Game extends Legacy{
- reset(){super.reset();this.phase='initiative';this.queue=[];this.activeTeam=null;this.actingId=null;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false};
+ reset(){super.reset();this.phase='initiative';this.queue=[];this.activeTeam=null;this.actingId=null;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.units.forEach((u,i)=>{Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
  if(i===2)u.weapons[3].location='CT';if(i===0)u.weapons[1].ammo=24;if(i===3){u.weapons.push({name:'Machine Gun A',damage:2,heat:0,ranges:[1,2,3],min:0,ammo:200,location:'LA',rack:0,shared:6});u.weapons.push({...u.weapons[6],name:'Machine Gun B'});}
@@ -206,7 +206,33 @@ export class Game extends Legacy{
  endPSR(){for(const u of this.units){this.consciousness(u);if(u.phaseDamage>=20)u.psrs.push({modifier:1,reason:'20+ урона'});if(!u.dead&&!u.prone){const tn=u.piloting+this.psrMod(u)+u.psrs.reduce((s,p)=>s+p.modifier,0);for(const p of u.psrs){if(!this.mobile(u)||u.gyroHits>=2||p.reason==='Потеря ноги'||this.roll(u.name+' · '+p.reason,tn)<tn){this.fall(u,0,tn);break;}}}u.psrs=[];u.phaseDamage=0;}}
  fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0){if(u.dead||u.falling)return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(u.shutdown||u.unconscious||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);let damage=Math.ceil(u.tonnage/10)*(levels+1)+extraDamage;if(this.tile(u.q,u.r).depth)damage=Math.floor(damage/2);this.note(`${u.name} упал: ${damage} урона.`);this.packets(u,damage,side);u.falling=false;}
  packets(u,amount,side='front',table='normal'){let total=amount;while(total>0&&!u.dead){const n=Math.min(5,total);this.hit(u,n,side,table);total-=n;}}
- hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){let loc,r;const obscured=l=>cover&&(underwaterCover?!['LL','RL'].includes(l):['LL','RL'].includes(l));if(table==='punch'){r=this.d6('Локация · удар рукой');loc=punch[side][r-1];}else if(table==='kick'){r=this.d6('Локация · удар ногой');loc=side==='left'?'LL':side==='right'?'RL':r<=3?'RL':'LL';}else{let attempts=0;do{r=this.roll(attempts?'Локация попадания · повтор из-за укрытия':'Локация попадания');loc=(side==='left'?left:side==='right'?right:front)[r-2];if(aim&&r>=6&&r<=8)loc=aim;attempts++;}while(aim&&obscured(loc)&&attempts<100);}this.phaseRolls.at(-1).result=LOCATIONS[loc]+(obscured(loc)?' · укрытие':` · ${amount} урона`);if(obscured(loc))return {location:loc,hits:[],damage:0};return {location:loc,hits:this.damage(u,loc,amount,{rear:side==='rear',tac:table==='normal'&&r===2}),damage:amount};}
+ hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){
+ let loc,r,floatingTac=false;const obscured=l=>cover&&(underwaterCover?!['LL','RL'].includes(l):['LL','RL'].includes(l));
+ if(table==='punch'){r=this.d6('Локация · удар рукой');loc=punch[side][r-1];}
+ else if(table==='kick'){r=this.d6('Локация · удар ногой');loc=side==='left'?'LL':side==='right'?'RL':r<=3?'RL':'LL';}
+ else{
+  let attempts=0;
+  do{
+   r=this.roll(attempts?'Локация попадания · повтор из-за укрытия':'Локация попадания');
+   const locations=side==='left'?left:side==='right'?right:front;
+   loc=locations[r-2];
+   if(r===2&&this.tacticalOptions?.floatingCriticals){
+    // BMM p.45: the initial 2 is a through-armor critical opportunity.
+    // A second 2 is an ordinary torso hit; it never creates another TAC.
+    let rerolls=0,locationRoll;
+    do{
+     locationRoll=this.roll('Плавающий критический · локация');
+     loc=locations[locationRoll-2];rerolls++;
+    }while(obscured(loc)&&rerolls<100);
+    floatingTac=locationRoll!==2;
+   }else if(aim&&r>=6&&r<=8)loc=aim;
+   attempts++;
+  }while(aim&&obscured(loc)&&attempts<100);
+ }
+ this.phaseRolls.at(-1).result=LOCATIONS[loc]+(obscured(loc)?' · укрытие':` · ${amount} урона`);
+ if(obscured(loc))return {location:loc,hits:[],damage:0};
+ return {location:loc,hits:this.damage(u,loc,amount,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}),damage:amount};
+}
  damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
  if(explosion&&this.hasCASEII(u,loc)){
   // BMM 2022 p.119: only one point damages structure; remainder vents.

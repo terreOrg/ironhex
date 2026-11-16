@@ -4,6 +4,44 @@ let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS',name);};
 function game(){const g=new Game({rng:()=>.5});for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});return g;}
 function acting(g,id,phase){g.phase=phase;g.activeTeam=g.units[id].team;g.queue=[g.activeTeam];g.actingId=null;}
 
+
+test('Floating criticals is opt-in; default location 2 stays in torso (BMM p.45)',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>0;const observed=[];
+ g.damage=(mech,loc,amount,opts)=>{observed.push({loc,tac:opts.tac});return [];};
+ const out=g.hit(u,5,'front');assert.equal(out.location,'CT');
+ assert.deepEqual(observed,[{loc:'CT',tac:true}]);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Плавающий')).length,0);
+});
+test('Floating critical relocates hit and TAC from initial 2 (BMM p.45)',()=>{
+ const g=game(),u=g.units[0];g.tacticalOptions.floatingCriticals=true;
+ const seq=[0,0,.17,.17];g.rng=()=>seq.shift()??.5;
+ let applied=null;g.damage=(mech,loc,amount,opts)=>{applied={loc,amount,tac:opts.tac};return [];};
+ const hit=g.hit(u,5,'front');
+ assert.equal(hit.location,'RA');assert.deepEqual(applied,{loc:'RA',amount:5,tac:true});
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Плавающий')).length,1);
+});
+test('Floating critical second 2 loses TAC and stays side torso (BMM p.45)',()=>{
+ const g=game(),u=g.units[0];g.tacticalOptions.floatingCriticals=true;g.rng=()=>0;
+ let applied=null;g.damage=(m,loc,amount,opts)=>{applied=opts;return [];};
+ const hit=g.hit(u,5,'left');
+ assert.equal(hit.location,'LT');assert.equal(applied.tac,false);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Плавающий')).length,1);
+});
+test('Partial cover rerolls floating critical results for hidden legs (BMM p.45)',()=>{
+ const g=game(),u=g.units[0];g.tacticalOptions.floatingCriticals=true;
+ const seq=[0,0,0,.5,.17,.17];g.rng=()=>seq.shift()??.5;
+ let applied=null;g.damage=(m,loc,amt,opts)=>{applied={loc,tac:opts.tac};return [];};
+ const hit=g.hit(u,5,'front','normal',null,true);
+ assert.equal(hit.location,'RA');assert.deepEqual(applied,{loc:'RA',tac:true});
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Плавающий')).length,2);
+});
+test('Floating criticals does not apply to punch and kick tables',()=>{
+ const g=game(),u=g.units[0];g.tacticalOptions.floatingCriticals=true;g.rng=()=>0;
+ g.damage=()=>[];
+ g.hit(u,5,'front','punch');g.hit(u,5,'front','kick');
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Плавающий')).length,0);
+});
+
 test('Last critical slot hit this phase does not transfer later criticals (BMM p.46)',()=>{
  const g=game(),u=g.units[0];g.rng=()=>.5;g.phase='fire';
  u.slots.LT=Array(12).fill(null);u.slots.LT[0]='sink';u.crit.LT=Array(12).fill(false);
