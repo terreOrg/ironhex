@@ -110,6 +110,90 @@ const edited=await request('/api/v1/hangar/'+mechId,{
 assert.equal(edited.status,200,JSON.stringify(edited.data));
 assert.equal(edited.data.item.chassis,'Refitted Griffin');
 assert.equal((await request('/api/v1/hangar',{cookie:firstCookie})).data.items[0].callsign,'Lead');
+
+const unauthPilot=await request('/api/v1/pilots');
+assert.equal(unauthPilot.status,401);
+const pilotInput={fullName:'Mara Voss',callsign:'Raven',faction:'mercenary',portrait:3};
+const badPilot=await request('/api/v1/pilots',{
+  method:'POST',cookie:firstCookie,body:{...pilotInput,gunnery:0,experience:999999}
+});
+assert.equal(badPilot.status,422,'Client must not assign free experience or skills');
+assert.equal((await request('/api/v1/pilots',{
+  method:'POST',body:pilotInput,cookie:firstCookie,withOrigin:false
+})).status,403,'Pilot creation requires same-origin request');
+const createdPilot=await request('/api/v1/pilots',{
+  method:'POST',body:pilotInput,cookie:firstCookie
+});
+assert.equal(createdPilot.status,201,JSON.stringify(createdPilot.data));
+const pilotId=createdPilot.data.item.id;
+assert.equal(createdPilot.data.item.gunnery,4);
+assert.equal(createdPilot.data.item.piloting,5);
+assert.equal(createdPilot.data.item.experience,0);
+assert.equal(createdPilot.data.item.callsign,'Raven');
+assert.equal(createdPilot.data.item.assignedMechId,null);
+assert.equal((await request('/api/v1/pilots',{cookie:otherCookie})).data.items.length,0);
+assert.equal((await request('/api/v1/pilots/'+pilotId,{cookie:otherCookie})).status,404);
+assert.equal((await request('/api/v1/pilots/'+pilotId+'/history',{cookie:otherCookie})).status,404);
+assert.equal((await request('/api/v1/pilots/'+pilotId,{
+  method:'PATCH',cookie:otherCookie,body:pilotInput
+})).status,404);
+assert.equal((await request('/api/v1/pilots/'+pilotId,{
+  method:'DELETE',cookie:otherCookie
+})).status,404);
+assert.equal((await request('/api/v1/hangar/'+mechId+'/pilot',{
+  method:'PUT',cookie:otherCookie,body:{pilotId}
+})).status,404);
+assert.equal((await request('/api/v1/hangar/'+mechId+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId:'not-a-uuid'}
+})).status,422);
+assert.equal((await request('/api/v1/hangar/'+mechId+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId},withOrigin:false
+})).status,403);
+const assignment=await request('/api/v1/hangar/'+mechId+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId}
+});
+assert.equal(assignment.status,200,JSON.stringify(assignment.data));
+const roster=await request('/api/v1/pilots',{cookie:firstCookie});
+assert.equal(roster.data.items.length,1);
+assert.equal(roster.data.items[0].assignedMechId,mechId);
+const events=await request('/api/v1/pilots/'+pilotId+'/history',{cookie:firstCookie});
+assert.equal(events.status,200);
+assert.deepEqual(events.data.items,[],'No rewards until battle result is server authoritative');
+const changedPilot=await request('/api/v1/pilots/'+pilotId,{
+  method:'PATCH',cookie:firstCookie,body:{...pilotInput,callsign:'Night Raven',portrait:7}
+});
+assert.equal(changedPilot.status,200);
+assert.equal(changedPilot.data.item.callsign,'Night Raven');
+assert.equal(changedPilot.data.item.portrait,7);
+const otherPilot=await request('/api/v1/pilots',{method:'POST',cookie:otherCookie,body:{
+  ...pilotInput,callsign:'Enemy'
+}});
+assert.equal(otherPilot.status,201);
+assert.equal((await request('/api/v1/hangar/'+mechId+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId:otherPilot.data.item.id}
+})).status,404,'Cannot assign a rival commander’s pilot');
+const secondMech=await request('/api/v1/hangar',{method:'POST',cookie:firstCookie,body:design});
+assert.equal(secondMech.status,201);
+assert.equal((await request('/api/v1/hangar/'+secondMech.data.item.id+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId}
+})).status,409,'Pilot cannot crew two mechs simultaneously');
+assert.equal((await request('/api/v1/hangar/'+mechId+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId:null}
+})).status,200);
+assert.equal((await request('/api/v1/hangar/'+secondMech.data.item.id+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId}
+})).status,200);
+assert.equal((await request('/api/v1/pilots/'+pilotId,{
+  method:'DELETE',cookie:firstCookie
+})).status,200);
+assert.equal((await request('/api/v1/pilots',{cookie:firstCookie})).data.items.length,0);
+assert.equal((await request('/api/v1/hangar/'+secondMech.data.item.id+'/pilot',{
+  method:'PUT',cookie:firstCookie,body:{pilotId:null}
+})).status,200);
+assert.equal((await request('/api/v1/hangar/'+secondMech.data.item.id,{
+  method:'DELETE',cookie:firstCookie
+})).status,200);
+
 const removed=await request('/api/v1/hangar/'+mechId,{
   method:'DELETE',cookie:firstCookie
 });

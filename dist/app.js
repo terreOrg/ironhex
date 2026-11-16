@@ -49,7 +49,13 @@ const pause=ms=>new Promise(r=>setTimeout(r,ms));
 function toast(text){$('#toast').textContent=text;}
 function sum(o){return Object.values(o).reduce((a,b)=>a+b,0);}
 function owned(u){return !!u&&!u.dead&&(hotseat?u.team===game.activeTeam:u.team===0);}
-function applyCustom(){if(!new URLSearchParams(location.search).has('custom'))return;try{const d=JSON.parse(localStorage.getItem('ironhex-design')),r=construct(d.config);if(!r.errors.length&&game.units[d.position])Object.assign(game.units[d.position],r.unit);}catch(e){console.warn('Custom design unavailable',e);}}
+function applyCustom(){if(!new URLSearchParams(location.search).has('custom'))return;try{const d=JSON.parse(localStorage.getItem('ironhex-design')),r=construct(d.config);if(!r.errors.length&&game.units[d.position]){
+  Object.assign(game.units[d.position],r.unit);
+  const p=d.pilot;
+  if(p&&Number.isInteger(p.gunnery)&&Number.isInteger(p.piloting)&&
+     p.gunnery>=0&&p.gunnery<=8&&p.piloting>=0&&p.piloting<=8)
+    Object.assign(game.units[d.position],{gunnery:p.gunnery,piloting:p.piloting});
+}}catch(e){console.warn('Custom design unavailable',e);}}
 applyCustom();
 let aimLocation='',weaponBins={},flamerHeat=false,weaponTargets={},physicalType='kick',physicalLimb='RL';
 function syncModels(){for(const u of game.units){const r=records.get(u.id);if(!r)continue;r.root.position.copy(world(u.q,u.r));r.root.position.y=groundY(u.q,u.r);r.root.rotation.y=Math.PI/2+u.facing*Math.PI/3;if(u.dead&&!r.dead){r.dead=true;r.label.style.display='none';play(u.id,'Collapse',true);}else if(!u.dead){r.model.rotation.x=u.prone?-Math.PI/2:0;r.label.textContent=`${u.id+1} / ${u.name.toUpperCase()}${u.prone?' · ЛЁЖА':''}${u.shutdown?' · OFF':''}${u.unconscious?' · ПИЛОТ БЕЗ СОЗНАНИЯ':''}`;}}}

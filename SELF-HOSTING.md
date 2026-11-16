@@ -254,3 +254,23 @@ To verify API configuration after deployment:
 curl -fsS https://ironhex.krbox.top/api/health
 curl -fsS https://ironhex.krbox.top/api/v1/capabilities
 ```
+
+
+## 8. MechWarrior personnel IDs
+
+The authenticated command hub now includes **ЛИЧНЫЙ СОСТАВ** with fictional
+military-style MechWarrior ID cards: procedural illustrated portraits,
+unique credential numbers, callsigns, affiliations, ranks, Gunnery/Piloting,
+and a read-only service record. Each account can create up to 24 pilots.
+
+Personnel records are stored in PostgreSQL and scoped to their owner.
+In the hangar, assign a pilot to a mech through the **ПИЛОТ МЕХА** selector.
+One pilot can crew only one saved mech at a time. Pilots may be unassigned,
+edited or deleted; deleting a pilot clears their mech assignment.
+
+Initial skills are Gunnery 4 and Piloting 5. The client may use these for
+local hotseat/AI battles, but **combat results are not yet server-authoritative**.
+Experience, victories, kills, wounds and ranks are read-only in this release:
+no API permits users to award themselves XP or fake battles. A future
+server-side combat referee will record verifiable battle results and handle
+pilot advancement and campaign rosters.

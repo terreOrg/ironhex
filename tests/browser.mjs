@@ -12,6 +12,7 @@ const dist = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.glb':'model/gltf-binary' };
 let server, browser, baseURL;
+const browserPilots=[];
 
 function serve(req,res) {
   let urlPath;
@@ -32,6 +33,18 @@ function serve(req,res) {
     };
     if (req.method === 'GET' && urlPath === '/api/v1/auth/me')
       return reply(200,{authenticated,user:authenticated?commander:null});
+    if (req.method === 'GET' && urlPath === '/api/v1/pilots')
+      return reply(200,{items:browserPilots});
+    if (req.method === 'POST' && urlPath === '/api/v1/pilots') {
+      req.resume();
+      const item={id:'a'.repeat(8)+'-aaaa-aaaa-aaaa-'+'a'.repeat(12),
+        fullName:'Mara Voss',callsign:'Raven',faction:'mercenary',
+        portrait:3,rank:'cadet',gunnery:4,piloting:5,experience:0,
+        battles:0,wins:0,losses:0,kills:0,wounds:0,
+        assignedMechId:null,assignedChassis:null};
+      browserPilots.push(item);
+      return reply(201,{item});
+    }
     if (req.method === 'GET' && urlPath === '/api/v1/hangar')
       return authenticated ? reply(200,{items:[]}) : reply(401,{error:'unauthorized'});
     if (req.method === 'POST' && ['/api/v1/auth/login','/api/v1/auth/register'].includes(urlPath)) {
@@ -347,5 +360,26 @@ test('Password recovery opens from login and accepts a one-time link',
       await page.getByText('Пароль изменён.').waitFor();
       assert.equal(await page.locator('#auth-login').isVisible(),true);
       assert.equal(new URL(page.url()).hash,'');
+    });
+  });
+
+
+test('Personnel ID card renders portrait, serial, rank, and combat skills',
+  {timeout:120000},async()=>{
+    await withPage('pilot-id-cards',{hub:true},async page=>{
+      await page.locator('#hub-pilots-button').click();
+      await page.locator('#pilot-editor input[name=fullName]').fill('Mara Voss');
+      await page.locator('#pilot-editor input[name=callsign]').fill('Raven');
+      await page.locator('#pilot-editor select[name=portrait]').selectOption('3');
+      await page.locator('#pilot-save').click();
+      await page.locator('.pilot-id-card').waitFor({state:'visible'});
+      assert.equal(await page.locator('.pilot-id-photo svg').count(),1);
+      assert.match(await page.locator('.pilot-id-top').textContent(),/MECHWARRIOR/);
+      assert.match(await page.locator('.pilot-id-card').textContent(),/RAVEN/);
+      assert.match(await page.locator('.pilot-id-card').textContent(),/GUNNERY/);
+      assert.match(await page.locator('.pilot-id-card').textContent(),/PILOTING/);
+      assert.match(await page.locator('.pilot-id-card').textContent(),/IX-/);
+      await page.locator('#hub-hangar-button').click();
+      assert.equal(await page.locator('#hub-roster').isVisible(),false);
     });
   });
