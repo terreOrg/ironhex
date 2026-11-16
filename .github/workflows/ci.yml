@@ -1,0 +1,62 @@
+name: Ironhex CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ironhex-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  syntax:
+    name: JavaScript syntax
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in dist/*.js tests/*.mjs; do
+            node --check "$file"
+          done
+
+  tests:
+    name: ${{ matrix.suite }} tests
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: combat
+            file: tests/combat.mjs
+          - suite: construction
+            file: tests/construction.mjs
+          - suite: fire-arcs
+            file: tests/fire-arcs.mjs
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run ${{ matrix.suite }} tests
+        shell: bash
+        run: node "${{ matrix.file }}"
