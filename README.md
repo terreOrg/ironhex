@@ -11,14 +11,14 @@ The project has a modular web/API structure with a shared rules engine:
 
 - `apps/web/src/` — authoritative browser JavaScript, HTML and CSS
 - `packages/engine/` — shared BattleTech rules used by browser and backend
-- `apps/api/` — Node.js read-only API and PostgreSQL schema foundation
+- `apps/api/` — authenticated Node.js API, operations, economy and PostgreSQL persistence
 - `dist/` — generated browser runtime, vendored 3D assets and GLB models
 - `compose.yaml` — Komodo Docker stack: frontend, API and PostgreSQL
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) and [SELF-HOSTING.md](SELF-HOSTING.md).
 
 The existing browser AI and hotseat game work independently of the API.
-**Registration, login and server-side sessions are implemented.** Campaign persistence, a functioning market and online multiplayer are not implemented yet. The database tables are only preparation.
+**Registration, login and server-side sessions are implemented.** Server-owned campaign operations, persistent C-Bills, fixed NPC contracts, supply purchasing and repair are playable. Player-to-player trading, open-world campaigns, live pricing and multiplayer are not implemented.
 
 ## Development
 
@@ -56,3 +56,9 @@ respective owners; this project is not affiliated with or endorsed by them.
 
 
 The standalone battlefield and MechLab now require an authenticated commander session before their JavaScript modules load. Visiting the site without a valid session opens the full-screen commander login / registration console first. An API outage blocks entry rather than falling back to anonymous gameplay. Static game assets remain publicly downloadable; the access gate is a UI restriction, not an authorization boundary for static files.
+
+## Campaign economy (first release)
+
+Each commander starts with 150,000 C-Bills. In **ОПЕРАЦИИ**, choose a contract and a repaired hangar roster; the higher-risk contracts improve the opposing AI's Gunnery skill. Victory/draw/defeat payouts are computed once by the server. Armor, structure loss and destroyed status persist in the hangar after an operation; damaged mechs require repair before starting another contract. **РЫНОК И РЕМОНТ** shows the wallet, signed ledger, two repair-supply SKUs and full repair quotes. Purchases and repairs are atomic, owner-scoped PostgreSQL operations.
+
+This is a fixed-price starter economy, **not** a live market: MechLab assembly is still free, equipment trading and ammunition consumption are not charged, and automatic missions can be repeated. See `SELF-HOSTING.md` for costs, endpoints and limits.
