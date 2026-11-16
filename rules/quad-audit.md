@@ -269,3 +269,12 @@ loss thresholds. This is necessary groundwork for correct Quad
 standing and other p.44 damage consequences; the subsection
 remains `tested_case`, not certified until all relevant exclusions
 and failure rolls are independently checked.
+
+### Failed standing attempt edge case
+
+A deterministic failed-PSR test for a Quad with exactly two
+remaining legs verifies that the unit stays prone, does not get
+the requested free facing, consumes exactly 2 MP and 1 heat,
+takes the fall consequence, and cannot attempt another stand
+during the same phase. This prevents treating the successful
+attempt path as evidence for all standing outcomes.

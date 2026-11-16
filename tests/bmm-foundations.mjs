@@ -781,3 +781,32 @@ test('BMM p.44: losing a single Quad leg reduces walking MP by one but preserves
  assert.equal(b.mp(biped,'walk'),1);
  assert.equal(b.mp(biped,'run'),0,'Biped one-leg running prohibition remains');
 });
+
+test('BMM p.19: a failed two-leg Quad stand remains prone and cannot retry this turn',()=>{
+ const design=construct({...example,name:'Quad failed stand',config:'Quad',
+  jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[]);
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,design.unit);
+ for(const other of g.units.slice(1))other.dead=true;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ u.prone=true;u.facing=0;u.spent=0;u.pendingHeat=0;
+ u.moveMode='stand';u.standAttempts=0;
+ u.structure.LA=0;u.structure.RA=0;
+ let fallCount=0;
+ g.fall=actor=>{assert.equal(actor,u);actor.prone=true;fallCount++;};
+ g.rng=()=>0; // roll 2, below the standing PSR target
+ const result=g.stand(0,5);
+ assert(result.ok,result.error);
+ assert.equal(fallCount,1,'Failed PSR causes another fall');
+ assert.equal(u.prone,true,'A failed stand does not make the quad upright');
+ assert.equal(u.facing,0,'Chosen facing applies only after successful stand');
+ assert.equal(u.standAttempts,1);
+ assert.equal(u.spent,2);
+ assert.equal(u.pendingHeat,1);
+ assert.equal(u.moveMode,'run');
+ const roll=g.phaseRolls.find(x=>x.kind.includes('Подъём'));
+ assert(roll);assert.equal(roll.result,'Неудача');
+ assert.equal(g.stand(0).ok,false,
+  'Two-legged quad gets exactly one attempt per movement phase');
+});

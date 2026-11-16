@@ -1174,6 +1174,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.44: losing a single Quad leg reduces walking MP by one but preserves running"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.19: a failed two-leg Quad stand remains prone and cannot retry this turn"
         }
       ]
     },
