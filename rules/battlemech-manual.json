@@ -36,7 +36,8 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "known_missing",
+      "note": "BMM defines quad BattleMechs alongside bipeds; engine's four limb layout and walking/physical arcs currently assume two arms and two legs. Quad-only rules are not implemented; this is an explicit BattleMech-only scope gap."
     },
     {
       "id": "bmm-p005-game-terms",
@@ -145,7 +146,13 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: ranged and physical preview preserve an un-clamped modified TN"
+        }
+      ]
     },
     {
       "id": "bmm-p006-movement-points",
@@ -190,7 +197,13 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: a friendly BattleMech cannot be directly targeted"
+        }
+      ]
     },
     {
       "id": "bmm-p006-target-movement-modifier",
@@ -208,7 +221,14 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: equal target succeeds; target <=2 always succeeds; 13+ fails"
+        }
+      ],
+      "note": "The shared 2D6 outcome is tested at exact equality, auto-success <=2 and auto-failure >=13. All distinct skill/action target-number sources must still be audited before verifying the entire definition."
     },
     {
       "id": "bmm-p007-mech-record-sheet",
@@ -245,7 +265,26 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.7: each 2D6 roll uses two independent six-sided results and their sum"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.7: 1D6 uses exactly one die across all six faces"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "requirements": [
+          "bmm-req-057",
+          "bmm-req-058"
+        ],
+        "notes": "Printed page 7 dice rule covers two independent fair six-sided dice summed for 2D6 and a single die for explicit 1D6. Both were checked for every possible face/outcome. All mechanical dice use Game.roll()/Game.d6()."
+      }
     },
     {
       "id": "bmm-p007-mapsheets",
@@ -300,7 +339,22 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: ordinary IS MechWarriors start at Gunnery 4 / Piloting 5"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: default Clan skill ratings are Gunnery 3 / Piloting 4"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.9: ranged attacks use Gunnery; physical attacks use Piloting"
+        }
+      ],
+      "note": "Gunnery/Piloting baselines and IS/Clan defaults are tested in the battle runtime and shared campaign fallback. Every unusual PSR trigger and special-attack exception remains outside this introductory audit."
     },
     {
       "id": "bmm-p009-the-mechwarrior",
@@ -338,7 +392,18 @@
       "chapter": "Turn sequence",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.10: initiative rerolls 101 consecutive ties and honors the higher 2D6"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.10: either team can win and the losing side moves first"
+        }
+      ],
+      "note": "Both sides roll 2D6, ties are rerolled, higher score wins. Added 101-tie regression. Remains tested_subset until the pathological RNG anti-stall cap (10,000 ties) is eliminated or explicitly justified in complete rules audit."
     },
     {
       "id": "bmm-p010-movement-phase",
@@ -347,7 +412,14 @@
       "chapter": "Turn sequence",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.10: a shutdown or unconscious unit still consumes a movement selection"
+        }
+      ],
+      "note": "An immobile BattleMech may expend its movement selection; complete terrain and PSR correctness is audited in the Movement chapter."
     },
     {
       "id": "bmm-p010-moving-multiple-mechs",
@@ -375,7 +447,14 @@
       "chapter": "Turn sequence",
       "kind": "heading",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.10-12: normal turns advance through exactly six ordered phases"
+        }
+      ],
+      "note": "Six-phase order and no-skipped-selection rule tested; advanced phase-specific order, declaration timing and optional segmented fire remain under audit."
     },
     {
       "id": "bmm-p010-weapon-attack-phase",
@@ -384,7 +463,14 @@
       "chapter": "Turn sequence",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Declared shot survives destruction of shooter"
+        }
+      ],
+      "note": "Introductory sequencing evidence is linked. Rules in the detailed Heat/Combat chapters and all exceptions still require cross-chapter verification."
     },
     {
       "id": "bmm-p011-segmented-fire",
@@ -402,7 +488,14 @@
       "chapter": "Turn sequence",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Voluntary shutdown occurs in End Phase without causing a PSR (BMM p.52)"
+        }
+      ],
+      "note": "Introductory sequencing evidence is linked. Rules in the detailed Heat/Combat chapters and all exceptions still require cross-chapter verification."
     },
     {
       "id": "bmm-p012-heat-phase",
@@ -411,7 +504,14 @@
       "chapter": "Turn sequence",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "External heat allowance resets after Heat Phase (BMM p.50)"
+        }
+      ],
+      "note": "Introductory sequencing evidence is linked. Rules in the detailed Heat/Combat chapters and all exceptions still require cross-chapter verification."
     },
     {
       "id": "bmm-p012-physical-attack-phase",
@@ -420,7 +520,14 @@
       "chapter": "Turn sequence",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Two punches declare two independent attack rolls"
+        }
+      ],
+      "note": "Introductory sequencing evidence is linked. Rules in the detailed Heat/Combat chapters and all exceptions still require cross-chapter verification."
     },
     {
       "id": "bmm-p012-unequal-numbers-of-mechs",
@@ -429,8 +536,15 @@
       "chapter": "Turn sequence",
       "kind": "heading",
       "optional": false,
-      "status": "not_audited",
-      "provenance": "Manually verified in the user-supplied PDF table of contents."
+      "status": "tested_subset",
+      "provenance": "Manually verified in the user-supplied PDF table of contents.",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.12: initiative batches honor 2:1 and 3:1 force ratios"
+        }
+      ],
+      "note": "2:1 and 3:1 grouping tested; exhaustive dynamic ratios and unit-destruction changes within a phase remain unverified."
     },
     {
       "id": "bmm-p012-victory-conditions",
@@ -439,8 +553,9 @@
       "chapter": "Turn sequence",
       "kind": "heading",
       "optional": false,
-      "status": "not_audited",
-      "provenance": "Manually verified in the user-supplied PDF table of contents."
+      "status": "known_missing",
+      "provenance": "Manually verified in the user-supplied PDF table of contents.",
+      "note": "Engine resolves eliminated teams, but the BMM draw condition where the last surviving opponents cannot move and cannot damage each other has not been proven; simultaneous complete destruction must also be audited."
     },
     {
       "id": "bmm-p013-movement",
