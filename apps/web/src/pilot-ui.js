@@ -1,6 +1,6 @@
 // MechWarrior personnel registry: fictional identification cards and crew assignments.
 // All user-entered names are inserted with textContent, never HTML.
-const $=(scope,selector)=>scope.querySelector(selector);
+const $=(selector,scope)=>scope.querySelector(selector);
 const el=(tag,cls,content)=>{
   const x=document.createElement(tag);
   if(cls)x.className=cls;
