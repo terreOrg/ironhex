@@ -3,6 +3,7 @@ import {Game} from '../../../packages/engine/engine.js';
 import {construct} from '../../../packages/engine/construction.js';
 import {validateDesign} from './hangar.mjs';
 import {AuthError} from './auth.mjs';
+import {runTacticalOrder,publicSnapshot} from './server-combat.mjs';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_ROUNDS=12;
@@ -10,7 +11,7 @@ const MAX_OPERATIONS=200;
 
 export function validateOperation(input) {
   if(!input||typeof input!=='object'||Array.isArray(input)||
-     Object.keys(input).some(k=>!['mechIds','title'].includes(k))||
+     Object.keys(input).some(k=>!['mechIds','title','mode'].includes(k))||
      !Array.isArray(input.mechIds)||input.mechIds.length<1||input.mechIds.length>2||
      input.mechIds.some(id=>typeof id!=='string'||!UUID.test(id))||
      new Set(input.mechIds).size!==input.mechIds.length)
@@ -19,7 +20,9 @@ export function validateOperation(input) {
   if(typeof title!=='string'||title.trim().length<3||title.trim().length>80||
      /[\u0000-\u001f\u007f<>]/.test(title))
     throw new AuthError(422,'invalid_operation');
-  return {title:title.trim(),mechIds:input.mechIds};
+  const mode=input.mode??'auto';
+  if(!['auto','interactive'].includes(mode))throw new AuthError(422,'invalid_operation');
+  return {title:title.trim(),mechIds:input.mechIds,mode};
 }
 
 function sourceRng(seed) {
@@ -158,6 +161,7 @@ function publicItem(row,{detail=false}={}){
   }));
   return {
     id:row.id,title:row.title,status:row.status,version:row.version,
+    controlMode:row.control_mode||'auto',
     roster,createdAt:row.created_at,
     startedAt:row.started_at,completedAt:row.completed_at,
     state:detail&&row.battle_state?summary(row.battle_state.game):null,
@@ -167,97 +171,7 @@ function publicItem(row,{detail=false}={}){
 }
 
 export function createOperationStore(pool){
-  async function locked(id,owner,action){
-    if(typeof id!=='string'||!UUID.test(id))throw new AuthError(404,'operation_not_found');
-    const client=await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const found=await client.query(
-        'SELECT * FROM combat_operations WHERE id=$1 AND commander_id=$2 FOR UPDATE',
-        [id,owner]);
-      if(!found.rows.length)throw new AuthError(404,'operation_not_found');
-      const result=await action(client,found.rows[0]);
-      await client.query('COMMIT');
-      return result;
-    }catch(error){
-      await client.query('ROLLBACK');
-      throw error;
-    }finally{client.release();}
-  }
-
-  return {
-    async list(owner){
-      const result=await pool.query(
-        'SELECT * FROM combat_operations WHERE commander_id=$1 '+
-        'ORDER BY created_at DESC,id DESC LIMIT 100',[owner]);
-      return result.rows.map(row=>publicItem(row));
-    },
-    async get(owner,id){
-      if(typeof id!=='string'||!UUID.test(id))throw new AuthError(404,'operation_not_found');
-      const result=await pool.query(
-        'SELECT * FROM combat_operations WHERE id=$1 AND commander_id=$2',[id,owner]);
-      if(!result.rows.length)throw new AuthError(404,'operation_not_found');
-      return publicItem(result.rows[0],{detail:true});
-    },
-    async create(owner,input){
-      const {title,mechIds}=validateOperation(input);
-      const client=await pool.connect();
-      try{
-        await client.query('BEGIN');
-        const current=await client.query(
-          'SELECT status FROM combat_operations WHERE commander_id=$1',[owner]);
-        if(current.rows.length>=MAX_OPERATIONS||
-           current.rows.filter(r=>['draft','active'].includes(r.status)).length>=5)
-          throw new AuthError(409,'operation_limit');
-        const result=await client.query(
-          'SELECT m.id,m.chassis,m.state,m.pilot_id,p.callsign,p.gunnery,p.piloting '+
-          'FROM hangar_mechs m LEFT JOIN mechwarrior_pilots p '+
-          'ON p.id=m.pilot_id AND p.commander_id=m.commander_id '+
-          'WHERE m.commander_id=$1 AND m.id=ANY($2::uuid[])',
-          [owner,mechIds]);
-        if(result.rows.length!==mechIds.length)
-          throw new AuthError(422,'invalid_roster');
-        const found=new Map(result.rows.map(r=>[r.id,r]));
-        const roster=mechIds.map(id=>{
-          const mech=found.get(id);
-          if(!mech?.state?.config)throw new AuthError(422,'invalid_roster');
-          const config=mech.state.config;
-          const checked=validateDesign({config});
-          return {
-            mechId:mech.id,chassis:checked.chassis,config:checked.state.config,
-            pilot:mech.pilot_id?{
-              id:mech.pilot_id,callsign:mech.callsign,
-              gunnery:mech.gunnery,piloting:mech.piloting
-            }:null
-          };
-        });
-        const inserted=await client.query(
-          'INSERT INTO combat_operations(commander_id,title,roster) '+
-          'VALUES($1,$2,$3::jsonb) RETURNING *',
-          [owner,title,JSON.stringify(roster)]);
-        await client.query('COMMIT');
-        return publicItem(inserted.rows[0],{detail:true});
-      }catch(error){await client.query('ROLLBACK');throw error;}
-      finally{client.release();}
-    },
-    launch(owner,id){
-      return locked(id,owner,async(client,row)=>{
-        if(row.status!=='draft')throw new AuthError(409,'operation_not_draft');
-        const runtime=makeRuntime(row.roster);
-        const state=capture(runtime);
-        const updated=await client.query(
-          'UPDATE combat_operations SET status=$3,battle_state=$4::jsonb, '+
-          'started_at=now(),version=version+1 WHERE id=$1 AND commander_id=$2 RETURNING *',
-          [id,owner,'active',JSON.stringify(state)]);
-        return publicItem(updated.rows[0],{detail:true});
-      });
-    },
-    advance(owner,id){
-      return locked(id,owner,async(client,row)=>{
-        if(row.status!=='active'||!row.battle_state)
-          throw new AuthError(409,'operation_not_active');
-        const runtime=makeRuntime(row.roster,row.battle_state);
-        performRound(runtime.game);
+  async function persistStep(client,owner,id,row,runtime){
         const completed=runtime.game.winner!==null;
         let report=null;
         if(completed){
@@ -294,6 +208,131 @@ export function createOperationStore(pool){
           [id,owner,completed?'completed':'active',
             JSON.stringify(capture(runtime)),report?JSON.stringify(report):null,completed]);
         return publicItem(updated.rows[0],{detail:true});
+  }
+
+  async function locked(id,owner,action){
+    if(typeof id!=='string'||!UUID.test(id))throw new AuthError(404,'operation_not_found');
+    const client=await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const found=await client.query(
+        'SELECT * FROM combat_operations WHERE id=$1 AND commander_id=$2 FOR UPDATE',
+        [id,owner]);
+      if(!found.rows.length)throw new AuthError(404,'operation_not_found');
+      const result=await action(client,found.rows[0]);
+      await client.query('COMMIT');
+      return result;
+    }catch(error){
+      await client.query('ROLLBACK');
+      throw error;
+    }finally{client.release();}
+  }
+
+  return {
+    async list(owner){
+      const result=await pool.query(
+        'SELECT * FROM combat_operations WHERE commander_id=$1 '+
+        'ORDER BY created_at DESC,id DESC LIMIT 100',[owner]);
+      return result.rows.map(row=>publicItem(row));
+    },
+    async get(owner,id){
+      if(typeof id!=='string'||!UUID.test(id))throw new AuthError(404,'operation_not_found');
+      const result=await pool.query(
+        'SELECT * FROM combat_operations WHERE id=$1 AND commander_id=$2',[id,owner]);
+      if(!result.rows.length)throw new AuthError(404,'operation_not_found');
+      return publicItem(result.rows[0],{detail:true});
+    },
+    async create(owner,input){
+      const {title,mechIds,mode}=validateOperation(input);
+      const client=await pool.connect();
+      try{
+        await client.query('BEGIN');
+        const current=await client.query(
+          'SELECT status FROM combat_operations WHERE commander_id=$1',[owner]);
+        if(current.rows.length>=MAX_OPERATIONS||
+           current.rows.filter(r=>['draft','active'].includes(r.status)).length>=5)
+          throw new AuthError(409,'operation_limit');
+        const result=await client.query(
+          'SELECT m.id,m.chassis,m.state,m.pilot_id,p.callsign,p.gunnery,p.piloting '+
+          'FROM hangar_mechs m LEFT JOIN mechwarrior_pilots p '+
+          'ON p.id=m.pilot_id AND p.commander_id=m.commander_id '+
+          'WHERE m.commander_id=$1 AND m.id=ANY($2::uuid[])',
+          [owner,mechIds]);
+        if(result.rows.length!==mechIds.length)
+          throw new AuthError(422,'invalid_roster');
+        const found=new Map(result.rows.map(r=>[r.id,r]));
+        const roster=mechIds.map(id=>{
+          const mech=found.get(id);
+          if(!mech?.state?.config)throw new AuthError(422,'invalid_roster');
+          const config=mech.state.config;
+          const checked=validateDesign({config});
+          return {
+            mechId:mech.id,chassis:checked.chassis,config:checked.state.config,
+            pilot:mech.pilot_id?{
+              id:mech.pilot_id,callsign:mech.callsign,
+              gunnery:mech.gunnery,piloting:mech.piloting
+            }:null
+          };
+        });
+        const inserted=await client.query(
+          'INSERT INTO combat_operations(commander_id,title,roster,control_mode) '+
+          'VALUES($1,$2,$3::jsonb,$4) RETURNING *',
+          [owner,title,JSON.stringify(roster),mode]);
+        await client.query('COMMIT');
+        return publicItem(inserted.rows[0],{detail:true});
+      }catch(error){await client.query('ROLLBACK');throw error;}
+      finally{client.release();}
+    },
+    launch(owner,id){
+      return locked(id,owner,async(client,row)=>{
+        if(row.status!=='draft')throw new AuthError(409,'operation_not_draft');
+        const runtime=makeRuntime(row.roster);
+        const state=capture(runtime);
+        const updated=await client.query(
+          'UPDATE combat_operations SET status=$3,battle_state=$4::jsonb, '+
+          'started_at=now(),version=version+1 WHERE id=$1 AND commander_id=$2 RETURNING *',
+          [id,owner,'active',JSON.stringify(state)]);
+        return publicItem(updated.rows[0],{detail:true});
+      });
+    },
+    advance(owner,id){
+      return locked(id,owner,async(client,row)=>{
+        if(row.status!=='active'||!row.battle_state)
+          throw new AuthError(409,'operation_not_active');
+        if(row.control_mode==='interactive')throw new AuthError(409,'interactive_only_commands');
+        const runtime=makeRuntime(row.roster,row.battle_state);
+        performRound(runtime.game);
+        return persistStep(client,owner,id,row,runtime);
+      });
+    },
+    async snapshot(owner,id){
+      if(typeof id!=='string'||!UUID.test(id))
+        throw new AuthError(404,'operation_not_found');
+      const result=await pool.query(
+        'SELECT * FROM combat_operations WHERE id=$1 AND commander_id=$2',[id,owner]);
+      if(!result.rows.length)throw new AuthError(404,'operation_not_found');
+      const row=result.rows[0];
+      if(row.control_mode!=='interactive')
+        throw new AuthError(409,'not_interactive_operation');
+      return {...publicItem(row,{detail:true}),
+        game:publicSnapshot(row.battle_state)};
+    },
+    command(owner,id,input){
+      return locked(id,owner,async(client,row)=>{
+        if(row.control_mode!=='interactive')
+          throw new AuthError(409,'not_interactive_operation');
+        if(row.status!=='active'||!row.battle_state)
+          throw new AuthError(409,'operation_not_active');
+        if(!input||input.version!==row.version)
+          throw new AuthError(409,'stale_operation_version');
+        const runtime=makeRuntime(row.roster,row.battle_state);
+        const effect=runTacticalOrder(runtime.game,input);
+        if(runtime.game.winner===null&&runtime.game.round>MAX_ROUNDS){
+          runtime.game.winner='draw';
+          runtime.game.note('Лимит раундов достигнут. Операция завершена вничью.');
+        }
+        const item=await persistStep(client,owner,id,row,runtime);
+        return {...item,game:publicSnapshot(capture(runtime)),effect};
       });
     },
     abandon(owner,id){
