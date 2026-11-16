@@ -58,3 +58,11 @@ CI: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) executes the regis
 The first detailed backlog includes: skidding; CASE II; AMS interception; ECM; targeting computers; hidden BattleMechs. Other unreviewed chapter entries remain **unverified**, even if the engine exposes a similarly named function.
 
 This audit records implementation evidence and engineering status, not copyrighted page text. This project is an unofficial BattleTech implementation and does not claim complete rules conformity.
+
+## Skidding progress (2026-11-16)
+
+The basic Skidding PSR and damage pathway is implemented and tested against
+BMM pp. 20 and 68. **This is still not section-complete:** involuntary charges,
+domino displacement and collisions with buildings during a skid remain separate
+`known_missing` granular requirements. Do not promote p.68 to `verified`
+until those interactions have their own deterministic tests.

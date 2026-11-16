@@ -289,6 +289,100 @@
       "statement": "Implement hidden-unit deployment, detection and reveal rules.",
       "status": "known_missing",
       "evidence": []
+    },
+    {
+      "id": "bmm-req-025",
+      "topicId": "bmm-p020-skidding",
+      "page": 20,
+      "statement": "A running BattleMech turning on pavement must check Piloting before entering its next hex.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Successful skid PSR permits entering next hex with no fall"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-026",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skid PSR modifiers follow the printed moved-hex threshold table.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid modifier table matches BMM p.68 at every breakpoint"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-027",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "After a failed skid PSR a BattleMech slides in its previous travel direction and falls.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Failed skid uses prior travel direction and combined fall/slide damage"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-028",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Sliding distance is reduced by intervening terrain movement costs.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skidding through difficult woods reduces sliding distance as specified in BMM p.68"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-029",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skidding adds a +2 defensive and +1 attacking modifier for the rest of the turn.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid modifiers apply to being targeted and to shots until End Phase"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-030",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skidding across the mapsheet boundary destroys the unit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid off the mapsheet destroys the mech rather than leaving invalid coordinates"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-031",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skidding into another BattleMech requires involuntary charge, avoidance and displacement.",
+      "status": "known_missing",
+      "evidence": []
+    },
+    {
+      "id": "bmm-req-032",
+      "topicId": "bmm-p068-skidding",
+      "page": 68,
+      "statement": "Skidding into buildings requires building collisions and structural damage.",
+      "status": "known_missing",
+      "evidence": []
     }
   ]
 }

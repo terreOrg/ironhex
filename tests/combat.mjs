@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {Game,chargeTravelHexes,distance,CLUSTER_HITS,UNDERWATER_RANGES} from '../dist/engine.js';
+import {Game,chargeTravelHexes,distance,CLUSTER_HITS,UNDERWATER_RANGES,skidModifier} from '../dist/engine.js';
 let count=0;const test=(name,fn)=>{fn();count++;console.log('PASS',name);};
 function game(){const g=new Game({rng:()=>.5});for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});return g;}
 function acting(g,id,phase){g.phase=phase;g.activeTeam=g.units[id].team;g.queue=[g.activeTeam];g.actingId=null;}
@@ -277,6 +277,81 @@ test('Flamers, autocannons and missiles cannot fire underwater under BMM rules',
   const p=g.preview(0,2,0);assert.equal(p.legal,false,name);
   assert.equal(p.reason,'Оружие не допускает подводную стрельбу');
  }
+});
+
+
+test('Skid modifier table matches BMM p.68 at every breakpoint',()=>{
+ for(const [hexes,mod] of [[0,-1],[2,-1],[3,0],[4,0],[5,1],[7,1],
+  [8,2],[10,2],[11,4],[17,4],[18,5],[24,5],[25,6],[30,6]])
+  assert.equal(skidModifier(hexes),mod,'hexes '+hexes);
+});
+test('Failed skid uses prior travel direction and combined fall/slide damage',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>0;
+ for(const t of g.tiles)Object.assign(t,{type:'pavement',paved:true,depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;acting(g,0,'move');
+ const runBudget=g.mp(u,'run');
+ assert(g.move(0,2,0,'run').ok);assert.equal(u.distanceMoved,2);
+ assert(g.rotate(0,-1).ok);assert.equal(u.skidDirection,0);
+ const result=g.move(0,2,1,'run');
+ assert(result.ok);assert.equal(u.skidded,true);
+ assert.equal(u.prone,true);assert.equal(u.q,3);assert.equal(u.r,0);
+ assert.equal(u.spent,runBudget);assert.equal(result.path.length,1);
+ assert(g.phaseRolls.some(r=>r.kind.includes('Скольжение')));
+ assert(g.log.some(s=>s.includes('упал: 9 урона')));
+});
+test('Successful skid PSR permits entering next hex with no fall',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.99;
+ for(const t of g.tiles)Object.assign(t,{type:'pavement',paved:true,depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;acting(g,0,'move');
+ assert(g.move(0,2,0,'run').ok);assert(g.rotate(0,-1).ok);
+ const result=g.move(0,2,1,'run');
+ assert(result.ok);assert.equal(u.q,2);assert.equal(u.r,1);
+ assert.equal(u.skidded,false);assert.equal(u.prone,false);
+ assert(g.phaseRolls.some(r=>r.kind.includes('Скольжение')));
+});
+
+test('Skid is triggered by facing changes embedded inside a multi-hex move',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>0;
+ for(const t of g.tiles)Object.assign(t,{type:'pavement',paved:true,depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;acting(g,0,'move');
+ const result=g.move(0,2,1,'run');
+ assert(result.ok);assert.equal(u.skidded,true);
+ assert.equal(u.prone,true);assert.equal(u.q,3);assert.equal(u.r,0);
+ assert(g.phaseRolls.some(r=>r.kind.includes('Скольжение')));
+});
+test('Skidding through difficult woods reduces sliding distance as specified in BMM p.68',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.99;
+ for(const t of g.tiles)Object.assign(t,{type:'pavement',paved:true,depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;
+ Object.assign(g.tile(1,0),{type:'woods',paved:false});
+ const result=g.resolveSkid(u,0,4,4);
+ assert.equal(result.hexes,1);assert.equal(u.q,1);assert.equal(u.r,0);
+ assert.equal(result.damage,Math.ceil(u.tonnage/10)+Math.ceil(Math.ceil(u.tonnage/10)/2));
+});
+test('Skid off the mapsheet destroys the mech rather than leaving invalid coordinates',()=>{
+ const g=game(),u=g.units[0];u.q=6;u.r=0;
+ const result=g.resolveSkid(u,0,2,4);
+ assert.equal(result.hexes,0);assert.equal(u.dead,true);
+ assert.equal(u.q,6);assert.equal(u.r,0);
+});
+
+test('Skid modifiers apply to being targeted and to shots until End Phase',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
+ const mod=g.targetMovementModifier(u),attacker=g.preview(0,2,0).mods.attacker;
+ u.skidded=true;
+ assert.equal(g.targetMovementModifier(u),mod+2);
+ assert.equal(g.preview(0,2,0).mods.attacker,attacker+1);
+ g.endPhase();assert.equal(u.skidded,false);
+});
+test('Skid PSR still occurs when leaving pavement onto a clear hex',()=>{
+ const g=game(),u=g.units[0];g.rng=()=>.99;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',paved:false,depth:0,height:0,surface:0});
+ u.q=0;u.r=0;u.facing=0;acting(g,0,'move');
+ for(const [q,r] of [[0,0],[1,0],[2,0]])Object.assign(g.tile(q,r),{type:'pavement',paved:true});
+ assert(g.move(0,2,0,'run').ok);assert(g.rotate(0,-1).ok);
+ assert(g.move(0,2,1,'run').ok);
+ assert(g.phaseRolls.some(r=>r.kind.includes('Скольжение')));
 });
 
 test('Run may not enter water; jump may land there',()=>{const g=game(),u=g.units[0],t=g.tile(-3,1);Object.assign(t,{type:'water',depth:1,height:-1,surface:0});acting(g,0,'move');assert(!g.reachable(u,'run').some(x=>x.q===t.q&&x.r===t.r));assert(g.reachable(u,'jump').some(x=>x.q===t.q&&x.r===t.r));});

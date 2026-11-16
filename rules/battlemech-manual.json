@@ -714,8 +714,17 @@
       "chapter": "Movement",
       "kind": "topic",
       "optional": false,
-      "status": "known_missing",
-      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+      "status": "tested_subset",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Successful skid PSR permits entering next hex with no fall"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid PSR still occurs when leaving pavement onto a clear hex"
+        }
+      ]
     },
     {
       "id": "bmm-p021-hidden-mechs",
@@ -2251,7 +2260,41 @@
       "kind": "topic",
       "optional": false,
       "status": "known_missing",
-      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+      "note": "Partial skid movement, PSR, fall/slide damage, terrain and combat modifiers tested. Full unintentional-charge collision, displacement and buildings still missing.",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid modifier table matches BMM p.68 at every breakpoint"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Failed skid uses prior travel direction and combined fall/slide damage"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Successful skid PSR permits entering next hex with no fall"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid modifiers apply to being targeted and to shots until End Phase"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid PSR still occurs when leaving pavement onto a clear hex"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid is triggered by facing changes embedded inside a multi-hex move"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skidding through difficult woods reduces sliding distance as specified in BMM p.68"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Skid off the mapsheet destroys the mech rather than leaving invalid coordinates"
+        }
+      ]
     },
     {
       "id": "bmm-p071-attacking-mechs-inside-buildings",
