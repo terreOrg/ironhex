@@ -6,12 +6,12 @@
     "edition": "Corrected sixth printing, 2022",
     "publisher": "Catalyst Game Labs",
     "pageNumbering": "printed",
-    "provenance": "User-uploaded PDF; 326 headings extracted directly from the printed table of contents (pp. 2–3)."
+    "provenance": "User-provided PDF, corrected sixth printing: 326 parsed table-of-contents headings plus 26 manually restored headings from multi-column layout; printed contents pp. 2–3."
   },
   "scope": {
     "battlemechsOnly": true,
     "includeOptionalRules": true,
-    "disclaimer": "Heading-level inventory, not yet a paragraph-by-paragraph audit; linked tests only prove particular scenarios, never 100% coverage."
+    "disclaimer": "Provisional heading-level inventory; many individual rule exceptions are not yet enumerated or tested. No 100% conformity claim."
   },
   "statusDefinitions": {
     "not_audited": "Indexed; implementation and tests have not been individually audited.",
@@ -37,6 +37,16 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p005-game-terms",
+      "title": "GAME TERMS",
+      "page": 5,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p005-introduction",
@@ -210,6 +220,16 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p007-components",
+      "title": "COMPONENTS",
+      "page": 7,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p007-counters",
       "title": "Counters",
       "page": 7,
@@ -255,6 +275,16 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p008-scale",
+      "title": "SCALE",
+      "page": 8,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p009-damaging-a-warrior",
       "title": "Damaging A Warrior",
       "page": 9,
@@ -273,6 +303,16 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p009-the-mechwarrior",
+      "title": "THE MECHWARRIOR",
+      "page": 9,
+      "chapter": "Foundations",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p010-alternate-initiative",
       "title": "Alternate Initiative",
       "page": 10,
@@ -280,6 +320,16 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p010-deploying-mechs",
+      "title": "DEPLOYING ’MECHS",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p010-initiative-phase",
@@ -307,6 +357,16 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p010-playing-the-game",
+      "title": "PLAYING THE GAME",
+      "page": 10,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p010-sequence-of-play",
@@ -363,6 +423,36 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p012-unequal-numbers-of-mechs",
+      "title": "UNEQUAL NUMBERS OF ’MECHS",
+      "page": 12,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p012-victory-conditions",
+      "title": "VICTORY CONDITIONS",
+      "page": 12,
+      "chapter": "Turn sequence",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p013-movement",
+      "title": "MOVEMENT",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p013-movement-dice",
       "title": "Movement Dice",
       "page": 13,
@@ -370,6 +460,16 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p013-movement-modes",
+      "title": "MOVEMENT MODES",
+      "page": 13,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p013-piloting-skill-rolls",
@@ -495,6 +595,16 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p018-jumping-movement",
+      "title": "JUMPING MOVEMENT",
+      "page": 18,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p018-stacking",
       "title": "Stacking",
       "page": 18,
@@ -535,6 +645,16 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p019-prone-battlemechs",
+      "title": "PRONE BATTLEMECHS",
+      "page": 19,
+      "chapter": "Movement",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p019-standing-up",
@@ -661,6 +781,16 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p022-line-of-sight",
+      "title": "LINE OF SIGHT",
+      "page": 22,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p023-other-mechs-and-los",
       "title": "Other ’Mechs and LOS",
       "page": 23,
@@ -695,6 +825,26 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p024-attack-declaration",
+      "title": "ATTACK DECLARATION",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p024-firing-arcs",
+      "title": "FIRING ARCS",
+      "page": 24,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p024-forward-arc",
@@ -758,6 +908,16 @@
       "kind": "topic",
       "optional": true,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p025-firing-weapons",
+      "title": "FIRING WEAPONS",
+      "page": 25,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p025-making-the-attack",
@@ -877,6 +1037,16 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p032-hit-location",
+      "title": "HIT LOCATION",
+      "page": 32,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p034-different-levels",
       "title": "Different Levels",
       "page": 34,
@@ -893,6 +1063,16 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p034-physical-attacks",
+      "title": "PHYSICAL ATTACKS",
+      "page": 34,
+      "chapter": "Combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p035-charge-attacks",
@@ -1003,6 +1183,26 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p041-damage",
+      "title": "DAMAGE",
+      "page": 41,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p041-damage-resolution",
+      "title": "DAMAGE RESOLUTION",
+      "page": 41,
+      "chapter": "Damage and criticals",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p041-step-by-step-damage",
       "title": "Step-By-Step Damage",
       "page": 41,
@@ -1022,7 +1222,7 @@
     },
     {
       "id": "bmm-p043-hull-integrity-and-breaches",
-      "title": "HULL INTEGRITY AND BREACHES ",
+      "title": "HULL INTEGRITY AND BREACHES",
       "page": 43,
       "chapter": "Damage and criticals",
       "kind": "heading",
@@ -1357,6 +1557,26 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p050-heat",
+      "title": "HEAT",
+      "page": 50,
+      "chapter": "Heat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
+      "id": "bmm-p050-heat-points",
+      "title": "HEAT POINTS",
+      "page": 50,
+      "chapter": "Heat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p051-dissipating-heat",
       "title": "Dissipating Heat",
       "page": 51,
@@ -1460,6 +1680,16 @@
           "test": "Any subsequent PSR after reactor shutdown fails automatically (BMM p.53)"
         }
       ]
+    },
+    {
+      "id": "bmm-p053-piloting-skill-rolls-psr",
+      "title": "PILOTING SKILL ROLLS (PSR)",
+      "page": 53,
+      "chapter": "Piloting and other actions",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p055-displacement",
@@ -1958,6 +2188,16 @@
       "status": "not_audited"
     },
     {
+      "id": "bmm-p066-building-types",
+      "title": "BUILDING TYPES",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
+    },
+    {
       "id": "bmm-p066-construction-factor",
       "title": "Construction Factor",
       "page": 66,
@@ -1974,6 +2214,16 @@
       "kind": "topic",
       "optional": true,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p066-urban-combat",
+      "title": "URBAN COMBAT",
+      "page": 66,
+      "chapter": "Urban combat",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p067-movement-effects",
@@ -2096,7 +2346,7 @@
     },
     {
       "id": "bmm-p079-dropping-mechs-simplified",
-      "title": "DROPPING ’MECHS (SIMPLIFIED) ",
+      "title": "DROPPING ’MECHS (SIMPLIFIED)",
       "page": 79,
       "chapter": "Support and deployment",
       "kind": "heading",
@@ -2638,7 +2888,7 @@
     },
     {
       "id": "bmm-p103-medium-range-missile-mrm-launcher",
-      "title": "Medium Range Missile (MRM) Launcher ",
+      "title": "Medium Range Missile (MRM) Launcher",
       "page": 103,
       "chapter": "Weapons",
       "kind": "topic",
@@ -3058,6 +3308,16 @@
       "kind": "topic",
       "optional": false,
       "status": "not_audited"
+    },
+    {
+      "id": "bmm-p114-structural-components",
+      "title": "STRUCTURAL COMPONENTS",
+      "page": 114,
+      "chapter": "Electronics and targeting",
+      "kind": "heading",
+      "optional": false,
+      "status": "not_audited",
+      "provenance": "Manually verified in the user-supplied PDF table of contents."
     },
     {
       "id": "bmm-p114-targeting-computer",
