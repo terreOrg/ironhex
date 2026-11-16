@@ -96,7 +96,13 @@ async function withPage(name, options, verify) {
       });
     }
     await page.goto(baseURL + (options.path || '/'), { waitUntil:'domcontentloaded' });
-    if (!options.path && !options.unauthenticated) await loaded(page);
+    if (!options.path && !options.unauthenticated) {
+      await page.locator('#hub-battle').waitFor({state:'visible',timeout:20000});
+      if (!options.hub) {
+        await page.locator('#hub-battle').click();
+        await loaded(page);
+      }
+    }
     await verify(page);
     assert.deepEqual(errors, [], 'Uncaught browser JavaScript errors');
   } catch(e) {
@@ -246,12 +252,15 @@ test('Guest sees the login/registration landing screen before the 3D game starts
       await page.locator('#auth-register input[name=password]').fill('Private-Test-Password-2026!');
       await page.locator('#auth-register input[name=confirm]').fill('Private-Test-Password-2026!');
       await page.locator('#auth-register button[type=submit]').click();
-      await loaded(page);
+      await page.locator('#hub-battle').waitFor({state:'visible'});
       assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('auth-locked')),false);
       assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),false);
+      assert.equal(await page.locator('#viewport canvas').count(),0);
+      await page.locator('#hub-battle').click();
+      await loaded(page);
       assert.equal(await page.locator('#viewport canvas').count(),1);
       await page.reload();
-      await loaded(page);
+      await page.locator('#hub-battle').waitFor({state:'visible'});
       assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),false,
         'An existing commander session should open the game automatically');
     });
@@ -264,6 +273,8 @@ test('Commander login and logout return to the protected landing screen',
       await page.locator('#auth-login input[name=identity]').fill('TestCommander');
       await page.locator('#auth-login input[name=password]').fill('Private-Test-Password-2026!');
       await page.locator('#auth-login button[type=submit]').click();
+      await page.locator('#hub-battle').waitFor({state:'visible'});
+      await page.locator('#hub-battle').click();
       await loaded(page);
       await page.locator('#auth-trigger').click();
       assert.equal(await page.locator('#auth-profile').isVisible(),true);
@@ -285,5 +296,21 @@ test('Direct MechLab navigation also requires login',
       await page.locator('#auth-login button[type=submit]').click();
       await page.locator('#name').waitFor({state:'visible'});
       assert.equal(await page.locator('body > main').isVisible(),true);
+    });
+  });
+
+
+test('Authenticated commander headquarters lists the hangar and routes to MechLab',
+  {timeout:120000},async()=>{
+    await withPage('headquarters',{hub:true},async page=>{
+      assert.equal(await page.locator('body').evaluate(el=>el.classList.contains('hub-open')),true);
+      assert.equal(await page.locator('body > main').isVisible(),false);
+      assert.equal(await page.locator('#viewport canvas').count(),0);
+      await page.locator('#hub-hangar-button').click();
+      await page.locator('#hub-hangar-status').waitFor({state:'visible'});
+      assert.match(await page.locator('#hub-hangar-status').textContent(),/Ангар пуст/);
+      await page.locator('#hub-hangar a[href="mechlab.html"]').click();
+      await page.waitForURL('**/mechlab.html');
+      await page.locator('#name').waitFor({state:'visible'});
     });
   });
