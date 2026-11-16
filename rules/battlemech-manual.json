@@ -221,14 +221,26 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "tested_subset",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.6: equal target succeeds; target <=2 always succeeds; 13+ fails"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: all 36 dice combinations obey inclusive target checks for TN -3 through 15"
         }
       ],
-      "note": "The shared 2D6 outcome is tested at exact equality, auto-success <=2 and auto-failure >=13. All distinct skill/action target-number sources must still be audited before verifying the entire definition."
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "requirements": [
+          "bmm-req-059",
+          "bmm-req-077"
+        ],
+        "notes": "Printed p.6 fully audited for the generic dice Target Number definition. Base target numbers for specialized actions are governed by their later sections and not certified here."
+      }
     },
     {
       "id": "bmm-p007-mech-record-sheet",

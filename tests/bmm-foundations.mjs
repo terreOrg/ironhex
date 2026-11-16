@@ -227,3 +227,20 @@ test('BMM p.9: injuries outside attack resolution retain immediate consciousness
  assert.equal(u.unconscious,true);
  assert.equal(u.consciousChecks,0);
 });
+
+test('BMM p.6: all 36 dice combinations obey inclusive target checks for TN -3 through 15',()=>{
+ const g=flatGame(),targets=Array.from({length:19},(_,i)=>i-3);
+ let comparisons=0;
+ for(let first=1;first<=6;first++)for(let second=1;second<=6;second++)
+  for(const target of targets){
+   const values=[(first-.5)/6,(second-.5)/6];
+   g.rng=()=>values.shift();
+   const total=g.roll('Exhaustive target number',target);
+   assert.equal(total,first+second);
+   assert.equal(g.phaseRolls.at(-1).result,
+    first+second>=target?'Успех':'Неудача',
+    'dice '+first+','+second+' target '+target);
+   comparisons++;
+  }
+ assert.equal(comparisons,684);
+});

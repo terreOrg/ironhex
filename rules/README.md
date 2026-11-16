@@ -155,3 +155,12 @@ child requirement is enumerated and also `verified`** with independently
 reviewed source, edge cases and exact automated evidence. Run
 `node --test tests/bmm-foundations.mjs tests/rules-registry.mjs` to audit
 this first batch, or `npm run rules:coverage` for current counts.
+
+### Target Number semantics verified (BMM p.6)
+
+The generic 2D6 success threshold is now marked `verified`: exact equality
+counts as success, TN ≤2 succeeds on every roll, and TN ≥13 fails on every
+roll. In addition to the boundary tests, an exhaustive **684-comparison**
+table tests all 36 ordered dice combinations against 19 TN values. This
+certifies the dice-target predicate, **not** the specialized modifiers for
+individual weapons and maneuvers in later chapters.
