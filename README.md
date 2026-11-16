@@ -11,7 +11,8 @@ cockpit UI, dice, mech record sheets and a construction tool.
 printing (2022) in version control. It separates **352 table-of-contents topics**
 from **24 granular requirements** with exact regression-test links.
 Passing one test never certifies a whole topic. Run
-`node --test tests/rules-registry.mjs` to verify the inventory and its links.
+`node --test tests/rules-registry.mjs` to verify the inventory and its links;
+`npm run rules:coverage` prints the current audit status.
 Source-specific rule gaps remain visible and are blocked from claiming 100% coverage.
 
 ## Architecture
