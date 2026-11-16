@@ -731,7 +731,13 @@
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.7: each 2D6 roll uses two independent six-sided results and their sum"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 7,
+        "notes": "Manually compared with BMM p.7; test enumerates every permissible face and all relevant 1D6/2D6 combinations."
+      }
     },
     {
       "id": "bmm-req-058",
@@ -744,7 +750,13 @@
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.7: 1D6 uses exactly one die across all six faces"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 7,
+        "notes": "Manually compared with BMM p.7; test enumerates every permissible face and all relevant 1D6/2D6 combinations."
+      }
     },
     {
       "id": "bmm-req-059",
