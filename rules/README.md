@@ -4,7 +4,7 @@
 
 ## What is tracked
 
-- [`battlemech-manual.json`](battlemech-manual.json) — **326 headings and subheadings** transcribed from the rulebook's table of contents (printed pp. 2–3), each with a stable `bmm-pNNN-slug` identifier, printed page, topic group, optional flag and status.
+- [`battlemech-manual.json`](battlemech-manual.json) — **352 headings and subheadings** verified from the rulebook's table of contents (printed pp. 2–3; 326 extracted automatically and 26 headings restored manually), each with a stable `bmm-pNNN-slug` identifier, printed page, topic group, optional flag and status.
 - [`battlemech-manual-requirements.json`](battlemech-manual-requirements.json) — **24 initial individual requirements**, including 18 linked to existing named automated tests and 6 known missing mechanics. This will grow into a paragraph/exception-level specification.
 - [`tests/rules-registry.mjs`](../tests/rules-registry.mjs) — checks identifiers, referenced files and **exact test names**, parent/child consistency, status integrity and the reporting baseline.
 
@@ -25,11 +25,11 @@ Initial baseline after the grounded TOC extraction:
 
 | Topic status | Number |
 | --- | ---: |
-| Not audited | 274 |
+| Not audited | 300 |
 | Tested subset | 36 |
 | Known missing | 16 |
 | Verified complete | 0 |
-| **Total TOC topics** | **326** |
+| **Total TOC topics** | **352** |
 
 Granular requirement baseline: 18 tested cases + 6 known missing cases. **These counts are audit inventory counts, not a percentage of implemented rules**: one TOC section may contain numerous independent rules, variants and exceptions.
 
