@@ -66,3 +66,13 @@ BMM pp. 20 and 68. **This is still not section-complete:** involuntary charges,
 domino displacement and collisions with buildings during a skid remain separate
 `known_missing` granular requirements. Do not promote p.68 to `verified`
 until those interactions have their own deterministic tests.
+
+## CASE II progress (2026-11-16)
+
+Inner Sphere CASE II is implemented as a 1-ton, 1-slot system in MechLab,
+market and combat. It vents explosion damage into rear/limb/head armor,
+limits internal structure damage to one point and suppresses explosion
+criticals on a secondary 8+ roll. Tests also check campaign persistence.
+The Clan-specific 0.5-ton variant and automatic standard Clan CASE remain
+**known missing requirements**, so the CASE II section remains
+`tested_subset`, never `verified`.

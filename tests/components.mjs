@@ -58,6 +58,29 @@ test('CASE is a marketable, BattleMech Manual sourced system with a combat imple
  assert.deepEqual(outOfBookEquipment({equipment:[{type:'case',location:'RT',slot:4}]}),[]);
 });
 
+
+test('CASE II is a sourced, purchasable, rules-enabled component',()=>{
+ const item=EQUIPMENT_CATALOG.find(e=>e.sku==='system:case2');
+ assert(item);assert.equal(item.tons,1);assert.equal(item.slots,1);
+ assert.equal(item.price,100000);assert.equal(item.rulebook.page,119);
+ assert.equal(item.rulebook.status,'verified_supplement');
+ assert.deepEqual(outOfBookEquipment({equipment:[{type:'case2',location:'HD',slot:4}]}),[]);
+});
+test('CASE II inapplicable critical slots are omitted from campaign damage and repair',()=>{
+ const config=structuredClone(example);
+ Object.assign(config,{tonnage:100,walk:3,jump:0,sinks:10,
+  equipment:[{type:'case2',location:'HD',slot:4}]});
+ const built=construct(config);assert.deepEqual(built.errors,[]);
+ const unit=built.unit;assert.equal(unit.slots.HD[3],'case2');
+ assert.deepEqual(normalizedCriticalDamage(config,{HD:[3]}),{});
+ unit.crit.HD[3]=true;
+ assert.deepEqual(captureCriticalDamage(unit),{});
+ unit.crit.HD[3]=false;
+ applyCriticalDamage(unit,{HD:[3]});
+ assert.equal(unit.crit.HD[3],false);
+ assert.deepEqual(damagedComponents(config,{HD:[3]}),[]);
+});
+
 test('CASE inapplicable slots cannot become persisted critical damage',()=>{
  const config=structuredClone(example);
  config.tonnage=100;config.walk=3;config.jump=0;config.sinks=10;

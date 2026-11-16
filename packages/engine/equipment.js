@@ -83,7 +83,9 @@ export const FIXED_COMPONENTS=Object.freeze({
   hatchet:{kind:'physical',name:'Hatchet',supported:true,sold:true,
     price:10000,mechanic:'melee'},
   case:{kind:'defense',name:'CASE',supported:true,sold:true,
-    price:50000,tons:0.5,slots:1,mechanic:'explosion_containment'}
+    price:50000,tons:0.5,slots:1,mechanic:'explosion_containment'},
+  case2:{kind:'defense',name:'CASE II',supported:true,sold:true,
+    price:100000,tons:1,slots:1,mechanic:'advanced_explosion_containment'}
 });
 export const SYSTEM_ITEMS=Object.freeze(Object.entries(FIXED_COMPONENTS)
   .filter(([,item])=>item.supported&&item.sold)

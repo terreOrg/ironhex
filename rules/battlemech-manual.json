@@ -3477,8 +3477,34 @@
       "chapter": "Special equipment",
       "kind": "heading",
       "optional": false,
-      "status": "known_missing",
-      "note": "Known implementation gap. Requires dedicated code and deterministic rulebook tests."
+      "status": "tested_subset",
+      "note": "Inner Sphere CASE II explosion behavior and damage persistence tested. Clan construction/tech-base variant remains missing; no full-section verification.",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II torso vents ammo explosion through rear armor, with only one internal hit (BMM p.119)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II limb loses up to half original armor and only one structure point (BMM p.119)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II head loses one structure and half starting head armor (BMM p.119)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II suppresses explosion-generated criticals on secondary roll 8+ (BMM p.119)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II explosion critical takes effect if confirmation roll is below 8"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "CASE II has inapplicable crit slots and does not prevent ordinary damage transfer"
+        }
+      ]
     },
     {
       "id": "bmm-p119-coolant-pod",
