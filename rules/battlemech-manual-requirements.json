@@ -1065,6 +1065,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.5 quad front legs cannot split a biped arm/torso weapon"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.5: quad diagnostic record sheet shows four legs, not biped arms"
         }
       ]
     },

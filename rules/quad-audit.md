@@ -98,3 +98,17 @@ torso/arm weapons. Deterministic tests cover all four legs, a
 biped-arm rejection and a split-weapon rejection. Normal quad
 deployment remains disabled; `bmm-req-080` is still `tested_case`,
 not fully verified.
+
+### Diagnostic record-sheet adaptation
+
+The browser record sheet now detects the chassis configuration and
+displays four **separately drawn** leg sections for Quad:
+Left/Right Front and Left/Right Rear. It labels the critical-slot
+tables and damage-transfer hints as legs and exposes the configuration
+as a diagnostic-only layout. The original biped diagram and labels
+remain unchanged. A Node regression test renders both a quad
+diagnostic sheet and the existing Griffin-style biped sheet.
+
+This is still not evidence of playable Quad movement, firing arcs,
+critical-hit locations or combat persistence. The quad remains
+blocked from ordinary constructor and market paths.

@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Game,defaultMechWarriorSkills} from '../dist/engine.js';
 import {construct,example,isBattleMechConfiguration,QUAD_LEG_LOCATIONS,quadStructuralLayout} from '../dist/construction.js';
+import {recordSheet} from '../dist/record-sheet.js';
 
 const flatGame=()=>{
  const game=new Game({rng:()=>.5});
@@ -357,4 +358,27 @@ test('BMM p.5 quad front legs cannot split a biped arm/torso weapon',()=>{
  assert(result.errors.some(x=>x.includes('Quad leg cannot split critical slots')),
   'Front leg must not be treated as an arm for split critical slots');
  assert.equal(construct(fixture).unit,undefined);
+});
+
+test('BMM p.5: quad diagnostic record sheet shows four legs, not biped arms',()=>{
+ const fixture={...example,name:'Quad sheet audit',config:'Quad',
+  jump:0,sinks:10,equipment:[]};
+ const result=construct(fixture,{auditQuad:true});
+ assert.deepEqual(result.errors,[]);
+ const u={...result.unit,id:0,team:0,variant:'QUAD-AUDIT',
+  gunnery:4,piloting:5,pilotWounds:0,unconscious:false,dead:false,
+  shutdown:false,heat:0,pendingHeat:0,sinksLost:0};
+ const html=recordSheet(u);
+ for(const label of ['Правая передняя нога','Левая передняя нога',
+  'Правая задняя нога','Левая задняя нога'])
+  assert(html.includes(label),'Quad sheet misses leg location: '+label);
+ assert(html.includes('Quad (диагностическая схема)'));
+ assert(!html.includes('Правая рука / нога'));
+ assert(!html.includes('Левая рука / нога'));
+ assert(html.includes('M244 82 L295 82'));
+ const biped=construct(example);
+ assert.deepEqual(biped.errors,[]);
+ const b={...u,...biped.unit};
+ assert(recordSheet(b).includes('Правая рука / нога'));
+ assert(!recordSheet(b).includes('Quad (диагностическая схема)'));
 });
