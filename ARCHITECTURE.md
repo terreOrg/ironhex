@@ -38,3 +38,7 @@ Komodo deploys `ironhex-web`, `ironhex-api` and `ironhex-db` as one stack,
 without explicit Compose network declarations. Host Caddy routes `/api/*` to
 the API and all other paths to the web container. Both exposed ports bind only
 to loopback. Database storage persists in a named volume.
+
+## Licensed hangar and NPC market
+
+`market_owned` is true for pre-existing legacy saves and purchased NPC units, false for new free MechLab prototypes. Only licensed mechs are accepted by the campaign operation API. The fixed dealer validates its stock with the shared construction engine. A successful purchase debits the wallet and creates a hangar mech within one database transaction. Weapon parts bought from the same dealer live in `commander_equipment`. Licensed-mech PATCH requests compare weapon counts with the stored loadout, deduct additions and return removals under a PostgreSQL row lock; missing stock rolls the refit back. Prototypes retain the legacy free-design experience but cannot join rewarded missions. No inter-player transfers, crafting or auction matching are implemented yet.

@@ -10,7 +10,9 @@ const messages={
   insufficient_credits:'Недостаточно C-Bills.',
   mech_undamaged:'Этот мех уже полностью исправен.',
   mech_not_found:'Мех не найден в вашем ангаре.',
-  invalid_purchase:'Недопустимый заказ.'
+  invalid_purchase:'Недопустимый заказ.',
+  invalid_mech_offer:'Модель отсутствует в каталоге.',
+  hangar_full:'В ангаре нет свободных мест.'
 };
 let root=null,refreshHangar=()=>{},busy=false;
 async function request(path,method='GET',body){
@@ -36,9 +38,11 @@ async function mutate(path,body){
     busy=false;
     await refreshEconomy();
     await refreshHangar();
-    notice(path.endsWith('/purchase')?
-      'Заказ выполнен. Куплено единиц: '+body.quantity+'.':
-      'Ремонт завершён. Списано '+money(item.spent)+'.');
+    notice(body.offerId?
+      'Мех приобретён. Списано '+money(item.spent)+'. Откройте его в ангаре.':
+      path.endsWith('/purchase')?
+        'Заказ выполнен. Куплено единиц: '+body.quantity+'.':
+        'Ремонт завершён. Списано '+money(item.spent)+'.');
   }catch(e){notice('Ошибка: '+e.message);}
   finally{busy=false;root.querySelectorAll('#hub-market-panel button').forEach(b=>b.disabled=false);}
 }
@@ -54,12 +58,16 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
     el('p','','Доход начисляется сервером после завершения операции. Заказы и ремонт оплачиваются из средств командира.'));
   const balance=el('div','economy-wallet');
   balance.id='economy-wallet';
+  const mechs=el('div','economy-mechs');mechs.id='economy-mechs';
   const supplies=el('div','economy-supplies');supplies.id='economy-supplies';
+  const inventory=el('div','economy-inventory');inventory.id='economy-inventory';
   const repairs=el('div','economy-repairs');repairs.id='economy-repairs';
   const ledger=el('div','economy-ledger');ledger.id='economy-ledger';
   const status=el('p','op-message');status.id='economy-message';
   status.setAttribute('role','status');
-  section.append(heading,balance,el('h3','economy-heading','РЫНОК ЗАПЧАСТЕЙ'),supplies,
+  section.append(heading,balance,el('h3','economy-heading','ДИЛЕР БОЕВЫХ МЕХОВ'),mechs,
+    el('h3','economy-heading','ВООРУЖЕНИЕ И РЕМОНТНЫЕ КОМПЛЕКТЫ'),supplies,
+    el('h3','economy-heading','ОРУЖЕЙНЫЙ СКЛАД'),inventory,
     el('h3','economy-heading','РЕМОНТ АНГАРА'),repairs,
     el('h3','economy-heading','ЖУРНАЛ РАСЧЁТОВ'),ledger,status);
   const button=root.querySelector('#hub-market-button');
@@ -81,13 +89,41 @@ export async function refreshEconomy(){
       el('small','','СЧЁТ КОМАНДИРА'),
       el('strong','',money(data.balance)),
       el('span','','Начальный капитал: 150 000 C-Bills'));
+    const offers=root.querySelector('#economy-mechs');
+    offers.replaceChildren();
+    for(const offer of data.mechOffers||[]){
+      const card=el('article','economy-item economy-mech-offer');
+      const content=el('div','');
+      content.append(el('strong','',offer.name),
+        el('small','',offer.description),
+        el('small','','Цена со склада дилера: '+money(offer.price)));
+      const buy=el('button','op-primary','ПРИОБРЕСТИ МЕХА');
+      buy.type='button';
+      buy.onclick=()=>{
+        if(confirm('Купить '+offer.name+' за '+money(offer.price)+'?'))
+          void mutate('/api/v1/economy/mechs/purchase',{offerId:offer.id});
+      };
+      card.append(content,buy);offers.append(card);
+    }
+    if(!data.mechOffers?.length)offers.append(el('p','op-empty','Нет доступных предложений.'));
+    const stored=root.querySelector('#economy-inventory');
+    stored.replaceChildren();
+    const weapons=Object.entries(data.equipmentStock||{}).filter(([,qty])=>qty>0);
+    for(const [name,qty] of weapons){
+      const line=el('div','economy-entry');
+      line.append(el('span','',name),el('strong','',qty+' ед.'));
+      stored.append(line);
+    }
+    if(!weapons.length)stored.append(el('p','op-empty','Склад пуст. Приобретите оружие для переоборудования в MechLab.'));
     const stock=root.querySelector('#economy-supplies');
     stock.replaceChildren();
     for(const entry of data.catalog||[]){
       const card=el('div','economy-item');
       const text=el('div','');
       text.append(el('strong','',entry.name),
-        el('small','','Цена: '+money(entry.price)+' · На складе: '+(data.stock?.[entry.sku]||0)));
+        el('small','','Цена: '+money(entry.price)+' · На складе: '+
+          (entry.kind==='weapon'?(data.equipmentStock?.[entry.name]||0):
+            (data.stock?.[entry.sku]||0))));
       const buy=el('button','op-primary','КУПИТЬ');
       buy.type='button';
       buy.onclick=()=>{

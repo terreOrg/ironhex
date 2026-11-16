@@ -329,7 +329,7 @@ API endpoints:
 
 Stale versions, enemy commands and illegal actions are rejected. Once the combat ends, the database transaction records the result, creates a report, and awards pilot XP only once. The after-action report button returns to the operation archive. Saved operations can be resumed on a later visit.
 
-This release remains single-player versus AI. It does not implement multiplayer, repair charges, automatic hangar damage deductions, market inventory or contracts.
+This release remains single-player versus AI. It includes contract rewards, hangar wear and a fixed-price NPC dealer, but not multiplayer or player-to-player trading.
 
 ## 11. Starter economy and contracts
 
@@ -350,3 +350,13 @@ Authenticated same-origin API:
 - `POST /api/v1/operations` — includes optional `contractId` (`patrol`, `intercept`, or `assault`)
 
 All purchases, payouts and repairs are committed inside PostgreSQL transactions. The client never supplies a price, balance, damage, result or payout. Wallets and inventory are account-scoped; operations with damaged mechs are rejected. The historical `market_listings` table is still only a future foundation: **player-to-player trades, live pricing, chassis construction costs, travel, ammunition expenses and marketplaces are not implemented**. This prototype still lets players construct new hangar designs without paying for production.
+
+## 12. NPC BattleMech dealer, warehouse and MechLab
+
+The authenticated market now offers three 55-ton Griffin surplus variants for **48,000 / 62,000 / 76,000 C-Bills** and individual weapons using the engine's equipment catalog. All offers have static prices and unlimited NPC availability. An authenticated commander may purchase a licensed mech with `POST /api/v1/economy/mechs/purchase` and body `{"offerId":"griffin-standard"}`. The operation creates an owned, working hangar mech and writes a debit in the financial ledger atomically. Sending an unknown offer or caller-supplied price is rejected. The hangar limit is 50.
+
+The existing `POST /api/v1/economy/purchase` also accepts weapon SKUs, for example `{"sku":"weapon:Medium Laser","quantity":1}`, and stores quantities in `commander_equipment`. The `GET /api/v1/economy` reply includes `mechOffers`, `equipmentStock` and weapon entries in `catalog`, alongside the previous wallet, supply kit, repair and contract fields.
+
+In MechLab, **licensed** hangar mechs can be refitted using the current `PATCH /api/v1/hangar/{id}` endpoint: the server compares old and new weapon counts, removes newly installed weapons from owned inventory, returns stripped weapons to the warehouse, and rejects insufficient stock. Engine rating, chassis mass, armor and factory-installed jump jets/heat sinks/hatchets are locked for these mechs; ammunition placement is not yet charged. Refitting damaged or mission-assigned mechs is blocked. Creating a free design, including **Save as new**, still works for training mode, but saves it with `market_owned=false` and does **not** qualify it for credited operations. Mechs in the database before this migration retain `market_owned=true` for compatibility.
+
+The NPC dealer is not a player auction, and the `market_listings` schema remains inactive. Prices are noncanonical prototype balancing figures; no selling, scarcity model, transit times, paid assembly, or ammunition accounting is implemented.

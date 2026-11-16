@@ -269,7 +269,7 @@ export function createOperationStore(pool){
            current.rows.filter(r=>['draft','active'].includes(r.status)).length>=5)
           throw new AuthError(409,'operation_limit');
         const result=await client.query(
-          'SELECT m.id,m.chassis,m.state,m.armor_damage,m.structure_damage,m.wrecked, ' +
+          'SELECT m.id,m.chassis,m.state,m.armor_damage,m.structure_damage,m.wrecked,m.market_owned, ' +
           'm.pilot_id,p.callsign,p.gunnery,p.piloting '+
           'FROM hangar_mechs m LEFT JOIN mechwarrior_pilots p '+
           'ON p.id=m.pilot_id AND p.commander_id=m.commander_id '+
@@ -277,6 +277,8 @@ export function createOperationStore(pool){
           [owner,mechIds]);
         if(result.rows.length!==mechIds.length)
           throw new AuthError(422,'invalid_roster');
+        if(result.rows.some(r=>!r.market_owned))
+          throw new AuthError(409,'prototype_not_licensed');
         if(result.rows.some(r=>r.armor_damage>0||r.structure_damage>0||r.wrecked))
           throw new AuthError(409,'mech_needs_repair');
         if(current.rows.some(r=>['draft','active'].includes(r.status)&&

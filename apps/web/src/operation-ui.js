@@ -18,7 +18,8 @@ const errors={
   email_unverified:'Сначала подтвердите адрес электронной почты.',
   invalid_contract:'Выберите доступный контракт.',
   mech_needs_repair:'Мех повреждён. Сначала отремонтируйте его на рынке.',
-  mech_assigned_operation:'Мех уже участвует в незакрытой операции.'
+  mech_assigned_operation:'Мех уже участвует в незакрытой операции.',
+  prototype_not_licensed:'Это учебный прототип. Для контракта купите мех на рынке.'
 };
 async function request(url,method='GET',body){
   const options={method,credentials:'same-origin',cache:'no-store'};
@@ -59,7 +60,7 @@ function renderRoster(items,pilots){
     checkbox.type='checkbox';
     checkbox.name='mechId';
     checkbox.value=mech.id;
-    checkbox.disabled=!!(mech.armorDamage||mech.structureDamage||mech.wrecked);
+    checkbox.disabled=mech.marketOwned===false||!!(mech.armorDamage||mech.structureDamage||mech.wrecked);
     checkbox.addEventListener('change',()=>{
       const selected=[...box.querySelectorAll('input:checked')];
       if(selected.length>2) checkbox.checked=false;

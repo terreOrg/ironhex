@@ -1,5 +1,6 @@
 import {randomUUID} from 'node:crypto';
 import {AuthError} from './auth.mjs';
+import {MECH_OFFERS,showMechOffer,EQUIPMENT_CATALOG} from './market.mjs';
 
 export const CONTRACTS=[
   {id:'patrol',name:'Приграничный патруль',victory:32000,enemyGunnery:4},
@@ -66,11 +67,17 @@ export function createEconomyStore(pool){
       return inTransaction(pool,async c=>{
         const balance=await ensureWallet(c,owner);
         const stock=await stockFor(c,owner);
+        const equipped=await c.query(
+          'SELECT equipment_type,quantity FROM commander_equipment WHERE commander_id=$1',[owner]);
+        const equipmentStock=Object.fromEntries(
+          equipped.rows.map(row=>[row.equipment_type,row.quantity]));
         const mechs=await c.query('SELECT id,chassis,armor_damage,structure_damage,wrecked '+
           'FROM hangar_mechs WHERE commander_id=$1 ORDER BY created_at DESC',[owner]);
         const ledger=await c.query('SELECT change_amount,reason,created_at FROM credit_ledger '+
           'WHERE commander_id=$1 ORDER BY id DESC LIMIT 20',[owner]);
-        return {balance,stock,contracts:CONTRACTS,catalog:CATALOG,
+        return {balance,stock,equipmentStock,contracts:CONTRACTS,
+          catalog:[...CATALOG.map(item=>({...item,kind:'supply'})),...EQUIPMENT_CATALOG],
+          mechOffers:MECH_OFFERS.map(showMechOffer),
           repairs:mechs.rows.map(m=>repairQuote(m,stock)),
           ledger:ledger.rows.map(e=>({amount:Number(e.change_amount),
             reason:e.reason,createdAt:e.created_at}))};
@@ -81,16 +88,41 @@ export function createEconomyStore(pool){
          Object.keys(body).some(k=>!['sku','quantity'].includes(k))||
          !Number.isInteger(body.quantity)||body.quantity<1||body.quantity>10)
         throw new AuthError(422,'invalid_purchase');
-      const item=CATALOG.find(c=>c.sku===body.sku);
+      const item=[...CATALOG,...EQUIPMENT_CATALOG].find(c=>c.sku===body.sku);
       if(!item)throw new AuthError(422,'invalid_purchase');
       return inTransaction(pool,async c=>{
         await changeCredits(c,owner,-item.price*body.quantity,
           'Закупка: '+item.name,'supply:'+randomUUID());
-        const result=await c.query('INSERT INTO commander_supplies(commander_id,sku,quantity) '+
+        const isWeapon=item.kind==='weapon';
+        const result=isWeapon?await c.query(
+          'INSERT INTO commander_equipment(commander_id,equipment_type,quantity) '+
+          'VALUES($1,$2,$3) ON CONFLICT(commander_id,equipment_type) DO UPDATE SET '+
+          'quantity=commander_equipment.quantity+EXCLUDED.quantity RETURNING quantity',
+          [owner,item.name,body.quantity]):await c.query(
+          'INSERT INTO commander_supplies(commander_id,sku,quantity) '+
           'VALUES($1,$2,$3) ON CONFLICT(commander_id,sku) DO UPDATE SET '+
           'quantity=commander_supplies.quantity+EXCLUDED.quantity RETURNING quantity',
           [owner,item.sku,body.quantity]);
         return {sku:item.sku,quantity:result.rows[0].quantity,spent:item.price*body.quantity};
+      });
+    },
+    buyMech(owner,body){
+      if(!body||typeof body!=='object'||Array.isArray(body)||
+         Object.keys(body).length!==1||typeof body.offerId!=='string')
+        throw new AuthError(422,'invalid_mech_offer');
+      const offer=MECH_OFFERS.find(item=>item.id===body.offerId);
+      if(!offer)throw new AuthError(422,'invalid_mech_offer');
+      return inTransaction(pool,async c=>{
+        await ensureWallet(c,owner);
+        const count=await c.query('SELECT count(*)::int AS count FROM hangar_mechs WHERE commander_id=$1',[owner]);
+        if(count.rows[0].count>=50)throw new AuthError(409,'hangar_full');
+        await changeCredits(c,owner,-offer.price,
+          'Покупка меха: '+offer.name,'mech-purchase:'+randomUUID());
+        const newMech=await c.query(
+          'INSERT INTO hangar_mechs(commander_id,chassis,state,market_owned) '+
+          'VALUES($1,$2,$3::jsonb,true) RETURNING id,chassis',
+          [owner,offer.name,JSON.stringify({version:1,config:offer.config})]);
+        return {id:newMech.rows[0].id,chassis:newMech.rows[0].chassis,spent:offer.price};
       });
     },
     repair(owner,body){

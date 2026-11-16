@@ -136,6 +136,10 @@ export function createHttpServer({
           if(!economyStore)return json(res,503,{error:'economy_unavailable'},head);
           if(path==='/api/v1/economy'&&(method==='GET'||head))
             return json(res,200,await economyStore.summary(user.id),head);
+          if(path==='/api/v1/economy/mechs/purchase'&&method==='POST'){
+            if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
+            return json(res,201,{item:await economyStore.buyMech(user.id,await readJson(req))},head);
+          }
           if(method==='POST'&&['/api/v1/economy/purchase','/api/v1/economy/repair'].includes(path)){
             if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
             const input=await readJson(req);

@@ -59,7 +59,9 @@ async function refresh() {
       const card=E('article','hub-mech');
       card.append(E('div','hub-mech-icon','⬡'));
       const detail=E('div','hub-mech-detail');
-      detail.append(E('small','',item.callsign||'БОЕВОЙ МЕХ'));
+      detail.append(E('small','',item.marketOwned===false?
+        'УЧЕБНЫЙ ПРОТОТИП · ТОЛЬКО БЫСТРЫЙ БОЙ':
+        (item.callsign||'КОНТРАКТНЫЙ БОЕВОЙ МЕХ')));
       detail.append(E('h3','',item.chassis));
       const config=item.state?.config;
       detail.append(E('p','',String(config?.tonnage||'?')+' т · '+String(config?.walk||'?')+' MP'));

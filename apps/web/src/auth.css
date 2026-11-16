@@ -695,3 +695,12 @@ color:#1d3223;font-weight:800;font-size:14px;padding:14px;cursor:pointer}
 .hub-mech-damage{font-size:10px;color:#e8ae89;border-left:2px solid #e8ae89;padding-left:9px;line-height:1.6}
 .hub-repair{border-color:#a0b98a;color:#d1ebc4}
 @media(max-width:600px){.economy-item{flex-direction:column;align-items:stretch}.economy-item button{width:100%}.economy-wallet strong{font-size:24px}}
+
+/* Fixed-price NPC mech dealer and owned weapon inventory. */
+.economy-mechs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-bottom:20px}
+.economy-mech-offer{align-items:stretch;flex-direction:column;justify-content:space-between;min-height:145px}
+.economy-mech-offer button{width:100%;max-width:100%}
+.economy-inventory{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:6px}
+.economy-inventory .economy-entry{padding:8px;border:1px solid #405b43;background:#1a291d}
+.economy-supplies{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+@media(max-width:600px){.economy-mechs,.economy-supplies,.economy-inventory{grid-template-columns:1fr}}

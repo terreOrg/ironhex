@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
+import {construct} from '../packages/engine/construction.js';
+import {MECH_OFFERS,EQUIPMENT_CATALOG,weaponCounts,weaponName} from '../apps/api/src/market.mjs';
 import {CATALOG,CONTRACTS,contractById,contractPayout,repairQuote} from '../apps/api/src/economy.mjs';
 
 test('Contracts have unique, server-owned terms and nonzero risk payouts',()=>{
@@ -25,4 +27,19 @@ test('Repair quotes consume owned supplies and keep wreck salvage fee',()=>{
 test('Supply catalog prices remain fixed and positive',()=>{
   assert.deepEqual(CATALOG.map(p=>p.sku),['armor_patch','structure_kit']);
   assert(CATALOG.every(item=>item.price>0&&Number.isSafeInteger(item.price)));
+});
+
+test('Dealer offers stay under construction limits and have unique fixed prices',()=>{
+  assert(MECH_OFFERS.length>=3);
+  assert.equal(new Set(MECH_OFFERS.map(x=>x.id)).size,MECH_OFFERS.length);
+  for(const offer of MECH_OFFERS){
+    assert.deepEqual(construct(offer.config).errors,[],offer.id);
+    assert(Number.isInteger(offer.price)&&offer.price>0);
+  }
+});
+test('All equipment SKUs map to controlled inventory keys',()=>{
+  assert(EQUIPMENT_CATALOG.length>=15);
+  assert.equal(weaponName('weapon:Medium Laser'),'Medium Laser');
+  assert.equal(weaponName('weapon:PPC-synthetic'),null);
+  assert.equal(weaponCounts({equipment:[{type:'PPC'},{type:'PPC'},{type:'jump'}]}).get('PPC'),2);
 });

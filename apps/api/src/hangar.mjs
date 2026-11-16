@@ -1,4 +1,5 @@
 import { construct } from '../../../packages/engine/construction.js';
+import {weaponCounts} from './market.mjs';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -42,14 +43,14 @@ function serialize(row) {
   return {id:row.id, chassis:row.chassis, callsign:row.callsign,
     state:row.state, createdAt:row.created_at,
     armorDamage:row.armor_damage||0,structureDamage:row.structure_damage||0,
-    wrecked:!!row.wrecked};
+    wrecked:!!row.wrecked,marketOwned:!!row.market_owned};
 }
 
 export function createHangarStore(pool) {
   return {
     async list(commanderId) {
       const result=await pool.query(
-        'SELECT id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked FROM hangar_mechs ' +
+        'SELECT id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned FROM hangar_mechs ' +
         'WHERE commander_id=$1 ORDER BY created_at DESC LIMIT 100',
         [commanderId]
       );
@@ -58,26 +59,79 @@ export function createHangarStore(pool) {
     async create(commanderId,input) {
       const design=validateDesign(input);
       const result=await pool.query(
-        'INSERT INTO hangar_mechs(commander_id,chassis,callsign,state) ' +
-        'SELECT $1,$2,$3,$4::jsonb WHERE ' +
+        'INSERT INTO hangar_mechs(commander_id,chassis,callsign,state,market_owned) ' +
+        'SELECT $1,$2,$3,$4::jsonb,false WHERE ' +
         '(SELECT count(*) FROM hangar_mechs WHERE commander_id=$1) < 50 ' +
-        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked',
+        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned',
         [commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]
       );
       if (!result.rows.length) throw new AuthError(409,'hangar_full');
       return serialize(result.rows[0]);
     },
     async update(commanderId,id,input) {
-      if (!UUID.test(id)) throw new AuthError(404,'mech_not_found');
+      if (!UUID.test(id))throw new AuthError(404,'mech_not_found');
       const design=validateDesign(input);
-      const result=await pool.query(
-        'UPDATE hangar_mechs SET chassis=$3,callsign=$4,state=$5::jsonb ' +
-        'WHERE id=$1 AND commander_id=$2 ' +
-        'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked',
-        [id,commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]
-      );
-      if (!result.rows.length) throw new AuthError(404,'mech_not_found');
-      return serialize(result.rows[0]);
+      const client=await pool.connect();
+      try{
+        await client.query('BEGIN');
+        const result=await client.query(
+          'SELECT * FROM hangar_mechs WHERE id=$1 AND commander_id=$2 FOR UPDATE',
+          [id,commanderId]);
+        if(!result.rows.length)throw new AuthError(404,'mech_not_found');
+        const row=result.rows[0];
+        // Active mission rosters are snapshots and cannot be refitted mid-sortie.
+        const active=await client.query(
+          "SELECT 1 FROM combat_operations WHERE commander_id=$1 " +
+          "AND status IN ('draft','active') AND roster @> $2::jsonb LIMIT 1",
+          [commanderId,JSON.stringify([{mechId:id}])]);
+        if(active.rows.length)throw new AuthError(409,'mech_assigned_operation');
+        if(row.market_owned){
+          if(row.wrecked||row.armor_damage||row.structure_damage)
+            throw new AuthError(409,'mech_needs_repair');
+          const old=row.state.config,now=design.state.config;
+          const same=(l,r)=>JSON.stringify(l)===JSON.stringify(r);
+          for(const key of ['tonnage','walk','jump','sinks','armor','rear']){
+            if(!same(old[key],now[key]))
+              throw new AuthError(409,'factory_frame_locked');
+          }
+          if(!same([...(old.removeActuators||[])].sort(),
+                   [...(now.removeActuators||[])].sort()))
+            throw new AuthError(409,'factory_frame_locked');
+          // Installed jump jets, heat sinks and hatchets stay part of the
+          // purchased frame. Ammunition bins remain free in this release.
+          const fixed=x=>(x.equipment||[])
+            .filter(e=>['jump','sink','hatchet'].includes(e.type))
+            .map(e=>[e.type,e.location,e.slot].join(':')).sort();
+          if(!same(fixed(old),fixed(now)))
+            throw new AuthError(409,'factory_frame_locked');
+          const previous=weaponCounts(old),next=weaponCounts(now);
+          for(const name of new Set([...previous.keys(),...next.keys()])){
+            const delta=(next.get(name)||0)-(previous.get(name)||0);
+            if(delta>0){
+              const updated=await client.query(
+                'UPDATE commander_equipment SET quantity=quantity-$3 '+
+                'WHERE commander_id=$1 AND equipment_type=$2 AND quantity>=$3 RETURNING quantity',
+                [commanderId,name,delta]);
+              if(!updated.rows.length)throw new AuthError(409,'insufficient_equipment');
+            }else if(delta<0){
+              await client.query(
+                'INSERT INTO commander_equipment(commander_id,equipment_type,quantity) '+
+                'VALUES($1,$2,$3) ON CONFLICT(commander_id,equipment_type) '+
+                'DO UPDATE SET quantity=commander_equipment.quantity+EXCLUDED.quantity',
+                [commanderId,name,-delta]);
+            }
+          }
+        }
+        const changed=await client.query(
+          'UPDATE hangar_mechs SET chassis=$3,callsign=$4,state=$5::jsonb '+
+          'WHERE id=$1 AND commander_id=$2 '+
+          'RETURNING id,chassis,callsign,state,created_at,armor_damage,structure_damage,wrecked,market_owned',
+          [id,commanderId,design.chassis,design.callsign,JSON.stringify(design.state)]);
+        await client.query('COMMIT');
+        return serialize(changed.rows[0]);
+      }catch(error){
+        await client.query('ROLLBACK');throw error;
+      }finally{client.release();}
     },
     async remove(commanderId,id) {
       if (!UUID.test(id)) throw new AuthError(404,'mech_not_found');
