@@ -123,6 +123,42 @@ test('CASE II has inapplicable crit slots and does not prevent ordinary damage t
  assert.equal(u.armor.CT,ct-2);
 });
 
+
+test('Clan BattleMechs receive automatic CASE in torso without slots or mass (TechManual p.58)',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];u.techBase='Clan';
+ g.rng=()=>.5;u.structure.RT=1;u.structure.CT=10;bin.shots=1;
+ const beforeSlots=[...u.slots.RT];
+ assert.equal(u.slots.RT.includes('case'),false);
+ assert.equal(g.hasCASE(u,'RT'),true);
+ g.explode(u,bin);
+ assert.equal(u.structure.RT,0);assert.equal(u.structure.CT,10);
+ assert.deepEqual(u.slots.RT,beforeSlots);
+ assert.equal(u.pilotWounds,2);
+});
+test('Clan automatic CASE protects arm explosions before they reach side torso',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];u.techBase='Clan';
+ g.rng=()=>.5;bin.location='LA';bin.shots=1;
+ u.structure.LA=1;u.structure.LT=10;
+ const lt=u.structure.LT;g.explode(u,bin);
+ assert.equal(u.structure.LA,0);assert.equal(u.structure.LT,lt);
+ assert.equal(g.hasCASE(u,'LA'),true);
+});
+test('Standard Inner Sphere BattleMechs still need explicit CASE for blast containment',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];u.techBase='Inner Sphere';
+ g.rng=()=>.5;bin.shots=1;u.structure.RT=1;u.structure.CT=10;
+ assert.equal(g.hasCASE(u,'RT'),false);
+ g.explode(u,bin);
+ assert.equal(u.structure.CT,1);
+});
+test('Clan CASE II protection takes precedence over automatic Clan CASE',()=>{
+ const g=game(),u=g.units[0],bin=u.bins[0];u.techBase='Clan';g.rng=()=>.5;
+ u.slots.RT[0]='case2';bin.shots=1;
+ const before=u.structure.RT,rear=u.rear.RT;g.explode(u,bin);
+ assert.equal(u.structure.RT,before-1);
+ assert.equal(u.rear.RT,Math.max(0,rear-9));
+ assert.equal(u.structure.CT,u.maxStructure.CT);
+});
+
 test('CASE vents an ammo explosion after RT is destroyed; pilot still suffers feedback (BMM p.47)',()=>{
  const g=game(),u=g.units[0],bin=u.bins[0];g.rng=()=>.5;
  u.slots.RT=Array(12).fill(null);u.slots.RT[0]='case';u.crit.RT=Array(12).fill(false);

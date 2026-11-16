@@ -484,8 +484,25 @@
       "topicId": "bmm-p118-storage-equipment-case",
       "page": 118,
       "statement": "Automatic weightless critical-slot-free standard Clan CASE protection applies to all explosive locations of a Clan BattleMech.",
-      "status": "known_missing",
-      "evidence": []
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Clan BattleMechs receive automatic CASE in torso without slots or mass (TechManual p.58)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Clan automatic CASE protects arm explosions before they reach side torso"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Standard Inner Sphere BattleMechs still need explicit CASE for blast containment"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Clan CASE II protection takes precedence over automatic Clan CASE"
+        }
+      ]
     },
     {
       "id": "bmm-req-041",
@@ -559,6 +576,14 @@
           "test": "Floating criticals does not apply to punch and kick tables"
         }
       ]
+    },
+    {
+      "id": "bmm-req-047",
+      "topicId": "bmm-p118-storage-equipment-case",
+      "page": 118,
+      "statement": "The construction and MTF import pipelines must support authentic Clan BattleMech engines, equipment statistics and tech restrictions before creating Clan designs.",
+      "status": "known_missing",
+      "evidence": []
     }
   ]
 }

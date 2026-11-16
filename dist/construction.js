@@ -10,7 +10,8 @@ const data=Object.fromEntries(Object.entries(WEAPON_SPECS).map(([name,w])=>[
 ]));
 export const EQUIPMENT=WEAPON_NAMES;
 export function construct(c){
- const errors=[],ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
+ const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
+ if(techBase!=='Inner Sphere'&&techBase!=='IS')errors.push('Клановая технология ещё не поддерживается конструктором; сначала реализуйте её массы, критические слоты и ограничения.');
  if(!Number.isInteger(ton)||ton<20||ton>100||ton%5)errors.push('Масса: 20–100 тонн с шагом 5.');
  if(!Number.isInteger(walk)||walk<1||rating<20||rating>400||rating%5)errors.push('Рейтинг двигателя: 20–400.');
  if(!Number.isInteger(jump)||jump<0||jump>walk)errors.push('Прыжок: от 0 до значения ходьбы.');
@@ -54,6 +55,6 @@ export function construct(c){
    }
  });
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
- return {errors,total,weights,remaining:ton-total,rating,unit:{name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
+ return {errors,total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
 }
 export const example={name:'Griffin custom',tonnage:55,walk:5,jump:5,sinks:12,armor:{HD:9,CT:20,LT:20,RT:20,LA:14,RA:14,LL:18,RL:18},rear:{CT:7,LT:6,RT:6},equipment:[{type:'PPC',location:'RA',slot:5},{type:'LRM 10',location:'RT',slot:3},{type:'ammo',location:'RT',slot:5,weapon:1,mass:1},{type:'ammo',location:'RT',slot:6,weapon:1,mass:1},{type:'jump',location:'LT',slot:1},{type:'jump',location:'LT',slot:2},{type:'jump',location:'RT',slot:1},{type:'jump',location:'RT',slot:2},{type:'jump',location:'CT',slot:12},{type:'sink',location:'CT',slot:11}]};
