@@ -86,7 +86,7 @@ test('Optional TO movement settings are server-controlled, locked and validated'
   }),e=>e.code==='invalid_command');
   const game=new Game({rng:()=>.5});
   assert.equal(runTacticalOrder(game,cmd).result.ok,true);
-  assert.deepEqual(game.tacticalOptions,{standingStill:true,evading:true});
+  assert.deepEqual(game.tacticalOptions,{standingStill:true,evading:true,floatingCriticals:false});
   game.phase='move';
   assert.throws(()=>runTacticalOrder(game,{...cmd,evading:false}),
     e=>e.code==='weather_locked');
@@ -94,4 +94,18 @@ test('Optional TO movement settings are server-controlled, locked and validated'
     type:'move',id:0,version:1,q:1,r:0,mode:'evade'
   });
   assert.equal(move.mode,'evade');
+});
+
+test('BMM floating criticals is validated, server-settable and locked after initiative',()=>{
+ const game=new Game({rng:()=>.5});
+ assert.equal(game.tacticalOptions.floatingCriticals,false);
+ const command=validateTacticalOrder({type:'weather',version:1,night:false,gale:false,
+  standingStill:false,evading:false,floatingCriticals:true});
+ assert.equal(runTacticalOrder(game,command).result.ok,true);
+ assert.equal(game.tacticalOptions.floatingCriticals,true);
+ assert.throws(()=>validateTacticalOrder({...command,floatingCriticals:1}),
+  e=>e.code==='invalid_command');
+ game.phase='move';
+ assert.throws(()=>runTacticalOrder(game,{...command,floatingCriticals:false}),
+  e=>e.code==='weather_locked');
 });
