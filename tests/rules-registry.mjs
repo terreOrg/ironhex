@@ -108,9 +108,35 @@ test('Granular requirements reference printed section ids and real tests',()=>{
 
 test('Coverage baselines cannot be confused with full book certification',()=>{
  const totals=registry.topics.reduce((o,t)=>(o[t.status]=(o[t.status]||0)+1,o),{});
- assert.equal(totals.verified||0,0,'Initial inventory does not certify complete sections');
+ assert((totals.verified||0)>=1,'At least the exhaustively audited Dice entry must remain verified');
+ assert((totals.verified||0)<registry.topics.length,'Full-book completion is not yet confirmed');
  assert((totals.not_audited||0)>200,'Unreviewed sections must remain visible');
  console.log('BMM topic audit: '+JSON.stringify(totals));
  const granular=details.requirements.reduce((o,t)=>(o[t.status]=(o[t.status]||0)+1,o),{});
  console.log('BMM granular requirement audit: '+JSON.stringify(granular));
+});
+
+test('A verified heading must have a complete, exact set of independently verified child requirements',()=>{
+ const byTopic=new Map();
+ for(const r of details.requirements){
+  if(!byTopic.has(r.topicId))byTopic.set(r.topicId,[]);
+  byTopic.get(r.topicId).push(r);
+ }
+ let verifiedCount=0;
+ for(const topic of registry.topics){
+  if(topic.status!=='verified')continue;
+  verifiedCount++;
+  const children=byTopic.get(topic.id)||[];
+  assert(children.length>0,topic.id+': cannot verify a heading with no requirements');
+  const expected=children.map(r=>r.id).sort();
+  const declared=[...new Set(topic.audit?.requirements||[])].sort();
+  assert.deepEqual(declared,expected,topic.id+': audit must enumerate ALL child requirements');
+  for(const r of children){
+   assert.equal(r.status,'verified',r.id+': cannot certify a heading with unresolved children');
+   assert(r.audit?.sourceChecked===true&&r.audit?.edgeCasesChecked===true,
+    r.id+': atomic requirement must have explicit source/edge reviews');
+   assert(r.evidence?.length>0,r.id+': verified child needs a named automated test');
+  }
+ }
+ assert(verifiedCount>0,'At least one narrow rule must have been fully audited');
 });
