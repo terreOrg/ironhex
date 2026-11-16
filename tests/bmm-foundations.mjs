@@ -460,3 +460,34 @@ test('BMM pp.5,33: combat hit labels use quad front-leg names and distinct biped
  assert.equal(locationNameForMech(target,'RA'),'Правая рука');
  assert.equal(locationNameForMech(target,'LA'),'Левая рука');
 });
+
+test('BMM p.6: quad leg critical capacities and armor limits cover 20-100 tons',()=>{
+ // Independent expected standard internal-structure leg sequence, in 5-ton increments.
+ const legStructure=[4,6,7,8,10,11,12,13,14,15,15,16,17,18,19,20,21];
+ const legs=['LA','RA','LL','RL'];
+ for(let step=0;step<legStructure.length;step++){
+  const mass=20+5*step,layout=quadStructuralLayout(mass);
+  for(const leg of legs){
+   assert.equal(layout.structure[leg],legStructure[step],
+    mass+' ton '+leg+' leg structure');
+   assert.equal(layout.slots[leg].length,6,mass+' ton '+leg+' slot count');
+  }
+ }
+ const base={...example,name:'Quad armor boundaries',config:'Quad',
+  jump:0,sinks:10,equipment:[]};
+ for(const leg of legs){
+  const limit=2*quadStructuralLayout(base.tonnage).structure[leg];
+  const legal={...base,armor:{...base.armor,[leg]:limit}};
+  const valid=construct(legal,{auditQuad:true});
+  assert.deepEqual(valid.errors,[],leg+' legal armor '+limit+': '+valid.errors.join('; '));
+  const exceeded={...base,armor:{...base.armor,[leg]:limit+1}};
+  const invalid=construct(exceeded,{auditQuad:true});
+  assert(invalid.errors.some(error=>error.includes(leg)&&error.includes('брони')),
+   leg+' must reject >'+limit+' armor');
+  const outOfRange=construct({...base,equipment:[
+   {type:'Medium Laser',location:leg,slot:7}
+  ]},{auditQuad:true});
+  assert(outOfRange.errors.some(error=>error.includes(leg)&&error.includes('слот')),
+   leg+' must never accept a seventh critical slot');
+ }
+});

@@ -1077,6 +1077,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM pp.5,33: combat hit labels use quad front-leg names and distinct biped arms"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: quad leg critical capacities and armor limits cover 20-100 tons"
         }
       ]
     },

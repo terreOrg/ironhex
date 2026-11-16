@@ -140,3 +140,14 @@ arm names are unaffected. This validates the geometry-to-location
 handoff for the current structural requirement, but does not certify
 Quad-specific combat consequences such as leg destruction or
 falling. Those remain separate known-missing requirements.
+
+### Independent slot/armor boundary sweep
+
+The structural suite now compares all seventeen standard 20–100 ton
+leg-internal-structure values against an independent expectation list
+instead of comparing the quad's four legs only against each other.
+Each Quad leg must have exactly six critical slots (BMM printed p.6).
+For every front/rear leg of a 55-ton test chassis, the constructor
+accepts the maximum leg armor but rejects one point above the limit
+and rejects placement in nonexistent critical slot seven. This is
+still a validation of structural topology only.
