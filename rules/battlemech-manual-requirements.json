@@ -763,13 +763,19 @@
       "topicId": "bmm-p006-target-number",
       "page": 6,
       "statement": "A roll equal to its target number succeeds, target numbers of 2 or lower always succeed, and 13 or higher always fail with 2D6.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.6: equal target succeeds; target <=2 always succeeds; 13+ fails"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 6,
+        "notes": "Checked complete 2D6 success predicate, exact equality and automatic bounds against BMM p.6."
+      }
     },
     {
       "id": "bmm-req-060",
@@ -976,6 +982,25 @@
           "test": "BMM p.9: injuries outside attack resolution retain immediate consciousness checks"
         }
       ]
+    },
+    {
+      "id": "bmm-req-077",
+      "topicId": "bmm-p006-target-number",
+      "page": 6,
+      "statement": "For every 2D6 result and modified target number from -3 to 15, success is inclusive and the automatic-success / automatic-failure boundaries match BMM p.6.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: all 36 dice combinations obey inclusive target checks for TN -3 through 15"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 6,
+        "notes": "684 deterministic comparisons enumerate 36 possible 2D6 combinations for each of 19 representative target numbers, including impossible targets."
+      }
     }
   ]
 }
