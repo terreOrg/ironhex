@@ -334,7 +334,10 @@ test('Authenticated commander headquarters lists the hangar and routes to MechLa
       assert.equal(await page.locator('body > main').isVisible(),false);
       assert.equal(await page.locator('#viewport canvas').count(),0);
       await page.locator('#hub-hangar-button').click();
-      await page.locator('#hub-hangar-status').waitFor({state:'visible'});
+      await page.waitForFunction(() =>
+        document.querySelector('#hub-hangar-status')?.textContent.includes('Ангар пуст'),
+        {timeout:12000}
+      );
       assert.match(await page.locator('#hub-hangar-status').textContent(),/Ангар пуст/);
       await page.locator('#hub-hangar a[href="mechlab.html"]').click();
       await page.waitForURL('**/mechlab.html');
