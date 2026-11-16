@@ -13,6 +13,20 @@ const rows={
   'ER Medium Laser':[5,5,0,4,8,12,1,1,0,0,4800],
   'ER Large Laser':[12,8,0,7,14,19,5,2,0,0,10800],
   'ER PPC':[15,10,0,7,14,23,7,3,0,0,18500],
+  // Clan advanced energy weapons. Tech-base identifiers are explicit, not
+  // inferred from a shared IS weapon name.
+  'Clan ER Small Laser':[2,5,0,2,4,6,.5,1,0,0,3800],
+  'Clan ER Medium Laser':[5,7,0,5,10,15,1,1,0,0,9200],
+  'Clan ER Large Laser':[12,10,0,8,15,25,4,1,0,0,17000],
+  'Clan ER PPC':[15,15,0,7,14,23,6,2,0,0,27000],
+  // Normal pulse lasers apply a -2 attack target-number modifier in the
+  // shared combat rules; the shortened range is part of each specification.
+  'Small Pulse Laser':[2,3,0,1,2,3,1,1,0,0,2600],
+  'Medium Pulse Laser':[4,6,0,2,4,6,2,1,0,0,6500],
+  'Large Pulse Laser':[10,9,0,3,7,10,7,2,0,0,13000],
+  'Clan Small Pulse Laser':[2,3,0,2,4,6,1,1,0,0,4500],
+  'Clan Medium Pulse Laser':[4,7,0,4,8,12,2,1,0,0,10300],
+  'Clan Large Pulse Laser':[10,10,0,6,14,20,6,2,0,0,20000],
   'AC/2':[1,2,4,8,16,24,6,1,45,0,3500],
   'AC/5':[1,5,3,6,12,18,8,4,20,0,5500],
   'AC/10':[3,10,0,5,10,15,12,7,10,0,9500],
@@ -31,11 +45,18 @@ export const WEAPON_SPECS=Object.freeze(Object.fromEntries(
     const [heat,damage,minimum,short,medium,long,tons,slots,
       roundsPerTon,rack,price]=values;
     return [name,Object.freeze({
-      id:'weapon:'+name,name,kind:'weapon',supported:true,techBase:'Inner Sphere',
+      id:'weapon:'+name,name,kind:'weapon',supported:true,
+      techBase:name.startsWith('Clan ')?'Clan':'Inner Sphere',
       heat,damage,minimum,ranges:[short,medium,long],tons,slots,
-      introYear:name.startsWith('ER ')?3037:3025,
+      // First year this proto-campaign market treats the tech as available;
+      // not necessarily the original in-universe invention year.
+      introYear:name.startsWith('Clan ')?3049:
+        /^ER (Small|Medium) Laser$/.test(name)?3058:
+        name.startsWith('ER ')||name.includes('Pulse Laser')?3037:3025,
+      accuracyModifier:name.includes('Pulse Laser')?-2:0,
       roundsPerTon,rack,price,
-      mechanic:roundsPerTon?'ammo_weapon':'energy_weapon'
+      mechanic:roundsPerTon?'ammo_weapon':
+        name.includes('Pulse Laser')?'pulse_energy':'energy_weapon'
     })];
   })
 ));

@@ -37,8 +37,10 @@ test('The single component registry supplies construction AND market stats',()=>
   assert.equal(bySku.get('system:hatchet').price,FIXED_COMPONENTS.hatchet.price);
   assert.equal(bySku.has('weapon:ER PPC'),true,
     'Inner Sphere ER PPC has full direct-fire combat mechanics');
-  assert.equal(bySku.has('weapon:Clan ER PPC'),false,
-    'Unimplemented Clan tech must not be available');
+  assert.equal(bySku.has('weapon:Clan ER PPC'),true,
+    'Clan ER PPC uses the combat engine directly');
+  assert.equal(bySku.has('weapon:Clan Gauss Rifle'),false,
+    'Specialized ballistic rules must exist before offering Clan Gauss');
 });
 test('A purchased magazine stays empty until explicitly reloaded',()=>{
   const built=construct(example);
@@ -172,7 +174,8 @@ test('Inner Sphere ER direct-fire weapons use verified damage, heat and ranges',
     assert.equal(spec.tons,tons);
     assert.equal(spec.slots,slots);
     assert.equal(spec.roundsPerTon,0);
-    assert.equal(spec.introYear,3037);
+    assert.equal(spec.introYear,
+      name==='ER Small Laser'||name==='ER Medium Laser'?3058:3037);
     const copied=structuredClone(example);
     copied.equipment[0].type=name;
     assert.deepEqual(construct(copied).errors,[],name);
@@ -181,4 +184,61 @@ test('Inner Sphere ER direct-fire weapons use verified damage, heat and ranges',
     assert.equal(built.weapons[0].damage,damage);
     assert.deepEqual(built.weapons[0].ranges,[short,medium,long]);
   }
+});
+
+test('Clan energy and pulse weapons share the combat and market specification',()=>{
+  const clan=[
+    ['Clan ER Small Laser',2,5,2,4,6,.5,1],
+    ['Clan ER Medium Laser',5,7,5,10,15,1,1],
+    ['Clan ER Large Laser',12,10,8,15,25,4,1],
+    ['Clan ER PPC',15,15,7,14,23,6,2],
+    ['Clan Small Pulse Laser',2,3,2,4,6,1,1],
+    ['Clan Medium Pulse Laser',4,7,4,8,12,2,1],
+    ['Clan Large Pulse Laser',10,10,6,14,20,6,2]
+  ];
+  const sphere=[
+    ['Small Pulse Laser',2,3,1,2,3,1,1],
+    ['Medium Pulse Laser',4,6,2,4,6,2,1],
+    ['Large Pulse Laser',10,9,3,7,10,7,2]
+  ];
+  for(const [name,heat,damage,short,medium,long,tons,slots] of [...clan,...sphere]){
+    const spec=WEAPON_SPECS[name];
+    assert(spec,name);
+    assert.equal(spec.heat,heat);
+    assert.equal(spec.damage,damage);
+    assert.deepEqual(spec.ranges,[short,medium,long]);
+    assert.equal(spec.tons,tons);
+    assert.equal(spec.slots,slots);
+    assert.equal(spec.techBase,name.startsWith('Clan ')?'Clan':'Inner Sphere');
+    assert.equal(spec.accuracyModifier,name.includes('Pulse Laser')?-2:0);
+    const cfg=structuredClone(example);
+    cfg.equipment[0].type=name;
+    const result=construct(cfg);
+    assert.deepEqual(result.errors,[],name);
+    assert.equal(result.unit.weapons[0].toHit,spec.accuracyModifier);
+    assert(EQUIPMENT_CATALOG.some(item=>
+      item.sku==='weapon:'+name&&item.price===spec.price));
+  }
+});
+test('Pulse targeting uses an actual -2 hit modifier in tactical probability',()=>{
+  const g=new Game({rng:()=>.5});
+  for(const tile of g.tiles)
+    Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+  const attacker=g.units[0],target=g.units[2];
+  attacker.q=0;attacker.r=0;attacker.facing=0;attacker.gunnery=6;
+  target.q=3;target.r=0;
+  const base={name:'Medium Laser',damage:5,heat:3,
+    ranges:[2,4,6],min:0,ammo:null,location:'RA',
+    rack:0,rear:false,destroyed:false,toHit:0};
+  attacker.weapons=[base];
+  const normal=g.preview(0,2,0);
+  attacker.weapons=[{...base,name:'Medium Pulse Laser',toHit:-2}];
+  const pulse=g.preview(0,2,0);
+  assert.equal(normal.legal,true,normal.reason);
+  assert.equal(pulse.legal,true,pulse.reason);
+  assert.equal(pulse.mods.weapon,-2);
+  assert.equal(normal.mods.weapon,0);
+  assert.equal(pulse.targetNumber,normal.targetNumber-2,
+    'The pulse bonus must change the real dice target, not only the UI');
+  assert(pulse.chance>normal.chance);
 });

@@ -252,7 +252,7 @@ export async function refreshEconomy(){
           'Урон '+entry.damage+' · Нагрев '+entry.heat+
           ' · Дальность '+(entry.ranges||[]).join(' / ')+' гексов'+
           ' · Масса '+entry.tons+' т · Слоты '+entry.slots+
-          (entry.introYear>3025?' · Возвращение технологии: '+entry.introYear:'') ));
+          (entry.accuracyModifier?' · Попадание '+entry.accuracyModifier:'')+(entry.techBase==='Clan'?' · Clan':'')+(entry.introYear>3025?' · Эпоха доступности: '+entry.introYear:'') ));
       }else if(entry.kind==='ammo'){
         text.append(el('small','',
           entry.rounds+' выстрелов на комплект · Масса '+entry.tons+' т'));

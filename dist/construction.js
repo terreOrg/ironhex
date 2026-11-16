@@ -6,7 +6,7 @@ const structures=[[6,5,3,4],[8,6,4,6],[10,7,5,7],[11,8,6,8],[12,10,6,10],[14,11,
 // implemented component registry instead of maintaining a parallel table.
 const data=Object.fromEntries(Object.entries(WEAPON_SPECS).map(([name,w])=>[
   name,[w.heat,w.damage,w.minimum,...w.ranges,w.tons,w.slots,
-    w.roundsPerTon,w.rack]
+    w.roundsPerTon,w.rack,w.accuracyModifier||0]
 ]));
 export const EQUIPMENT=WEAPON_NAMES;
 export function construct(c){
@@ -28,7 +28,7 @@ export function construct(c){
  else if(e.type==='jump'){jets++;if(!['CT','LT','RT','LL','RL'].includes(l))errors.push('Прыжковые двигатели: только торс/ноги.');place(l,e.slot,1,'jump');}
  else if(e.type==='sink'){extSinks++;place(l,e.slot,1,'sink');}
  else if(e.type==='ammo'){const w=weapons[e.weapon],d=w&&data[w.name],mass=Number(e.mass??1);if(!d?.[8]){errors.push('Боезапас должен ссылаться на уже добавленное оружие.');continue;}if(mass!==1&&!(w.name==='Machine Gun'&&mass===.5))errors.push('Бункер: 1 т, для пулемёта также 0,5 т.');weights.ammo+=mass;const shots=d[8]*mass;if(place(l,e.slot,1,`ammo:${e.weapon}:${shots}`))bins.push({location:l,slot:+e.slot-1,weapon:+e.weapon,shots,destroyed:false});}
- else{const d=data[e.type];if(!d){errors.push('Неизвестное оборудование: '+e.type);continue;}const index=weapons.length;weights.weapons+=d[6];weapons.push({name:e.type,heat:d[0],damage:d[1],min:d[2],ranges:d.slice(3,6),ammo:d[8]?0:null,location:l,rack:d[9],rear:!!e.rear,destroyed:false});if(e.type==='AC/20'&&e.splitLocation){const n=Number(e.splitCount),pairs={LA:['LT'],RA:['RT'],LT:['LA','CT'],RT:['RA','CT'],CT:['LT','RT']};if(!Number.isInteger(n)||n<1||n>=d[7]||!pairs[l]?.includes(e.splitLocation))errors.push('AC/20: разделение только между соседними секциями торса/рук.');else{weapons[index].locations=[l,e.splitLocation];place(l,e.slot,n,`w:${index}`);place(e.splitLocation,e.splitSlot,d[7]-n,`w:${index}`);}}else place(l,e.slot,d[7],`w:${index}`);}
+ else{const d=data[e.type];if(!d){errors.push('Неизвестное оборудование: '+e.type);continue;}const index=weapons.length;weights.weapons+=d[6];weapons.push({name:e.type,heat:d[0],damage:d[1],min:d[2],ranges:d.slice(3,6),ammo:d[8]?0:null,location:l,rack:d[9],toHit:d[10]||0,rear:!!e.rear,destroyed:false});if(e.type==='AC/20'&&e.splitLocation){const n=Number(e.splitCount),pairs={LA:['LT'],RA:['RT'],LT:['LA','CT'],RT:['RA','CT'],CT:['LT','RT']};if(!Number.isInteger(n)||n<1||n>=d[7]||!pairs[l]?.includes(e.splitLocation))errors.push('AC/20: разделение только между соседними секциями торса/рук.');else{weapons[index].locations=[l,e.splitLocation];place(l,e.slot,n,`w:${index}`);place(e.splitLocation,e.splitSlot,d[7]-n,`w:${index}`);}}else place(l,e.slot,d[7],`w:${index}`);}
  }
  if(jets!==jump)errors.push(`Разместите ${jump} прыжковых двигателей; размещено ${jets}.`);
  const needed=Math.max(0,sinks-Math.floor(rating/25));if(extSinks!==needed)errors.push(`Разместите ${needed} внешних теплоотводов; размещено ${extSinks}.`);
