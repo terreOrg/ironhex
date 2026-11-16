@@ -1001,6 +1001,42 @@
         "sourcePage": 6,
         "notes": "684 deterministic comparisons enumerate 36 possible 2D6 combinations for each of 19 representative target numbers, including impossible targets."
       }
+    },
+    {
+      "id": "bmm-req-078",
+      "topicId": "bmm-p005-mech",
+      "page": 5,
+      "statement": "The generic Mech abbreviation includes both biped and quad BattleMechs, while non-BattleMech types are excluded from that definition.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.5: the Mech abbreviation includes both biped and quad BattleMechs"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 5,
+        "notes": "Exact BMM glossary definition reviewed. This requirement is vocabulary/classification only, not quad combat certification."
+      }
+    },
+    {
+      "id": "bmm-req-079",
+      "topicId": "bmm-p005-four-legged-mech",
+      "page": 5,
+      "statement": "A quad declaration is never silently converted into a biped design or sold through the current biped-only MTF importer.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.5: quad designs never silently use biped-only construction"
+        },
+        {
+          "file": "tests/market.mjs",
+          "test": "BMM p.5: MTF importer distinguishes unsupported quads from non-BattleMechs"
+        }
+      ]
     }
   ]
 }

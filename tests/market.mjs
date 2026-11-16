@@ -129,3 +129,14 @@ test('Filters combine server-side before pagination and do not guess unknown mas
   assert.deepEqual(sorted.map(x=>x.price),sorted.map(x=>x.price).sort((a,b)=>a-b));
   assert.equal(searchMechCatalog({availableOnly:true,limit:2,page:2}).items.length,2);
 });
+
+test('BMM p.5: MTF importer distinguishes unsupported quads from non-BattleMechs',()=>{
+  const entry=sourceManifest.entries.find(x=>x.file.includes('Griffin'));
+  assert(entry);
+  const raw=readFileSync(join(base,entry.file),'utf8');
+  assert.match(raw,/^Config:Biped$/m);
+  assert.throws(()=>importMtf(raw.replace(/^Config:Biped$/m,'Config:Quad')),
+    /unsupported_mtf:quad_not_implemented/);
+  assert.throws(()=>importMtf(raw.replace(/^Config:Biped$/m,'Config:Vehicle')),
+    /unsupported_mtf:not_battlemech/);
+});

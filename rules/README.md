@@ -164,3 +164,9 @@ roll. In addition to the boundary tests, an exhaustive **684-comparison**
 table tests all 36 ordered dice combinations against 19 TN values. This
 certifies the dice-target predicate, **not** the specialized modifiers for
 individual weapons and maneuvers in later chapters.
+
+## Strict ordered audit — first entry (2026-11-16)
+
+- **bmm-p005-mech, printed p.5: verified.** This heading is the exact narrow glossary definition: generic Mech means both Biped and Quad. A deterministic classification test covers both and excludes non-BattleMech types. This does **not** certify Quad mechanics.
+- **Next entry is bmm-p005-four-legged-mech, printed p.5: known_missing.** The constructor and MTF importer reject Quad designs explicitly so the game's biped-only rules cannot be silently applied. Quad movement, locations, firing arcs, physical attacks and damage remain unimplemented; the audit must stay on this entry until those rules are fully correct.
+- No later heading was promoted because of this work. The status must follow source + tests, not the presence of code or a heading.

@@ -11,7 +11,8 @@ pages, the whole chapter or the entire BMM have been implemented completely.
 
 | Printed page / heading | Status | Source check and existing implementation |
 | --- | --- | --- |
-| p.5 Introduction, Game Terms, Vs. Total Warfare | Informational / cross-references remain | Context and definitions, not a standalone combat mechanic. Cross-reference rule texts are not audited as complete. |
+| p.5 ’Mech (generic term) | **Verified** | The glossary explicitly includes both Biped and Quad; classification is tested and does not assert quad gameplay support. |
+| p.5 Introduction, remaining Game Terms, Vs. Total Warfare | Informational / cross-references remain | Context and definitions, not a standalone combat mechanic. Cross-reference rule texts are not audited as complete. |
 | p.5 Four-Legged ’Mech | **Known missing** | BMM includes quadruped BattleMechs; current engine's arm/leg actuator and movement model is biped-specific. |
 | p.5 Optional Rules | Not fully audited | Rules labelled optional require pregame agreement. Some browser toggles exist; consistent agreement and every option still need review. |
 | p.6 Target Number | **Verified** | The 2D6 inclusive threshold predicate, TN ≤2 auto-success and TN ≥13 auto-failure have been checked across **all 36 ordered results × 19 representative TN values = 684 comparisons**. Base target numbers for specific maneuvers are separately governed by their later rulebook chapters. |

@@ -1,5 +1,10 @@
 import {WEAPON_SPECS,WEAPON_NAMES} from './equipment.js';
 export const LOCS=['HD','CT','LT','RT','LA','RA','LL','RL'];
+// BMM corrected sixth printing, printed p.5: the generic "Mech" term includes
+// both biped and quad BattleMechs. Classification is not proof of quad support.
+export const BATTLEMECH_CONFIGURATIONS=Object.freeze(['Biped','Quad']);
+export const isBattleMechConfiguration=config=>
+  BATTLEMECH_CONFIGURATIONS.includes(config);
 const masses=[.5,.5,1,1,1,1,1.5,1.5,1.5,2,2,2,2.5,2.5,3,3,3,3.5,3.5,4,4,4,4.5,4.5,5,5,5.5,5.5,6,6,6,7,7,7.5,7.5,8,8.5,8.5,9,9.5,10,10,10.5,11,11.5,12,12.5,13,13.5,14,14.5,15.5,16,16.5,17.5,18,19,19.5,20.5,21.5,22.5,23.5,24.5,25.5,27,28.5,29.5,31.5,33,34.5,36.5,38.5,41,43.5,46,49,52.5];
 const structures=[[6,5,3,4],[8,6,4,6],[10,7,5,7],[11,8,6,8],[12,10,6,10],[14,11,7,11],[16,12,8,12],[18,13,9,13],[20,14,10,14],[21,15,10,15],[22,15,11,15],[23,16,12,16],[25,17,13,17],[27,18,14,18],[29,19,15,19],[30,20,16,20],[31,21,17,21]];
 // Stats, equipment weight and critical-slot usage share the market's
@@ -11,6 +16,11 @@ const data=Object.fromEntries(Object.entries(WEAPON_SPECS).map(([name,w])=>[
 export const EQUIPMENT=WEAPON_NAMES;
 export function construct(c){
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
+ const chassisConfig=c.config??'Biped';
+ if(!isBattleMechConfiguration(chassisConfig))
+   errors.push('Конфигурация не является двуногим или четырёхногим BattleMech.');
+ else if(chassisConfig==='Quad')
+   errors.push('Четырёхногие BattleMech пока не поддерживаются: нельзя применять правила двуногого меха.');
  if(techBase!=='Inner Sphere'&&techBase!=='IS')errors.push('Клановая технология ещё не поддерживается конструктором; сначала реализуйте её массы, критические слоты и ограничения.');
  if(!Number.isInteger(ton)||ton<20||ton>100||ton%5)errors.push('Масса: 20–100 тонн с шагом 5.');
  if(!Number.isInteger(walk)||walk<1||rating<20||rating>400||rating%5)errors.push('Рейтинг двигателя: 20–400.');
@@ -55,6 +65,6 @@ export function construct(c){
    }
  });
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
- return {errors,total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
+ return {errors,total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
 }
 export const example={name:'Griffin custom',tonnage:55,walk:5,jump:5,sinks:12,armor:{HD:9,CT:20,LT:20,RT:20,LA:14,RA:14,LL:18,RL:18},rear:{CT:7,LT:6,RT:6},equipment:[{type:'PPC',location:'RA',slot:5},{type:'LRM 10',location:'RT',slot:3},{type:'ammo',location:'RT',slot:5,weapon:1,mass:1},{type:'ammo',location:'RT',slot:6,weapon:1,mass:1},{type:'jump',location:'LT',slot:1},{type:'jump',location:'LT',slot:2},{type:'jump',location:'RT',slot:1},{type:'jump',location:'RT',slot:2},{type:'jump',location:'CT',slot:12},{type:'sink',location:'CT',slot:11}]};

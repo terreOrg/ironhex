@@ -27,7 +27,23 @@
       "chapter": "Foundations",
       "kind": "topic",
       "optional": false,
-      "status": "not_audited"
+      "status": "verified",
+      "note": "This is the p.5 terminology definition only: Mech includes bipeds and quads. Quad combat, construction and special cases are separately tracked as known missing under bmm-p005-four-legged-mech; classification does not imply their support.",
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.5: the Mech abbreviation includes both biped and quad BattleMechs"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourcePage": 5,
+        "requirements": [
+          "bmm-req-078"
+        ],
+        "notes": "Checked exact p.5 glossary wording. Biped and Quad classify as BattleMechs; other configurations do not. Full quad-specific simulation remains separately unverified."
+      }
     },
     {
       "id": "bmm-p005-four-legged-mech",

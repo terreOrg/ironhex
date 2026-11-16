@@ -1,4 +1,4 @@
-import {EQUIPMENT,construct} from '../../../packages/engine/construction.js';
+import {EQUIPMENT,construct,isBattleMechConfiguration} from '../../../packages/engine/construction.js';
 import {WEAPON_SPECS} from '../../../packages/engine/equipment.js';
 
 const LOCATION_NAMES={
@@ -47,7 +47,9 @@ export function importMtf(raw,{sourcePath='unknown'}={}){
   };
   const name=required('chassis')+' '+required('model');
   if(name.length>30)bad('name_too_long');
-  if(required('config')!=='Biped')bad('non_biped');
+  const chassisConfig=required('config');
+  if(!isBattleMechConfiguration(chassisConfig))bad('not_battlemech');
+  if(chassisConfig==='Quad')bad('quad_not_implemented');
   if(required('techbase')!=='Inner Sphere')bad('technology');
   if(required('structure')!=='IS Standard')bad('structure');
   if(required('armor')!=='Standard(Inner Sphere)')bad('armor_type');
@@ -120,7 +122,7 @@ export function importMtf(raw,{sourcePath='unknown'}={}){
   const totalWeapons=Number(required('weapons'));
   if(!Number.isInteger(totalWeapons)||mountTypes.length!==totalWeapons)
     bad('weapons_manifest');
-  const config={name,tonnage,walk,jump,sinks,armor,rear,equipment};
+  const config={name,config:chassisConfig,tonnage,walk,jump,sinks,armor,rear,equipment};
   if(removeActuators.length)config.removeActuators=removeActuators;
   const built=construct(config);
   if(built.errors.length||!built.unit||built.remaining<-.001)

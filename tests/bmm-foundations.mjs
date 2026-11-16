@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Game,defaultMechWarriorSkills} from '../dist/engine.js';
+import {construct,example,isBattleMechConfiguration} from '../dist/construction.js';
 
 const flatGame=()=>{
  const game=new Game({rng:()=>.5});
@@ -243,4 +244,26 @@ test('BMM p.6: all 36 dice combinations obey inclusive target checks for TN -3 t
    comparisons++;
   }
  assert.equal(comparisons,684);
+});
+
+test('BMM p.5: the Mech abbreviation includes both biped and quad BattleMechs',()=>{
+  for(const type of ['Biped','Quad'])
+    assert.equal(isBattleMechConfiguration(type),true,type);
+  for(const type of ['Tripod','Vehicle','Aero','','quad',null,undefined])
+    assert.equal(isBattleMechConfiguration(type),false,String(type));
+});
+
+test('BMM p.5: quad designs never silently use biped-only construction',()=>{
+  const biped=construct({...example,config:'Biped'});
+  assert.deepEqual(biped.errors,[]);
+  assert.equal(biped.unit.config,'Biped');
+  const implicit=construct(example);
+  assert.deepEqual(implicit.errors,[]);
+  assert.equal(implicit.unit.config,'Biped');
+  const quad=construct({...example,config:'Quad'});
+  assert(quad.errors.some(error=>error.includes('Четырёхногие')),
+    'Quad construction must explicitly remain unsupported: '+quad.errors.join('; '));
+  const other=construct({...example,config:'Tripod'});
+  assert(other.errors.some(error=>error.includes('Конфигурация')),
+    'A non-BattleMech must never be relabelled as a biped');
 });
