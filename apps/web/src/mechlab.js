@@ -10,3 +10,59 @@ function draw(){
 function read(){for(const k of ['tonnage','walk','jump','sinks'])c[k]=+$('#'+k).value;c.name=$('#name').value;for(const el of document.querySelectorAll('[data-armor]'))c.armor[el.dataset.armor]=+el.value;for(const el of document.querySelectorAll('[data-rear]'))c.rear[el.dataset.rear]=+el.value;c.removeActuators=['LA','RA'].filter(l=>$('#remove'+l).checked);for(const row of document.querySelectorAll('[data-row]'))for(const el of row.querySelectorAll('[data-key]')){const key=el.dataset.key;c.equipment[+row.dataset.row][key]=el.type==='checkbox'?el.checked:['slot','weapon','mass','splitCount','splitSlot'].includes(key)?+el.value:el.value;}}
 function check(){const r=construct(c);$('#results').innerHTML=`<b>${r.errors.length?'Конструкция требует исправления':'Конструкция допустима'}</b>${r.total!==undefined?`<p>Масса ${r.total.toFixed(1)} / ${c.tonnage} т · запас ${r.remaining.toFixed(1)} т · двигатель ${r.rating}</p><p class="hint">${Object.entries(r.weights).map(([k,v])=>`${({structure:'Каркас',engine:'Двигатель',gyro:'Гироскоп',cockpit:'Кабина',sinks:'Теплоотводы',armor:'Броня',jump:'Прыжок',weapons:'Оружие',ammo:'Боезапас'})[k]}: ${v} т`).join(' · ')}</p>`:''}${r.errors.map(e=>`<p class="error">${esc(e)}</p>`).join('')}`;$('#launch').disabled=!!r.errors.length;$('#slotmap').innerHTML=r.unit?Object.entries(r.unit.slots).map(([l,a])=>`<p><b>${l}</b>: ${a.map((s,i)=>`${i+1} ${s||'свободно'}`).join(' · ')}</p>`).join(''):'';return r;}
 $('#add').onclick=()=>{read();c.equipment.push({type:'Medium Laser',location:'LT',slot:1});draw();};$('#check').onclick=()=>{read();check();};$('#example').onclick=()=>{c=structuredClone(example);draw();};$('#launch').onclick=()=>{read();if(check().errors.length)return;localStorage.setItem('ironhex-design',JSON.stringify({config:c,position:+$('#position').value}));location.href='index.html?custom=1';};draw();
+
+let currentHangarId = new URL(location.href).searchParams.get('mech');
+
+async function loadFromHangar() {
+  if (!currentHangarId) return;
+  const feedback=$('#hangar-feedback');
+  feedback.textContent='Загрузка конструкции из вашего ангара…';
+  try {
+    const response=await fetch('/api/v1/hangar',{credentials:'same-origin',cache:'no-store'});
+    if (!response.ok) throw Error('Сервер вернул '+response.status);
+    const {items}=await response.json();
+    const item=items.find(mech=>mech.id===currentHangarId);
+    if (!item?.state?.config) throw Error('Мех не найден в вашем ангаре');
+    c=structuredClone(item.state.config);
+    draw();
+    feedback.textContent='Открыта конструкция: '+item.chassis;
+  } catch(error) {
+    feedback.textContent='Не удалось открыть меха: '+error.message;
+    currentHangarId=null;
+  }
+}
+
+async function saveToHangar(copy=false) {
+  const feedback=$('#hangar-feedback');
+  read();
+  if (check().errors.length) {
+    feedback.textContent='Сначала устраните ошибки конструкции.';
+    return;
+  }
+  const button=copy?$('#save-copy'):$('#save-hangar');
+  button.disabled=true;
+  feedback.textContent='Сохранение в PostgreSQL…';
+  try {
+    const id=(!copy && currentHangarId)?currentHangarId:null;
+    const response=await fetch('/api/v1/hangar'+(id?'/'+encodeURIComponent(id):''),{
+      method:id?'PATCH':'POST', credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({config:c})
+    });
+    const data=await response.json();
+    if(!response.ok) throw Error(
+      ({invalid_design:'Недопустимая конструкция',hangar_full:'Ангар заполнен',
+        unauthorized:'Необходимо войти в аккаунт'})[data.error]||data.error||'HTTP '+response.status
+    );
+    currentHangarId=data.item.id;
+    history.replaceState(null,'','mechlab.html?mech='+encodeURIComponent(currentHangarId));
+    feedback.textContent='Мех «'+data.item.chassis+'» сохранён в вашем ангаре.';
+  } catch(error) {
+    feedback.textContent='Ошибка сохранения: '+error.message;
+  } finally {
+    button.disabled=false;
+  }
+}
+$('#save-hangar').onclick=()=>void saveToHangar();
+$('#save-copy').onclick=()=>void saveToHangar(true);
+void loadFromHangar();
