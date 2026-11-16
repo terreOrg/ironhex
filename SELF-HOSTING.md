@@ -27,6 +27,8 @@ In **Stack environment variables**, set a long random password:
 IRONHEX_DB_PASSWORD=<set-a-unique-strong-password-in-Komodo>
 IRONHEX_PORT=18088
 IRONHEX_API_PORT=18089
+IRONHEX_PUBLIC_ORIGIN=http://ironhex.lan
+IRONHEX_AUTH_COOKIE_SECURE=false
 ```
 
 The password is required. Do not commit it to Git, paste it into a chat, or
@@ -86,9 +88,27 @@ From a device on the LAN (or VPN with local DNS), open:
 - `http://ironhex.lan/api/health` — backend/database health
 - `http://ironhex.lan/api/v1/catalog/chassis` — starter chassis catalog
 
-For now the browser still runs the same AI/hotseat game independently from
-the backend. Online gameplay, users, wallet balance, campaigns and market
-transactions are not ready yet.
+The game now includes account registration and a cockpit login button.
+Sessions and user profiles are persisted in PostgreSQL. Online gameplay,
+wallet balances, campaigns and market transactions are not yet ready.
+
+**Before using real passwords or inviting other players, enable HTTPS.**
+The original LAN-only `http://ironhex.lan` route is not encrypted. You can
+use the existing wildcard TLS configuration for a local-only hostname such
+as `ironhex.krbox.top` and add a local Technitium DNS record pointing it to
+the CentOS host. Then set:
+```
+IRONHEX_PUBLIC_ORIGIN=https://ironhex.krbox.top
+IRONHEX_AUTH_COOKIE_SECURE=true
+```
+in Komodo and redeploy. Both values must match the actual browser origin.
+Add the `ironhex.krbox.top` host to your existing wildcard Caddy
+site and route `/api/*` to port 18089 and other paths to 18088.
+Do not create a public DNS record. Do not disable the existing Caddy
+external-access restrictions. Cookies should use `Secure` in HTTPS mode.
+
+Email addresses are collected but **not yet verified** and SMTP password
+reset is **not yet implemented**; do not treat these as verified identities.
 
 ## 4. Seeing updates
 

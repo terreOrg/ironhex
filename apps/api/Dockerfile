@@ -6,6 +6,7 @@ RUN cd /app/apps/api && npm install --omit=dev --ignore-scripts --no-audit --no-
 
 COPY packages/engine/ /app/packages/engine/
 COPY apps/api/src/ /app/apps/api/src/
+COPY tests/auth-integration.mjs /app/tests/auth-integration.mjs
 
 WORKDIR /app/apps/api
 USER node

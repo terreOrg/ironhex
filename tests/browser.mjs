@@ -189,3 +189,19 @@ test('Mobile Canvas fallback keeps controls and dialogs accessible', { timeout:1
     await page.locator('#close').click();
   });
 });
+
+test('Commander UI opens registration and login forms in the cockpit',
+  {timeout:120000},async()=>{
+    await withPage('auth-console',{noWebGL:true},async page=>{
+      await page.locator('#auth-trigger').click();
+      assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),true);
+      await page.locator('#auth-tab-register').click();
+      assert.equal(await page.locator('#auth-register').isVisible(),true);
+      assert.equal(await page.locator('#auth-login').isVisible(),false);
+      assert.equal(await page.locator('#auth-register input[name=email]').getAttribute('type'),'email');
+      await page.locator('#auth-tab-login').click();
+      assert.equal(await page.locator('#auth-login').isVisible(),true);
+      await page.locator('#auth-close').click();
+      assert.equal(await page.locator('#auth-dialog').evaluate(el=>el.open),false);
+    });
+  });

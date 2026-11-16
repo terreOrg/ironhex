@@ -27,11 +27,11 @@ Docker also runs the build in its build stage.
   on the *same* engine code as the browser.
 - `GET /api/v1/capabilities`: explicit availability of implemented features.
 
-No account, wallet, marketplace or battle mutation endpoints are exposed.
+Registration, login and logout now use scrypt password hashes, HttpOnly session cookies and PostgreSQL storage. No wallet, marketplace or battle mutation endpoints are exposed.
 The DB schema only reserves tables for future authenticated operations. The
 browser remains authoritative for *local* AI and hotseat battles only.
 
-Next milestones: account authentication, server-authoritative battle commands,
+Next milestones: verified-email and password recovery, server-authoritative battle commands,
 idempotent wallet ledger, owner-checked hangar transactions, market listing
 locking and campaign persistence. Keep all financial state authoritative on the
 server; do not trust balances submitted by the browser.

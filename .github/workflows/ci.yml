@@ -53,6 +53,8 @@ jobs:
             file: tests/fire-arcs.mjs
           - suite: api
             file: tests/api.mjs
+          - suite: auth
+            file: tests/auth.mjs
           - suite: deployment-gate
             file: tests/deploy-gate.mjs
     steps:

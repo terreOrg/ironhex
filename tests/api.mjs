@@ -50,3 +50,28 @@ test('API reports unavailable database without exposing secrets',async()=>{
     assert(!JSON.stringify(await r.json()).includes('password'));
   } finally { await new Promise(resolve=>broken.close(resolve)); }
 });
+
+test('CSRF rejects cross-site account mutations before touching auth storage',async()=>{
+  const authenticated=createHttpServer({authStore:{
+    register:async()=>{throw Error('unexpected registration');},
+    currentUser:async()=>null
+  }});
+  authenticated.listen(0,'127.0.0.1');
+  await once(authenticated,'listening');
+  const url='http://127.0.0.1:'+authenticated.address().port;
+  try {
+    const r=await fetch(url+'/api/v1/auth/register',{
+      method:'POST',headers:{
+        Origin:'https://evil.example','Content-Type':'application/json'
+      },body:'{}'
+    });
+    assert.equal(r.status,403);
+    assert.deepEqual(await r.json(),{error:'invalid_origin'});
+    const me=await fetch(url+'/api/v1/auth/me');
+    assert.deepEqual(await me.json(),{authenticated:false,user:null});
+    const hanging=await fetch(url+'/api/v1/hangar');
+    assert.equal(hanging.status,401);
+  } finally {
+    await new Promise(resolve=>authenticated.close(resolve));
+  }
+});

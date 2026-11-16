@@ -37,6 +37,8 @@ services:
       PGUSER: ironhex
       PGPASSWORD: "${IRONHEX_DB_PASSWORD:?Set IRONHEX_DB_PASSWORD in Komodo}"
       PGDATABASE: ironhex
+      IRONHEX_PUBLIC_ORIGIN: "${IRONHEX_PUBLIC_ORIGIN:-http://ironhex.lan}"
+      IRONHEX_AUTH_COOKIE_SECURE: "${IRONHEX_AUTH_COOKIE_SECURE:-false}"
     ports:
       - "127.0.0.1:${IRONHEX_API_PORT:-18089}:3000"
     security_opt:

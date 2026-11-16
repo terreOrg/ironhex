@@ -18,8 +18,7 @@ The project has a modular web/API structure with a shared rules engine:
 See [ARCHITECTURE.md](ARCHITECTURE.md) and [SELF-HOSTING.md](SELF-HOSTING.md).
 
 The existing browser AI and hotseat game work independently of the API.
-**Campaign persistence, accounts, a functioning market and online multiplayer
-are not implemented yet.** The database tables are only preparation.
+**Registration, login and server-side sessions are implemented.** Campaign persistence, a functioning market and online multiplayer are not implemented yet. The database tables are only preparation.
 
 ## Development
 
