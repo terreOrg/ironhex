@@ -852,8 +852,15 @@
       "chapter": "Combat",
       "kind": "heading",
       "optional": false,
-      "status": "not_audited",
-      "provenance": "Manually verified in the user-supplied PDF table of contents."
+      "status": "tested_subset",
+      "provenance": "Manually verified in the user-supplied PDF table of contents.",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Firing arcs include the exact ±60° and ±120° hex-direction boundaries"
+        }
+      ],
+      "note": "Boundary and sector checks tested with floating point tolerance; all firing-arc exceptions and equipment modifiers remain to be audited."
     },
     {
       "id": "bmm-p024-forward-arc",

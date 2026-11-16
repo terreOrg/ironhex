@@ -584,6 +584,19 @@
       "statement": "The construction and MTF import pipelines must support authentic Clan BattleMech engines, equipment statistics and tech restrictions before creating Clan designs.",
       "status": "known_missing",
       "evidence": []
+    },
+    {
+      "id": "bmm-req-048",
+      "topicId": "bmm-p024-firing-arcs",
+      "page": 24,
+      "statement": "BattleMech left, right and forward firing arcs include all hexes exactly on their 60° and 120° boundaries, independent of floating-point rounding.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Firing arcs include the exact ±60° and ±120° hex-direction boundaries"
+        }
+      ]
     }
   ]
 }
