@@ -1,7 +1,8 @@
 .git
 .github
 .openai
-tests
+tests/*
+!tests/auth-integration.mjs
 node_modules
 test-results
 *.log
