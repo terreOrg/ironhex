@@ -931,3 +931,37 @@ test('BMM p.5 Quad torso cannot twist or flip its front legs as arms',()=>{
  u.twist=0;
  assert.equal(g.twist(u.id,0.5).ok,false,'Fractional twist must be rejected');
 });
+
+test('BMM pp.25,30,83: extended torso twist explicitly grants only normal quad twist',()=>{
+ const g=flatGame(),u=g.units[0];
+ g.phase='fire';g.activeTeam=u.team;u.prone=false;u.config='Quad';u.twist=0;
+ assert.equal(g.twist(u.id,1).ok,false,'no quirk means no quad twist');
+ u.quirks={extendedTorsoTwist:true};
+ for(const value of [-1,0,1]){assert.equal(g.twist(u.id,value).ok,true,String(value));}
+ for(const value of [-2,2,0.5,NaN,Infinity])assert.equal(g.twist(u.id,value).ok,false,String(value));
+ u.quirks={extendedTorsoTwist:false};
+ assert.equal(g.twist(u.id,-1).ok,false);
+ u.config='Biped';u.quirks={extendedTorsoTwist:true};
+ for(const value of [-2,2])assert.equal(g.twist(u.id,value).ok,true,String(value));
+ assert.equal(g.twist(u.id,3).ok,false);
+ u.quirks={};
+ assert.equal(g.twist(u.id,2).ok,false,'standard biped limit remains one hexside');
+});
+
+test('BMM p.30: quad front and rear leg firing arcs ignore torso twist',()=>{
+ const g=flatGame(),u=g.units[0],target=g.units[1];
+ u.config='Quad';u.quirks={extendedTorsoTwist:true};u.facing=0;u.twist=0;
+ target.q=u.q+2;target.r=u.r;
+ const locations=['LA','RA','LL','RL','CT','LT','RT','HD'];
+ const baseline=Object.fromEntries(locations.map(location=>[location,g.arc(u,target,{location,rear:false})]));
+ u.twist=1;
+ for(const location of ['LA','RA','LL','RL'])assert.equal(g.arc(u,target,{location,rear:false}),baseline[location],location);
+ // A torso mount must still respond to a twist where the target crosses an arc boundary.
+ let changed=false;
+ for(const delta of [[2,0],[0,2],[-2,0],[0,-2],[2,-2],[-2,2]]){
+  target.q=u.q+delta[0];target.r=u.r+delta[1];
+  u.twist=0;const before=g.arc(u,target,{location:'CT',rear:false});
+  u.twist=1;if(before!==g.arc(u,target,{location:'CT',rear:false}))changed=true;
+ }
+ assert.equal(changed,true,'torso arc changes under twist');
+});

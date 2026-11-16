@@ -323,3 +323,15 @@ The standard biped twist remains available; fractional twist values
 are now rejected for both chassis. This is the standard, non-quirk
 case only: qualifying optional torso-twist quirks are **not yet
 implemented**, so bmm-req-083 and bmm-req-094 remain open.
+
+### Explicit Extended Torso Twist quirk (BMM pp.25, 30, 83)
+
+A Quad now accepts a one-hexside torso twist only with the explicit
+unit flag `quirks.extendedTorsoTwist === true`. Standard Quads still
+reject twist orders. The same flag permits a biped to twist up to two
+hexsides; without it the existing one-hexside limit remains.
+Quad front and rear leg-mounted weapons retain their original firing
+arcs while torso weapons follow torso twist. The AI respects the same
+limits. Tests cover absent/false/true flags, invalid twist magnitudes,
+biped compatibility, leg arcs and torso arcs. Directional Torso Mount
+remains unimplemented, so full optional-quirk coverage is still open.
