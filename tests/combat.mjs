@@ -108,6 +108,30 @@ test('Failed water landing falls the full water depth before halving damage (BMM
  assert.equal(u.phaseDamage,Math.floor(Math.ceil(u.tonnage/10)*3/2));
 });
 test('Turn cannot advance while unit declarations remain',()=>{const g=game();acting(g,0,'move');assert.equal(g.nextPhase().ok,false);g.hold(0);assert(g.nextPhase().ok);assert.equal(g.phase,'fire');});
+
+test('Automatic shared-ammo shot preserves a later explicitly reserved magazine (BMM ammo expenditure)',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>.99;
+ u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;
+ const second=u.weapons.length;u.weapons.push({...u.weapons[1],location:'RA',shared:1});
+ u.bins[0].shots=1;u.bins[1].shots=1;g.syncAmmo(u);
+ acting(g,0,'fire');
+ assert(g.declareFire(0,[{index:1,target:2},{index:second,target:2,bin:0}]).ok);
+ const resolution=g.resolveFire();
+ assert.equal(resolution.length,2);
+ assert.equal(u.bins[0].shots,0);assert.equal(u.bins[1].shots,0);
+ assert.equal(u.weapons[1].ammo,0);
+});
+test('An early explicit shared-ammo shot still allows later automatic ammunition selection',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];g.rng=()=>.99;
+ u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;
+ const second=u.weapons.length;u.weapons.push({...u.weapons[1],location:'RA',shared:1});
+ u.bins[0].shots=1;u.bins[1].shots=1;g.syncAmmo(u);
+ acting(g,0,'fire');
+ assert(g.declareFire(0,[{index:1,target:2,bin:0},{index:second,target:2}]).ok);
+ g.resolveFire();
+ assert.equal(u.bins[0].shots,0);assert.equal(u.bins[1].shots,0);
+});
+
 test('Shared MG pool cannot declare two shots with one round',()=>{const g=game(),u=g.units[3],t=g.units[0];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.bins.find(b=>b.weapon===6).shots=1;g.syncAmmo(u);acting(g,3,'fire');assert.equal(g.declareFire(3,[{index:6,target:0},{index:7,target:0}]).ok,false);assert.equal(g.declarations.length,0);});
 
 
