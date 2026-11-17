@@ -598,8 +598,7 @@ export class Game extends Legacy{
     side==='left'?'LL':side==='right'?'RL':r<=3?'RL':'LL';
  }
  else{
-  let attempts=0;
-  do{
+  for(let attempts=0;attempts<100;attempts++){
    r=this.roll(attempts?'Локация попадания · повтор из-за укрытия':'Локация попадания');
    const locations=side==='left'?left:side==='right'?right:front;
    loc=locations[r-2];
@@ -613,8 +612,8 @@ export class Game extends Legacy{
     }while(obscured(loc)&&rerolls<100);
     floatingTac=locationRoll!==2;
    }else if(aim&&r>=6&&r<=8)loc=aim;
-   attempts++;
-  }while(aim&&obscured(loc)&&attempts<100);
+   if(!aim||!obscured(loc))break;
+  }
  }
  this.phaseRolls.at(-1).result=locationNameForMech(u,loc)+(obscured(loc)?' · укрытие':` · ${amount} урона`);
  if(obscured(loc))return {location:loc,hits:[],damage:0};

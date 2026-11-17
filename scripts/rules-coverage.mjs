@@ -5,7 +5,7 @@ import {dirname,resolve} from 'node:path';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const book=JSON.parse(readFileSync(resolve(root,'rules/battlemech-manual.json'),'utf8'));
 const cases=JSON.parse(readFileSync(resolve(root,'rules/battlemech-manual-requirements.json'),'utf8'));
-const countBy=(records)=>Object.fromEntries([...new Set(records.map(r=>r.status))].sort()
+const countBy=(records)=>Object.fromEntries([...new Set(records.map(r=>r.status))].sort((a,b)=>a<b?-1:a>b?1:0)
   .map(status=>[status,records.filter(r=>r.status===status).length]));
 const sections=countBy(book.topics),requirements=countBy(cases.requirements);
 const verifiedSections=sections.verified||0,verifiedRequirements=requirements.verified||0;
