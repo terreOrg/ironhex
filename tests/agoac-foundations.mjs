@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills} from '../dist/engine.js';
+import {recordSheet} from '../dist/record-sheet.js';
 import {readFileSync} from 'node:fs';
 
 const fresh=()=>new Game({rng:()=>.5});
@@ -75,4 +76,37 @@ test('AGoAC audit never promotes a topic without complete reviewed child evidenc
   assert(children.length&&children.every(q=>q.status==='verified'&&q.evidence?.length));
  }
  console.log('AGoAC audited topics:',r.topics.filter(t=>t.status==='verified').length,'/',r.topics.length);
+});
+
+test('AGoAC pp.4-5: record sheet displays front and rear damage, current pilot skills and heat overflow',()=>{
+ const g=fresh(),u=g.units[0];
+ u.gunnery=2;u.piloting=3;u.pilotWounds=2;
+ u.armor.CT=u.maxArmor.CT-1;u.rear.CT=u.maxRear.CT-2;
+ u.structure.CT=u.maxStructure.CT-1;u.crit.CT[0]=true;u.sinksLost=1;
+ for(const heat of [0,29,30,31,36,75]){
+  u.heat=heat;
+  const html=recordSheet(u);
+  assert(html.includes('Стрельба: <b>2</b>'));
+  assert(html.includes('Пилотирование: <b>3</b>'));
+  assert(html.includes('Ранения: 2/6'));
+  assert(html.includes('Структура: '+u.structure.CT+' / '+u.maxStructure.CT));
+  assert(html.includes('Центр торса: '+u.armor.CT+' / '+u.maxArmor.CT));
+  assert(html.includes('<span>'+u.rear.CT+' / '+u.maxRear.CT+'</span>'));
+  assert(html.includes('● Двигатель'));
+  assert(html.includes('Радиаторы: '+(u.sinks-u.sinksLost)));
+  assert(html.includes('title="Heat Overflow / нагрев сверх 30">+'+Math.max(0,heat-30)+'</span>'));
+ }
+});
+
+test('AGoAC p.5: base pilot defaults and skill-dependent attack targets',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ assert.deepEqual(defaultMechWarriorSkills('Inner Sphere'),{gunnery:4,piloting:5});
+ assert.equal(u.gunnery,4);assert.equal(u.piloting,5);
+ for(const tile of g.tiles)Object.assign(tile,{depth:0,height:0,surface:0,type:'plain'});
+ u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;u.moveMode='stand';t.moveMode='stand';
+ const p=g.preview(u.id,t.id,0),k=g.physicalPreview(u.id,t.id,'kick','LL');
+ assert.equal(p.legal,true,p.reason);assert.equal(k.legal,true,k.reason);
+ u.gunnery=2;u.piloting=3;
+ assert.equal(g.preview(u.id,t.id,0).targetNumber,p.targetNumber-2);
+ assert.equal(g.physicalPreview(u.id,t.id,'kick','LL').targetNumber,k.targetNumber-2);
 });
