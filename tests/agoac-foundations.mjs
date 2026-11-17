@@ -893,3 +893,57 @@ test('AGoAC p.42: displacement invalidates an unmade attack against a stationary
   assert.deepEqual(damage,pushFirst?[]:[[ally.id,5]]);
  }
 });
+
+test('AGoAC pp.27–28: DFA searches legal directions by angular distance, with occupied and offboard destinations allowed',()=>{
+ const g=fresh(),[u,t,a,b]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,airborne:true});Object.assign(t,{q:1,r:0});a.dead=b.dead=true;
+ const neighbor=dir=>g.tile(t.q+DIRS[dir][0],t.r+DIRS[dir][1]);
+ assert.equal(g.occupied(u.q,u.r,t.id),false,'DFA in flight does not count for stacking');
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,true),[0]);
+ neighbor(0).height=3;
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,true),[1,5]);
+ Object.assign(a,{dead:false,q:neighbor(1).q,r:neighbor(1).r});
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,true),[1,5],'occupied landing is legal');
+ neighbor(1).height=3;neighbor(5).height=3;
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,true),[2,4]);
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,false),[2,4,3],'miss allows any legal neighbor');
+ for(let dir=0;dir<6;dir++)neighbor(dir).height=3;
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,true),[]);
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,false),[]);
+ Object.assign(t,{q:6,r:0});
+ assert(!g.tile(7,0));
+ assert.deepEqual(g.dfaDisplacementOptions(t,0,true),[0],'forced offboard is legal');
+});
+test('AGoAC pp.27–28: successful and missed DFA land in target hex; impassable surroundings determine destruction',()=>{
+ for(const hit of [true,false])for(const blocked of [false,true]){
+  const g=fresh(),[u,t,a,b]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0,airborne:true,tonnage:55,moveMode:'jump',charge:{target:t.id,type:'dfa',dir:0,targetPos:{q:1,r:0},startPos:{q:-2,r:0}}});
+  Object.assign(t,{q:1,r:0,moveMode:'stand',distanceMoved:0});a.dead=b.dead=true;
+  const neighbor=dir=>g.tile(t.q+DIRS[dir][0],t.r+DIRS[dir][1]);
+  neighbor(0).height=3;
+  if(blocked)for(let dir=1;dir<6;dir++)neighbor(dir).height=3;
+  g.rng=()=>hit?.99:0;
+  const damage=[],falls=[],checks=[];
+  g.packets=(v,n,side,table)=>damage.push([v.id,n,side,table]);
+  g.fall=(v,levels,tn,side)=>{falls.push([v.id,levels,side,v.q,v.r]);v.prone=true;};
+  g.psr=(v,mod)=>{checks.push([v.id,mod]);return true;};
+  const dest={q:neighbor(1).q,r:neighbor(1).r};
+  g.resolveSpecial(u);
+  assert.equal(u.airborne,false);
+  assert.equal(g.resolution[0].shots[0].hit,hit);
+  assert.equal(u.dead,!hit&&blocked);assert.equal(t.dead,hit&&blocked);
+  if(!u.dead)assert.deepEqual([u.q,u.r],[1,0]);
+  if(!blocked)assert.deepEqual([t.q,t.r],[dest.q,dest.r]);
+  else assert.deepEqual([t.q,t.r],[1,0]);
+  if(hit){
+   assert.equal(damage[0][1],17);assert.deepEqual(damage[1],[u.id,11,'front','kick']);
+   assert(checks.some(([id,mod])=>id===u.id&&mod===4));
+   assert.equal(falls.length,0);
+  }else{
+   assert.equal(damage.length,0);
+   assert.deepEqual(falls,blocked?[]:[[u.id,2,'rear',1,0]]);
+  }
+ }
+});

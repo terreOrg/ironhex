@@ -202,7 +202,7 @@ export class Game extends Legacy{
  // destroyed model remains on the board until this phase is finished.
  // Old saves and unused roster slots have no pending-removal marker.
  onMap(u){return !!u&&(!u.dead||u.removalPending===true);}
- occupied(q,r,except){return this.units.some(u=>this.onMap(u)&&u.id!==except&&u.q===q&&u.r===r);}
+ occupied(q,r,except){return this.units.some(u=>this.onMap(u)&&!u.airborne&&u.id!==except&&u.q===q&&u.r===r);}
  destroyMech(u){if(u.dead)return;u.removalPending=true;u.dead=true;}
  removeDestroyedMechs(){for(const u of this.units)if(u.dead&&u.removalPending===true)u.removalPending=false;}
  mobile(u){return !u.dead&&!u.shutdown&&!u.unconscious&&!u.abandoned;}
@@ -851,7 +851,7 @@ export class Game extends Legacy{
   if(!t){u.dead=true;u.removalPending=false;u.escaped=true;this.note(u.name+' вытеснен за край карты.');return true;}
   const old=this.tile(u.q,u.r);
   if(t.height-old.height>2)return false;
-  const occ=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===t.q&&v.r===t.r);
+  const occ=this.units.find(v=>!v.dead&&!v.airborne&&v.id!==u.id&&v.q===t.q&&v.r===t.r);
   if(occ&&old.height-t.height>=2)return this.accidentalFall(u,occ,old,t,depth);
   if(occ)this.resolveDomino(occ,dir,depth);
   u.q=t.q;u.r=t.r;
@@ -987,14 +987,46 @@ export class Game extends Legacy{
  orderDump(id,index){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||this.phase!=='move'||u.moveMode==='run'||u.moveMode==='jump')return fail('Сброс боезапаса: только ходьба или неподвижность');if(!u.bins[index]?.shots)return fail('Бункер пуст');if(!u.dumpNext.includes(index))u.dumpNext.push(index);this.note(`${u.name}: сброс бункера ${index+1} начнётся в конце хода; завершится через ход.`);return {ok:true};}
  orderShutdown(id){const u=this.unit(id);if(!this.canAct(u)||u.unconscious||u.abandoned||this.phase!=='move')return fail('Приказ недоступен');if(u.shutdown&&!u.voluntaryShutdown)return fail('После аварийного отключения перезапуск происходит в фазу нагрева');u.shutdownNext=!u.shutdownNext;return {ok:true};}
  declareCharge(id,target,type='charge',moveMode='run'){const u=this.unit(id),t=this.unit(target);if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone||!t||t.team===u.team||t.dead||t.charge||t.airborne||(type==='charge'&&t.prone)||!(t.moved||!this.mobile(t)))return fail('Цель должна завершить движение; для тарана цель должна стоять');if(this.displacementTargetReserved(target))return fail('Эта цель уже выбрана для тарана/DFA');if(!['charge','dfa'].includes(type)||type==='charge'&&!['walk','run'].includes(moveMode))return fail('Недопустимый тип тарана или режим движения');const mode=type==='dfa'?'jump':moveMode;if(u.spent||u.moveMode!=='stand')return fail('Заявите таран/DFA до обычного движения');let options=this.reachable(u,mode).filter(p=>distance(p,t)===1);if(type==='dfa'){if(!this.mp(u,'jump')||distance(u,t)>this.mp(u,'jump')||this.tile(t.q,t.r).height+(t.prone?0:2)>this.tile(u.q,u.r).height+this.mp(u,'jump'))return fail('Не хватает высоты или дальности прыжка');}else options=options.filter(p=>p.cost+this.terrainCost(this.tile(t.q,t.r))+Math.abs(this.tile(p.q,p.r).height-this.tile(t.q,t.r).height)<=this.mp(u,mode));
- options.sort((a,b)=>a.cost-b.cost);const p=options[0];if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},r=this.move(id,p.q,p.r,mode);if(!r.ok)return r;const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r}};if(type==='dfa'){u.pendingHeat-=Math.max(3,u.spent);u.spent=distance(start,t);u.pendingHeat+=Math.max(3,u.spent);u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
- resolveSpecial(u){const s=u.charge,t=this.unit(s.target);if(!t||u.dead)return;if(t.dead||t.q!==s.targetPos.q||t.r!==s.targetPos.r||t.prone&&s.type==='charge'){u.airborne=false;this.note(`${u.name}: специальная атака отменена — цель изменилась.`);return;}const start=this.phaseRolls.length,dfa=s.type==='dfa',tn=Math.max(2,u.piloting+(u.piloting-t.piloting)+(dfa?3:u.moveMode==='run'?2:1)+(this.isImmobile(t)?-4:this.tmm(t))+(dfa?0:this.los(u,t).woods)),roll=this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn),hit=!u.prone&&roll>=tn;const old={q:t.q,r:t.r},side=this.hitSide(t,u);let damage=0;u.airborne=false;
- if(hit){damage=dfa?Math.ceil(u.tonnage/10*3):Math.ceil(u.tonnage/10*s.hexes);this.packets(t,damage,dfa&&t.prone?'rear':side,dfa&&!t.prone?'punch':'normal');this.packets(u,dfa?u.tonnage/5:Math.ceil(t.tonnage/10),'front',dfa?'kick':'normal');// AGoAC pp.26,42: a successful charge may cause damage without
+ options.sort((a,b)=>a.cost-b.cost);const p=options[0];if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},r=this.move(id,p.q,p.r,mode);if(!r.ok)return r;const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r},startPos:start};if(type==='dfa'){u.pendingHeat-=Math.max(3,u.spent);u.spent=distance(start,t);u.pendingHeat+=Math.max(3,u.spent);u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
+ // AGoAC p.27: a missed DFA allows any legal neighboring hex,
+ // including an occupied one. A successful DFA searches by angular
+ // distance from the original displacement direction.
+ dfaDisplacementOptions(t,dir,hit){
+  const old=this.tile(t.q,t.r);
+  const groups=hit?[[dir],[wrap(dir+1),wrap(dir-1)],
+   [wrap(dir+2),wrap(dir-2)],[wrap(dir+3)]]:
+   [[dir,wrap(dir+1),wrap(dir-1),wrap(dir+2),wrap(dir-2),wrap(dir+3)]];
+  for(const group of groups){
+   const legal=group.filter(d=>{
+    const [dq,dr]=DIRS[d],tile=this.tile(t.q+dq,t.r+dr);
+    return !tile||tile.height-old.height<=2;
+   });
+   if(legal.length)return legal;
+  }
+  return [];
+ }
+ resolveDFALanding(u,t,dir,hit,old){
+  const options=t.dead?[]:this.dfaDisplacementOptions(t,dir,hit);
+  if(!t.dead&&!options.length){
+   if(!hit){this.destroyMech(u);return;}
+   this.destroyMech(t);
+  }
+  // The controller may pick among equally legal options; until a choice
+  // is exposed in the interface, use the stable first permissible option.
+  u.q=old.q;u.r=old.r;
+  if(!t.dead&&options.length&&!this.displace(t,options[0]))this.destroyMech(t);
+  if(hit){
+   if(!u.dead)this.psr(u,4,'Посадка DFA');
+   if(!t.dead&&!t.prone)this.psr(t,2,'Попадание DFA');
+  }else if(!u.dead)this.fall(u,2,null,'rear');
+ }
+ resolveSpecial(u){const s=u.charge,t=this.unit(s.target);if(!t||u.dead)return;if(t.dead||t.q!==s.targetPos.q||t.r!==s.targetPos.r||t.prone&&s.type==='charge'){u.airborne=false;this.note(`${u.name}: специальная атака отменена — цель изменилась.`);return;}const start=this.phaseRolls.length,dfa=s.type==='dfa',tn=Math.max(2,u.piloting+(u.piloting-t.piloting)+(dfa?3:u.moveMode==='run'?2:1)+(this.isImmobile(t)?-4:this.tmm(t))+(dfa?0:this.los(u,t).woods)),roll=this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn),hit=!u.prone&&roll>=tn;const old={q:t.q,r:t.r},side=this.hitSide(t,dfa?(s.startPos??u.moveStart??u):u);let damage=0;u.airborne=false;
+ if(hit){damage=dfa?Math.ceil(u.tonnage/10*3):Math.ceil(u.tonnage/10*s.hexes);this.packets(t,damage,dfa&&t.prone?'rear':side,dfa&&!t.prone?'punch':'normal');this.packets(u,dfa?u.tonnage/5:Math.ceil(t.tonnage/10),'front',dfa?'kick':'normal');if(dfa)this.resolveDFALanding(u,t,s.dir,true,old);else{
+ // AGoAC pp.26,42: a successful charge may cause damage without
  // displacing either Mech when the destination is prohibited. Destruction
  // by the charge itself instead permits the attacker to enter the hex.
- let advance=t.dead||this.displace(t,s.dir);
- if(!advance&&dfa){t.dead=true;advance=true;} // DFA has separate displacement exceptions (p.27).
- if(!u.dead){if(advance){u.q=old.q;u.r=old.r;}this.psr(u,dfa?4:2,dfa?'Посадка DFA':'Таран');}this.psr(t,2,dfa?'Попадание DFA':'Попадание тарана');}else if(dfa){const dirs=[s.dir,wrap(s.dir+1),wrap(s.dir-1),wrap(s.dir+2),wrap(s.dir-2),wrap(s.dir+3)];const d=dirs.find(d=>{const v=DIRS[d],x=this.tile(t.q+v[0],t.r+v[1]);return x&&!this.occupied(x.q,x.r,t.id)&&x.height-this.tile(t.q,t.r).height<=2;});if(d===undefined)u.dead=true;else{this.displace(t,d);u.q=old.q;u.r=old.r;this.fall(u,2,null,'rear');}}else{const d=[wrap(s.dir+1),wrap(s.dir-1)].find(d=>{const v=DIRS[d];return this.tile(u.q+v[0],u.r+v[1])&&!this.occupied(u.q+v[0],u.r+v[1],u.id);});if(d!==undefined){u.q+=DIRS[d][0];u.r+=DIRS[d][1];}}
+ const advance=t.dead||this.displace(t,s.dir);
+ if(!u.dead){if(advance){u.q=old.q;u.r=old.r;}this.psr(u,2,'Таран');}this.psr(t,2,'Попадание тарана');}}else if(dfa){this.resolveDFALanding(u,t,s.dir,false,old);}else{const d=[wrap(s.dir+1),wrap(s.dir-1)].find(d=>{const v=DIRS[d];return this.tile(u.q+v[0],u.r+v[1])&&!this.occupied(u.q+v[0],u.r+v[1],u.id);});if(d!==undefined){u.q+=DIRS[d][0];u.r+=DIRS[d][1];}}
  this.resolution.push({id:u.id,target:t.id,ok:true,shots:[{weapon:dfa?'DFA':'Таран',hit,roll,targetNumber:tn,damage,rolls:this.phaseRolls.slice(start)}]});}
 
 }
