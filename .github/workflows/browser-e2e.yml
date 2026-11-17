@@ -28,12 +28,24 @@ jobs:
           node-version: '24'
       - name: Confirm sources are synchronized
         run: node scripts/build-web.mjs --check
-      - name: Install pinned Playwright
-        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Install pinned browser-test and coverage tools
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1 v8-to-istanbul@9.3.0 istanbul-lib-coverage@3.2.2 istanbul-lib-report@3.0.1 istanbul-reports@3.1.7
       - name: Install headless Chromium
         run: npx --no-install playwright install chromium
-      - name: Execute browser test suite
-        run: node --test tests/browser.mjs
+      - name: Execute browser test suite and verify coverage report
+        env:
+          IRONHEX_BROWSER_COVERAGE: '1'
+        run: |
+          rm -f coverage/browser.info
+          node --test tests/browser.mjs
+          test -s coverage/browser.info
+      - name: Upload browser LCOV report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ironhex-browser-lcov-${{ github.sha }}
+          path: coverage/browser.info
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload failure screenshots
         if: failure()
         uses: actions/upload-artifact@v4
