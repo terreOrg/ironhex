@@ -15,7 +15,7 @@ const MAX_OPERATIONS=200;
 
 export function validateOperation(input) {
   if(!input||typeof input!=='object'||Array.isArray(input)||
-     Object.keys(input).some(k=>!['mechIds','title','mode','contractId'].includes(k))||
+     Object.keys(input).some(k=>!['mechIds','title','mode','contractId','deploymentMode'].includes(k))||
      !Array.isArray(input.mechIds)||input.mechIds.length<1||input.mechIds.length>2||
      input.mechIds.some(id=>typeof id!=='string'||!UUID.test(id))||
      new Set(input.mechIds).size!==input.mechIds.length)
@@ -28,7 +28,9 @@ export function validateOperation(input) {
   if(!['auto','interactive'].includes(mode))throw new AuthError(422,'invalid_operation');
   const contractId=input.contractId??'patrol';
   if(!contractById(contractId))throw new AuthError(422,'invalid_contract');
-  return {title:title.trim(),mechIds:input.mechIds,mode,contractId};
+  const deploymentMode=Object.hasOwn(input,'deploymentMode')?input.deploymentMode:'scenario';
+  if(!['scenario','standard'].includes(deploymentMode))throw new AuthError(422,'invalid_operation');
+  return {title:title.trim(),mechIds:input.mechIds,mode,contractId,deploymentMode};
 }
 
 function sourceRng(seed) {
@@ -45,7 +47,7 @@ function sourceRng(seed) {
   };
 }
 
-function makeRuntime(roster,saved=null,contractId='patrol') {
+function makeRuntime(roster,saved=null,contractId='patrol',deploymentMode='scenario') {
   const rng=sourceRng(saved?.rngState??(randomBytes(4).readUInt32LE(0)||1));
   const game=new Game({rng:()=>rng.next()});
   if(saved?.game){
@@ -86,6 +88,8 @@ function makeRuntime(roster,saved=null,contractId='patrol') {
     }
     for(const enemy of game.units.filter(u=>u.team===1))
       enemy.gunnery=contractById(contractId)?.enemyGunnery??4;
+    if(deploymentMode==='standard'&&!game.startStandardDeployment().ok)
+      throw Error('deployment_setup_failed');
     game.note('Сервер открыл операцию. Состав и навыки пилотов зафиксированы.');
   }
   return {game,rng};
@@ -201,6 +205,7 @@ function publicItem(row,{detail=false}={}){
   return {
     id:row.id,title:row.title,status:row.status,version:row.version,
     controlMode:row.control_mode||'auto',contractId:row.contract_id||'patrol',
+    deploymentMode:row.deployment_mode||'scenario',
     roster,createdAt:row.created_at,
     startedAt:row.started_at,completedAt:row.completed_at,
     state:detail&&row.battle_state?summary(row.battle_state.game):null,
@@ -294,7 +299,7 @@ export function createOperationStore(pool){
       return publicItem(result.rows[0],{detail:true});
     },
     async create(owner,input){
-      const {title,mechIds,mode,contractId}=validateOperation(input);
+      const {title,mechIds,mode,contractId,deploymentMode}=validateOperation(input);
       const client=await pool.connect();
       try{
         await client.query('BEGIN');
@@ -345,9 +350,9 @@ export function createOperationStore(pool){
           };
         });
         const inserted=await client.query(
-          'INSERT INTO combat_operations(commander_id,title,roster,control_mode,contract_id) '+
-          'VALUES($1,$2,$3::jsonb,$4,$5) RETURNING *',
-          [owner,title,JSON.stringify(roster),mode,contractId]);
+          'INSERT INTO combat_operations(commander_id,title,roster,control_mode,contract_id,deployment_mode) '+
+          'VALUES($1,$2,$3::jsonb,$4,$5,$6) RETURNING *',
+          [owner,title,JSON.stringify(roster),mode,contractId,deploymentMode]);
         await client.query('COMMIT');
         return publicItem(inserted.rows[0],{detail:true});
       }catch(error){await client.query('ROLLBACK');throw error;}
@@ -356,7 +361,7 @@ export function createOperationStore(pool){
     launch(owner,id){
       return locked(id,owner,async(client,row)=>{
         if(row.status!=='draft')throw new AuthError(409,'operation_not_draft');
-        const runtime=makeRuntime(row.roster,null,row.contract_id);
+        const runtime=makeRuntime(row.roster,null,row.contract_id,row.deployment_mode);
         const state=capture(runtime);
         const updated=await client.query(
           'UPDATE combat_operations SET status=$3,battle_state=$4::jsonb, '+

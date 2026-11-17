@@ -100,7 +100,8 @@ function renderOperation(op){
   if(!op)return;
   panel.append(E('small','op-overline','ОПЕРАЦИЯ / '+(stateLabels[op.status]||op.status)),
     E('h3','',op.title),
-    E('small','', 'КОНТРАКТ: '+(contracts.find(c=>c.id===op.contractId)?.name||'Приграничный патруль')));
+    E('small','', 'КОНТРАКТ: '+(contracts.find(c=>c.id===op.contractId)?.name||'Приграничный патруль')),
+    E('small','', 'РАЗВЁРТЫВАНИЕ: '+(op.deploymentMode==='standard'?'AGoAC · вход с края':'Сценарий · готовые позиции')));
   const roster=E('div','op-unit-roster');
   for(const entry of op.roster){
     const cell=E('div','op-unit-card');
@@ -274,6 +275,9 @@ export function installOperationUI(hubRoot){
     'value="Патруль приграничного сектора"></label>',
     '<label>КОНТРАКТ<select id="op-contract" name="contractId" aria-label="Контракт">',
     '<option value="patrol">Приграничный патруль</option></select></label>',
+    '<label>РАЗВЁРТЫВАНИЕ<select name="deploymentMode" aria-label="Развёртывание">',
+    '<option value="scenario">Сценарий · готовые позиции</option>',
+    '<option value="standard">AGoAC · вход с края карты</option></select></label>',
     '<p class="op-label">ВЫБЕРИТЕ ДО ДВУХ МЕХОВ ИЗ АНГАРА</p>',
     '<label class="op-control-choice"><input type="checkbox" name="interactive" checked>',
     ' ИНТЕРАКТИВНЫЙ 3D-БОЙ (СЕРВЕРНЫЙ РЕЖИМ)</label>',
@@ -304,7 +308,8 @@ export function installOperationUI(hubRoot){
     try{
       const {item}=await request('/api/v1/operations','POST',{
         title:form.elements.title.value,mechIds,contractId:form.elements.contractId.value,
-        mode:form.elements.interactive.checked?'interactive':'auto'
+        mode:form.elements.interactive.checked?'interactive':'auto',
+        deploymentMode:form.elements.deploymentMode.value
       });
       opened=item.id;
       renderOperation(item);
