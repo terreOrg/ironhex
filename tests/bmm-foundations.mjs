@@ -1008,6 +1008,40 @@ test('BMM pp.24-25: all quad leg weapons obey forward/rear arcs, never biped arm
  assert.equal(g.arc(u,sideR,{location:'RL',rear:false}),false);
 });
 
+test('BMM pp.19,27,51,65: Quad front legs submerge, cool and disable jump jets in Depth 1',()=>{
+ const legs=['LA','RA','LL','RL'];
+ const design=construct({...example,name:'Quad water audit',config:'Quad',jump:5,sinks:15,equipment:[
+  ...legs.map(location=>({type:'jump',location,slot:5})),
+  ...legs.map(location=>({type:'sink',location,slot:6})),
+  {type:'jump',location:'CT',slot:12}
+ ]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(design.unit));
+ u.q=0;u.r=0;u.prone=false;u.dead=false;u.shutdown=false;u.unconscious=false;
+ u.breached=[];u.jumpLost=0;u.sinksLost=0;u.heat=20;u.pendingHeat=0;
+ const tile=g.tile(0,0);
+ assert.equal(g.mp(u,'jump'),5);
+ Object.assign(tile,{type:'water',depth:1,height:-1});
+ for(const loc of legs)assert.equal(g.isSubmergedLocation(u,loc),true,loc);
+ for(const loc of ['HD','CT','LT','RT'])assert.equal(g.isSubmergedLocation(u,loc),false,loc);
+ assert.equal(g.mp(u,'jump'),1);
+ g.heatPhase();assert.equal(u.heat,1,'All four functional leg sinks provide bonus cooling');
+ u.heat=20;u.crit.LA[5]=true;u.sinksLost=1;
+ g.heatPhase();assert.equal(u.heat,3,'Destroyed sink loses base and bonus cooling');
+ u.crit.RA[4]=true;u.jumpLost=1;
+ assert.equal(g.mp(u,'jump'),1,'Destroyed submerged jet is not deducted twice');
+ g.breachLocation(u,'LL');
+ assert.equal(g.mp(u,'jump'),1,'Flooded submerged jet is not deducted twice');
+ u.prone=true;assert.equal(g.mp(u,'jump'),0);
+ assert.equal(g.isSubmergedLocation(u,'CT'),true);
+ u.prone=false;tile.depth=2;assert.equal(g.mp(u,'jump'),0);
+ tile.depth=0;assert.equal(g.mp(u,'jump'),3);
+ const biped=g.units[2];biped.config='Biped';biped.q=0;biped.r=0;biped.prone=false;tile.depth=1;
+ assert.equal(g.isSubmergedLocation(biped,'LA'),false);
+ assert.equal(g.isSubmergedLocation(biped,'LL'),true);
+});
+
 test('BMM p.26: partial cover protects all four quad legs and not biped arms',()=>{
  const quad={config:'Quad'},biped={config:'Biped'};
  for(const loc of ['LA','RA','LL','RL']){
