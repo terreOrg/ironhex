@@ -520,3 +520,51 @@ test('AGoAC pp.6,7,35: destroyed map presence is cleared at each phase boundary'
  assert.equal(g.onMap(u),false,'legacy snapshots and absent roster slots do not reappear');
  g.reset();assert.equal(g.onMap(g.units[0]),true);
 });
+
+test('AGoAC pp.6,21,30: every weapon attack rolls and spends ammo before damage, even a destroyed shooter',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2],ammo=a.bins[0];
+ g.phase='fire';g.rng=()=>.99;
+ const shot=(u,target,index,bin=null)=>({index,target:target.id,bin,aim:null,heatMode:false,
+  weapon:{...u.weapons[index],rack:0},
+  preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false}});
+ const before=ammo.shots,observed=[];
+ g.declarations=[{id:b.id,shots:[shot(b,a,1)]},{id:a.id,shots:[shot(a,b,1,0)]}];
+ g.hit=(target,damage)=>{
+  observed.push(target.id);
+  assert.equal(ammo.shots,before-1,'Ammunition spent before any damage');
+  assert.deepEqual(g.phaseRolls.slice(0,2).map(r=>r.kind),
+   [b.name+' · '+b.weapons[1].name,a.name+' · '+a.weapons[1].name]);
+  if(target===a)g.destroyMech(a);
+  return {location:'CT',damage,hits:[]};
+ };
+ const results=g.resolveFire();
+ assert.deepEqual(observed,[a.id,b.id]);
+ assert.equal(a.dead,true);assert.equal(g.onMap(a),false);
+ assert.equal(results.length,2);
+ assert.equal(results[1].shots[0].damage,a.weapons[1].damage);
+ assert.deepEqual(results.map(r=>r.shots[0].rolls.length),[1,1]);
+ assert.deepEqual(results.map(r=>r.shots[0].rolls[0].kind),g.phaseRolls.slice(0,2).map(r=>r.kind));
+});
+test('AGoAC pp.21,30: resolve each target and each missile packet completely in declared order',()=>{
+ const g=fresh(),u=g.units[0],a=g.units[2],b=g.units[3];
+ g.phase='fire';g.rng=()=>.99;
+ const shot=(target,index,weapon)=>({index,target:target.id,bin:null,aim:null,heatMode:false,
+  weapon:{...weapon,ammo:null},preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false}});
+ g.declarations=[{id:u.id,shots:[
+  shot(a,0,{name:'SRM 2',rack:2,heat:2,damage:2,location:'RA'}),
+  shot(b,1,{name:'Medium Laser B',rack:0,heat:3,damage:5,location:'RA'}),
+  shot(a,2,{name:'Medium Laser A',rack:0,heat:3,damage:5,location:'RA'})
+ ]}];
+ const packets=[];
+ g.hit=(target,damage)=>{
+  assert.equal(g.phaseRolls.slice(0,3).filter(r=>r.target===2).length,3);
+  packets.push([target.id,damage]);
+  g.roll('Packet '+target.id+' '+damage,2);
+  return {location:'CT',damage,hits:[]};
+ };
+ const result=g.resolveFire();
+ assert.deepEqual(packets,[[a.id,2],[a.id,2],[a.id,5],[b.id,5]]);
+ assert.deepEqual(result.map(r=>r.target),[a.id,a.id,b.id]);
+ assert.deepEqual(result[0].shots[0].rolls.map(r=>r.kind),
+  [u.name+' · SRM 2','Ракетный кластер','Packet '+a.id+' 2','Packet '+a.id+' 2']);
+});
