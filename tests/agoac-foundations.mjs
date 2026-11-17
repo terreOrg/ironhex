@@ -1491,7 +1491,7 @@ test('AGoAC pp.11–12: jumping can use any legal shortest path but not a longer
  const g=fresh(),u=g.units[0],ally=g.units[1];
  g.phase='move';g.queue=[0,1,0,1];g.activeTeam=0;
  for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});
- Object.assign(u,{q:0,r:0,jump:2,jumpLost:0,spent:0,proneAtStart:false});
+ Object.assign(u,{q:0,r:0,moveStart:{q:0,r:0},jump:2,jumpLost:0,spent:0,proneAtStart:false});
  Object.assign(ally,{q:0,r:1});const a=g.tile(1,0),b=g.tile(0,1),target=g.tile(1,1);
  Object.assign(a,{height:3,surface:3});
  assert.equal(g.jumpClear(u,target,2),true);
