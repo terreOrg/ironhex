@@ -1211,3 +1211,58 @@ test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical at
  assert.equal(g.onMap(t),false);assert.equal(g.occupied(1,0),false);
  assert.equal(g.phase,'heat');assert.equal(other.dead,false);
 });
+
+function standardSetupGame(edge=0,winner=0){
+ const g=fresh();
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ assert(g.startStandardDeployment().ok);
+ const dice=[...diceFor(7),...diceFor(7),...diceFor(winner===0?12:2),...diceFor(winner===0?2:12)];
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ assert(g.nextPhaseWithChoices({humanTeams:[0,1]}).pending);
+ const request=g.pendingChoice;
+ assert.equal(request.kind,'deployment-edge');assert.equal(request.team,winner);
+ assert.equal(request.options.length,6);assert.equal(dice.length,0);
+ assert(g.nextPhaseWithChoices({choice:{key:request.key,option:String(edge)}}).ok);
+ assert.equal(g.phase,'initiative');
+ assert.equal(g.deployment.edges[winner],edge);
+ assert.equal(g.deployment.edges[1-winner],(edge+3)%6);
+ assert(g.units.every(u=>!g.onMap(u)));
+ assert.equal(g.phaseRolls.length,4);
+ const turnDice=[...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(turnDice.length);return turnDice.shift();};
+ assert(g.nextPhase().ok);assert.equal(g.phase,'move');assert.equal(turnDice.length,0);
+ assert.equal(g.initiativeWinner,0);return g;
+}
+test('AGoAC p.6: setup roll, all six opposite edges, separate turn initiative and no phantom occupants',()=>{
+ for(const winner of [0,1])for(let edge=0;edge<6;edge++){
+  const g=standardSetupGame(edge,winner),a=g.deploymentEdgeTiles(edge),b=g.deploymentEdgeTiles((edge+3)%6);
+  assert.equal(a.length,7);assert.equal(b.length,7);assert(a.every(t=>!b.includes(t)));
+  const [dq,dr]=DIRS[edge];assert(a.every(t=>!g.tile(t.q-dq,t.r-dr)));
+  assert(g.units.every(u=>!g.occupied(u.q,u.r)));
+  const active=g.units.find(u=>g.canAct(u)),legal=g.reachable(active,'walk');
+  assert(legal.length>0);assert(legal.every(p=>g.deploymentEdgeTiles(g.deployment.edges[active.team]).some(t=>t.q===p.q&&t.r===p.r)));
+  assert.equal(g.hold(active.id).ok,false);assert.equal(g.move(active.id,0,0,'walk').ok,false);
+ }
+ const normal=fresh();assert.equal(normal.phase,'initiative');assert(normal.units.every(u=>normal.onMap(u)));
+});
+test('AGoAC pp.6,8–12: walk and run charge first full hex terrain cost, then continue with remaining MP',()=>{
+ for(const mode of ['walk','run']){
+  const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x)),route=g.reachable(u,mode).find(p=>p.r===0);assert(route);
+  g.tile(route.q,route.r).type='woods';
+  assert.equal(g.reachable(u,mode).find(p=>p.q===route.q&&p.r===route.r).cost,2);
+  const initial=g.mp(u,mode);
+  assert(g.move(u.id,route.q,route.r,mode).ok);assert(g.onMap(u));assert.equal(u.spent,2);assert.equal(u.distanceMoved,1);
+  assert(g.reachable(u,mode).every(p=>p.cost<=initial-2));
+  const [dq,dr]=DIRS[u.facing];assert(g.move(u.id,u.q+dq,u.r+dr,mode).ok);
+  assert.equal(u.spent,3);assert.equal(u.distanceMoved,2);assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,mode==='walk'?1:2);
+ }
+});
+test('AGoAC pp.6,8,11–12: jumping entry counts the first full hex, consumes jump MP and excludes occupied landings',()=>{
+ const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x)),options=g.reachable(u,'jump');assert(options.length>7);
+ assert(options.some(p=>p.cost===1));assert(options.some(p=>p.cost===g.mp(u,'jump')));
+ const route=options.find(p=>p.cost===3);assert(route);
+ const other=g.units.find(x=>x.id!==u.id);Object.assign(other,{deployed:true,q:route.q,r:route.r});
+ assert(!g.reachable(u,'jump').some(p=>p.q===route.q&&p.r===route.r));other.deployed=false;
+ assert(g.move(u.id,route.q,route.r,'jump').ok);assert(g.onMap(u));assert.equal(u.spent,3);assert.equal(u.distanceMoved,3);
+ assert.equal(u.pendingHeat,3);assert.equal(g.reachable(u,'jump').length,0);assert(g.hold(u.id).ok);
+});
