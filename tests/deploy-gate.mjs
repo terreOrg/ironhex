@@ -105,3 +105,18 @@ test('cancelled duplicates cannot veto or substitute for a completed same-SHA su
     assert.equal(evaluate([duplicate,...runs.slice(1),{...runs[0],...other}]),false);
   }
 });
+
+test('unfinished required workflow remains retryable but completed failures stop deployment',()=>{
+  const runs=requiredWorkflows.map(success);
+  for(const status of ['queued','pending','waiting','in_progress']){
+    const pending={...runs[0],status,conclusion:null};
+    for(const items of [[pending,...runs.slice(1)],[...runs,pending]]){
+      const result=evaluateDeployment({sha,mainSha:sha,runs:items});
+      assert.equal(result.ready,false);
+      assert.match(result.reason,/not successful yet/);
+      assert(!result.reason.includes('did not pass'),'Deploy poller must wait for CI');
+    }
+  }
+  const result=evaluateDeployment({sha,mainSha:sha,runs:[...runs,{...runs[0],conclusion:'failure'}]});
+  assert.equal(result.ready,false);assert.match(result.reason,/did not pass/);
+});

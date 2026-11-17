@@ -19,11 +19,12 @@ export function evaluateDeployment({ sha, mainSha, runs }) {
     // A cancelled duplicate is not a successful check, but does not invalidate
     // another completed success for the identical main push. All other
     // non-success results and unfinished runs remain blocking.
-    if (matching.some(run => run.status !== 'completed' ||
+    if (matching.some(run => run.status === 'completed' &&
       !['success', 'cancelled'].includes(run.conclusion))) {
       return { ready: false, reason: name + ' did not pass' };
     }
-    if (!matching.some(run => run.status === 'completed' && run.conclusion === 'success')) {
+    if (matching.some(run => run.status !== 'completed') ||
+      !matching.some(run => run.status === 'completed' && run.conclusion === 'success')) {
       return { ready: false, reason: name + ' is not successful yet' };
     }
   }
