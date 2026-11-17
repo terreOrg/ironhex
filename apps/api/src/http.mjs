@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { BlockList, isIP } from 'node:net';
 import { AuthError, extractSession, makeSessionCookie } from './auth.mjs';
 import { Game } from '../../../packages/engine/engine.js';
 
@@ -45,6 +46,16 @@ async function readJson(req) {
   }
 }
 
+// Node's address matcher handles IPv4-mapped IPv6 without trusting proxy headers.
+const localPeers = new BlockList();
+localPeers.addAddress('127.0.0.1', 'ipv4');
+localPeers.addAddress('::1', 'ipv6');
+
+export function isLocalPeer(address) {
+  const family = isIP(address || '');
+  return family !== 0 && localPeers.check(address, family === 6 ? 'ipv6' : 'ipv4');
+}
+
 function sameOrigin(req, allowedOrigin) {
   const origin=req.headers.origin;
   if(!origin||req.headers['sec-fetch-site']==='cross-site')return false;
@@ -55,7 +66,7 @@ function sameOrigin(req, allowedOrigin) {
     const candidate=new URL(origin);
     return candidate.origin===origin&&candidate.host===req.headers.host&&
       candidate.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(candidate.hostname)&&
-      ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+      isLocalPeer(req.socket.remoteAddress);
   }catch{return false;}
 }
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
 import { after, before, test } from 'node:test';
-import { createHttpServer } from '../apps/api/src/http.mjs';
+import { createHttpServer, isLocalPeer } from '../apps/api/src/http.mjs';
 
 let server,origin;
 before(async()=>{
@@ -95,4 +95,11 @@ test('configured HTTPS origin accepts proxy traffic but rejects HTTP and cross-s
     const accepted=await send('https://example.com');
     assert.equal(accepted.status,201);assert.match(accepted.headers.get('set-cookie'),/Secure/);
   }finally{await new Promise(resolve=>originServer.close(resolve));}
+});
+
+test('local peer check accepts loopback and mapped loopback only',()=>{
+  for(const ip of ['127.0.0.1','::1','::ffff:127.0.0.1','::ffff:7f00:1'])
+    assert.equal(isLocalPeer(ip),true,ip);
+  for(const ip of ['127.0.0.2','192.168.0.1','::ffff:192.168.0.1','::ffff:7f00:2','::','localhost','',undefined])
+    assert.equal(isLocalPeer(ip),false,String(ip));
 });
