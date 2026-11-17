@@ -7,6 +7,7 @@ import { once } from 'node:events';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { createBrowserCoverage } from './browser-coverage.mjs';
 import { Game as TestBattleGame } from '../packages/engine/engine.js';
 
 const dist = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
@@ -14,6 +15,7 @@ const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; char
   '.css':'text/css; charset=utf-8', '.glb':'model/gltf-binary' };
 let server, browser, baseURL;
 const browserPilots=[];
+const browserCoverage=await createBrowserCoverage();
 
 function serve(req,res) {
   let urlPath;
@@ -100,8 +102,11 @@ before(async () => {
   });
 });
 after(async () => {
-  await browser?.close();
-  if (server?.listening) await new Promise(done => server.close(done));
+  try { await browserCoverage?.write(); }
+  finally {
+    await browser?.close();
+    if (server?.listening) await new Promise(done => server.close(done));
+  }
 });
 
 async function withPage(name, options, verify) {
@@ -118,6 +123,7 @@ async function withPage(name, options, verify) {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   try {
+    if(browserCoverage)await page.coverage.startJSCoverage({resetOnNavigation:false});
     if (options.noWebGL) {
       await page.addInitScript(() => {
         const original = HTMLCanvasElement.prototype.getContext;
@@ -135,6 +141,7 @@ async function withPage(name, options, verify) {
     }
     await verify(page);
     assert.deepEqual(errors, [], 'Uncaught browser JavaScript errors');
+    if(browserCoverage)await browserCoverage.add(await page.coverage.stopJSCoverage(),baseURL);
   } catch(e) {
     await mkdir('test-results', { recursive:true });
     await page.screenshot({ path:join('test-results',name+'.png'), fullPage:true, timeout:6000 }).catch(()=>{});

@@ -44,6 +44,19 @@ jobs:
             tests/auth.mjs tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs
           test -s coverage/lcov.info
           node scripts/normalize-sonar-coverage.mjs coverage/lcov.info
+      # Collect browser coverage on the same checked-out commit. Keep the
+      # independently required Browser E2E workflow until report handoff is verified.
+      - name: Install pinned browser-test and coverage tools
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1 v8-to-istanbul@9.3.0 istanbul-lib-coverage@3.2.2 istanbul-lib-report@3.0.1 istanbul-reports@3.1.7
+      - name: Install headless Chromium
+        run: npx --no-install playwright install chromium
+      - name: Run browser tests and collect UI LCOV
+        env:
+          IRONHEX_BROWSER_COVERAGE: '1'
+        run: |
+          rm -f coverage/browser.info
+          node --test tests/browser.mjs
+          test -s coverage/browser.info
       - name: Scan source code and report Quality Gate
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:
@@ -55,6 +68,6 @@ jobs:
             -Dsonar.sources=apps/web/src,apps/api/src,packages/engine,scripts
             -Dsonar.tests=tests
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,coverage/browser.info
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
