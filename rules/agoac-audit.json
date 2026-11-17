@@ -303,14 +303,46 @@
         4,
         18
       ],
-      "statement": "Use the book's logical 30 m hex, 6 m level, two-level standing chassis and ten-second turn. Hex range is shortest horizontal distance independently of elevation; map geometries and LOS height interactions remain separate audited sections.",
-      "status": "tested_case",
+      "statement": "Logical scale metadata is 30 m per hex, approximately 6 m per level, two levels for a standing chassis, and 10 s per complete turn. Range ignores elevation and is shortest horizontal hex distance; LOS and terrain movement effects are separate requirements.",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.3-4,18: logical scale and shortest hex distance independent of height"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6-7: six-phase round and pending-order protection preserve state"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Constants, completed-turn count, and axial distance were reviewed; breadth-first reference verifies all pairs on the existing board, including altered elevation. Existing six-phase test checks round advancement.",
+        "verifiedOn": "2026-11-17",
+        "testedSha": "19ef131c4dcd695770dcbf942ef5d3da191a816f",
+        "testedTree": "5a4eb3abed03e0d0c3a73db3f6920b723bc12ef6",
+        "mergedSha": "bbbbb14e9b852002781eb488e8e4b37f36a69f07",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44040618134,
+            "conclusion": "success",
+            "jobId": 133894031749
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44040618112,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44040618133,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-013",
@@ -365,16 +397,49 @@
       "id": "agoac-016",
       "topicId": "agoac-foundations",
       "pages": [
-        3
+        3,
+        15
       ],
-      "statement": "Single and paired dice use independent uniform six-face values; paired results are summed.",
-      "status": "tested_case",
+      "statement": "One die consumes one RNG sample and maps to a face 1–6; a two-die roll consumes two separate samples, stores both faces and returns their sum. No assertion of cryptographic randomness.",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.3: all six die faces and all 36 independent two-die combinations"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.6: all 36 dice combinations obey inclusive target checks for TN -3 through 15"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Game.roll and Game.d6 use one RNG invocation per die; six faces and 36 ordered pairs checked, with 684 inclusive target comparisons as independent regression evidence.",
+        "verifiedOn": "2026-11-17",
+        "testedSha": "19ef131c4dcd695770dcbf942ef5d3da191a816f",
+        "testedTree": "5a4eb3abed03e0d0c3a73db3f6920b723bc12ef6",
+        "mergedSha": "bbbbb14e9b852002781eb488e8e4b37f36a69f07",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44040618134,
+            "conclusion": "success",
+            "jobId": 133894031749
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44040618112,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44040618133,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-017",
@@ -504,14 +569,42 @@
         5,
         15
       ],
-      "statement": "Rear-mounted weapon entries identify their mounting in the record-sheet inventory and critical location table. Firing arc behavior remains in the combat audit.",
-      "status": "tested_case",
+      "statement": "A rear-installed weapon is marked (R) beside its name in the critical hit table; the same label also appears in inventory. Firing arc behavior remains a separate combat requirement.",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.5,15: rear-mounted weapon is identified in inventory and critical slots"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "The record sheet uses the same weaponLabel helper for every weapon inventory row and every weapon critical slot, with one conditional based on rear mounting; positive and negative cases confirm both render paths.",
+        "verifiedOn": "2026-11-17",
+        "testedSha": "19ef131c4dcd695770dcbf942ef5d3da191a816f",
+        "testedTree": "5a4eb3abed03e0d0c3a73db3f6920b723bc12ef6",
+        "mergedSha": "bbbbb14e9b852002781eb488e8e4b37f36a69f07",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44040618134,
+            "conclusion": "success",
+            "jobId": 133894031749
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44040618112,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44040618133,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-025",
