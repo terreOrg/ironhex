@@ -1349,3 +1349,27 @@ test('AGoAC p.21: attack and damage order remain grouped by target',()=>{
  g.orderFireStage(u,shots,'roll',s=>visited.push([s.target,s.index]));
  assert.deepEqual(visited,[[b.id,1],[a.id,0],[a.id,2]]);
 });
+
+test('AGoAC pp.6,30: controller chooses Mech order independently while preserving team slots',()=>{
+ const g=fresh(),[a,b,c,d]=g.units;
+ g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+ const shot=(target,name)=>({index:0,target:target.id,bin:null,aim:null,heatMode:false,
+  weapon:{name,rack:0,ammo:null,heat:1,damage:1,location:'RA'},
+  preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false}});
+ g.declarations=[{id:a.id,shots:[shot(c,'A')]},{id:c.id,shots:[shot(a,'C')]},
+  {id:b.id,shots:[shot(d,'B')]},{id:d.id,shots:[shot(b,'D')]}];
+ let draws=0;g.rng=()=>{draws++;return .5;};
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
+ let pending=g.pendingChoice;
+ assert.equal(pending.kind,'fire-roll-mech');assert.equal(draws,0);
+ assert.deepEqual(pending.options.map(o=>o.attackerId),[a.id,b.id]);
+ assert(g.nextPhaseWithChoices({choice:{key:pending.key,option:String(b.id)}}).pending);
+ pending=g.pendingChoice;
+ assert.equal(pending.kind,'fire-damage-mech');assert.equal(draws,8);
+ assert.deepEqual(pending.options.map(o=>o.attackerId),[a.id,b.id]);
+ assert(g.nextPhaseWithChoices({choice:{key:pending.key,option:String(a.id)}}).ok);
+ assert.equal(g.phase,'physical');assert.equal(draws,16);
+ assert.deepEqual(g.phaseRolls.slice(0,4).map(r=>r.kind),
+  [b.name+' · B',c.name+' · C',a.name+' · A',d.name+' · D']);
+ assert.deepEqual(g.resolution.map(o=>o.id),[a.id,c.id,b.id,d.id]);
+});
