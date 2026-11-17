@@ -1077,3 +1077,69 @@ test('AGoAC pp.6–7,42: same-side choice groups both punches and leaves opponen
  assert.equal(g.nextPhysicalAttacker(g.physicalOrder(),new Set([enemy])).length,2);
  assert.equal(asked,1,'ordinary-only attack order needs no displacement prompt');
 });
+
+function weaponPhaseDFAGame(){
+ const g=fresh(),[target,ally,attacker,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(attacker,{q:0,r:0,facing:0,tonnage:55,moveMode:'jump',
+  airborne:true,charge:{target:target.id,type:'dfa',dir:0,targetPos:{q:1,r:0},startPos:{q:-2,r:0}}});
+ Object.assign(target,{q:1,r:0,facing:3});ally.dead=other.dead=true;
+ g.phase='fire';g.initiativeWinner=0;g.queue=[];g.activeTeam=null;
+ return {g,attacker,target};
+}
+test('AGoAC pp.27–28,40,44: weapon phase DFA PSR failure lands as an automatic miss, retaining the cause TN',()=>{
+ for(const cause of ['damage-fail','damage-pass','unconscious','leg-loss','gyro']){
+  const {g,attacker:u,target:t}=weaponPhaseDFAGame();
+  const falls=[],impacts=[];let draws=0;
+  const fall=g.fall.bind(g);
+  g.fall=(unit,levels,tn,side,...rest)=>{
+   if(unit===u&&levels===2)falls.push([levels,tn,side,unit.q,unit.r]);
+   return fall(unit,levels,tn,side,...rest);
+  };
+  g.packets=(unit,n,side)=>impacts.push([unit.id,n,side]);
+  u.phaseDamage=20;
+  if(cause==='unconscious'){u.unconscious=true;u.pilotWounds=1;}
+  if(cause==='leg-loss')g.destroyLocation(u,'LL');
+  if(cause==='gyro')u.gyroHits=2;
+  const expectedTN=u.piloting+g.psrMod(u,true)+1;
+  g.rng=()=>{draws++;return cause==='damage-fail'&&draws<=2?0:.99;};
+  g.resolveFire();
+  if(cause==='damage-pass'){
+   assert.equal(u.airborne,true);assert.equal(u.charge.resolved,undefined);
+   assert.equal(u.prone,false);assert.equal(falls.length,0);
+   assert.deepEqual([u.q,u.r,t.q,t.r],[0,0,1,0]);
+   continue;
+  }
+  assert.equal(u.airborne,false);assert.equal(u.charge.resolved,true);assert.equal(u.prone,true);
+  assert.deepEqual([u.q,u.r],[1,0]);
+  assert.equal(distance(u,t),1);
+  assert.deepEqual(falls,[[2,expectedTN,'rear',1,0]],cause);
+  assert.deepEqual(impacts,[[u.id,18,'rear']],cause);
+  assert.equal(g.phaseRolls.filter(r=>r.kind===u.name+' · DFA').length,0);
+  assert(g.displacementTargetReserved(t.id),'the declared DFA retains its per-turn target reservation');
+  g.phase='physical';assert(!g.physicalOrder().some(d=>d.id===u.id&&d.special));
+  const before=JSON.stringify({units:g.units,rolls:g.phaseRolls});
+  g.resolveSpecial(u);assert.equal(JSON.stringify({units:g.units,rolls:g.phaseRolls}),before);
+ }
+});
+test('AGoAC pp.27–28: weapon phase DFA miss waits for the target controller without repeating the failed PSR',()=>{
+ const {g,attacker:u,target:t}=weaponPhaseDFAGame();u.phaseDamage=20;
+ let draws=0;g.rng=()=>{draws++;return draws<=2?0:.4;};
+ const original=JSON.stringify(g.units);
+ const r=g.nextPhaseWithChoices({humanTeams:[0]});assert(r.pending);
+ const choice=structuredClone(g.pendingChoice);
+ assert.equal(choice.kind,'dfa');assert.equal(choice.team,t.team);
+ assert.equal(choice.context.hit,false);assert.equal(draws,2);
+ assert.equal(g.phase,'fire');assert.equal(JSON.stringify(g.units),original);
+ const selected=choice.options.find(o=>o.q===0&&o.r===0);
+ assert(selected,'airborne attacker does not occupy its adjacent hex');
+ const done=g.nextPhaseWithChoices({choice:{key:choice.key,option:selected.id}});
+ assert(done.ok);assert.equal(g.pendingChoice,null);assert.equal(g.phase,'physical');
+ assert.equal(g.unit(u.id).charge.resolved,true);assert.equal(g.unit(u.id).airborne,false);
+ assert.equal(g.unit(u.id).prone,true);assert.equal(g.unit(u.id).lastFallSide,'rear');
+ assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);
+ assert.deepEqual([g.unit(t.id).q,g.unit(t.id).r],[0,0]);
+ assert.equal(g.phaseRolls.filter(r=>r.kind===u.name+' · 20+ урона').length,1);
+ assert.equal(g.phaseRolls.filter(r=>r.kind===u.name+' · DFA').length,0);
+ assert(!g.physicalOrder().some(d=>d.id===u.id&&d.special));
+});

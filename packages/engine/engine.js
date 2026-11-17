@@ -604,7 +604,21 @@ export class Game extends Legacy{
   }
   return [Math.floor((base*(levels+1)+extraDamage)/2)];
  }
- fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0,origin=null){if(u.dead||u.falling)return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(this.isImmobile(u)||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);const impacts=this.fallDamageGroups(u,levels,extraDamage,origin);this.note(`${u.name} упал: ${impacts.reduce((sum,n)=>sum+n,0)} урона.`);for(const damage of impacts)if(damage&&!u.dead)this.packets(u,damage,side);u.falling=false;}
+ // AGoAC pp.27–28: a fall in the Weapon Attack Phase interrupts
+ // an airborne DFA. Resolve the unsuccessful landing now, not a
+ // normal fall in the temporary adjacent hex and another DFA later.
+ interruptAirborneDFA(u,tn){
+  const order=u.charge;
+  if(this.phase!=='fire'||!u.airborne||order?.type!=='dfa'||order.resolved)return false;
+  const target=this.unit(order.target);
+  if(!target)return false;
+  order.resolved=true;
+  u.airborne=false;
+  this.note(u.name+': DFA автоматически не удалась в фазе стрельбы.');
+  this.resolveDFALanding(u,target,order.dir,false,{q:target.q,r:target.r},tn);
+  return true;
+ }
+ fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0,origin=null){if(u.dead||u.falling)return;if(this.interruptAirborneDFA(u,tn))return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(this.isImmobile(u)||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);const impacts=this.fallDamageGroups(u,levels,extraDamage,origin);this.note(`${u.name} упал: ${impacts.reduce((sum,n)=>sum+n,0)} урона.`);for(const damage of impacts)if(damage&&!u.dead)this.packets(u,damage,side);u.falling=false;}
  packets(u,amount,side='front',table='normal'){let total=amount;while(total>0&&!u.dead){const n=Math.min(5,total);this.hit(u,n,side,table);total-=n;}}
  hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){
  let loc,r,floatingTac=false;const obscured=l=>cover&&partialCoverObscures(u,l,underwaterCover);
@@ -946,7 +960,7 @@ export class Game extends Legacy{
  // interrupt an attack that has not yet been made.
  physicalOrder(){
   const orders=[
-   ...this.units.filter(u=>u.charge).map(u=>({id:u.id,target:u.charge.target,special:true})),
+   ...this.units.filter(u=>u.charge&&!u.charge.resolved).map(u=>({id:u.id,target:u.charge.target,special:true})),
    ...this.physicalDeclarations
   ];
   if(this.initiativeWinner!==0&&this.initiativeWinner!==1)return orders;
@@ -1144,7 +1158,7 @@ export class Game extends Legacy{
   }
   return [];
  }
- resolveDFALanding(u,t,dir,hit,old){
+ resolveDFALanding(u,t,dir,hit,old,fallTN=null){
   const options=t.dead?[]:this.dfaDisplacementOptions(t,dir,hit);
   if(!t.dead&&!options.length){
    if(!hit){this.destroyMech(u);return;}
@@ -1161,9 +1175,9 @@ export class Game extends Legacy{
   if(hit){
    if(!u.dead)this.psr(u,4,'Посадка DFA');
    if(!t.dead&&!t.prone)this.psr(t,2,'Попадание DFA');
-  }else if(!u.dead)this.fall(u,2,null,'rear');
+  }else if(!u.dead)this.fall(u,2,fallTN,'rear');
  }
- resolveSpecial(u){const s=u.charge,t=this.unit(s.target);if(!t||u.dead)return;if(t.dead||t.q!==s.targetPos.q||t.r!==s.targetPos.r||t.prone&&s.type==='charge'){u.airborne=false;this.note(`${u.name}: специальная атака отменена — цель изменилась.`);return;}const start=this.phaseRolls.length,dfa=s.type==='dfa',tn=Math.max(2,u.piloting+(u.piloting-t.piloting)+(dfa?3:u.moveMode==='run'?2:1)+(this.isImmobile(t)?-4:this.tmm(t))+(dfa?0:this.los(u,t).woods)),roll=this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn),hit=!u.prone&&roll>=tn;const old={q:t.q,r:t.r},side=this.hitSide(t,dfa?(s.startPos??u.moveStart??u):u);let damage=0;u.airborne=false;
+ resolveSpecial(u){const s=u.charge;if(!s||s.resolved||u.dead)return;const t=this.unit(s.target);if(!t)return;if(t.dead||t.q!==s.targetPos.q||t.r!==s.targetPos.r||t.prone&&s.type==='charge'){u.airborne=false;this.note(`${u.name}: специальная атака отменена — цель изменилась.`);return;}const start=this.phaseRolls.length,dfa=s.type==='dfa',tn=Math.max(2,u.piloting+(u.piloting-t.piloting)+(dfa?3:u.moveMode==='run'?2:1)+(this.isImmobile(t)?-4:this.tmm(t))+(dfa?0:this.los(u,t).woods)),roll=this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn),hit=!u.prone&&roll>=tn;const old={q:t.q,r:t.r},side=this.hitSide(t,dfa?(s.startPos??u.moveStart??u):u);let damage=0;u.airborne=false;
  if(hit){damage=dfa?Math.ceil(u.tonnage/10*3):Math.ceil(u.tonnage/10*s.hexes);this.packets(t,damage,dfa&&t.prone?'rear':side,dfa&&!t.prone?'punch':'normal');this.packets(u,dfa?u.tonnage/5:Math.ceil(t.tonnage/10),'front',dfa?'kick':'normal');if(dfa)this.resolveDFALanding(u,t,s.dir,true,old);else{
  // AGoAC pp.26,42: a successful charge may cause damage without
  // displacing either Mech when the destination is prohibited. Destruction
