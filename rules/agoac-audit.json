@@ -542,6 +542,22 @@
           "test": "AGoAC p.5: individual ammunition slots report capacity and remaining rounds"
         }
       ]
+    },
+    {
+      "id": "agoac-027",
+      "topicId": "agoac-foundations",
+      "pages": [
+        3,
+        4
+      ],
+      "statement": "Hexes without a terrain or level marking independently default to clear terrain and level zero. Store negative sublevels and water depth independently; preserve explicit terrain, level, and metadata across save/restore. Full terrain movement and LOS costs remain in their own sections.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.3-4: unmarked terrain and level default independently and survive map reload"
+        }
+      ]
     }
   ]
 }
