@@ -1,3 +1,4 @@
+import {createAccountFlows} from '../apps/api/src/account-flows.mjs';
 import {validEmailAddress} from '../apps/api/src/email-address.mjs';
 import {createBrevoMailer} from '../apps/api/src/mail.mjs';
 import assert from 'node:assert/strict';
@@ -64,4 +65,116 @@ test('Brevo validates sender and HTTPS origin and delivers an encoded verificati
   const payload=JSON.parse(calls[0].config.body);
   assert.match(payload.textContent,/https:\/\/example\.com\/#verify=a%26b/);
   await assert.rejects(createBrevoMailer({...options,fetchImpl:async()=>({ok:false})}).send({to:'pilot@example.com',purpose:'reset',token:'x'}),/mail_delivery_failed/);
+});
+
+function scriptedQueries(steps){
+  const remaining=[...steps];
+  const query=async(sql,params=[])=>{
+    const step=remaining.shift();
+    assert.ok(step,'Unexpected SQL: '+sql);
+    assert.match(sql,step.sql);
+    if(step.check)await step.check(params);
+    if(step.error)throw step.error;
+    return {rows:step.rows||[]};
+  };
+  let releases=0,connections=0;
+  const pool={query,async connect(){connections++;return {query,release(){releases++;}};}};
+  return {pool,done(expectedConnections=0){
+    assert.equal(remaining.length,0,'Every expected query was executed');
+    assert.equal(connections,expectedConnections);
+    assert.equal(releases,expectedConnections);
+  }};
+}
+const authCode=code=>error=>error instanceof AuthError&&error.code===code;
+test('verification links persist only token digests, replace older links and use the expiry',async()=>{
+  let digest;
+  const steps=scriptedQueries([
+    {sql:/^SELECT email,email_verified_at/,rows:[{email:'pilot@example.com'}],check:p=>assert.deepEqual(p,['owner'])},
+    {sql:/^DELETE FROM commander_action_tokens WHERE commander_id/,check:p=>assert.deepEqual(p,['owner','verify'])},
+    {sql:/^INSERT INTO commander_action_tokens/,check:p=>{[digest]=p;assert.deepEqual(p.slice(1),['owner','verify',86400]);assert.match(digest,/^[0-9a-f]{64}$/);}}
+  ]);
+  const flows=createAccountFlows(steps.pool,{mailer:{enabled:true,async send(message){
+    assert.equal(message.to,'pilot@example.com');assert.equal(message.purpose,'verify');
+    assert.equal(tokenHash(message.token),digest);assert.notEqual(message.token,digest);
+  }}});
+  assert.equal(flows.emailAvailable,true);
+  assert.deepEqual(await flows.sendVerification('owner'),{ok:true});steps.done();
+});
+test('failed verification delivery revokes the token and exposes a controlled error',async()=>{
+  let digest;
+  const steps=scriptedQueries([
+    {sql:/^SELECT email,email_verified_at/,rows:[{email:'pilot@example.com'}]},
+    {sql:/^DELETE FROM commander_action_tokens WHERE commander_id/},
+    {sql:/^INSERT INTO commander_action_tokens/,check:p=>{[digest]=p;}},
+    {sql:/^DELETE FROM commander_action_tokens WHERE token_hash/,check:p=>assert.deepEqual(p,[digest])}
+  ]);
+  const flows=createAccountFlows(steps.pool,{mailer:{enabled:true,async send(){throw new Error('provider unavailable');}}});
+  await assert.rejects(flows.sendVerification('owner'),authCode('mail_unavailable'));steps.done();
+});
+test('verification refuses missing accounts, skips verified accounts and checks mail availability',async()=>{
+  const steps=scriptedQueries([
+    {sql:/^SELECT email,email_verified_at/,rows:[]},
+    {sql:/^SELECT email,email_verified_at/,rows:[{email:'pilot@example.com',email_verified_at:'2026-01-01'}]},
+    {sql:/^SELECT email,email_verified_at/,rows:[{email:'pilot@example.com'}]}
+  ]);
+  const flows=createAccountFlows(steps.pool,{mailer:{enabled:false}});
+  assert.equal(flows.emailAvailable,false);
+  await assert.rejects(flows.sendVerification('missing'),authCode('unauthorized'));
+  assert.deepEqual(await flows.sendVerification('verified'),{ok:true,alreadyVerified:true});
+  await assert.rejects(flows.sendVerification('owner'),authCode('mail_unavailable'));
+  await assert.rejects(flows.requestReset('pilot@example.com'),authCode('mail_unavailable'));
+  steps.done();
+});
+test('password recovery is non-enumerating and normalizes account identity',async()=>{
+  let digest;
+  const steps=scriptedQueries([
+    {sql:/^SELECT commander_id,email/,rows:[],check:p=>assert.deepEqual(p,['missing@example.com'])},
+    {sql:/^SELECT commander_id,email/,rows:[{commander_id:'owner',email:'pilot@example.com'}],check:p=>assert.deepEqual(p,['pilot@example.com'])},
+    {sql:/^DELETE FROM commander_action_tokens WHERE commander_id/,check:p=>assert.deepEqual(p,['owner','reset'])},
+    {sql:/^INSERT INTO commander_action_tokens/,check:p=>{[digest]=p;assert.deepEqual(p.slice(1),['owner','reset',1800]);}}
+  ]);
+  let messages=0;
+  const flows=createAccountFlows(steps.pool,{mailer:{enabled:true,async send(message){
+    messages++;assert.equal(message.purpose,'reset');assert.equal(tokenHash(message.token),digest);
+  }}});
+  await assert.rejects(flows.requestReset(null),authCode('invalid_email'));
+  await assert.rejects(flows.requestReset('a'.repeat(255)),authCode('invalid_email'));
+  assert.deepEqual(await flows.requestReset(' MISSING@example.com '),{ok:true});assert.equal(messages,0);
+  assert.deepEqual(await flows.requestReset(' PILOT@example.com '),{ok:true});assert.equal(messages,1);
+  steps.done();
+});
+test('verification consumes the matching unexpired token and rolls back invalid or failed actions',async()=>{
+  const token='a'.repeat(64);
+  const consume={sql:/^DELETE FROM commander_action_tokens WHERE token_hash=.*expires_at>now\(\) RETURNING commander_id/,check:p=>assert.deepEqual(p,[tokenHash(token),'verify'])};
+  const steps=scriptedQueries([
+    {sql:/^BEGIN$/},{...consume,rows:[{commander_id:'owner'}]},
+    {sql:/^UPDATE commander_credentials SET email_verified_at=now\(\)/,check:p=>assert.deepEqual(p,['owner'])},{sql:/^COMMIT$/},
+    {sql:/^BEGIN$/},{...consume,rows:[]},{sql:/^ROLLBACK$/},
+    {sql:/^BEGIN$/},{...consume,rows:[{commander_id:'owner'}]},
+    {sql:/^UPDATE commander_credentials/,error:Error('update failed')},{sql:/^ROLLBACK$/}
+  ]);
+  const flows=createAccountFlows(steps.pool,{mailer:{enabled:true}});
+  await assert.rejects(flows.verifyEmail('bad'),authCode('invalid_token'));
+  assert.deepEqual(await flows.verifyEmail(token),{ok:true});
+  await assert.rejects(flows.verifyEmail(token),authCode('invalid_token'));
+  await assert.rejects(flows.verifyEmail(token),/update failed/);
+  steps.done(3);
+});
+test('password reset hashes the new password and revokes all sessions and tokens transactionally',async()=>{
+  const token='b'.repeat(64),password='long private password';
+  const steps=scriptedQueries([
+    {sql:/^BEGIN$/},
+    {sql:/^DELETE FROM commander_action_tokens WHERE token_hash=/,rows:[{commander_id:'owner'}],
+      check:p=>assert.deepEqual(p,[tokenHash(token),'reset'])},
+    {sql:/^UPDATE commander_credentials SET password_hash=/,check:async p=>{
+      assert.equal(p[0],'owner');assert.notEqual(p[1],password);assert.equal(await verifyPassword(password,p[1]),true);
+    }},
+    {sql:/^DELETE FROM commander_sessions/,check:p=>assert.deepEqual(p,['owner'])},
+    {sql:/^DELETE FROM commander_action_tokens WHERE commander_id/,check:p=>assert.deepEqual(p,['owner'])},
+    {sql:/^COMMIT$/}
+  ]);
+  const flows=createAccountFlows(steps.pool,{mailer:{enabled:true}});
+  assert.throws(()=>flows.resetPassword(token,'short'),authCode('weak_password'));
+  assert.deepEqual(await flows.resetPassword(token,password),{ok:true});
+  steps.done(1);
 });
