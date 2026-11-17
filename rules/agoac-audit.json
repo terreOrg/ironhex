@@ -179,7 +179,7 @@
       ],
       "statement": "Verify scenario setup and general deployment with initiative-selected opposite entry edges, walking/running/jumping entry and MP spent from the first complete hex.",
       "status": "known_missing",
-      "reviewNote": "Printed p.6 general setup: current Legacy.reset initializes all units inside the board at fixed coordinates; initiative goes directly to move and makeRuntime preserves that placement. The non-scenario initiative edge choice, opposite entry edges and border entry MP accounting are absent. Scenario-specific placement remains separate. Initial engine implementation: separate setup initiative and replay-safe choice, six opposite axial edges, offboard exclusion from occupancy, walk/run first full hex terrain cost and continuation, jump first-hex accounting. Existing scenario unchanged. Layout convention: facing along inward axis and external origin at first full hex surface. UI/server configuration, blocked or immobile entry and complete browser/server tests remain; status stays known_missing.",
+      "reviewNote": "Printed p.6 general setup: current Legacy.reset initializes all units inside the board at fixed coordinates; initiative goes directly to move and makeRuntime preserves that placement. The non-scenario initiative edge choice, opposite entry edges and border entry MP accounting are absent. Scenario-specific placement remains separate. Initial engine implementation: separate setup initiative and replay-safe choice, six opposite axial edges, offboard exclusion from occupancy, walk/run first full hex terrain cost and continuation, jump first-hex accounting. Existing scenario unchanged. Layout convention: facing along inward axis and external origin at first full hex surface. UI/server configuration, blocked or immobile entry and complete browser/server tests remain; status stays known_missing. Local browser now exposes standard setup from New Battle, edge selection for hotseat/player winners, entry mode and legal hex selection, hides undeployed models/arcs, animates entry from virtual origin, preserves scenario restart option. Browser regression covers edge selection then first entry. Fixed offboard jump MP using no inherited dummy water depth. Server contract selection and no-legal-entry behavior still pending.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -200,6 +200,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.6,8,11–12: jumping entry counts the first full hex, consumes jump MP and excludes occupied landings"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "Local standard AGoAC deployment selects an entry edge and enters a first full hex"
         }
       ]
     },

@@ -305,7 +305,7 @@ export class Game extends Legacy{
    if(!u.dead&&(tile.depth||tile.type==='rubble'))this.psr(u,tile.depth>=3?1:tile.depth===1?-1:0,tile.depth?'Вода':'Обломки',true);
   }
   this.note(u.name+': вход на поле, '+route.cost+' MP.');
-  return {ok:true,path:[{q,r}],from,to:{q,r},mode,rolls:[...this.phaseRolls]};
+  return {ok:true,entry:true,path:[{q,r}],from,to:{q,r},mode,rolls:[...this.phaseRolls]};
  }
  initiative(){this.phaseRolls=[];let a,b,tries=0;do{a=this.roll('Инициатива: зелёные');b=this.roll('Инициатива: красные');}while(a===b&&++tries<10000);if(a===b)throw Error('Генератор выдаёт только ничьи инициативы');this.initiativeWinner=a>b?0:1;this.phase='move';this.buildQueue();this.note(`Инициатива ${a}:${b}. ${this.initiativeWinner?'Красные':'Зелёные'} действуют вторыми.`);}
  psrMod(u,fallAvoidance=false){
@@ -337,7 +337,7 @@ export class Game extends Legacy{
  const lost=legs.filter(l=>u.structure[l]===0).length;
  if(mode==='jump'){
   if(quad&&lost>=3)return 0;
-  const depth=this.tile(u.q,u.r)?.depth??0;
+  const depth=u.deployed===false?0:this.tile(u.q,u.r)?.depth??0;
   if(depth>=2||(depth>=1&&u.prone))return 0;
   const submergedJets=depth===1?legs.reduce((n,l)=>n+(this.isBreached(u,l)?0:u.slots[l].filter((slot,i)=>slot==='jump'&&!u.crit[l][i]).length),0):0;
   return Math.max(0,u.jump-u.jumpLost-this.floodedSlots(u,'jump')-submergedJets);
