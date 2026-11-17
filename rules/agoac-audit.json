@@ -21,7 +21,7 @@
         3,
         5
       ],
-      "status": "not_audited"
+      "status": "tested_subset"
     },
     {
       "id": "agoac-setup",
@@ -208,6 +208,37 @@
       ],
       "statement": "Undestroyed immobile and nonattacking units count for selections; declaration order and simultaneity, consciousness before PSRs, Heat and End actions and victory/draw conditions require independent audit.",
       "status": "not_audited"
+    },
+    {
+      "id": "agoac-007",
+      "topicId": "agoac-foundations",
+      "pages": [
+        4,
+        5
+      ],
+      "statement": "Display armor, internal structure, rear armor, critical slot damage, pilot state and heat including overflow above 30 on the live record sheet.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.4-5: record sheet displays front and rear damage, current pilot skills and heat overflow"
+        }
+      ]
+    },
+    {
+      "id": "agoac-008",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5
+      ],
+      "statement": "Standard Inner Sphere pilot defaults to Gunnery 4 and Piloting 5; those independent ratings drive the corresponding attack target numbers.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: base pilot defaults and skill-dependent attack targets"
+        }
+      ]
     }
   ]
 }
