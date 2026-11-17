@@ -389,3 +389,55 @@ test('AGoAC pp.5,37-38: all heat scale levels mark effects and preserve current 
   assert(html.includes('title="Heat Overflow / нагрев сверх 30">+'+Math.max(0,heat-30)+'</span>'));
  }
 });
+
+test('AGoAC pp.5,44: Warrior Data shows all six injury steps and the exact consciousness table',()=>{
+ const u=fresh().units[0];
+ for(let wounds=0;wounds<=6;wounds++){
+  u.pilotWounds=wounds;
+  const html=recordSheet(u);
+  const hitCells=[...html.matchAll(/data-wound="(\d+)" data-hit="(true|false)"/g)];
+  assert.deepEqual(hitCells.map(m=>[Number(m[1]),m[2]==='true']),
+    Array.from({length:6},(_,i)=>[i+1,i+1<=wounds]));
+  const cells=[...html.matchAll(/data-consciousness="(\d+)"( class="wound-current")?>([^<]*)<\/td>/g)];
+  assert.deepEqual(cells.map(m=>m[3]),['3','5','7','10','11','Dead']);
+  assert.deepEqual(cells.filter(m=>m[2]).map(m=>Number(m[1])),wounds?[wounds]:[]);
+ }
+});
+test('AGoAC pp.4-5: armor and structure dots track every section independently',()=>{
+ const locations=['HD','CT','RT','LT','RA','LA','RL','LL'];
+ for(const u of fresh().units){
+  for(const damaged of [false,true]){
+   for(const [i,l] of locations.entries()){
+    u.armor[l]=damaged?Math.max(0,u.maxArmor[l]-i-1):u.maxArmor[l];
+    u.structure[l]=damaged?Math.max(0,u.maxStructure[l]-2*i-1):u.maxStructure[l];
+   }
+   for(const l of ['RT','CT','LT'])u.rear[l]=damaged?0:u.maxRear[l];
+   const html=recordSheet(u);
+   const groups=[...html.matchAll(/<g data-record-location="([^"]+)" data-record-kind="(armor|structure)">([\s\S]*?)<\/g>/g)];
+   assert.equal(groups.length,16);
+   for(const [kind,current,max] of [['armor',u.armor,u.maxArmor],['structure',u.structure,u.maxStructure]]){
+    for(const l of locations){
+     const group=groups.find(m=>m[1]===l&&m[2]===kind);
+     assert(group,l+' '+kind);
+     assert.equal([...group[3].matchAll(/<circle /g)].length,max[l]);
+     assert.equal([...group[3].matchAll(/fill="white"/g)].length,current[l]);
+     assert.equal([...group[3].matchAll(/fill="#171717"/g)].length,max[l]-current[l]);
+    }
+   }
+   const rear=[...html.matchAll(/data-record-location="([^"]+)" data-record-kind="rear"><b>[^<]*<\/b><p>([○●]*)<\/p>/g)];
+   assert.deepEqual(rear.map(m=>m[1]),['RT','CT','LT']);
+   for(const [,l,dots] of rear)assert.equal(dots,'○'.repeat(u.rear[l])+'●'.repeat(u.maxRear[l]-u.rear[l]));
+  }
+ }
+});
+test('AGoAC p.5: Mech Data uses actual chassis metadata with escaped text',()=>{
+ const u=fresh().units[0];
+ Object.assign(u,{name:'<Atlas & Co>',variant:'<AS7>',techBase:'Inner Sphere',walk:5,jump:3});
+ const html=recordSheet(u);
+ assert(html.includes('Тип: &lt;Atlas &amp; Co&gt; &lt;AS7&gt;'));
+ assert(html.includes('Ходьба: <b>5</b>'));
+ assert(html.includes('Бег: <b>8</b>'));
+ assert(html.includes('Прыжок: <b>3</b>'));
+ assert(html.includes('Масса: <b>'+u.tonnage+' т</b>'));
+ assert(!html.includes('<Atlas & Co>'));assert(!html.includes('<AS7>'));
+});
