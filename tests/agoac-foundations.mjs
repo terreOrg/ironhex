@@ -1526,3 +1526,42 @@ test('AGoAC p.12: voluntary drop is rejected after a jump, without MP, or outsid
   assert.equal(JSON.stringify(u),before,why);
  }
 });
+
+test('AGoAC pp.9,11,40,42: hazardous friendly entry checks terrain before continuing or displacing',()=>{
+ for(const hazard of ['rubble','water'])for(const pass of [true,false]){
+  const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+  const ally=g.units.find(x=>x!==u&&x.team===u.team);
+  const first=g.deploymentEdgeTiles(g.deployment.edges[u.team]).find(t=>t.r===0);
+  const [dq,dr]=DIRS[g.deployment.edges[u.team]],q=first.q+dq,r=first.r+dr;
+  Object.assign(first,{type:hazard,depth:hazard==='water'?1:0,height:hazard==='water'?-1:0,surface:0});
+  Object.assign(ally,{q:first.q,r:first.r,deployed:true,prone:false});
+  u.walk=6;let draws=0;g.rng=()=>{draws++;return !pass&&draws<=2?0:.5;};
+  const route=g.reachable(u,'walk').find(p=>p.q===q&&p.r===r);
+  assert(route?.transit);assert.equal(route.cost,hazard==='water'?5:3);
+  const result=g.move(u.id,q,r,'walk');assert(result.ok);assert(result.entry);
+  assert(result.rolls[0].kind.includes(hazard==='water'?'Вода':'Обломки'));
+  if(pass){
+   assert.deepEqual(result.path,[{q:first.q,r:first.r},{q,r}]);
+   assert.deepEqual([u.q,u.r,u.spent,u.distanceMoved],[q,r,route.cost,2]);
+   assert.deepEqual([ally.q,ally.r],[first.q,first.r]);
+  }else{
+   assert.equal(u.prone,true);assert.equal(u.distanceMoved,1);
+   assert.deepEqual([u.q,u.r],[first.q,first.r]);
+   assert.deepEqual([ally.q,ally.r],[q,r]);
+   assert(result.rolls.some(x=>x.kind.includes('Домино')));
+  }
+  assert.notDeepEqual([u.q,u.r],[ally.q,ally.r]);
+ }
+});
+test('AGoAC p.9: normal ground movement may pass through a prone friendly Mech but not stop on it',()=>{
+ const g=fresh(),u=g.units[0],ally=g.units[1];
+ g.phase='move';g.queue=[0,1];g.activeTeam=0;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});
+ Object.assign(u,{q:0,r:0,facing:0,walk:4});Object.assign(ally,{q:1,r:0,prone:true});
+ for(const v of g.units.filter(v=>v.team!==u.team))v.dead=true;
+ const options=g.reachable(u,'walk');
+ assert(!options.some(t=>t.q===1&&t.r===0));
+ const dest=options.find(t=>t.q===2&&t.r===0);assert.equal(dest.cost,2);
+ assert(g.move(u.id,2,0,'walk').ok);assert.equal(u.distanceMoved,2);
+ assert.deepEqual([ally.q,ally.r],[1,0]);
+});
