@@ -294,8 +294,72 @@
         3,
         4
       ],
-      "statement": "Audit physical scale abstractions and independent dice results; map-size and scenario geometry are audited under setup.",
+      "statement": "Audit hex dimensions, elevation and level abstraction; source p.4 specifies one hex is 30 m and one turn represents ten seconds. Standard map shapes audited under setup.",
       "status": "not_audited"
+    },
+    {
+      "id": "agoac-013",
+      "topicId": "agoac-foundations",
+      "pages": [
+        6,
+        44
+      ],
+      "statement": "Deferred consciousness rolls preserve the threshold of each individual wound; later checks stop after unconsciousness and sixth wound is lethal.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,44: delayed consciousness rolls retain each wound threshold"
+        }
+      ]
+    },
+    {
+      "id": "agoac-014",
+      "topicId": "agoac-foundations",
+      "pages": [
+        6,
+        7,
+        44
+      ],
+      "statement": "All phase-end consciousness checks precede all required piloting checks.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,44: all pilots roll consciousness before any phase PSR"
+        }
+      ]
+    },
+    {
+      "id": "agoac-015",
+      "topicId": "agoac-foundations",
+      "pages": [
+        7,
+        44
+      ],
+      "statement": "Recovery attempts begin in the following turn's end phase and use current accumulated wounds.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: recovery starts only in the next turn and uses current wounds"
+        }
+      ]
+    },
+    {
+      "id": "agoac-016",
+      "topicId": "agoac-foundations",
+      "pages": [
+        3
+      ],
+      "statement": "Single and paired dice use independent uniform six-face values; paired results are summed.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.3: all six die faces and all 36 independent two-die combinations"
+        }
+      ]
     }
   ]
 }
