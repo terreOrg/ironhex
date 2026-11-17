@@ -1248,6 +1248,26 @@ test('BMM pp.38,53: Quad kick hit or miss resolves actual deferred PSR and fall'
  }
 });
 
+test('BMM pp.34,36,38: Quad cannot take a club or kick a prone target one level below',()=>{
+ const design=construct({...example,name:'Quad physical restrictions',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const g=flatGame(),u=g.units[0],t=g.units[2];
+ Object.assign(u,structuredClone(design.unit));
+ g.phase='physical';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ u.q=0;u.r=0;u.facing=0;u.prone=false;u.moveMode='stand';u.firedLocations=[];
+ t.q=1;t.r=0;t.dead=false;t.prone=false;
+ g.tile(u.q,u.r).height=1;g.tile(t.q,t.r).height=0;
+ const lower=g.physicalPreview(u.id,t.id,'kick','LA');
+ assert.equal(lower.legal,true,lower.reason);assert.equal(lower.table,'punch');
+ t.prone=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'kick','LA').legal,false);
+ g.tile(t.q,t.r).height=1;
+ assert.equal(g.physicalPreview(u.id,t.id,'kick','LA').legal,true);
+ g.tile(u.q,u.r).type='woods';
+ assert.equal(g.takeClub(u.id).ok,false);
+ assert.notEqual(u.club,true);
+});
+
 test('BMM pp.45,65: quad side torso destruction or flooding affects front leg only',()=>{
  const fixture=construct({...example,name:'Quad torso coupling',config:'Quad',
   jump:0,sinks:10,equipment:[]},{auditQuad:true});
