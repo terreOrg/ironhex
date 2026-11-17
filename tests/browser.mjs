@@ -1045,3 +1045,53 @@ test('Local standard AGoAC deployment selects an entry edge and enters a first f
   assert.equal(await page.locator('#labels .mechlabel[data-on-map="false"]').count(),3);
  });
 });
+
+
+test('Authoritative weapon roll and damage order are independent and survive reconnect',{timeout:120000},async()=>{
+ const operationId='77777777-7777-4777-8777-777777777777';
+ await withPage('server-fire-order',{path:'/index.html?battle=1&operation='+operationId,noWebGL:true},async page=>{
+  let draws=0,version=1;
+  const referee=new TestBattleGame({rng:()=>{draws++;return .5;}});
+  const [u,,t]=referee.units;
+  referee.phase='fire';referee.queue=[];referee.activeTeam=null;referee.initiativeWinner=1;
+  const shot=(index,name)=>({index,target:t.id,bin:null,aim:null,heatMode:false,
+   weapon:{name,rack:0,ammo:null,heat:1,damage:1,location:'RA'},
+   preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false}});
+  referee.declarations=[{id:u.id,shots:[shot(0,'First gun'),shot(1,'Second gun')]}];
+  const snapshot=()=>JSON.parse(JSON.stringify(referee,
+   (key,value)=>['map','rng','_resolutionReplay'].includes(key)?undefined:value));
+  const send=(route,status,body)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
+   const url=new URL(route.request().url());
+   const item=()=>({id:operationId,controlMode:'interactive',status:'active',version,game:snapshot()});
+   if(url.pathname.endsWith('/snapshot'))return send(route,200,{item:item()});
+   if(url.pathname.endsWith('/command')){
+    const payload=route.request().postDataJSON();
+    assert.equal(payload.type,'next');assert.equal(payload.version,version);
+    if(version===2)assert.equal(payload.choice.option,'1');
+    if(version===3)assert.equal(payload.choice.option,'0');
+    const result=referee.nextPhaseWithChoices({humanTeams:[0],choice:payload.choice});
+    assert(result.ok);version++;
+    return send(route,200,{item:{...item(),effect:{type:'next',result,rolls:[],resolution:[],afterRolls:[],ai:[]}}});
+   }
+   return send(route,404,{error:'not_found'});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v1'));
+  await page.locator('#next').click();
+  const second=page.locator('[data-resolution-option="1"]'),first=page.locator('[data-resolution-option="0"]');
+  await second.waitFor({state:'visible'});
+  assert.match(await page.locator('#actions').textContent(),/ОЧЕРЁДНОСТЬ БРОСКОВ/);
+  assert.match(await second.textContent(),/Second gun/);assert.equal(draws,0);
+  await second.click();
+  await page.waitForFunction(()=>document.querySelector('#actions')?.textContent.includes('ОЧЕРЁДНОСТЬ УРОНА'));
+  assert.equal(draws,4);assert.match(await first.textContent(),/First gun.*8\/2/);
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+  await first.waitFor({state:'visible'});
+  assert.match(await page.locator('#actions').textContent(),/ОЧЕРЁДНОСТЬ УРОНА/);
+  assert.equal(draws,4);await first.click();
+  await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='ФИЗИЧЕСКИЕ АТАКИ');
+  assert.equal(draws,8);assert.equal(version,4);assert.equal(referee.pendingChoice,null);
+  assert.deepEqual(referee.resolution.map(o=>o.shots[0].index),[0,1]);
+ });
+});
