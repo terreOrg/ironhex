@@ -963,3 +963,59 @@ test('Commander launches an interactive 3D operation from the mission briefing',
       assert.equal(await page.locator('#hub-work-title').textContent(),'Быстрый бой');
     });
   });
+
+test('Authoritative displacement choice survives reconnect and submits the selected legal hex',
+ {timeout:120000},async()=>{
+  const operationId='66666666-6666-4666-8666-666666666666';
+  await withPage('server-displacement-choice',{
+   path:'/index.html?battle=1&operation='+operationId,noWebGL:true
+  },async page=>{
+   let draws=0,version=1,commands=0;
+   const referee=new TestBattleGame({rng:()=>{draws++;return .99;}}),[t,b,a,other]=referee.units;
+   for(const tile of referee.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+   Object.assign(a,{q:-1,r:0,facing:0});Object.assign(t,{q:0,r:0});
+   Object.assign(b,{q:1,r:0,facing:1,moveMode:'walk',spent:0});
+   other.dead=true;referee.phase='physical';referee.initiativeWinner=0;referee.queue=[];referee.activeTeam=null;
+   const preview=referee.physicalPreview(a.id,t.id,'push','LA');assert(preview.legal,preview.reason);
+   referee.physicalDeclarations=[{id:a.id,target:t.id,type:'push',limb:'LA',...preview}];
+   const snapshot=()=>JSON.parse(JSON.stringify(referee,
+    (key,value)=>['map','rng','_resolutionReplay'].includes(key)?undefined:value));
+   const reply=(route,status,body)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+   await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
+    const url=new URL(route.request().url());
+    const item=()=>({id:operationId,controlMode:'interactive',status:'active',version,game:snapshot()});
+    if(url.pathname.endsWith('/snapshot'))return reply(route,200,{item:item()});
+    if(url.pathname.endsWith('/command')){
+     const payload=route.request().postDataJSON();
+     assert.equal(payload.type,'next');assert.equal(payload.version,version);
+     commands++;
+     if(commands===1)assert.equal(payload.choice,undefined);
+     if(commands===2)assert.deepEqual(payload.choice,{key:referee.pendingChoice.key,option:'back'});
+     const result=referee.nextPhaseWithChoices({humanTeams:[0],choice:payload.choice});
+     assert.equal(result.ok,true);version++;
+     return reply(route,200,{item:{...item(),effect:{type:'next',result,rolls:[],resolution:[],afterRolls:[],ai:[]}}});
+    }
+    return reply(route,404,{error:'not_found'});
+   });
+   await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+   await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v1'));
+   await page.locator('#next').click();
+   const backward=page.locator('[data-resolution-option="back"]');
+   await backward.waitFor({state:'visible'});
+   assert(await page.locator('#next').isDisabled());
+   assert.match(await page.locator('#actions').textContent(),/PSR 12\//);
+   assert.match(await page.locator('#phase').textContent(),/ФИЗИЧЕСКИЕ АТАКИ/);
+   assert.equal(draws,4);assert.equal(commands,1);
+   const pending=structuredClone(referee.pendingChoice),destination=pending.options.find(o=>o.id==='back');
+   await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+   await backward.waitFor({state:'visible'});
+   assert.equal(draws,4);assert.equal(commands,1);
+   assert.match(await backward.textContent(),new RegExp(destination.q+', '+destination.r));
+   await backward.click();
+   await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='НАГРЕВ');
+   assert.equal(commands,2);assert.equal(draws,6);
+   assert.equal(referee.pendingChoice,null);
+   assert.deepEqual([referee.unit(b.id).q,referee.unit(b.id).r],[destination.q,destination.r]);
+   assert.equal(await page.locator('[data-resolution-option]').count(),0);
+  });
+ });
