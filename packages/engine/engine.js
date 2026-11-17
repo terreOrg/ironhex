@@ -471,7 +471,7 @@ export class Game extends Legacy{
     buildingDamage:cfBefore-building.cf};
  }
 
- reachable(u,mode='walk'){u=this.unit(u);if(u?.deployed===false)return this.deploymentEntryRoutes(u,mode);if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];return this.tiles.filter(t=>!(t.building?.cf>0)&&!this.occupied(t.q,t.r,u.id)&&Math.max(1,distance(u,t))<=max&&this.jumpClear(u,t,max)).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
+ reachable(u,mode='walk'){u=this.unit(u);if(u?.deployed===false)return this.deploymentEntryRoutes(u,mode);if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];if(max<1)return [];const legal=this.jumpShortestReach(u,max);return this.tiles.filter(t=>!(t.building?.cf>0)&&!this.occupied(t.q,t.r,u.id)&&legal.has(key(t.q,t.r))).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
  const lateralShifts=quadLateralDirections(u,mode);
  const actions=['left','right','forward','back',...lateralShifts.map(s=>s.action)];
  const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>this.onMap(x)&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.prone))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
@@ -480,7 +480,26 @@ export class Game extends Legacy{
     (u.config==='Quad'&&old.cost===cost&&v.facing===u.facing&&old.facing!==u.facing))
     ends.set(key(q,r),v);
  }}}return [...ends.values()];}
- jumpClear(u,t,max){const n=distance(u,t),height=this.tile(u.q,u.r).height+max;for(let i=1;i<=n;i++){const p=roundHex(u.q+(t.q-u.q)*i/n,u.r+(t.r-u.r)*i/n),x=this.tile(p.q,p.r);if(x&&x.surface>height)return false;}return true;}
+ // AGoAC pp.11–12: any shortest path is legal if every intervening
+ // terrain level is within the jump ceiling. No detours around a hill.
+ // Woods and occupants do not obstruct an intermediate jump hex.
+ jumpShortestReach(u,max){
+  const reached=new Set(),start=this.tile(u.q,u.r);
+  if(!start||max<1)return reached;
+  const ceiling=start.height+max,queue=[{tile:start,cost:0}];
+  reached.add(key(start.q,start.r));
+  for(let i=0;i<queue.length;i++){
+   const {tile,cost}=queue[i];if(cost>=max)continue;
+   for(const [dq,dr] of DIRS){
+    const next=this.tile(tile.q+dq,tile.r+dr);
+    if(!next||next.height>ceiling||distance(start,next)!==cost+1)continue;
+    const k=key(next.q,next.r);if(reached.has(k))continue;
+    reached.add(k);queue.push({tile:next,cost:cost+1});
+   }
+  }
+  return reached;
+ }
+ jumpClear(u,t,max){return this.jumpShortestReach(u,max).has(key(t.q,t.r));}
  isPaved(t){return !!t&&(t.paved===true||t.road===true||['pavement','road'].includes(t.type));}
  skidTerrainCost(t){return t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:1;}
  resolveSkid(u,direction,moved,tn){
@@ -685,7 +704,18 @@ export class Game extends Legacy{
   // The player chooses any new facing at no MP charge, but only on success.
   if(stood&&newFacing!==null)u.facing=newFacing;
   return {ok:true};}
- drop(id){const u=this.unit(id);if(u?.deployed===false)return fail('Сначала войдите на поле');if(!this.canAct(u)||this.isImmobile(u)||u.prone)return fail('Нельзя лечь');u.prone=true;this.checkExistingHullBreaches(u);this.actingId=id;return {ok:true};}
+ // AGoAC p.12: dropping voluntarily costs 1 MP; no jump, fall damage
+ // or additional heat. The declared ground movement mode is retained.
+ drop(id,options={}){
+  const u=this.unit(id);if(u?.deployed===false)return fail('Сначала войдите на поле');
+  if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.prone||u.moveEndedByLegLoss)return fail('Нельзя лечь');
+  const mode=options.mode??(u.moveMode==='stand'?'walk':u.moveMode);
+  if(!['walk','run'].includes(mode)||(u.moveMode!=='stand'&&u.moveMode!==mode)||
+     (mode==='run'&&(u.dumping.length||u.dumpNext.length))||this.mp(u,mode)-u.spent<1)
+   return fail('Чтобы лечь, нужен 1 MP ходьбы или бега');
+  u.moveMode=mode;u.spent++;u.prone=true;this.actingId=id;
+  this.checkExistingHullBreaches(u);return {ok:true};
+ }
  hold(id){const u=this.unit(id);if(u?.deployed===false&&!u.dead)return fail('Сначала войдите на поле');if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(u.gyroHits||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip))this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
  relative(a,b,f=a.facing){const x=Math.sqrt(3)*(b.q-a.q+(b.r-a.r)/2),y=-1.5*(b.r-a.r),v=Math.atan2(y,x)-f*Math.PI/3;return Math.atan2(Math.sin(v),Math.cos(v))*180/Math.PI;}
  hitSide(u,a){const v=this.relative(u,a);return Math.abs(v)<=60.00001?'front':Math.abs(v)>=120-.00001?'rear':v>0?'left':'right';}

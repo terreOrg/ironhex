@@ -1486,3 +1486,43 @@ test('AGoAC pp.6,9: occupied enemy entry and insufficient transit MP cannot be b
  assert(!g.reachable(u,'walk').some(p=>p.q===q&&p.r===r));
  assert.equal(g.move(u.id,q,r,'walk').ok,false);assert.equal(u.deployed,false);
 });
+
+test('AGoAC pp.11–12: jumping can use any legal shortest path but not a longer detour',()=>{
+ const g=fresh(),u=g.units[0],ally=g.units[1];
+ g.phase='move';g.queue=[0,1,0,1];g.activeTeam=0;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});
+ Object.assign(u,{q:0,r:0,jump:2,jumpLost:0,spent:0,proneAtStart:false});
+ Object.assign(ally,{q:0,r:1});const a=g.tile(1,0),b=g.tile(0,1),target=g.tile(1,1);
+ Object.assign(a,{height:3,surface:3});
+ assert.equal(g.jumpClear(u,target,2),true);
+ assert(g.reachable(u,'jump').some(t=>t.q===1&&t.r===1&&t.cost===2));
+ assert(!g.reachable(u,'jump').some(t=>t.q===0&&t.r===1));
+ Object.assign(b,{height:3,surface:3});assert.equal(g.jumpClear(u,target,2),false);
+ assert(!g.reachable(u,'jump').some(t=>t.q===1&&t.r===1));
+ Object.assign(a,{height:5,surface:5});Object.assign(b,{height:5,surface:5});
+ assert.equal(g.jumpClear(u,target,4),false,'longer route does not legalize a shortest-path obstruction');
+ Object.assign(b,{height:1,surface:1,type:'heavy'});assert.equal(g.jumpClear(u,target,2),true);
+ const result=g.move(u.id,1,1,'jump');assert(result.ok);assert.equal(u.spent,2);
+ assert.equal(u.distanceMoved,2);assert.equal(u.pendingHeat,3);
+});
+test('AGoAC p.12: voluntary prone posture costs exactly one ground MP, without extra heat or damage',()=>{
+ for(const mode of ['walk','run']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.queue=[0,1];g.activeTeam=0;
+  const before=JSON.stringify(u.armor),facing=u.facing;
+  assert(g.drop(u.id,{mode}).ok);assert.equal(u.spent,1);assert.equal(u.moveMode,mode);
+  assert.equal(u.pendingHeat,0);assert.equal(u.prone,true);assert.equal(u.facing,facing);
+  assert.equal(JSON.stringify(u.armor),before);assert.equal(g.phaseRolls.length,0);
+  assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,mode==='walk'?1:2);
+ }
+});
+test('AGoAC p.12: voluntary drop is rejected after a jump, without MP, or outside movement',()=>{
+ for(const why of ['jump','zero-mp','fire','mode-change']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  if(why==='jump'){u.moveMode='jump';u.spent=1;}
+  if(why==='zero-mp'){u.moveMode='walk';u.spent=g.mp(u,'walk');}
+  if(why==='fire')g.phase='fire';
+  if(why==='mode-change')u.moveMode='run';
+  const before=JSON.stringify(u);assert.equal(g.drop(u.id,{mode:'walk'}).ok,false);
+  assert.equal(JSON.stringify(u),before,why);
+ }
+});

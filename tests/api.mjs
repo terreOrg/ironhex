@@ -215,3 +215,9 @@ test('API rejects minimum-entry mode for ordinary on-map movement',()=>{
   e=>e instanceof AuthError&&e.status===422);
  assert.equal(JSON.stringify(u),before);
 });
+
+test('API validates optional walking or running mode for voluntary prone orders',()=>{
+ assert.doesNotThrow(()=>validateTacticalOrder({type:'drop',id:0,version:1}));
+ assert.doesNotThrow(()=>validateTacticalOrder({type:'drop',id:0,version:1,mode:'run'}));
+ assert.throws(()=>validateTacticalOrder({type:'drop',id:0,version:1,mode:'jump'}),AuthError);
+});
