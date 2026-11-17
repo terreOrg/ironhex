@@ -87,3 +87,36 @@ test('deploy gate rejects malformed SHAs and missing signing secrets',()=>{
   assert.equal(evaluateDeployment({sha:'not-a-sha',mainSha:sha,runs:requiredWorkflows.map(success)}).ready,false);
   assert.throws(()=>makeWebhookRequest({sha}),/secret/i);
 });
+
+test('cancelled duplicates cannot veto or substitute for a completed same-SHA success',()=>{
+  const runs=requiredWorkflows.map(success);
+  const duplicate={...runs[0],conclusion:'cancelled'};
+  const evaluate=items=>evaluateDeployment({sha,mainSha:sha,runs:items}).ready;
+  assert.equal(evaluate([...runs,duplicate]),true);
+  assert.equal(evaluate([duplicate,...runs]),true);
+  assert.equal(evaluate([duplicate,...runs.slice(1)]),false);
+  for(const conclusion of ['failure','timed_out','action_required','skipped','neutral','stale',null]){
+    assert.equal(evaluate([...runs,{...duplicate,conclusion}]),false);
+  }
+  for(const status of ['queued','in_progress','waiting','pending']){
+    assert.equal(evaluate([...runs,{...duplicate,status,conclusion:null}]),false);
+  }
+  for(const other of [{head_sha:'b'.repeat(40)},{head_branch:'audit/test'},{event:'pull_request'}]){
+    assert.equal(evaluate([duplicate,...runs.slice(1),{...runs[0],...other}]),false);
+  }
+});
+
+test('unfinished required workflow remains retryable but completed failures stop deployment',()=>{
+  const runs=requiredWorkflows.map(success);
+  for(const status of ['queued','pending','waiting','in_progress']){
+    const pending={...runs[0],status,conclusion:null};
+    for(const items of [[pending,...runs.slice(1)],[...runs,pending]]){
+      const result=evaluateDeployment({sha,mainSha:sha,runs:items});
+      assert.equal(result.ready,false);
+      assert.match(result.reason,/not successful yet/);
+      assert(!result.reason.includes('did not pass'),'Deploy poller must wait for CI');
+    }
+  }
+  const result=evaluateDeployment({sha,mainSha:sha,runs:[...runs,{...runs[0],conclusion:'failure'}]});
+  assert.equal(result.ready,false);assert.match(result.reason,/did not pass/);
+});
