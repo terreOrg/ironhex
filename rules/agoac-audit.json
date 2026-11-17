@@ -276,14 +276,22 @@
       "id": "agoac-011",
       "topicId": "agoac-foundations",
       "pages": [
-        4
+        4,
+        45,
+        46,
+        47,
+        48
       ],
-      "statement": "The opposing record sheet can be inspected during tactical targeting without changing the acting unit or consuming the selection. Scenario-specific information exceptions remain unaudited.",
+      "statement": "All combatant record sheets are public by default and can be inspected independently of the current tactical selection. Reviewed the three printed scenarios and their listed variations; no record-sheet secrecy exception is specified. Future custom scenario policy remains separate.",
       "status": "tested_case",
       "evidence": [
         {
           "file": "tests/browser.mjs",
           "test": "AGoAC p.4: inspecting enemy record sheet preserves active unit and target selection"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC pp.4,45-48: every unit record remains open throughout all six battle phases"
         }
       ]
     },
