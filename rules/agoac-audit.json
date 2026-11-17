@@ -278,8 +278,14 @@
       "pages": [
         4
       ],
-      "statement": "During targeting allow direct opening of opponent record sheet, unless scenario rules restrict information. Browser interaction still requires an explicit regression.",
-      "status": "not_audited"
+      "statement": "The opposing record sheet can be inspected during tactical targeting without changing the acting unit or consuming the selection. Scenario-specific information exceptions remain unaudited.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC p.4: inspecting enemy record sheet preserves active unit and target selection"
+        }
+      ]
     },
     {
       "id": "agoac-012",
