@@ -21,6 +21,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Set up Node.js 24 for coverage conversion
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install pinned coverage tools
+        run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund v8-to-istanbul@9.3.0 istanbul-lib-coverage@3.2.2 istanbul-lib-report@3.0.1 istanbul-reports@3.1.7
       - name: Verify Compose with CI-only placeholder secret
         env:
           IRONHEX_DB_PASSWORD: ci-validation-only
@@ -56,7 +62,10 @@ jobs:
           image_tag="ironhex-api-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}"
           database="ironhex-postgres-smoke-${GITHUB_RUN_ID}"
           api="ironhex-api-smoke-${GITHUB_RUN_ID}"
-          trap 'docker logs "$api" 2>/dev/null || true; docker logs "$database" 2>/dev/null || true; docker rm -f "$api" "$database" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
+          coverage_dir="$(mktemp -d "${RUNNER_TEMP}/ironhex-api-v8.XXXXXXXX")"
+          # The container's unprivileged node user writes only to this ephemeral directory.
+          chmod 1777 "$coverage_dir"
+          trap 'docker logs "$api" 2>/dev/null || true; docker logs "$database" 2>/dev/null || true; docker rm -f "$api" "$database" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true; rm -rf "$coverage_dir"' EXIT
           docker build -f apps/api/Dockerfile --tag "$image_tag" .
           # Both containers share one isolated network namespace; neither publishes host ports.
           docker run -d --rm --name "$database" \
@@ -81,6 +90,8 @@ jobs:
             -e PGHOST=127.0.0.1 -e PGPORT=5432 \
             -e PGUSER=ironhex -e PGDATABASE=ironhex \
             -e PGPASSWORD=ci-only-not-a-real-secret \
+            -e NODE_V8_COVERAGE=/coverage \
+            --mount "type=bind,source=$coverage_dir,target=/coverage" \
             --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
             --cap-drop ALL --security-opt no-new-privileges "$image_tag"
           for i in $(seq 1 60); do
@@ -96,4 +107,23 @@ jobs:
           docker exec "$api" node /app/tests/auth-email-integration.mjs
           docker exec "$api" node /app/tests/operations-integration.mjs
           docker exec "$api" node /app/tests/market-integration.mjs
+          # Verify the covered application sources are the exact checkout, not stale image code.
+          docker exec "$api" sh -ec 'cd /app && find apps/api/src -type f -name "*.mjs" -exec sha256sum {} \;' > "$coverage_dir/source.sha256"
+          test -s "$coverage_dir/source.sha256"
+          sha256sum --check --strict "$coverage_dir/source.sha256"
+          # Node flushes NODE_V8_COVERAGE during graceful shutdown. The bind mount survives removal.
+          docker stop --time 30 "$api"
+          rm -f coverage/backend.info coverage/backend-map.json
+          node tests/backend-coverage.mjs "$coverage_dir"
+          test -s coverage/backend.info
+          test -s coverage/backend-map.json
           echo "PostgreSQL migrations, auth registration/login, health and catalogue verified."
+      - name: Upload PostgreSQL integration coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: ironhex-backend-coverage-${{ github.sha }}
+          path: |
+            coverage/backend.info
+            coverage/backend-map.json
+          if-no-files-found: error
+          retention-days: 7
