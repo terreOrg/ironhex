@@ -107,8 +107,9 @@ export function createHangarStore(pool) {
             if(!same(old[key],now[key]))
               throw new AuthError(409,'factory_frame_locked');
           }
-          if(!same([...(old.removeActuators||[])].sort(),
-                   [...(now.removeActuators||[])].sort()))
+          const compareLocation=(a,b)=>a<b?-1:a>b?1:0;
+          if(!same([...(old.removeActuators||[])].sort(compareLocation),
+                   [...(now.removeActuators||[])].sort(compareLocation)))
             throw new AuthError(409,'factory_frame_locked');
           // The shared combat registry models jump MP, cooling and hatchet
           // attacks. Count those real systems alongside weapons so refits
