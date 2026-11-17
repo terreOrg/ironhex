@@ -884,12 +884,33 @@ export class Game extends Legacy{
    rolls:[attackRoll,...this.phaseRolls.slice(start)]}]});
   this.note(u.name+' → '+t.name+' '+w.name+': '+roll+'/'+p.targetNumber+'+ — '+damage+' урона.');
  }
+ // Preserve the initiative-based team selection slots. A controller
+ // may choose a different one of their remaining declared Mechs at
+ // each slot; finish that Mech's entire stage before the next slot.
+ orderFireMechs(declarations,stage,visit){
+  const teamOf=d=>this.unit(d.id).team;
+  const remaining=[declarations.filter(d=>teamOf(d)===0),declarations.filter(d=>teamOf(d)===1)];
+  for(const slot of declarations){
+   const list=remaining[teamOf(slot)],fallback=list[0];
+   const options=list.map(d=>({id:String(d.id),attackerId:d.id,
+    weaponNames:stage==='roll'?d.shots.map(s=>s.weapon.name):
+     d.attacks.filter(a=>a.hit).map(a=>a.s.weapon.name)}));
+   const pick=this.chooseResolutionOption('fire-'+stage+'-mech',this.unit(fallback.id),options,String(fallback.id));
+   const index=list.findIndex(d=>String(d.id)===pick);
+   visit(list.splice(index,1)[0]);
+  }
+ }
  resolveFire(){
   this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;
   try{
-   const staged=this.declarations.map(d=>({u:this.unit(d.id),attacks:this.rollDeclaredFire(d)}));
-   for(const {u,attacks} of staged)
-    this.orderFireStage(u,attacks,'damage',attack=>this.resolveRolledFire(attack));
+   const staged=new Map();
+   this.orderFireMechs(this.declarations,'roll',d=>{
+    staged.set(d.id,{id:d.id,attacks:this.rollDeclaredFire(d)});
+   });
+   // Damage order is independent, with the same team slots as declaration.
+   this.orderFireMechs(this.declarations.map(d=>staged.get(d.id)),'damage',d=>{
+    this.orderFireStage(this.unit(d.id),d.attacks,'damage',attack=>this.resolveRolledFire(attack));
+   });
   }finally{this.deferConsciousness=false;}
   const start=this.phaseRolls.length;this.endPSR();
   this.afterRolls=this.phaseRolls.slice(start);this.declarations=[];
