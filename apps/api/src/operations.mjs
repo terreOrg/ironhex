@@ -54,6 +54,11 @@ function makeRuntime(roster,saved=null,contractId='patrol') {
     // A Map cannot be serialized as JSON. Rebuild it from the stored tile array.
     game.map=new Map(game.tiles.map(t=>[t.q+','+t.r,t]));
     game.rng=()=>rng.next();
+    // Old saved battles may predate the Warrior Data name field.
+    for(const u of game.units.filter(u=>u.team===0)){
+      const pilot=roster[u.id]?.pilot;
+      u.pilotName??=pilot?.fullName||pilot?.callsign||null;
+    }
   } else {
     for(let i=0;i<2;i++){
       const unit=game.units[i];
@@ -70,6 +75,7 @@ function makeRuntime(roster,saved=null,contractId='patrol') {
       const defaults=defaultMechWarriorSkills(unit.techBase);
       unit.gunnery=entry.pilot?.gunnery??defaults.gunnery;
       unit.piloting=entry.pilot?.piloting??defaults.piloting;
+      unit.pilotName=entry.pilot?.fullName||entry.pilot?.callsign||null;
       unit.pilotWounds=0;
       unit.dead=false;
       unit.id=i;
@@ -189,7 +195,7 @@ function publicItem(row,{detail=false}={}){
   const roster=(row.roster||[]).map(r=>({
     mechId:r.mechId,chassis:r.chassis,
     tonnage:r.config?.tonnage??null,
-    pilot:r.pilot?{id:r.pilot.id,callsign:r.pilot.callsign,
+    pilot:r.pilot?{id:r.pilot.id,callsign:r.pilot.callsign,fullName:r.pilot.fullName??null,
       gunnery:r.pilot.gunnery,piloting:r.pilot.piloting}:null
   }));
   return {
@@ -300,7 +306,7 @@ export function createOperationStore(pool){
           throw new AuthError(409,'operation_limit');
         const result=await client.query(
           'SELECT m.id,m.chassis,m.state,m.ammo_state,m.critical_damage,m.armor_damage,m.structure_damage,m.wrecked,m.market_owned, ' +
-          'm.pilot_id,p.callsign,p.gunnery,p.piloting '+
+          'm.pilot_id,p.callsign,p.full_name,p.gunnery,p.piloting '+
           'FROM hangar_mechs m LEFT JOIN mechwarrior_pilots p '+
           'ON p.id=m.pilot_id AND p.commander_id=m.commander_id '+
           'WHERE m.commander_id=$1 AND m.id=ANY($2::uuid[])',
@@ -333,7 +339,7 @@ export function createOperationStore(pool){
             ammoState:normalizedAmmoState(checked.state.config,mech.ammo_state),
             criticalDamage:normalizedCriticalDamage(checked.state.config,mech.critical_damage),
             pilot:mech.pilot_id?{
-              id:mech.pilot_id,callsign:mech.callsign,
+              id:mech.pilot_id,callsign:mech.callsign,fullName:mech.full_name,
               gunnery:mech.gunnery,piloting:mech.piloting
             }:null
           };

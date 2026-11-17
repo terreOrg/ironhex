@@ -94,6 +94,7 @@ assert.equal(op.contractId,'intercept');
 assert.equal(op.version,0);
 assert.equal(op.roster.length,1);
 assert.equal(op.roster[0].pilot.id,pilotId);
+assert.equal(op.roster[0].pilot.fullName,'Dana Vos');
 assert.equal(op.roster[0].pilot.gunnery,4);
 assert.equal(op.roster[0].chassis,'Griffin GRF-1M');
 assert.equal(JSON.stringify(op).includes('rngState'),false,
