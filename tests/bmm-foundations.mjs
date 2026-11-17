@@ -1042,6 +1042,45 @@ test('BMM pp.19,27,51,65: Quad front legs submerge, cool and disable jump jets i
  assert.equal(g.isSubmergedLocation(biped,'LL'),true);
 });
 
+test('BMM pp.26,28,35: standing Quad water cover protects legs from non-kick physical hits only at equal LOS',()=>{
+ const design=construct({...example,name:'Quad physical water cover',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const scenario of [
+  {type:'punch',limb:'LA',face:1,depth:1,equal:true,table:'punch',cover:true,blocked:true},
+  {type:'punch',limb:'LA',face:2,depth:1,equal:true,table:'punch',cover:true,blocked:false},
+  {type:'kick',limb:'LL',face:1,depth:1,equal:true,table:'kick',cover:false,blocked:false},
+  {type:'kick',limb:'LL',face:1,depth:1,equal:false,table:'punch',cover:false,blocked:false},
+  {type:'punch',limb:'LA',face:1,depth:0,equal:true,table:'punch',cover:false,blocked:false}
+ ]){
+  const g=flatGame(),u=g.units[0],t=g.units[2];
+  Object.assign(t,structuredClone(design.unit));
+  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;t.facing=3;
+  for(const v of [u,t]){
+   v.prone=false;v.dead=false;v.shutdown=false;v.unconscious=false;
+   v.moveMode='stand';v.firedLocations=[];v.psrs=[];v.phaseDamage=0;v.piloting=5;
+  }
+  const aTile=g.tile(0,0),tTile=g.tile(1,0);
+  // Dry reference at identical relative elevation; water adds exactly +1.
+  aTile.height=scenario.equal?0:1;
+  const baseline=g.physicalPreview(u.id,t.id,scenario.type,scenario.limb);
+  assert.equal(baseline.legal,true,baseline.reason);
+  Object.assign(tTile,{depth:scenario.depth,height:-scenario.depth,type:scenario.depth?'water':'plain'});
+  Object.assign(aTile,{depth:scenario.equal?scenario.depth:0,height:scenario.equal?-scenario.depth:0,type:scenario.equal&&scenario.depth?'water':'plain'});
+  const p=g.physicalPreview(u.id,t.id,scenario.type,scenario.limb);
+  assert.equal(p.legal,true,p.reason);
+  assert.equal(p.targetNumber,baseline.targetNumber+(scenario.depth?1:0));
+  assert.equal(p.table,scenario.table);assert.equal(p.physicalCover,scenario.cover);
+  const location=scenario.table==='kick'?'RA':scenario.face===1?'LA':'LT';
+  const armor=t.armor[location];
+  g.physicalDeclarations=[{id:u.id,target:t.id,type:scenario.type,limb:scenario.limb,...p}];
+  const dice=[.99,.99,(scenario.face-.5)/6];g.rng=()=>dice.shift()??.99;
+  const shot=g.resolvePhysical()[0].shots[0];
+  assert.equal(shot.hit,true);
+  assert.equal(shot.damage,scenario.blocked?0:p.damage);
+  assert.equal(t.armor[location],armor-(scenario.blocked?0:p.damage));
+ }
+});
+
 test('BMM p.26: partial cover protects all four quad legs and not biped arms',()=>{
  const quad={config:'Quad'},biped={config:'Biped'};
  for(const loc of ['LA','RA','LL','RL']){

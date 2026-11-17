@@ -1223,6 +1223,7 @@
       "status": "tested_case",
       "sourcePages": [
         26,
+        28,
         35
       ],
       "evidence": [
@@ -1233,6 +1234,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.26: quad normal cover and submerged-water cover suppress opposite locations"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.26,28,35: standing Quad water cover protects legs from non-kick physical hits only at equal LOS"
         }
       ]
     },
