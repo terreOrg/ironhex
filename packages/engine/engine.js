@@ -760,7 +760,46 @@ export class Game extends Legacy{
  declarePhysical(id,target,type,limb){const u=this.unit(id);if(this.phase!=='physical'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const limbs=type==='punch'&&limb==='both'?['LA','RA']:[limb],pending=[];for(const l of limbs){const p=this.physicalPreview(id,target,type,l);if(!p.legal)return fail(p.reason);pending.push({id,target,type,limb:l,...p});}this.physicalDeclarations.push(...pending);this.finish(u);return {ok:true,declared:true};}
  takeClub(id){const u=this.unit(id),t=this.tile(u.q,u.r);if(u.config==='Quad'||this.phase!=='physical'||!this.canAct(u)||!this.mobile(u)||(!['woods','heavy'].includes(t.type)&&!t.club)||['LA','RA'].some(l=>!u.structure[l]||Object.values(u.actuators[l]).some(Boolean)))return fail('Нужны две исправные руки и дерево/оторванная рука в гексе');u.club=true;this.finish(u);return {ok:true};}
  displace(u,dir,depth=0){if(u.dead||depth>this.units.length+1)return false;const d=DIRS[dir],t=this.tile(u.q+d[0],u.r+d[1]);if(!t){u.dead=true;u.escaped=true;this.note(`${u.name} вытеснен за край карты.`);return true;}const old=this.tile(u.q,u.r);if(t.height-old.height>2)return false;const occ=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===t.q&&v.r===t.r);if(occ){if(!this.displace(occ,dir,depth+1)){occ.dead=true;}else this.psr(occ,0,'Домино',true);}u.q=t.q;u.r=t.r;if(old.height-t.height>=2)this.fall(u,old.height-t.height);return true;}
- resolvePhysical(){this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;try{for(const u of this.units)if(u.charge)this.resolveSpecial(u);for(const d of this.physicalDeclarations){const u=this.unit(d.id),t=this.unit(d.target),start=this.phaseRolls.length,roll=this.roll(u.name+' · '+d.type,d.targetNumber),hit=roll>=d.targetNumber;let damage=0;if(hit&&!t.dead){if(d.type==='push'){const old={q:t.q,r:t.r};if(this.displace(t,u.facing)){u.q=old.q;u.r=old.r;}this.psr(t,0,'Толчок');}else{const o=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover);damage=o.damage;if(d.type==='kick')this.psr(t,0,'Удар ногой');if(d.type==='club')u.club=false;}}else if(d.type==='kick')this.psr(u,0,'Промах ногой');this.resolution.push({id:d.id,target:d.target,ok:true,shots:[{weapon:d.type,hit,roll,targetNumber:d.targetNumber,damage,rolls:this.phaseRolls.slice(start)}]});this.note(`${u.name}: ${d.type}, ${roll}/${d.targetNumber}+, ${damage} урона.`);}}finally{this.deferConsciousness=false;}const start=this.phaseRolls.length;this.endPSR();this.afterRolls=this.phaseRolls.slice(start);this.physicalDeclarations=[];this.removeDestroyedMechs();return this.resolution;}
+ // AGoAC pp.29,40,42: resolve opposed pushes together. A displacement
+ // check is immediate, and a drop of two or more levels already caused a fall.
+ pushTargetValid(u,t){
+  if(!u||!t||u.dead||t.dead||u.prone||t.prone)return false;
+  const [dq,dr]=DIRS[u.facing];
+  return t.q===u.q+dq&&t.r===u.r+dr&&this.tile(u.q,u.r).height===this.tile(t.q,t.r).height;
+ }
+ applyPush(u,t){
+  const old={q:t.q,r:t.r};
+  if(this.displace(t,u.facing)){u.q=old.q;u.r=old.r;}
+  if(!t.dead&&!t.prone)this.psr(t,0,'Толчок',true);
+ }
+ resolvePush(d,opposed){
+  const first=this.unit(d.id),second=this.unit(d.target),orders=opposed?[d,opposed]:[d];
+  const valid=this.pushTargetValid(first,second);
+  const attacks=orders.map(order=>{
+   const u=this.unit(order.id),t=this.unit(order.target);
+   const legal=valid&&this.pushTargetValid(u,t);
+   const roll=legal?this.roll(u.name+' · push',order.targetNumber):null;
+   return {u,t,order,roll,hit:legal&&roll>=order.targetNumber,rolls:legal?[this.phaseRolls.at(-1)]:[]};
+  });
+  const successes=attacks.filter(a=>a.hit);
+  if(successes.length===2){
+   for(const a of successes){
+    const start=this.phaseRolls.length;
+    this.psr(a.t,0,'Встречный толчок',true);
+    a.rolls.push(...this.phaseRolls.slice(start));
+   }
+  }else if(successes.length===1){
+   const a=successes[0],start=this.phaseRolls.length;
+   this.applyPush(a.u,a.t);
+   a.rolls.push(...this.phaseRolls.slice(start));
+  }
+  for(const a of attacks){
+   this.resolution.push({id:a.u.id,target:a.t.id,ok:true,shots:[{
+    weapon:'push',hit:a.hit,roll:a.roll,targetNumber:a.order.targetNumber,damage:0,rolls:a.rolls}]});
+   this.note(a.u.name+': push, '+(a.roll??'—')+'/'+a.order.targetNumber+'+, 0 урона.');
+  }
+ }
+ resolvePhysical(){this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;try{for(const u of this.units)if(u.charge)this.resolveSpecial(u);const handled=new Set();for(const d of this.physicalDeclarations){if(handled.has(d))continue;if(d.type==='push'){const opposed=this.physicalDeclarations.find(p=>p!==d&&!handled.has(p)&&p.type==='push'&&p.id===d.target&&p.target===d.id);handled.add(d);if(opposed)handled.add(opposed);this.resolvePush(d,opposed);continue;}const u=this.unit(d.id),t=this.unit(d.target),start=this.phaseRolls.length,roll=this.roll(u.name+' · '+d.type,d.targetNumber),hit=roll>=d.targetNumber;let damage=0;if(hit&&!t.dead){const o=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover);damage=o.damage;if(d.type==='kick')this.psr(t,0,'Удар ногой');if(d.type==='club')u.club=false;}else if(d.type==='kick')this.psr(u,0,'Промах ногой');this.resolution.push({id:d.id,target:d.target,ok:true,shots:[{weapon:d.type,hit,roll,targetNumber:d.targetNumber,damage,rolls:this.phaseRolls.slice(start)}]});this.note(`${u.name}: ${d.type}, ${roll}/${d.targetNumber}+, ${damage} урона.`);}}finally{this.deferConsciousness=false;}const start=this.phaseRolls.length;this.endPSR();this.afterRolls=this.phaseRolls.slice(start);this.physicalDeclarations=[];this.removeDestroyedMechs();return this.resolution;}
  // AGoAC p.38: only a conscious pilot may override thermal shutdown.
  // Below 14 heat an involuntarily shut-down reactor restarts automatically,
  // even if the pilot is still unconscious. Voluntary shutdown is separate.
