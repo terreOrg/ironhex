@@ -307,12 +307,11 @@ export class Game extends Legacy{
     }else if(!(mode==='run'&&first.depth)&&cost<=max){
      add(first,cost,from);
      // p.9: a friendly occupant does not prohibit transit, but may
-     // never be the endpoint. A dry nonhazardous first hex can be
-     // passed using the ordinary ground movement pathfinder.
+     // never be the endpoint. Check difficult terrain immediately;
+     // involuntary stops that create stacking use displacement.
      const occupants=this.units.filter(v=>v.id!==u.id&&this.onMap(v)&&!v.airborne&&v.q===first.q&&v.r===first.r);
      if(occupants.length&&occupants.every(v=>!v.dead&&v.team===u.team)&&
-        !first.depth&&first.type!=='rubble'&&!(first.building?.cf>0)&&
-        !(mode==='run'&&this.isPaved(first))){
+        !(first.building?.cf>0)&&!(mode==='run'&&this.isPaved(first))){
       const origin={q:first.q,r:first.r,facing:edge,cost};
       const entering={...u,...origin,deployed:true,spent:cost,moveMode:mode,distanceMoved:1,lastMovementDirection:edge};
       for(const route of this.reachable(entering,mode)){
@@ -346,14 +345,25 @@ export class Game extends Legacy{
   this.phaseRolls=[];this.actingId=u.id;
   const from=route.entryFrom,minimum=mode==='minimum';
   if(route.transit){
-   // Transit begins on the virtual edge, never ends on the ally.
-   // The first hex is known not to require any immediate check.
-   const first=route.transit.origin;
+   // Transit starts at the virtual edge. Resolve the first hex's
+   // checks immediately, before any subsequent movement.
+   const first=route.transit.origin,entryPath=[{q:first.q,r:first.r}];
    Object.assign(u,{q:first.q,r:first.r,deployed:true,facing:first.facing,moveStart:{...from},
     moveMode:mode,spent:first.cost,distanceMoved:1,lastMovementDirection:first.facing});
-   const result=this.move(u.id,q,r,mode);
-   if(!result.ok)throw Error('deployment_transit_route_mismatch');
-   return {...result,entry:true,from,path:[{q:first.q,r:first.r},...result.path]};
+   this.checkExistingHullBreaches(u);
+   const tile=this.tile(u.q,u.r);
+   if(!u.dead&&!u.moveEndedByLegLoss&&(tile.depth||tile.type==='rubble'))
+    this.psr(u,tile.depth>=3?1:tile.depth===1?-1:0,tile.depth?'Вода':'Обломки',true);
+   const entryRolls=[...this.phaseRolls];
+   if(!u.dead&&!u.prone&&!u.moveEndedByLegLoss&&!this.isImmobile(u)){
+    const result=this.move(u.id,q,r,mode);
+    if(result.ok){
+     this.phaseRolls=[...entryRolls,...result.rolls];
+     return {...result,entry:true,from,path:[...entryPath,...result.path],rolls:[...this.phaseRolls]};
+    }
+   }
+   this.resolveGroundStacking(u);
+   return {ok:true,entry:true,from,to:{q:u.q,r:u.r},path:entryPath,mode,rolls:[...this.phaseRolls]};
   }
   if(minimum)mode='run';
   Object.assign(u,{q,r,deployed:true,facing:route.facing,moveStart:{...from},
@@ -474,7 +484,7 @@ export class Game extends Legacy{
  reachable(u,mode='walk'){u=this.unit(u);if(u?.deployed===false)return this.deploymentEntryRoutes(u,mode);if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];if(max<1)return [];const legal=this.jumpShortestReach(u,max);return this.tiles.filter(t=>!(t.building?.cf>0)&&!this.occupied(t.q,t.r,u.id)&&legal.has(key(t.q,t.r))).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
  const lateralShifts=quadLateralDirections(u,mode);
  const actions=['left','right','forward','back',...lateralShifts.map(s=>s.action)];
- const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>this.onMap(x)&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.prone))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
+ const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>this.onMap(x)&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.dead))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
   const old=ends.get(key(q,r));
   if(!old||old.cost>cost||
     (u.config==='Quad'&&old.cost===cost&&v.facing===u.facing&&old.facing!==u.facing))
@@ -610,6 +620,14 @@ export class Game extends Legacy{
   return {hit:true,continueSkid:t.dead,damage:targetDamage,selfDamage};
  }
  rotate(id,delta){const u=this.unit(id);if(u?.deployed===false)return fail('Сначала войдите на поле');if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u))return fail('Разворот недоступен');const cost=Math.abs(delta);if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');if(u.moveMode!=='jump'){const mode=u.moveMode==='stand'?'walk':u.moveMode;if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');u.spent+=cost;u.moveMode=mode;}if(u.moveMode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)u.skidDirection=u.lastMovementDirection??u.facing;u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};}
+ // AGoAC pp.9,11,42: transit through a friendly hex is legal;
+ // if an immediate fall or other involuntary stop leaves two live
+ // ground Mechs there, resolve the resulting stacking via domino.
+ resolveGroundStacking(u){
+  if(u.dead||!Number.isInteger(u.lastMovementDirection)||u.lastMovementDirection<0)return;
+  const other=this.units.find(v=>v.id!==u.id&&this.onMap(v)&&!v.dead&&!v.airborne&&v.q===u.q&&v.r===u.r);
+  if(other)this.resolveDomino(other,u.lastMovementDirection,0);
+ }
  move(id,q,r,mode='walk',options={}){const u=this.unit(id);if(u?.deployed===false)return options.lateral===undefined?this.enterDeployment(u,q,r,mode):fail('Сначала войдите на поле');if(mode==='minimum')return fail('Используйте отдельный приказ минимального движения');const routes=this.reachable(u,mode);
  let dst=routes.find(t=>t.q===q&&t.r===r);
  if(options?.lateral!==undefined){
@@ -667,7 +685,9 @@ export class Game extends Legacy{
    if(u.prone)break;
   }
  }
-}u.distanceMoved=mode==='jump'?distance(u.moveStart,u):u.distanceMoved+path.length;this.note(`${u.name}: ${mode}, потрачено ${u.spent} MP.`);return {ok:true,path,from,to:{q:u.q,r:u.r},mode,rolls:[...this.phaseRolls]};}
+}
+ if(mode!=='jump')this.resolveGroundStacking(u);
+ u.distanceMoved=mode==='jump'?distance(u.moveStart,u):u.distanceMoved+path.length;this.note(`${u.name}: ${mode}, потрачено ${u.spent} MP.`);return {ok:true,path,from,to:{q:u.q,r:u.r},mode,rolls:[...this.phaseRolls]};}
  stand(id,newFacing=null,options={}){const u=this.unit(id),quad=u?.config==='Quad';
   const lost=quad?['LA','RA','LL','RL'].filter(l=>!u.structure[l]).length:0;
   if(this.phase!=='move'||!this.canAct(u)||!u.prone||this.isImmobile(u)||u.gyroHits>=2||u.moveEndedByLegLoss||
