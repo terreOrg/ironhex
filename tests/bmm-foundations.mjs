@@ -1509,6 +1509,47 @@ test('BMM p.48: biped retains hip PSR behavior after Quad critical-hit integrati
  assert.equal(g.mp(u,'walk'),Math.ceil(u.walk/2));
 });
 
+test('BMM pp.43,48: all Quad legs blown off by critical roll leave a limb club without counting armor loss',()=>{
+ const design=construct({...example,name:'Quad limb wreckage',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const config of ['Quad','Biped'])for(const loc of ['LA','RA','LL','RL']){
+  const g=flatGame(),u=g.units[0];
+  if(config==='Quad')Object.assign(u,structuredClone(design.unit));
+  else u.config='Biped';
+  u.q=0;u.r=0;u.prone=true;u.phaseDamage=0;u.dead=false;
+  const tile=g.tile(0,0);tile.club=false;
+  g.rng=()=>.99;
+  g.criticalHit(u,loc);
+  assert.equal(u.structure[loc],0,config+' '+loc);
+  assert.equal(tile.club,true,config+' '+loc);
+  assert.equal(u.phaseDamage,0,'Blown-off limb armor is not damage for the 20+ PSR');
+ }
+});
+
+test('BMM pp.43,45: side torso creates one detached limb club but ordinary limb destruction does not',()=>{
+ const design=construct({...example,name:'Quad torso wreckage',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const config of ['Quad','Biped'])for(const [side,limb] of [['LT','LA'],['RT','RA']]){
+  for(const previouslyDestroyed of [true,false]){
+   const g=flatGame(),u=g.units[0];
+   if(config==='Quad')Object.assign(u,structuredClone(design.unit));
+   else u.config='Biped';
+   u.q=0;u.r=0;u.prone=true;u.dead=false;
+   const tile=g.tile(0,0);tile.club=false;
+   if(previouslyDestroyed){
+    g.destroyLocation(u,limb);
+    assert.equal(tile.club,false,'Ordinary destruction creates no usable club');
+   }
+   g.destroyLocation(u,side);
+   assert.equal(u.structure[limb],0);
+   assert.equal(tile.club,!previouslyDestroyed);
+   tile.club=false;
+   g.destroyLocation(u,side);
+   assert.equal(tile.club,false,'Repeated destruction does not duplicate a collected limb');
+  }
+ }
+});
+
 test('BMM p.45: each quad leg loss causes one immediate fall and ends movement',()=>{
  const built=construct({...example,config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
  assert.deepEqual(built.errors,[],built.errors.join('; '));

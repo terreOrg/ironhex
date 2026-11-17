@@ -1350,7 +1350,9 @@
       "status": "tested_case",
       "sourcePages": [
         19,
-        45
+        43,
+        45,
+        48
       ],
       "evidence": [
         {
@@ -1372,6 +1374,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.45: a Quad with one missing leg must make the +5 landing PSR"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.43,48: all Quad legs blown off by critical roll leave a limb club without counting armor loss"
         }
       ]
     },
@@ -1431,13 +1437,19 @@
       "statement": "Destroyed or flooded side torso disables or removes the corresponding front leg while distinguishing the rear leg.",
       "status": "tested_case",
       "sourcePages": [
+        43,
         45,
+        48,
         65
       ],
       "evidence": [
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM pp.45,65: quad side torso destruction or flooding affects front leg only"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.43,45: side torso creates one detached limb club but ordinary limb destruction does not"
         }
       ]
     },
