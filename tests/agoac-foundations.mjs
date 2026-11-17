@@ -1143,3 +1143,71 @@ test('AGoAC pp.27–28: weapon phase DFA miss waits for the target controller wi
  assert.equal(g.phaseRolls.filter(r=>r.kind===u.name+' · DFA').length,0);
  assert(!g.physicalOrder().some(d=>d.id===u.id&&d.special));
 });
+
+test('AGoAC pp.30,35,44: actual sixth head wound in an attack phase preserves declared return fire and punches until cleanup',()=>{
+ for(const phase of ['fire','physical']){
+  const g=fresh(),[a,ally,b,enemy]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(a,{q:0,r:0,facing:0,pilotWounds:5,unconscious:false});
+  Object.assign(b,{q:phase==='fire'?4:1,r:0,facing:3});
+  g.phase=phase;g.initiativeWinner=0;g.buildQueue();
+  const declare=(u,t)=>phase==='fire'?g.declareFire(u.id,[{index:u===a?0:1,target:t.id}]):g.declarePhysical(u.id,t.id,'punch','LA');
+  const first=declare(b,a);assert(first.ok,first.error);
+  const second=declare(a,b);assert(second.ok,second.error);
+  assert(g.hold(enemy.id).ok);assert(g.hold(ally.id).ok);
+  assert.equal(g.queue.length,0);
+  const initialHead=a.armor.HD,initialBCT=b.armor.CT;
+  const dice=[...diceFor(12),...diceFor(12),...(phase==='fire'?[...diceFor(12),...diceFor(7)]:[5.5/6,2.5/6])];
+  g.rng=()=>{assert(dice.length,'unexpected die');return dice.shift();};
+  const originalDamage=g.damage.bind(g);let lethalObserved=false,returnObserved=false;
+  g.damage=(victim,loc,n,opts)=>{
+   if(victim===b){
+    assert(lethalObserved);assert.equal(a.pilotWounds,6);assert.equal(a.dead,true);
+    assert.equal(g.onMap(a),true);assert.equal(g.occupied(a.q,a.r),true);
+    returnObserved=true;
+   }
+   const result=originalDamage(victim,loc,n,opts);
+   if(victim===a){
+    assert.equal(loc,'HD');assert.equal(a.pilotWounds,6);assert.equal(a.dead,true);
+    assert(a.armor.HD<initialHead);assert(a.structure.HD>0);
+    assert(g.onMap(a));assert(g.occupied(a.q,a.r));assert(!g.canAct(a));
+    lethalObserved=true;
+   }
+   return result;
+  };
+  assert(g.nextPhase().ok);
+  assert(lethalObserved&&returnObserved);assert.equal(dice.length,0);
+  assert.equal(g.resolution.length,2);assert(g.resolution.every(r=>r.shots[0].hit));
+  assert.equal(g.resolution[1].id,a.id);assert(b.armor.CT<initialBCT);
+  assert.equal(g.onMap(a),false);assert.equal(g.occupied(a.q,a.r),false);
+  assert.equal(g.unit(a.id),a);assert.equal(a.pilotWounds,6);
+  assert.equal(g.phase,phase==='fire'?'physical':'heat');assert(!g.canAct(a));
+ }
+});
+test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical attack against the fallen Mech',()=>{
+ const g=fresh(),[pusher,kicker,t,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(pusher,{q:-1,r:0,facing:0});
+ Object.assign(kicker,{q:1,r:-1,facing:4});
+ Object.assign(t,{q:0,r:0,facing:3,pilotWounds:5,unconscious:false});
+ g.phase='physical';g.initiativeWinner=1;g.queue=[];g.activeTeam=null;
+ const push=g.physicalPreview(pusher.id,t.id,'push','LA'),kick=g.physicalPreview(kicker.id,t.id,'kick','RL');
+ assert(push.legal,push.reason);assert(kick.legal,kick.reason);
+ g.physicalDeclarations=[{id:pusher.id,target:t.id,type:'push',limb:'LA',...push},{id:kicker.id,target:t.id,type:'kick',limb:'RL',...kick}];
+ const dice=[...diceFor(12),...diceFor(2),.5/6,...diceFor(2)];
+ g.rng=()=>{assert(dice.length,'an invalidated kick should not roll');return dice.shift();};
+ const originalWound=g.wound.bind(g);let deathObserved=false;
+ g.wound=(victim,n)=>{
+  originalWound(victim,n);
+  if(victim===t&&t.dead){
+   assert.equal(t.pilotWounds,6);assert.equal(g.onMap(t),true);
+   assert.equal(g.occupied(t.q,t.r),true);assert.deepEqual([t.q,t.r],[1,0]);
+   deathObserved=true;
+  }
+ };
+ assert(g.nextPhase().ok);assert(deathObserved);assert.equal(dice.length,0);
+ const shot=g.resolution.find(r=>r.id===kicker.id).shots[0];
+ assert.equal(shot.cancelled,true);assert.equal(shot.roll,null);assert.equal(shot.damage,0);
+ assert.equal(g.onMap(t),false);assert.equal(g.occupied(1,0),false);
+ assert.equal(g.phase,'heat');assert.equal(other.dead,false);
+});
