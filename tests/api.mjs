@@ -221,3 +221,25 @@ test('API validates optional walking or running mode for voluntary prone orders'
  assert.doesNotThrow(()=>validateTacticalOrder({type:'drop',id:0,version:1,mode:'run'}));
  assert.throws(()=>validateTacticalOrder({type:'drop',id:0,version:1,mode:'jump'}),AuthError);
 });
+
+test('API movement choice pauses with active queue and resumes original authenticated order',()=>{
+ const g=new Game(),u=g.units[0],ally=g.units[1];
+ g.phase='move';g.queue=[0,1,0,1];g.activeTeam=0;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,walk:5,moveStart:{q:0,r:0}});
+ Object.assign(ally,{q:1,r:0,facing:1,walk:4});
+ for(const v of g.units.filter(v=>v.team!==u.team))v.dead=true;
+ g.tile(1,0).type='rubble';
+ let draws=0;g.rng=()=>{draws++;return draws<=2?0:.5;};
+ const before=JSON.stringify(g.units);
+ const pending=runTacticalOrder(g,{type:'move',version:1,id:u.id,q:2,r:0,mode:'walk'});
+ assert.equal(pending.result.pending,true);assert.equal(JSON.stringify(g.units),before);
+ const saved=draws,p=g.pendingChoice;
+ assert.equal(publicSnapshot({game:JSON.parse(JSON.stringify(g))})._resolutionReplay,undefined);
+ assert.throws(()=>runTacticalOrder(g,{type:'hold',version:2,id:u.id}),AuthError);
+ const completed=runTacticalOrder(g,{type:'next',version:2,choice:{key:p.key,option:'forward'}});
+ assert.equal(completed.type,'move');assert.equal(completed.id,u.id);
+ assert.equal(completed.result.pending,undefined);assert.equal(draws,saved);
+ assert.deepEqual(completed.result.to,{q:1,r:0});
+ assert.equal(g.pendingChoice,null);
+});
