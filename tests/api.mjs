@@ -206,3 +206,12 @@ test('API persists mandatory phase choice, rejects forged decisions and redacts 
  assert.equal(publicSnapshot({game:finalState}).pendingChoice,null);
  assert(!Object.hasOwn(publicSnapshot({game:finalState}),'_resolutionReplay'));
 });
+
+test('API rejects minimum-entry mode for ordinary on-map movement',()=>{
+ const g=new Game();g.phase='move';g.activeTeam=0;g.queue=[0];
+ const u=g.units[0],target=g.reachable(u,'walk').find(t=>t.q!==u.q||t.r!==u.r);
+ assert(target);const before=JSON.stringify(u);
+ assert.throws(()=>runTacticalOrder(g,{type:'move',id:0,q:target.q,r:target.r,mode:'minimum',version:1}),
+  e=>e instanceof AuthError&&e.status===422);
+ assert.equal(JSON.stringify(u),before);
+});
