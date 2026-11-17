@@ -70,6 +70,15 @@ test('AGoAC audit never promotes a topic without complete reviewed child evidenc
   assert(Array.isArray(q.pages)&&q.pages.length);
   for(const e of q.evidence||[])assert(readFileSync(new URL('../'+e.file,import.meta.url),'utf8').includes("test('"+e.test+"'"));
  }
+ for(const q of r.requirements.filter(q=>q.status==='verified')){
+  assert(q.evidence?.length,q.id+' missing test evidence');
+  assert(q.audit?.sourceChecked&&q.audit?.edgeCasesChecked,q.id+' missing source review');
+  assert.match(q.audit.testedSha,/^[0-9a-f]{40}$/);
+  assert.match(q.audit.testedTree,/^[0-9a-f]{40}$/);
+  assert.match(q.audit.mergedSha,/^[0-9a-f]{40}$/);
+  assert.deepEqual(q.audit.checks.map(c=>c.name).sort(),['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
+  assert(q.audit.checks.every(c=>Number.isSafeInteger(c.runId)&&c.conclusion==='success'));
+ }
  for(const t of r.topics.filter(t=>t.status==='verified')){
   const children=r.requirements.filter(q=>q.topicId===t.id);
   assert(t.audit?.sourceChecked&&t.audit?.edgeCasesChecked&&t.audit?.inventoryComplete);
