@@ -488,6 +488,22 @@
           "test": "AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aimed head shots"
         }
       ]
+    },
+    {
+      "id": "agoac-024",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5,
+        15
+      ],
+      "statement": "Rear-mounted weapon entries identify their mounting in the record-sheet inventory and critical location table. Firing arc behavior remains in the combat audit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.5,15: rear-mounted weapon is identified in inventory and critical slots"
+        }
+      ]
     }
   ]
 }
