@@ -657,3 +657,46 @@ test('AGoAC pp.29,42: prohibited push retains positions but still requires an im
  assert.equal(t.dead,false);
  assert.equal(dice.length,0);
 });
+
+test('AGoAC p.42: domino checks occur before chain displacement and failures fall in destination',()=>{
+ for(const [firstPass,lastPass] of [[false,false],[false,true],[true,false],[true,true]]){
+  const g=fresh(),[a,b,c,d]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(a,{q:0,r:0});Object.assign(b,{q:1,r:0,spent:99});
+  Object.assign(c,{q:2,r:0,spent:99});d.dead=true;
+  const events=[];
+  const dice=[...diceFor(firstPass?12:2),...diceFor(lastPass?12:2)];
+  g.rng=()=>{assert(dice.length);return dice.shift();};
+  const roll=g.roll.bind(g);
+  g.roll=(kind,tn)=>{events.push(['roll',kind,b.q,c.q]);return roll(kind,tn);};
+  g.fall=(u,levels,tn)=>{events.push(['fall',u.id,u.q,u.r,levels,tn]);u.prone=true;};
+  assert.equal(g.displace(a,0),true);
+  assert.deepEqual([a.q,b.q,c.q],[1,2,3]);
+  assert.deepEqual(events.slice(0,2),[['roll',b.name+' · Домино',1,2],['roll',c.name+' · Домино',1,2]]);
+  assert.equal(b.prone,!firstPass);assert.equal(c.prone,!lastPass);
+  const expected=[];
+  if(!lastPass)expected.push(['fall',c.id,3,0,0,c.piloting]);
+  if(!firstPass)expected.push(['fall',b.id,2,0,0,b.piloting]);
+  assert.deepEqual(events.slice(2),expected);
+  assert.equal(dice.length,0);
+ }
+});
+test('AGoAC p.42: immobile and prone domino targets do not roll; blocked final target is destroyed',()=>{
+ for(const state of ['unconscious','prone','blocked']){
+  const g=fresh(),[a,b,c,d]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(a,{q:0,r:0});Object.assign(b,{q:1,r:0,spent:99});c.dead=d.dead=true;
+  if(state==='unconscious'){b.unconscious=true;b.pilotWounds=1;}
+  if(state==='prone')b.prone=true;
+  if(state==='blocked')g.tile(2,0).height=3;
+  const dice=state==='blocked'?diceFor(12):[];
+  g.rng=()=>{assert(dice.length);return dice.shift();};
+  let fell=false;g.fall=(u,levels)=>{assert.equal(u,b);assert.equal(u.q,2);assert.equal(levels,0);fell=true;u.prone=true;};
+  assert(g.displace(a,0));assert.equal(a.q,1);
+  assert.equal(b.dead,state==='blocked');
+  assert.equal(b.q,state==='blocked'?1:2);
+  assert.equal(fell,state==='unconscious');
+  if(state==='blocked'){assert(g.onMap(b));g.removeDestroyedMechs();assert(!g.onMap(b));}
+  assert.equal(dice.length,0);
+ }
+});

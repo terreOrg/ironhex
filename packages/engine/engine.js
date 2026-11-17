@@ -759,7 +759,42 @@ export class Game extends Legacy{
  return {legal:!reason,reason,targetNumber,damage,underwaterPhysical,table,side,physicalCover};}
  declarePhysical(id,target,type,limb){const u=this.unit(id);if(this.phase!=='physical'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const limbs=type==='punch'&&limb==='both'?['LA','RA']:[limb],pending=[];for(const l of limbs){const p=this.physicalPreview(id,target,type,l);if(!p.legal)return fail(p.reason);pending.push({id,target,type,limb:l,...p});}this.physicalDeclarations.push(...pending);this.finish(u);return {ok:true,declared:true};}
  takeClub(id){const u=this.unit(id),t=this.tile(u.q,u.r);if(u.config==='Quad'||this.phase!=='physical'||!this.canAct(u)||!this.mobile(u)||(!['woods','heavy'].includes(t.type)&&!t.club)||['LA','RA'].some(l=>!u.structure[l]||Object.values(u.actuators[l]).some(Boolean)))return fail('Нужны две исправные руки и дерево/оторванная рука в гексе');u.club=true;this.finish(u);return {ok:true};}
- displace(u,dir,depth=0){if(u.dead||depth>this.units.length+1)return false;const d=DIRS[dir],t=this.tile(u.q+d[0],u.r+d[1]);if(!t){u.dead=true;u.escaped=true;this.note(`${u.name} вытеснен за край карты.`);return true;}const old=this.tile(u.q,u.r);if(t.height-old.height>2)return false;const occ=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===t.q&&v.r===t.r);if(occ){if(!this.displace(occ,dir,depth+1)){occ.dead=true;}else this.psr(occ,0,'Домино',true);}u.q=t.q;u.r=t.r;if(old.height-t.height>=2)this.fall(u,old.height-t.height);return true;}
+ // AGoAC pp.40–42: the domino check occurs before moving the target.
+ // The target falls in its destination, not in the hex it is vacating.
+ dominoCheck(u){
+  this.consciousness(u);
+  const tn=u.piloting+this.psrMod(u,true)+u.psrs.reduce((sum,p)=>sum+p.modifier,0)+(u.phaseDamage>=20?1:0);
+  if(u.dead||u.prone)return {tn,failed:false};
+  const failed=this.isImmobile(u)||u.gyroHits>=2||
+   this.roll(u.name+' · Домино',tn)<tn;
+  return {tn,failed};
+ }
+ resolveDomino(u,dir,depth){
+  const check=this.dominoCheck(u);
+  if(u.dead)return;
+  const old=this.tile(u.q,u.r);
+  if(!this.displace(u,dir,depth+1)){
+   this.destroyMech(u);
+   this.note(u.name+': нет допустимого гекса для домино.');
+   return;
+  }
+  if(check.failed&&!u.dead&&!u.prone){
+   const drop=Math.max(0,old.height-this.tile(u.q,u.r).height);
+   this.fall(u,drop>=2?drop:0,check.tn);
+  }
+ }
+ displace(u,dir,depth=0){
+  if(u.dead||depth>this.units.length+1)return false;
+  const d=DIRS[dir],t=this.tile(u.q+d[0],u.r+d[1]);
+  if(!t){u.dead=true;u.removalPending=false;u.escaped=true;this.note(u.name+' вытеснен за край карты.');return true;}
+  const old=this.tile(u.q,u.r);
+  if(t.height-old.height>2)return false;
+  const occ=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===t.q&&v.r===t.r);
+  if(occ)this.resolveDomino(occ,dir,depth);
+  u.q=t.q;u.r=t.r;
+  if(old.height-t.height>=2)this.fall(u,old.height-t.height);
+  return true;
+ }
  // AGoAC pp.29,40,42: resolve opposed pushes together. A displacement
  // check is immediate, and a drop of two or more levels already caused a fall.
  pushTargetValid(u,t){
