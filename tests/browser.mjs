@@ -244,6 +244,27 @@ test('Record sheet and initiative dice do not leave a stuck dialog', { timeout:1
   });
 });
 
+test('AGoAC p.4: inspecting enemy record sheet preserves active unit and target selection', {timeout:120000}, async()=>{
+  await withPage('agoac-open-records',{noWebGL:true},async page=>{
+    await page.locator('#gamemode').selectOption('hotseat');
+    await page.locator('#next').click();
+    await page.locator('#hold').waitFor({timeout:50000});
+    const active=page.locator('.unitcard.active');
+    const id=await active.getAttribute('data-unit');
+    const enemy=await active.evaluate(e=>e.classList.contains('enemy'));
+    const opposing=page.locator(enemy?'#allies [data-unit]':'#enemies [data-unit]').first();
+    const opposingName=await opposing.locator('strong').textContent();
+    await opposing.click();
+    await page.locator('#target-sheet').click();
+    assert.equal(await page.locator('#modal').evaluate(e=>e.open),true);
+    assert.equal(await page.locator('#modal .recordhead b').textContent(),opposingName);
+    await page.locator('#close').click();
+    assert.equal(await page.locator('.unitcard.active').getAttribute('data-unit'),id);
+    assert.equal(await page.locator('#target-sheet').count(),1);
+    assert.equal((await page.locator('#phase').textContent()).trim(),'ДВИЖЕНИЕ');
+  });
+});
+
 async function completeOrders(page, label) {
   for (let i=0;i<8;i++) {
     if (await page.locator('#next').isEnabled()) return;

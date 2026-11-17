@@ -274,6 +274,7 @@ assert.equal(snapshot.data.item.game.phase,'initiative');
 assert.equal(JSON.stringify(snapshot.data).includes('rngState'),false,
   'Random generator state must never be returned to the client');
 assert.equal(snapshot.data.item.game.units[0].name,'Griffin GRF-1M');
+assert.equal(snapshot.data.item.game.units[0].pilotName,'Dana Vos');
 
 let command=await tactical({type:'next',version:1});
 assert.equal(command.status,200,JSON.stringify(command.data));
