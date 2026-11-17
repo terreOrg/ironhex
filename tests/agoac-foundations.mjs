@@ -479,3 +479,44 @@ test('AGoAC p.7: elimination and mutual destruction produce the correct result',
   g.checkWin();assert.equal(g.winner,winner);
  }
 });
+
+test('AGoAC pp.35,44: lethal pilot or component damage leaves map presence until phase end',()=>{
+ for(const cause of ['wounds','head','center','cockpit','engine']){
+  const g=fresh(),u=g.units[0];
+  g.phase='move';g.queue=[];g.activeTeam=null;
+  if(cause==='wounds'){u.pilotWounds=5;g.wound(u,1);}
+  if(cause==='head')g.destroyLocation(u,'HD');
+  if(cause==='center')g.destroyLocation(u,'CT');
+  if(cause==='cockpit'||cause==='engine'){
+   if(cause==='engine')u.engineHits=2;
+   const dice=[...diceFor(8),...(cause==='engine'?[0,0]:[(3-.5)/6])];
+   g.rng=()=>{assert(dice.length);return dice.shift();};
+   g.criticalHit(u,cause==='engine'?'CT':'HD');
+   assert.equal(dice.length,0);
+  }
+  assert.equal(u.dead,true,cause);assert.equal(g.onMap(u),true,cause);
+  assert.equal(g.occupied(u.q,u.r),true,cause);assert.equal(g.canAct(u),false);
+  const saved=JSON.parse(JSON.stringify(u));
+  Object.assign(u,saved);
+  assert.equal(g.onMap(u),true,'pending removal survives a JSON round trip');
+  assert.equal(g.nextPhase().ok,true);
+  assert.equal(g.phase,'fire');assert.equal(g.onMap(u),false,cause);
+  assert.equal(g.occupied(u.q,u.r),false,cause);
+  assert.equal(g.unit(u.id),u,'historical sheet remains available');
+ }
+});
+test('AGoAC pp.6,7,35: destroyed map presence is cleared at each phase boundary',()=>{
+ for(const phase of ['fire','physical','heat','end']){
+  const g=fresh(),u=g.units[0];g.phase=phase;
+  g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+  g.destroyMech(u);
+  assert.equal(g.onMap(u),true);
+  assert(g.nextPhase().ok);
+  assert.equal(g.onMap(u),false,phase);
+  assert.equal(g.occupied(u.q,u.r),false);
+ }
+ const g=fresh(),u=g.units[0];
+ u.dead=true;
+ assert.equal(g.onMap(u),false,'legacy snapshots and absent roster slots do not reappear');
+ g.reset();assert.equal(g.onMap(g.units[0]),true);
+});

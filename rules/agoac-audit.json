@@ -811,7 +811,7 @@
       ],
       "statement": "A Mech whose pilot dies is removed from the map at the end of that phase; preserve same-phase attack declarations and resolve occupancy and displacement until removal.",
       "status": "known_missing",
-      "reviewNote": "Printed pp.35 and 44 require phase-end map removal. Actual wound/destroyLocation marks dead immediately; movement occupancy and displacement ignore dead units before phase transition; the UI collapses a dead model but has no explicit phase-boundary removal state. Already-declared ordinary weapon attacks can still roll. Keep destruction and on-map presence distinct and audit displacement, immediate fall damage, persistence, and presentation together.",
+      "reviewNote": "Printed pp.35 and 44 require phase-end map removal. Actual wound/destroyLocation marks dead immediately; movement occupancy and displacement ignore dead units before phase transition; the UI collapses a dead model but has no explicit phase-boundary removal state. Already-declared ordinary weapon attacks can still roll. Keep destruction and on-map presence distinct and audit displacement, immediate fall damage, persistence, and presentation together. Partial implementation in follow-up: standard lethal damage records pending phase-end map removal; historical state and ordinary attack declarations are retained. Full domino, fall, charge/DFA and simultaneous damage ordering remain to be independently audited. Keep known_missing until those interactions are covered.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -824,6 +824,26 @@
         {
           "file": "tests/combat.mjs",
           "test": "Declared shot survives destruction of shooter"
+        }
+      ]
+    },
+    {
+      "id": "agoac-034",
+      "topicId": "agoac-foundations",
+      "pages": [
+        35,
+        44
+      ],
+      "statement": "Distinguish destroyed standard BattleMechs from their temporary map presence until the end of the phase. Clear pending presence at phase resolution while retaining historical state.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.35,44: lethal pilot or component damage leaves map presence until phase end"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,7,35: destroyed map presence is cleared at each phase boundary"
         }
       ]
     }
