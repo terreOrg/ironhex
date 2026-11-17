@@ -1304,12 +1304,36 @@
       "statement": "A quad with undamaged relevant hips may kick rearward with the extra +1 target number modifier and proper kick location table.",
       "status": "tested_case",
       "sourcePages": [
-        38
+        29,
+        34,
+        36,
+        38,
+        53
       ],
       "evidence": [
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.38: a quad may kick front or rear with the correct leg pair and +1 rear TN"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.29,38: Quad kick actuator modifiers stack for each eligible leg"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.38: Quad kick resolution requests PSR for target on hit and attacker on miss"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.38,53: Quad kick hit or miss resolves actual deferred PSR and fall"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.34,36,38: Quad cannot take a club or kick a prone target one level below"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.38: Quad kick arcs match every adjacent hex and all six facings"
         }
       ]
     },
@@ -1461,6 +1485,37 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.83: tactical server validates 360-degree turret rotation command"
+        },
+        {
+          "file": "tests/quad-quirks-validation.mjs",
+          "test": "BMM quad optional quirks: reject explicit null without crashing"
+        },
+        {
+          "file": "tests/quad-quirks-validation.mjs",
+          "test": "BMM quad optional quirks: absent and empty objects remain compatible"
+        },
+        {
+          "file": "tests/quad-quirks-validation.mjs",
+          "test": "BMM quad optional quirks: malformed values reject safely"
+        }
+      ]
+    },
+    {
+      "id": "bmm-req-095",
+      "topicId": "bmm-p005-four-legged-mech",
+      "page": 5,
+      "statement": "All four Quad leg locations are submerged in Depth 1 water; operational submerged heat sinks supply capped bonus cooling, and submerged jump jets are unavailable without double-counting prior damage or flooding. Complete gameplay and boundary audit remains open.",
+      "status": "tested_case",
+      "sourcePages": [
+        19,
+        27,
+        51,
+        65
+      ],
+      "evidence": [
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM pp.19,27,51,65: Quad front legs submerge, cool and disable jump jets in Depth 1"
         }
       ]
     }

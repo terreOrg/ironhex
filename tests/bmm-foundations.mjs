@@ -1302,6 +1302,30 @@ test('BMM pp.34,36,38: Quad cannot take a club or kick a prone target one level 
  assert.notEqual(u.club,true);
 });
 
+test('BMM p.38: Quad kick arcs match every adjacent hex and all six facings',()=>{
+ const design=construct({...example,name:'Quad kick arc matrix',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const g=flatGame(),u=g.units[0],t=g.units[2];
+ Object.assign(u,structuredClone(design.unit));
+ u.q=0;u.r=0;u.prone=false;u.moveMode='stand';u.firedLocations=[];
+ t.prone=false;t.dead=false;
+ for(let facing=0;facing<6;facing++){
+  u.facing=facing;
+  for(let dir=0;dir<6;dir++){
+   [t.q,t.r]=DIRS[dir];
+   const relative=(dir-facing+6)%6,front=[0,1,5].includes(relative);
+   for(const limb of ['LA','RA','LL','RL']){
+    const expected=front===['LA','RA'].includes(limb);
+    for(const twist of [-1,0,1]){
+     u.twist=twist;
+     const p=g.physicalPreview(u.id,t.id,'kick',limb);
+     assert.equal(p.legal,expected,'facing '+facing+' dir '+dir+' leg '+limb+' twist '+twist);
+    }
+   }
+  }
+ }
+});
+
 test('BMM pp.45,65: quad side torso destruction or flooding affects front leg only',()=>{
  const fixture=construct({...example,name:'Quad torso coupling',config:'Quad',
   jump:0,sinks:10,equipment:[]},{auditQuad:true});
