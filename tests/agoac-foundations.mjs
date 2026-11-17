@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds} from '../dist/engine.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {readFileSync} from 'node:fs';
 
@@ -292,4 +292,23 @@ test('AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aime
  const normal=g.preview(u.id,t.id,0),head=g.preview(u.id,t.id,0,{aim:'HD'});
  assert.equal(normal.legal,true,normal.reason);assert.equal(normal.mods.target,-4);
  assert.equal(head.legal,true,head.reason);assert.equal(head.mods.target,0);assert.equal(head.mods.aim,3);
+});
+
+test('AGoAC pp.3-4,18: logical scale and shortest hex distance independent of height',()=>{
+ assert.deepEqual(AGOAC_SCALE,{hexMeters:30,levelMeters:6,turnSeconds:10,standingMechLevels:2});
+ const g=fresh(),radius=6;
+ // Independent breadth-first reference instead of repeating the axial formula.
+ for(const start of g.tiles){
+  const key=(q,r)=>q+','+r,seen=new Map([[key(start.q,start.r),0]]),queue=[start];
+  for(let i=0;i<queue.length;i++){
+   const p=queue[i],n=seen.get(key(p.q,p.r));
+   for(const [dq,dr] of DIRS){const q=p.q+dq,r=p.r+dr,k=key(q,r);
+    if(Math.max(Math.abs(q),Math.abs(r),Math.abs(q+r))>radius||seen.has(k))continue;
+    seen.set(k,n+1);queue.push({q,r});}
+  }
+  for(const target of g.tiles){const expected=seen.get(key(target.q,target.r));
+   assert.equal(distance({...start,height:99},{...target,height:-3}),expected);
+   assert.equal(rangeMeters(start,target),30*expected);}
+ }
+ for(let round=1;round<=100;round++)assert.equal(elapsedBattleSeconds(round),10*(round-1));
 });
