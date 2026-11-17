@@ -171,3 +171,73 @@ test('AGoAC p.3: all six die faces and all 36 independent two-die combinations',
   }
  }
 });
+
+test('AGoAC p.44: head hits wound the pilot even when armor holds',()=>{
+ const g=fresh(),u=g.units[0];g.rng=()=>.99;
+ const hd=u.armor.HD;assert(hd>=2);
+ g.damage(u,'HD',1);assert.equal(u.armor.HD,hd-1);assert.equal(u.pilotWounds,1);
+ g.damage(u,'CT',1);assert.equal(u.pilotWounds,1);
+ g.damage(u,'HD',1);assert.equal(u.pilotWounds,2);
+ assert.deepEqual(g.phaseRolls.filter(r=>r.kind.includes('Сознание')).map(r=>r.target),[3,5]);
+});
+
+test('AGoAC pp.39,44: internal ammunition explosion wounds a surviving pilot twice',()=>{
+ const g=fresh(),u=g.units[0],bin=u.bins[0];bin.shots=1;
+ // The test fixture's standard SRM bin causes nonlethal internal damage.
+ const loc=bin.location,armor=u.armor[loc];
+ const dice=[...diceFor(3),...diceFor(5),...diceFor(2)];
+ g.rng=()=>dice.shift()??0;
+ g.explode(u,bin);
+ assert.equal(u.dead,false);assert.equal(u.pilotWounds,2);assert.equal(u.unconscious,false);
+ assert.equal(bin.shots,0);assert.equal(bin.destroyed,true);
+ assert.equal(u.armor[loc],armor);
+ assert.deepEqual(g.phaseRolls.filter(r=>r.kind.includes('Сознание')).map(r=>r.target),[3,5]);
+});
+
+test('AGoAC pp.33,39,44: damaged life support heat wounds at exact thresholds',()=>{
+ for(const lifeSupport of [false,true])for(const heat of [0,14,15,25,26,30,45]){
+  const g=fresh(),u=g.units[0];g.rng=()=>.99;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  for(const bin of u.bins)bin.shots=0;
+  u.lifeSupport=lifeSupport;u.heat=heat+u.sinks;u.pendingHeat=0;
+  u.shutdown=true;u.voluntaryShutdown=true;u.prone=true;
+  g.heatPhase();
+  assert.equal(u.heat,heat);
+  assert.equal(u.pilotWounds,lifeSupport?(heat>=26?2:heat>=15?1:0):0);
+ }
+});
+
+test('AGoAC pp.7,33,44: submerged life support wounds and lethal wounds cannot recover',()=>{
+ for(const lifeSupport of [false,true])for(const depth of [0,1,2,3])for(const prone of [false,true]){
+  const g=fresh(),u=g.units[0];g.rng=()=>.99;u.lifeSupport=lifeSupport;u.prone=prone;
+  Object.assign(g.tile(u.q,u.r),{depth,height:-depth,type:depth?'water':'plain'});
+  g.endPhase();
+  assert.equal(u.pilotWounds,lifeSupport&&depth>=(prone?1:2)?1:0);
+ }
+ const g=fresh(),u=g.units[0];u.lifeSupport=true;u.pilotWounds=5;u.unconscious=true;u.wasUnconscious=true;
+ Object.assign(g.tile(u.q,u.r),{type:'water',depth:2,height:-2});
+ g.rng=()=>{throw Error('A dead pilot cannot attempt to recover');};
+ g.endPhase();assert.equal(u.dead,true);assert.equal(u.pilotWounds,6);assert.equal(g.phaseRolls.length,0);
+});
+
+test('AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers',()=>{
+ for(const levels of [0,1,2,3])for(const success of [false,true]){
+  const g=fresh(),u=g.units[0];const tn=5+Math.max(0,levels-1);
+  Object.assign(g.tile(u.q,u.r),{depth:0,height:0,type:'plain'});
+  // Facing roll, seatbelt roll, optional consciousness check. All subsequent
+  // location and critical throws remain deterministic.
+  const values=[0,...diceFor(success?tn:tn-1),...(!success?diceFor(3):[])];
+  g.rng=()=>values.shift()??.5;
+  g.fall(u,levels,5);
+  const i=g.phaseRolls.findIndex(r=>r.kind.includes('Травма при падении'));
+  const j=g.phaseRolls.findIndex(r=>r.kind.includes('Локация попадания'));
+  assert(i>=0&&j>i);assert.equal(g.phaseRolls[i].target,tn);
+  assert.equal(u.pilotWounds,success?0:1);
+ }
+ for(const reason of ['shutdown','unconscious','target-over-12']){
+  const g=fresh(),u=g.units[0];u[reason]=true;g.rng=()=>.5;
+  g.fall(u,0,reason==='target-over-12'?13:5);
+  assert.equal(u.pilotWounds,1);
+  assert.equal(g.phaseRolls.some(r=>r.kind.includes('Травма при падении')),false);
+ }
+});

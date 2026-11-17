@@ -360,6 +360,88 @@
           "test": "AGoAC p.3: all six die faces and all 36 independent two-die combinations"
         }
       ]
+    },
+    {
+      "id": "agoac-017",
+      "topicId": "agoac-foundations",
+      "pages": [
+        44
+      ],
+      "statement": "Each damaging head hit causes one wound even without internal damage.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: head hits wound the pilot even when armor holds"
+        }
+      ]
+    },
+    {
+      "id": "agoac-018",
+      "topicId": "agoac-foundations",
+      "pages": [
+        39,
+        44
+      ],
+      "statement": "An internal ammunition explosion inflicts two pilot wounds independent of armor.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.39,44: internal ammunition explosion wounds a surviving pilot twice"
+        }
+      ]
+    },
+    {
+      "id": "agoac-019",
+      "topicId": "agoac-foundations",
+      "pages": [
+        33,
+        39,
+        44
+      ],
+      "statement": "Failed life support inflicts one wound at heat 15–25, two at 26 or more, and none below 15.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33,39,44: damaged life support heat wounds at exact thresholds"
+        }
+      ]
+    },
+    {
+      "id": "agoac-020",
+      "topicId": "agoac-foundations",
+      "pages": [
+        7,
+        33,
+        44
+      ],
+      "statement": "With failed life support and full submersion, one wound occurs at end phase; a lethal sixth wound forbids further recovery.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,33,44: submerged life support wounds and lethal wounds cannot recover"
+        }
+      ]
+    },
+    {
+      "id": "agoac-021",
+      "topicId": "agoac-foundations",
+      "pages": [
+        11,
+        43,
+        44
+      ],
+      "statement": "Seatbelt checks precede fall damage; required TN includes the original PSR and fall-height modifier; an unconscious or shut down pilot or TN above 12 suffers automatic injury. All-limb immobility still needs audit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers"
+        }
+      ]
     }
   ]
 }
