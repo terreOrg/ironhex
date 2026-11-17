@@ -1,3 +1,9 @@
+# Active audit: A Game of Armored Combat (AGoAC)
+
+The user's first-release priority is the 2018 CAT3500D base rules. See [agoac-audit.json](agoac-audit.json). BMM and Tactical Operations audits are deferred; their existing evidence and features are retained. AGoAC is independently audited; CI success is not complete rule conformity. The initial inventory groups chapters; atomic extraction is still incomplete. The initial code tests cover a portion of the play sequence; source review must continue at foundations before certifying further topics.
+
+---
+
 # BattleMech Manual rules audit
 
 **Source:** *BattleTech: BattleMech Manual*, corrected sixth printing (Catalyst Game Labs, 2022), supplied as a PDF to the project. Page numbers use the book's **printed** pagination, not zero-based PDF page indexes.
