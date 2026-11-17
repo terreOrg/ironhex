@@ -915,6 +915,7 @@ test('Commander launches an interactive 3D operation from the mission briefing',
     await withPage('interactive-operation-entry',{hub:true,noWebGL:true},async page=>{
       let operation=null;
       const simulation=new TestBattleGame();
+      assert(simulation.startStandardDeployment().ok);
       const game=JSON.parse(JSON.stringify(simulation,
         (key,value)=>key==='map'||key==='rng'?undefined:value));
       const result=(route,code,obj)=>route.fulfill({
@@ -930,9 +931,10 @@ test('Commander launches an interactive 3D operation from the mission briefing',
         if(pathname==='/api/v1/operations'&&method==='POST'){
           const body=route.request().postDataJSON();
           assert.equal(body.mode,'interactive');
+          assert.equal(body.deploymentMode,'standard');
           assert.deepEqual(body.mechIds,[mechId]);
           operation={id,title:body.title,status:'draft',version:0,
-            controlMode:'interactive',roster:[{mechId,chassis:'Shadow Hawk',
+            controlMode:'interactive',deploymentMode:body.deploymentMode,roster:[{mechId,chassis:'Shadow Hawk',
               tonnage:55,pilot:null}],state:null,report:null};
           return result(route,201,{item:operation});
         }
@@ -940,7 +942,7 @@ test('Commander launches an interactive 3D operation from the mission briefing',
           return result(route,200,{item:{...operation,game}});
         if(pathname.endsWith('/launch')&&method==='POST'){
           operation={...operation,status:'active',version:1,
-            state:{round:1,phase:'initiative',units:[],log:[]}};
+            state:{round:1,phase:'setup',units:[],log:[]}};
           return result(route,200,{item:operation});
         }
         if(pathname==='/api/v1/operations/'+id&&method==='GET')
@@ -950,6 +952,7 @@ test('Commander launches an interactive 3D operation from the mission briefing',
       await page.locator('#hub-campaigns-button').click();
       await page.locator('#op-mech-list input[name=mechId]').check();
       assert.equal(await page.locator('#op-create-form input[name=interactive]').isChecked(),true);
+      await page.locator('#op-create-form select[name=deploymentMode]').selectOption('standard');
       await page.locator('#op-create').click();
       await page.getByRole('button',{name:'НАЧАТЬ ОПЕРАЦИЮ'}).click();
       await page.locator('#hub-battle-frame').waitFor({state:'visible'});

@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {example,construct} from '../packages/engine/construction.js';
+import {Game} from '../packages/engine/engine.js';
 import {createPool} from '../apps/api/src/db.mjs';
 
 const base='http://127.0.0.1:3000';
@@ -240,6 +241,7 @@ const interactiveCreated=await req('/api/v1/operations',{
 assert.equal(interactiveCreated.status,201,JSON.stringify(interactiveCreated.data));
 const interactiveId=interactiveCreated.data.item.id;
 assert.equal(interactiveCreated.data.item.controlMode,'interactive');
+assert.equal(interactiveCreated.data.item.deploymentMode,'scenario');
 assert.equal((await req('/api/v1/operations/'+interactiveId+'/snapshot',
   {cookie:other.cookie})).status,404,'A rival cannot view private game state');
 assert.equal((await req('/api/v1/operations/'+interactiveId+'/command',{
@@ -318,6 +320,72 @@ const stillOwner=await req('/api/v1/pilots/'+pilotId,{cookie:owner.cookie});
 assert.equal(stillOwner.data.item.battles,1,
   'Abandoning interactive battle must not issue additional rewards');
 console.log('Interactive 3D protocol passed: private snapshots, enemy order rejection, version conflicts, server AI, phase persistence and abort');
+
+// AGoAC p.6: standard deployment is stored on the draft, not client state.
+const standardInput={title:'AGoAC deployment',mechIds:[mechId],mode:'interactive'};
+for(const deploymentMode of [null,'forged',true]){
+  const invalid=await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
+    body:{...standardInput,deploymentMode}});
+  assert.equal(invalid.status,422);
+}
+const standardCreated=await req('/api/v1/operations',{method:'POST',cookie:owner.cookie,
+  body:{...standardInput,deploymentMode:'standard'}});
+assert.equal(standardCreated.status,201,JSON.stringify(standardCreated.data));
+const standardId=standardCreated.data.item.id;
+const standardPath='/api/v1/operations/'+standardId;
+const readStandard=()=>req(standardPath+'/snapshot',{cookie:owner.cookie});
+const standardCommand=body=>req(standardPath+'/command',{method:'POST',cookie:owner.cookie,body});
+assert.equal(standardCreated.data.item.deploymentMode,'standard');
+assert.equal((await req(standardPath+'/launch',{method:'POST',cookie:owner.cookie})).status,200);
+let standard=(await readStandard()).data.item;
+assert.equal(standard.deploymentMode,'standard');
+assert.equal(standard.game.phase,'setup');
+assert(standard.game.units.filter(u=>!u.dead).every(u=>u.deployed===false));
+let setup=await standardCommand({type:'next',version:standard.version});
+assert.equal(setup.status,200,JSON.stringify(setup.data));
+standard=setup.data.item;
+if(standard.game.pendingChoice){
+  const pending=standard.game.pendingChoice;
+  assert.equal(pending.kind,'deployment-edge');
+  assert.deepEqual((await readStandard()).data.item.game.pendingChoice,pending);
+  assert.equal((await standardCommand({type:'next',version:standard.version,
+    choice:{key:pending.key,option:'forged'}})).status,422);
+  setup=await standardCommand({type:'next',version:standard.version,
+    choice:{key:pending.key,option:pending.options[0].id}});
+  assert.equal(setup.status,200,JSON.stringify(setup.data));
+  standard=setup.data.item;
+}
+assert.equal(standard.game.phase,'initiative');
+assert.equal((standard.game.deployment.edges[0]+3)%6,standard.game.deployment.edges[1]);
+assert.equal(Object.hasOwn(standard.game,'_resolutionReplay'),false);
+setup=await standardCommand({type:'next',version:standard.version});
+assert.equal(setup.status,200,JSON.stringify(setup.data));
+standard=setup.data.item;
+assert.equal(standard.game.phase,'move');
+assert.equal(standard.game.activeTeam,0);
+assert.equal((await standardCommand({type:'hold',id:0,version:standard.version})).status,422);
+const referee=new Game();
+Object.assign(referee,structuredClone(standard.game));referee.rebuildMap();
+const entry=referee.reachable(referee.units[0],'walk')[0];
+assert(entry,'available walk entry on the standard map');
+setup=await standardCommand({type:'move',id:0,q:entry.q,r:entry.r,mode:'walk',version:standard.version});
+assert.equal(setup.status,200,JSON.stringify(setup.data));
+standard=setup.data.item;
+assert.equal(standard.effect.result.entry,true);
+assert.equal(standard.game.units[0].deployed,true);
+assert.deepEqual([standard.game.units[0].q,standard.game.units[0].r,standard.game.units[0].spent],
+  [entry.q,entry.r,entry.cost]);
+assert.equal((await readStandard()).data.item.game.units[0].deployed,true);
+setup=await standardCommand({type:'hold',id:0,version:standard.version});
+assert.equal(setup.status,200,JSON.stringify(setup.data));
+standard=setup.data.item;
+assert(standard.game.units.filter(u=>!u.dead).every(u=>u.deployed===true));
+assert.equal(standard.game.queue.length,0);
+setup=await standardCommand({type:'next',version:standard.version});
+assert.equal(setup.status,200,JSON.stringify(setup.data));
+assert.equal(setup.data.item.game.phase,'fire');
+assert.equal((await req(standardPath+'/abandon',{method:'POST',cookie:owner.cookie})).status,200);
+console.log('AGoAC p.6 standard server deployment passed: draft selection, persisted edges, entry and phase transition');
 
 // Test a real reload transaction against a guaranteed depleted magazine.
 // The isolated test database is the only place we manipulate the starting

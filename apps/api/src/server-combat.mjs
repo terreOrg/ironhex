@@ -70,7 +70,7 @@ export function autoOpponent(game){
     if(!r?.ok&&!game.hold(unit.id)?.ok)throw Error('opponent_stalled');
     actions.push({id:unit.id,phase,
       ...(phase==='move'&&r?.path?.length?{
-        path:r.path,mode:r.mode,to:r.to,from:r.from}:{}),
+        path:r.path,mode:r.mode,to:r.to,from:r.from,...(r.entry?{entry:true}:{})}:{}),
       rolls:[...game.phaseRolls]});
   }
   return actions;
