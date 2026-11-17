@@ -998,6 +998,10 @@ export class Game extends Legacy{
  }
  physicalAfterDisplacement(d,snapshots){
   const u=this.unit(d.id),t=this.unit(d.target),originalU=snapshots.get(d.id),originalT=snapshots.get(d.target);
+  // Ordinary attack damage has not yet been resolved. A death occurring
+  // here is an immediate displacement/fall effect (pp.30,42), not a
+  // reason to erase an attack that was already rolled.
+  if((u.dead&&!originalU.dead)||(t.dead&&!originalT.dead))return null;
   if(!this.physicalGeometryChanged(originalU,u)&&!this.physicalGeometryChanged(originalT,t))return d;
   if(u.escaped||t.escaped)return null;
   // Reassess geometry using the state from before attacks. Ordinary damage
