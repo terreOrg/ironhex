@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   sonar:
-    name: SonarQube analysis (baseline)
+    name: SonarQube analysis and Quality Gate
     if: github.ref == 'refs/heads/main'
     runs-on: [self-hosted, Linux, X64, spellfire]
     timeout-minutes: 30
@@ -28,6 +28,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Verify generated files match their original sources
+        run: node scripts/build-web.mjs --check
       - name: Run unit tests and generate LCOV report
         shell: bash
         run: |
@@ -41,8 +43,8 @@ jobs:
             tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs \
             tests/auth.mjs tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs
           test -s coverage/lcov.info
+          node scripts/normalize-sonar-coverage.mjs coverage/lcov.info
       - name: Scan source code and report Quality Gate
-        # The deploy workflow does not require this baseline workflow yet.
         uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

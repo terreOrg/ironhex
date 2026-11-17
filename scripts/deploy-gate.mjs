@@ -3,7 +3,8 @@ import { createHmac } from 'node:crypto';
 export const requiredWorkflows = [
   'Ironhex CI',
   'Ironhex Browser E2E',
-  'Ironhex Container Smoke'
+  'Ironhex Container Smoke',
+  'Ironhex SonarQube'
 ];
 
 export function evaluateDeployment({ sha, mainSha, runs }) {

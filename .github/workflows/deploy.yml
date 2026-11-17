@@ -1,12 +1,12 @@
 name: Ironhex Deploy
 
-# Deploy only after all three workflows have passed for the same main commit.
+# Deploy only after all four workflows have passed for the same main commit.
 # Triggered by GitHub Actions on the self-hosted runner, not a public webhook.
 on:
   workflow_run:
-    # Trigger a single deploy check per main commit. The script waits for all three CI suites.
+    # Trigger a single deploy check per main commit. The script waits for all four CI suites.
     workflows:
-      - Ironhex CI
+      - Ironhex SonarQube
     branches: [main]
     types: [completed]
   workflow_dispatch:

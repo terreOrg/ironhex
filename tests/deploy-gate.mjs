@@ -32,3 +32,12 @@ test('webhook uses authenticated HMAC over exact body',()=>{
   assert.equal(signature,'sha256='+createHmac('sha256','unit-test-key').update(body).digest('hex'));
   assert.equal(JSON.parse(body).ref,'refs/heads/main');
 });
+test('SonarQube is mandatory and must pass on the same main commit',()=>{
+  assert.ok(requiredWorkflows.includes('Ironhex SonarQube'));
+  const others=requiredWorkflows.filter(name=>name!=='Ironhex SonarQube').map(success);
+  const sonar=success('Ironhex SonarQube');
+  for (const invalid of [undefined,{...sonar,conclusion:'failure'},{...sonar,status:'in_progress',conclusion:null},{...sonar,head_sha:'b'.repeat(40)}]) {
+    assert.equal(evaluateDeployment({sha,mainSha:sha,runs:invalid?[...others,invalid]:others}).ready,false);
+  }
+  assert.equal(evaluateDeployment({sha,mainSha:sha,runs:[...others,sonar]}).ready,true);
+});
