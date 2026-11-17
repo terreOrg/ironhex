@@ -829,3 +829,67 @@ test('AGoAC pp.25–27: prone completed target is eligible for DFA but not charg
  assert.equal(u.charge.type,'dfa');assert.equal(u.airborne,true);
  assert.equal(u.charge.target,t.id);
 });
+
+test('AGoAC pp.7,29–30: ordinary physical attacks all roll before damage, including a destroyed attacker',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];g.phase='physical';g.initiativeWinner=1;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(a,{q:0,r:0,facing:0});Object.assign(b,{q:1,r:0,facing:3});
+ const orders=[{id:a.id,target:b.id},{id:b.id,target:a.id}].map(d=>({...d,type:'punch',limb:'LA',
+  targetNumber:2,damage:5,side:'front',table:'punch'}));
+ g.physicalDeclarations=orders;g.rng=()=>.99;
+ const victims=[];g.hit=(victim,damage)=>{
+  assert.deepEqual(g.phaseRolls.slice(0,2).map(r=>r.kind),[a.name+' · punch',b.name+' · punch']);
+  victims.push(victim.id);if(victim===b)g.destroyMech(b);
+  return {damage,hits:[]};
+ };
+ const result=g.resolvePhysical();
+ assert.deepEqual(victims,[b.id,a.id]);
+ assert.equal(b.dead,true);
+ assert.deepEqual(result.map(r=>r.shots[0].damage),[5,5]);
+ assert.equal(g.phaseRolls.length,2);
+});
+test('AGoAC p.42: displacement does not cancel a still-valid adjacent physical attack',()=>{
+ for(const winner of [0,1]){
+  const g=fresh(),[a,ally,t,enemy]=g.units;g.phase='physical';g.initiativeWinner=winner;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(a,{q:-1,r:0,facing:0});Object.assign(t,{q:0,r:0,facing:3});
+  Object.assign(ally,{q:3,r:0});enemy.dead=true;
+  // a pushes t east and follows; a remains adjacent in t's forward arc.
+  const preview=g.physicalPreview(t.id,a.id,'punch','LA');
+  assert(preview.legal,preview.reason);
+  g.physicalDeclarations=[
+   {id:t.id,target:a.id,type:'punch',limb:'LA',...preview},
+   {id:a.id,target:t.id,type:'push',limb:'LA',targetNumber:2,damage:0}
+  ];
+  g.rng=()=>.99;const damage=[];
+  g.hit=(victim,n)=>{damage.push([victim.id,n]);return {damage:n,hits:[]};};
+  const result=g.resolvePhysical(),punch=result.find(r=>r.id===t.id).shots[0];
+  assert.deepEqual([a.q,t.q],[0,1]);
+  // a follows the pushed target. The resulting front/back facing relation
+  // remains adjacent; use a third stationary target to test interruption below.
+  assert.equal(punch.cancelled,false);
+  assert.equal(punch.hit,true);
+  assert.deepEqual(damage,[[a.id,preview.damage]]);
+ }
+});
+test('AGoAC p.42: displacement invalidates an unmade attack against a stationary third Mech',()=>{
+ for(const winner of [0,1]){
+  const g=fresh(),[a,ally,t,enemy]=g.units;g.phase='physical';g.initiativeWinner=winner;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(a,{q:-1,r:0,facing:0});Object.assign(t,{q:0,r:0,facing:3});
+  Object.assign(ally,{q:0,r:-1,facing:1});enemy.dead=true;
+  g.physicalDeclarations=[
+   {id:t.id,target:ally.id,type:'punch',limb:'LA',targetNumber:2,damage:5,side:'front',table:'punch'},
+   {id:a.id,target:t.id,type:'push',limb:'LA',targetNumber:2,damage:0}
+  ];
+  g.rng=()=>.99;const damage=[];
+  g.hit=(victim,n)=>{damage.push([victim.id,n]);return {damage:n,hits:[]};};
+  const result=g.resolvePhysical(),punch=result.find(r=>r.id===t.id).shots[0];
+  assert.deepEqual([a.q,t.q],[0,1]);
+  const pushFirst=winner===1;
+  assert.equal(punch.cancelled,pushFirst);
+  assert.equal(punch.hit,!pushFirst);
+  assert.equal(punch.roll,pushFirst?null:12);
+  assert.deepEqual(damage,pushFirst?[]:[[ally.id,5]]);
+ }
+});
