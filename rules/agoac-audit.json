@@ -244,7 +244,7 @@
       ],
       "statement": "Undestroyed immobile and nonattacking units count for selections; declaration order and simultaneity, consciousness before PSRs, Heat and End actions and victory/draw conditions require independent audit.",
       "status": "known_missing",
-      "reviewNote": "Printed pp.6-7 and 30: buildQueue includes surviving immobile and unarmed units and declarations are stored. However resolveFire interleaves to-hit rolls with damage rather than an all-attacks-first stage; resolvePhysical processes charge declarations in unit-array order before other declarations; heat avoidance lacks an explicit conscious-pilot restriction; inherited checkWin handles last-side elimination but has no stalemate draw predicate. Split these into atomic follow-up implementation and regression requirements; do not infer complete timing from green CI. Follow-up separates ordinary weapon to-hit and ammo expenditure from damage and groups damage by target. Physical staging, selectable independent damage ordering, heat and stalemate remain outstanding.",
+      "reviewNote": "Printed pp.6-7 and 30: buildQueue includes surviving immobile and unarmed units and declarations are stored. However resolveFire interleaves to-hit rolls with damage rather than an all-attacks-first stage; resolvePhysical processes charge declarations in unit-array order before other declarations; heat avoidance lacks an explicit conscious-pilot restriction; inherited checkWin handles last-side elimination but has no stalemate draw predicate. Split these into atomic follow-up implementation and regression requirements; do not infer complete timing from green CI. Follow-up separates ordinary weapon to-hit and ammo expenditure from damage and groups damage by target. Physical staging, selectable independent damage ordering, heat and stalemate remain outstanding. Thermal avoidance now distinguishes unconscious/unavailable pilots and automatic below-14 restart; voluntary shutdown/restart and phase PSR interactions remain independently auditable.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -865,6 +865,26 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.21,30: resolve each target and each missile packet completely in declared order"
+        }
+      ]
+    },
+    {
+      "id": "agoac-036",
+      "topicId": "agoac-foundations",
+      "pages": [
+        38,
+        44
+      ],
+      "statement": "A conscious pilot can attempt one highest-threshold thermal shutdown avoidance or restart roll at heat 14–29. An unconscious pilot cannot override thermal shutdown; an involuntarily shut-down reactor automatically restarts below 14 even if the pilot is out of action. Heat 30+ cannot be overridden.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: unconscious pilots cannot override thermal shutdown and auto restart below 14"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more"
         }
       ]
     }

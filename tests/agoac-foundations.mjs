@@ -568,3 +568,34 @@ test('AGoAC pp.21,30: resolve each target and each missile packet completely in 
  assert.deepEqual(result[0].shots[0].rolls.map(r=>r.kind),
   [u.name+' · SRM 2','Ракетный кластер','Packet '+a.id+' 2','Packet '+a.id+' 2']);
 });
+
+test('AGoAC p.38: unconscious pilots cannot override thermal shutdown and auto restart below 14',()=>{
+ for(const was of [false,true])for(let heat=0;heat<=35;heat++){
+  const g=fresh(),u=g.units[0];g.phase='heat';
+  for(const other of g.units.slice(1))other.dead=true;
+  for(const bin of u.bins)bin.shots=0;
+  u.sinks=0;u.heat=heat;u.prone=true;u.unconscious=true;u.pilotWounds=1;
+  u.shutdown=was;u.voluntaryShutdown=false;
+  g.rng=()=>{throw Error('An unconscious pilot cannot attempt a thermal override');};
+  g.heatPhase();assert.equal(u.heat,heat);
+  assert.equal(u.shutdown,heat>=14,'heat '+heat+' prior shutdown '+was);
+  assert.equal(g.phaseRolls.length,0);
+ }
+});
+test('AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more',()=>{
+ for(const was of [false,true])for(const heat of [0,13,14,17,18,21,22,25,26,29,30,35]){
+  const tn=heat>=30?99:heat>=26?10:heat>=22?8:heat>=18?6:heat>=14?4:0;
+  for(const sum of [2,4,6,8,10,12]){
+   const g=fresh(),u=g.units[0];g.phase='heat';
+   for(const other of g.units.slice(1))other.dead=true;
+   for(const bin of u.bins)bin.shots=0;
+   u.sinks=0;u.heat=heat;u.prone=true;u.shutdown=was;
+   const dice=tn>0&&tn<99?diceFor(sum):[];
+   g.rng=()=>{assert(dice.length);return dice.shift();};
+   g.heatPhase();
+   assert.equal(u.shutdown,tn===99||tn>0&&sum<tn);
+   assert.deepEqual(g.phaseRolls.map(r=>r.target),tn>0&&tn<99?[tn]:[]);
+   assert.equal(dice.length,0);
+  }
+ }
+});
