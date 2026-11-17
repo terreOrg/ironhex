@@ -2,7 +2,7 @@ name: Ironhex CI
 
 on:
   push:
-    branches: [main, audit/quad-water-physical-cover]
+    branches: [main, audit/quad-water-physical-cover, audit/quad-limb-wreckage]
   workflow_dispatch:
 
 permissions:
