@@ -619,3 +619,41 @@ test('AGoAC pp.26,42: successful charge against a prohibited displacement hex st
   if(!lethal)assert(t.psrs.some(p=>p.modifier===2),'Surviving target must check for falling');
  }
 });
+
+test('AGoAC pp.29,42: opposite pushes resolve both rolls before either displacement',()=>{
+ for(const [left,right] of [[false,false],[true,false],[false,true],[true,true]]){
+  const g=fresh(),u=g.units[0],t=g.units[2];g.phase='physical';
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+  for(const v of [g.units[1],g.units[3]])v.dead=true;
+  Object.assign(u,{q:0,r:0,facing:0});Object.assign(t,{q:1,r:0,facing:3});
+  const dice=[...diceFor(left?12:2),...diceFor(right?12:2),
+   ...Array.from({length:Number(left)+Number(right)},()=>diceFor(12)).flat()];
+  g.rng=()=>{assert(dice.length);return dice.shift();};
+  g.physicalDeclarations=[
+   {id:u.id,target:t.id,type:'push',targetNumber:7},
+   {id:t.id,target:u.id,type:'push',targetNumber:7}
+  ];
+  const results=g.resolvePhysical();
+  assert.deepEqual(results.map(r=>r.shots[0].hit),[left,right]);
+  assert.deepEqual(results.map(r=>r.shots[0].damage),[0,0]);
+  assert.deepEqual([u.q,t.q],left===right?[0,1]:left?[1,2]:[-1,0]);
+  assert.deepEqual(g.phaseRolls.slice(0,2).map(r=>r.total),[left?12:2,right?12:2]);
+  assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Толчок')||r.kind.includes('Встречный толчок')).length,Number(left)+Number(right));
+  assert.equal(dice.length,0);
+ }
+});
+test('AGoAC pp.29,42: prohibited push retains positions but still requires an immediate PSR',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];g.phase='physical';
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0});Object.assign(t,{q:1,r:0,facing:3});
+ g.tile(2,0).height=3;
+ const dice=[...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ const fall=[];g.fall=(v,levels)=>{fall.push([v.id,v.q,v.r,levels]);v.prone=true;};
+ g.physicalDeclarations=[{id:u.id,target:t.id,type:'push',targetNumber:7}];
+ assert(g.resolvePhysical()[0].shots[0].hit);
+ assert.deepEqual([u.q,t.q],[0,1]);
+ assert.deepEqual(fall,[[t.id,1,0,0]]);
+ assert.equal(t.dead,false);
+ assert.equal(dice.length,0);
+});
