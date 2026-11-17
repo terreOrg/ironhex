@@ -2,7 +2,7 @@ name: Ironhex CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, audit/quad-kick-actuators]
   workflow_dispatch:
 
 permissions:
