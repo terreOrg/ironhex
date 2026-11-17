@@ -1217,6 +1217,37 @@ test('BMM p.38: Quad kick resolution requests PSR for target on hit and attacker
  }
 });
 
+test('BMM pp.38,53: Quad kick hit or miss resolves actual deferred PSR and fall',()=>{
+ const design=construct({...example,name:'Quad kick fall audit',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const success of [true,false])for(const pass of [true,false]){
+  const g=flatGame(),u=g.units[0],target=g.units[2];
+  Object.assign(u,structuredClone(design.unit));Object.assign(target,structuredClone(design.unit));
+  // Preserve distinct tactical identities after construction.
+  u.id='quad-attacker';target.id='quad-target';u.team=0;target.team=1;
+  u.q=0;u.r=0;u.facing=0;target.q=1;target.r=0;target.facing=0;
+  for(const v of [u,target]){
+   v.prone=false;v.dead=false;v.shutdown=false;v.unconscious=false;
+   v.gyroHits=0;v.piloting=5;v.moveMode='stand';v.firedLocations=[];v.psrs=[];v.phaseDamage=0;
+  }
+  const p=g.physicalPreview(u.id,target.id,'kick','LA');
+  assert.equal(p.legal,true,p.reason);
+  g.physicalDeclarations=[{id:u.id,target:target.id,type:'kick',limb:'LA',...p}];
+  // Real dice, damage, PSR queue and fall logic; only RNG is scripted.
+  // Successful kick: 12, location 1; missed kick: 2.
+  const values=success?[.99,.99,.01]:[.01,.01];
+  values.push(...(pass?[.99,.99]:[.01,.01]));
+  g.rng=()=>values.length?values.shift():.5;
+  const result=g.resolvePhysical();
+  assert.equal(result[0].shots[0].hit,success);
+  const affected=success?target:u,other=success?u:target;
+  assert.equal(affected.prone,!pass);
+  assert.equal(other.prone,false);
+  assert.deepEqual(affected.psrs,[]);
+  assert(g.afterRolls.some(r=>r.target===3),'Intact Quad fall avoidance PSR is piloting 5 minus 2');
+ }
+});
+
 test('BMM pp.45,65: quad side torso destruction or flooding affects front leg only',()=>{
  const fixture=construct({...example,name:'Quad torso coupling',config:'Quad',
   jump:0,sinks:10,equipment:[]},{auditQuad:true});
