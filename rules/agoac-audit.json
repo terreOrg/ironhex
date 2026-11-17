@@ -142,7 +142,34 @@
         5
       ],
       "statement": "Audit scales, sheet definitions, pilot skills and injury rules against state and user-visible sheets.",
-      "status": "not_audited"
+      "status": "tested_case",
+      "reviewNote": "The printed introduction was reviewed against the current scale constants, pilot data and record sheet. Existing tests establish concrete cases; this is an umbrella entry, not a claim of complete coverage. The remaining child requirements and scenario cross-references must be individually verified before closing foundations.",
+      "review": {
+        "sourceEdition": "CAT3500D (2018)",
+        "reviewedOn": "2026-11-17",
+        "reviewedSha": "1d804a813bce00d29871bb3f1b77de573d17bfac",
+        "report": "rules/agoac-not-audited-review.md",
+        "sourceChecked": true,
+        "edgeCasesChecked": false
+      },
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.3-4,18: logical scale and shortest hex distance independent of height"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.4-5: record sheet displays front and rear damage, current pilot skills and heat overflow"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: base pilot defaults and skill-dependent attack targets"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.5,44: Warrior Data shows all six injury steps and the exact consciousness table"
+        }
+      ]
     },
     {
       "id": "agoac-002",
@@ -151,7 +178,16 @@
         6
       ],
       "statement": "Verify scenario setup and general deployment with initiative-selected opposite entry edges, walking/running/jumping entry and MP spent from the first complete hex.",
-      "status": "not_audited"
+      "status": "known_missing",
+      "reviewNote": "Printed p.6 general setup: current Legacy.reset initializes all units inside the board at fixed coordinates; initiative goes directly to move and makeRuntime preserves that placement. The non-scenario initiative edge choice, opposite entry edges and border entry MP accounting are absent. Scenario-specific placement remains separate.",
+      "review": {
+        "sourceEdition": "CAT3500D (2018)",
+        "reviewedOn": "2026-11-17",
+        "reviewedSha": "1d804a813bce00d29871bb3f1b77de573d17bfac",
+        "report": "rules/agoac-not-audited-review.md",
+        "sourceChecked": true,
+        "edgeCasesChecked": false
+      }
     },
     {
       "id": "agoac-003",
@@ -207,7 +243,38 @@
         7
       ],
       "statement": "Undestroyed immobile and nonattacking units count for selections; declaration order and simultaneity, consciousness before PSRs, Heat and End actions and victory/draw conditions require independent audit.",
-      "status": "not_audited"
+      "status": "known_missing",
+      "reviewNote": "Printed pp.6-7 and 30: buildQueue includes surviving immobile and unarmed units and declarations are stored. However resolveFire interleaves to-hit rolls with damage rather than an all-attacks-first stage; resolvePhysical processes charge declarations in unit-array order before other declarations; heat avoidance lacks an explicit conscious-pilot restriction; inherited checkWin handles last-side elimination but has no stalemate draw predicate. Split these into atomic follow-up implementation and regression requirements; do not infer complete timing from green CI.",
+      "review": {
+        "sourceEdition": "CAT3500D (2018)",
+        "reviewedOn": "2026-11-17",
+        "reviewedSha": "1d804a813bce00d29871bb3f1b77de573d17bfac",
+        "report": "rules/agoac-not-audited-review.md",
+        "sourceChecked": true,
+        "edgeCasesChecked": false
+      },
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6-7: six-phase round and pending-order protection preserve state"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.7: unequal force batches match both printed examples and either initiative winner"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: surviving immobile or unarmed units retain declaration selections"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.7: elimination and mutual destruction produce the correct result"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Declared shot survives destruction of shooter"
+        }
+      ]
     },
     {
       "id": "agoac-007",
@@ -743,8 +810,22 @@
         44
       ],
       "statement": "A Mech whose pilot dies is removed from the map at the end of that phase; preserve same-phase attack declarations and resolve occupancy and displacement until removal.",
-      "status": "not_audited",
-      "reviewNote": "Known gap: wound marks dead immediately and occupied ignores dead units; phase-boundary removal must be reviewed alongside displacement, declared attacks and renderer state before verification."
+      "status": "known_missing",
+      "reviewNote": "Printed pp.35 and 44 require phase-end map removal. Actual wound/destroyLocation marks dead immediately; movement occupancy and displacement ignore dead units before phase transition; the UI collapses a dead model but has no explicit phase-boundary removal state. Already-declared ordinary weapon attacks can still roll. Keep destruction and on-map presence distinct and audit displacement, immediate fall damage, persistence, and presentation together.",
+      "review": {
+        "sourceEdition": "CAT3500D (2018)",
+        "reviewedOn": "2026-11-17",
+        "reviewedSha": "1d804a813bce00d29871bb3f1b77de573d17bfac",
+        "report": "rules/agoac-not-audited-review.md",
+        "sourceChecked": true,
+        "edgeCasesChecked": false
+      },
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Declared shot survives destruction of shooter"
+        }
+      ]
     }
   ]
 }
