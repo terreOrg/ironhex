@@ -746,3 +746,36 @@ test('AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys
   }
  }
 });
+
+test('AGoAC p.43: falling from dry elevation into water resolves surface and bottom damage independently',()=>{
+ for(const tonnage of [20,65,85,100])for(const depth of [1,2,3])for(const above of [0,1,2,3]){
+  const g=fresh(),u=g.units[0];
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  for(const v of g.units.slice(1))v.dead=true;
+  Object.assign(u,{q:0,r:0,tonnage,facing:0});
+  Object.assign(g.tile(0,0),{height:above,surface:above});
+  Object.assign(g.tile(1,0),{type:'water',height:-depth,depth,surface:0});
+  const base=Math.ceil(tonnage/10),actual=[];
+  g.rng=()=>.99;
+  g.packets=(v,amount,side)=>{assert.equal(v,u);actual.push([amount,side]);};
+  if(above+depth>=2)assert(g.displace(u,0));
+  else{
+   const origin=g.tile(u.q,u.r);u.q=1;u.r=0;
+   g.fall(u,above+depth,null,null,0,origin);
+  }
+  assert.equal(u.prone,true);
+  assert.deepEqual(actual,[[Math.floor(base*(above+1)/2),'left'],[Math.floor(base*(depth+1)/2),'left']]);
+ }
+});
+test('AGoAC p.43: standing in water uses one halved impact and surface and bottom packets never combine',()=>{
+ const g=fresh(),u=g.units[0];
+ Object.assign(u,{q:0,r:0,tonnage:65});
+ Object.assign(g.tile(0,0),{type:'water',height:-2,depth:2,surface:0});
+ g.rng=()=>.99;
+ const packets=[];
+ g.hit=(v,amount,side)=>{assert.equal(v,u);packets.push(amount);return {damage:amount,hits:[]};};
+ g.fall(u,0);assert.deepEqual(packets,[3]);
+ packets.length=0;u.prone=false;
+ g.fall(u,3,null,'rear',0,{height:1,depth:0});
+ assert.deepEqual(packets,[5,2,5,5],'7 surface plus 10 bottom; do not combine into 17 before packetization');
+});

@@ -591,7 +591,20 @@ export class Game extends Legacy{
  endPSR(){// AGoAC p.6: every phase-end Consciousness Roll precedes the phase's PSRs.
  for(const u of this.units)this.consciousness(u);
  for(const u of this.units){if(u.phaseDamage>=20)u.psrs.push({modifier:1,reason:'20+ урона'});if(!u.dead&&!u.prone){const tn=u.piloting+this.psrMod(u,true)+u.psrs.reduce((s,p)=>s+p.modifier,0);for(const p of u.psrs){if(this.isImmobile(u)||u.gyroHits>=2||p.reason==='Потеря ноги'||this.roll(u.name+' · '+p.reason,tn)<tn){this.fall(u,0,tn);break;}}}u.psrs=[];u.phaseDamage=0;}}
- fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0){if(u.dead||u.falling)return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(this.isImmobile(u)||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);let damage=Math.ceil(u.tonnage/10)*(levels+1)+extraDamage;if(this.tile(u.q,u.r).depth)damage=Math.floor(damage/2);this.note(`${u.name} упал: ${damage} урона.`);this.packets(u,damage,side);u.falling=false;}
+ // AGoAC p.43: water surface and water bottom are separate impacts.
+ fallDamageGroups(u,levels,extraDamage=0,origin=null){
+  const tile=this.tile(u.q,u.r),base=Math.ceil(u.tonnage/10);
+  if(!tile.depth)return [base*(levels+1)+extraDamage];
+  const surface=tile.height+tile.depth;
+  const entersFromAbove=origin&&origin.height>=surface&&
+   (!origin.depth||origin.height>surface);
+  if(entersFromAbove){
+   return [Math.floor(base*(origin.height-surface+1)/2),
+    Math.floor(base*(tile.depth+1)/2),...(extraDamage?[Math.floor(extraDamage/2)]:[])];
+  }
+  return [Math.floor((base*(levels+1)+extraDamage)/2)];
+ }
+ fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0,origin=null){if(u.dead||u.falling)return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(this.isImmobile(u)||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);const impacts=this.fallDamageGroups(u,levels,extraDamage,origin);this.note(`${u.name} упал: ${impacts.reduce((sum,n)=>sum+n,0)} урона.`);for(const damage of impacts)if(damage&&!u.dead)this.packets(u,damage,side);u.falling=false;}
  packets(u,amount,side='front',table='normal'){let total=amount;while(total>0&&!u.dead){const n=Math.min(5,total);this.hit(u,n,side,table);total-=n;}}
  hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){
  let loc,r,floatingTac=false;const obscured=l=>cover&&partialCoverObscures(u,l,underwaterCover);
@@ -799,7 +812,7 @@ export class Game extends Legacy{
   const landing=this.chooseFallNeighbor(candidates.filter(({tile})=>distance(old,tile)===nearest));
   if(!landing){this.destroyMech(u);return;}
   u.q=landing.tile.q;u.r=landing.tile.r;
-  this.fall(u,old.height-landing.tile.height);
+  this.fall(u,old.height-landing.tile.height,null,null,0,old);
  }
  accidentalFallHit(u,target,old,destination,depth){
   const drop=old.height-destination.height;
@@ -808,7 +821,7 @@ export class Game extends Legacy{
   const damage=destination.depth>=(target.prone?1:2)?Math.floor(raw/2):raw;
   this.packets(target,damage,this.hitSide(target,u),'punch');
   u.q=destination.q;u.r=destination.r;
-  this.fall(u,drop,null,'rear');
+  this.fall(u,drop,null,'rear',0,old);
   if(target.dead)return;
   const landing=this.chooseFallNeighbor(this.fallNeighborOptions(destination));
   if(!landing||!this.displace(target,landing.dir,depth+1)){
@@ -834,7 +847,7 @@ export class Game extends Legacy{
   if(occ&&old.height-t.height>=2)return this.accidentalFall(u,occ,old,t,depth);
   if(occ)this.resolveDomino(occ,dir,depth);
   u.q=t.q;u.r=t.r;
-  if(old.height-t.height>=2)this.fall(u,old.height-t.height);
+  if(old.height-t.height>=2)this.fall(u,old.height-t.height,null,null,0,old);
   return true;
  }
  // AGoAC pp.29,40,42: resolve opposed pushes together. A displacement
