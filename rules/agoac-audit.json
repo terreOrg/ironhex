@@ -434,12 +434,51 @@
         43,
         44
       ],
-      "statement": "Seatbelt checks precede fall damage; required TN includes the original PSR and fall-height modifier; an unconscious or shut down pilot or TN above 12 suffers automatic injury. All-limb immobility still needs audit.",
+      "statement": "Seatbelt checks precede fall damage; target uses the original PSR modifiers and fall-height increment. Immobility or target above 12 causes automatic injury.",
       "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic"
+        }
+      ]
+    },
+    {
+      "id": "agoac-022",
+      "topicId": "agoac-foundations",
+      "pages": [
+        11,
+        40,
+        43,
+        44
+      ],
+      "statement": "Standing immobile chassis automatically fails required piloting checks; a prone chassis does not repeat them. Losing all limbs, reactor shutdown, abandonment and unconsciousness are classified independently of zero MP.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll"
+        }
+      ]
+    },
+    {
+      "id": "agoac-023",
+      "topicId": "agoac-foundations",
+      "pages": [
+        11,
+        17,
+        21
+      ],
+      "statement": "All-limb loss provides the immobile target modifier and aimed-attack eligibility; head aiming replaces that modifier with +3. Full attack audit remains in the combat section.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aimed head shots"
         }
       ]
     }

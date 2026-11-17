@@ -241,3 +241,55 @@ test('AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation mo
   assert.equal(g.phaseRolls.some(r=>r.kind.includes('Травма при падении')),false);
  }
 });
+
+test('AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic',()=>{
+ const limbs=['LA','RA','LL','RL'];
+ for(let mask=0;mask<16;mask++){
+  const g=fresh(),u=g.units[0];
+  for(let i=0;i<4;i++)if(mask&(1<<i))g.destroyLocation(u,limbs[i]);
+  u.psrs=[];u.phaseDamage=0;
+  g.rng=()=>.5;
+  assert.equal(g.isImmobile(u),mask===15);
+  g.fall(u,0,5);
+  assert.equal(u.pilotWounds,mask===15?1:0,'limbs '+mask);
+  assert.equal(g.phaseRolls.some(r=>r.kind.includes('Травма при падении')),mask!==15);
+ }
+ for(const flag of ['shutdown','unconscious','abandoned']){
+  const g=fresh(),u=g.units[0];u[flag]=true;g.rng=()=>.5;
+  assert(g.isImmobile(u));g.fall(u,0,5);
+  assert.equal(u.pilotWounds,1);
+  assert.equal(g.phaseRolls.some(r=>r.kind.includes('Травма при падении')),false);
+ }
+ for(const mutate of [u=>u.heat=30,u=>u.gyroHits=2,u=>u.prone=true,u=>{u.actuators.LL.hip=true;u.actuators.RL.hip=true;}]) {
+  const g=fresh(),u=g.units[0];mutate(u);assert.equal(g.isImmobile(u),false);
+ }
+});
+
+test('AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll',()=>{
+ for(const prone of [false,true])for(const immediate of [false,true]){
+  const g=fresh(),u=g.units[0];g.rng=()=>.5;
+  for(const l of ['LA','RA','LL','RL'])g.destroyLocation(u,l);
+  u.prone=prone;u.psrs=[];u.phaseDamage=0;
+  g.psr(u,0,'AGoAC immobile check',immediate);
+  if(!immediate)g.endPSR();
+  assert.equal(u.prone,true);assert.equal(u.pilotWounds,prone?0:1);
+  assert.equal(g.phaseRolls.some(r=>r.kind.includes('AGoAC immobile check')),false);
+  assert.equal(g.mp(u,'walk'),0);assert.equal(g.mp(u,'jump'),0);
+ }
+});
+
+test('AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aimed head shots',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+ Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand'});
+ Object.assign(t,{q:2,r:0,moveMode:'stand',distanceMoved:0});
+ g.phase='fire';
+ assert.equal(g.targetMovementModifier(t),0);
+ g.destroyLocation(t,'LL');g.destroyLocation(t,'RL');
+ assert.equal(g.targetMovementModifier(t),0);
+ g.destroyLocation(t,'LA');g.destroyLocation(t,'RA');
+ assert.equal(g.targetMovementModifier(t),-4);
+ const normal=g.preview(u.id,t.id,0),head=g.preview(u.id,t.id,0,{aim:'HD'});
+ assert.equal(normal.legal,true,normal.reason);assert.equal(normal.mods.target,-4);
+ assert.equal(head.legal,true,head.reason);assert.equal(head.mods.target,0);assert.equal(head.mods.aim,3);
+});
