@@ -441,3 +441,17 @@ test('AGoAC p.5: Mech Data uses actual chassis metadata with escaped text',()=>{
  assert(html.includes('Масса: <b>'+u.tonnage+' т</b>'));
  assert(!html.includes('<Atlas & Co>'));assert(!html.includes('<AS7>'));
 });
+
+test('AGoAC pp.6,11,44: unconscious pilot cannot issue voluntary orders but can pass selections',()=>{
+  for(const phase of ['move','fire','physical']){
+   const g=fresh(),u=g.units[0],t=g.units[2];
+   g.phase=phase;g.initiativeWinner=1;g.buildQueue();
+   u.pilotWounds=1;u.unconscious=true;
+   assert(g.canAct(u));assert(g.isImmobile(u));
+   Object.assign(g.tile(u.q,u.r),{type:'woods',depth:0,height:0,surface:0});
+   const before=JSON.stringify({u,queue:g.queue,rolls:g.phaseRolls});
+   const commands=phase==='move'?[()=>g.rotate(u.id,1),()=>g.drop(u.id),()=>g.orderDump(u.id,0),()=>g.orderShutdown(u.id)]:phase==='fire'?[()=>g.twist(u.id,1),()=>g.flipArms(u.id,false),()=>g.setBrace(u.id,'LA'),()=>g.attack(u.id,t.id,[0])]:[()=>g.takeClub(u.id),()=>g.declarePhysical(u.id,t.id,'kick','LL')];
+   for(const command of commands){assert.equal(command().ok,false);assert.equal(JSON.stringify({u,queue:g.queue,rolls:g.phaseRolls}),before);}
+   assert.equal(g.hold(u.id).ok,true);
+  }
+ });

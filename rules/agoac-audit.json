@@ -715,6 +715,36 @@
           "test": "AGoAC p.5: Mech Data uses actual chassis metadata with escaped text"
         }
       ]
+    },
+    {
+      "id": "agoac-032",
+      "topicId": "agoac-foundations",
+      "pages": [
+        6,
+        11,
+        44
+      ],
+      "statement": "An unconscious pilot cannot give voluntary movement, weapon or physical orders, but the surviving Mech remains eligible for a pass selection.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,11,44: unconscious pilot cannot issue voluntary orders but can pass selections"
+        }
+      ]
+    },
+    {
+      "id": "agoac-033",
+      "topicId": "agoac-foundations",
+      "pages": [
+        11,
+        30,
+        35,
+        44
+      ],
+      "statement": "A Mech whose pilot dies is removed from the map at the end of that phase; preserve same-phase attack declarations and resolve occupancy and displacement until removal.",
+      "status": "not_audited",
+      "reviewNote": "Known gap: wound marks dead immediately and occupied ignores dead units; phase-boundary removal must be reviewed alongside displacement, declared attacks and renderer state before verification."
     }
   ]
 }
