@@ -1491,7 +1491,7 @@ test('AGoAC pp.11–12: jumping can use any legal shortest path but not a longer
  const g=fresh(),u=g.units[0],ally=g.units[1];
  g.phase='move';g.queue=[0,1,0,1];g.activeTeam=0;
  for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,surface:0,depth:0});
- Object.assign(u,{q:0,r:0,jump:2,jumpLost:0,spent:0,proneAtStart:false});
+ Object.assign(u,{q:0,r:0,moveStart:{q:0,r:0},jump:2,jumpLost:0,spent:0,proneAtStart:false});
  Object.assign(ally,{q:0,r:1});const a=g.tile(1,0),b=g.tile(0,1),target=g.tile(1,1);
  Object.assign(a,{height:3,surface:3});
  assert.equal(g.jumpClear(u,target,2),true);
@@ -1535,7 +1535,7 @@ test('AGoAC pp.9,11,40,42: hazardous friendly entry checks terrain before contin
   const [dq,dr]=DIRS[g.deployment.edges[u.team]],q=first.q+dq,r=first.r+dr;
   Object.assign(first,{type:hazard,depth:hazard==='water'?1:0,height:hazard==='water'?-1:0,surface:0});
   Object.assign(ally,{q:first.q,r:first.r,deployed:true,prone:false});
-  u.walk=6;let draws=0;g.rng=()=>{draws++;return !pass&&draws<=2?0:.99;};
+  u.walk=6;let draws=0;g.rng=()=>{draws++;return !pass&&draws<=2?0:.5;};
   const route=g.reachable(u,'walk').find(p=>p.q===q&&p.r===r);
   assert(route?.transit);assert.equal(route.cost,hazard==='water'?5:3);
   const result=g.move(u.id,q,r,'walk');assert(result.ok);assert(result.entry);
