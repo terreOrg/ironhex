@@ -504,6 +504,36 @@
           "test": "AGoAC pp.5,15: rear-mounted weapon is identified in inventory and critical slots"
         }
       ]
+    },
+    {
+      "id": "agoac-025",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5
+      ],
+      "statement": "Show the base record sheet's separate critical damage counters for engine, gyro, sensors and life support, using accumulated critical state rather than temporary flooding.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: critical summary shows engine gyro sensors and life support hits"
+        }
+      ]
+    },
+    {
+      "id": "agoac-026",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5
+      ],
+      "statement": "Show ammunition magazine locations and capacity and remaining rounds separately in the critical hit table. Inventory aggregation and actual ammunition expenditure remain under combat.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: individual ammunition slots report capacity and remaining rounds"
+        }
+      ]
     }
   ]
 }

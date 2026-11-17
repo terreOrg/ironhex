@@ -324,3 +324,27 @@ test('AGoAC pp.5,15: rear-mounted weapon is identified in inventory and critical
  assert(front.includes('○ Audit Laser</div>'));
  assert(!front.includes('Audit Laser (R)'));
 });
+
+test('AGoAC p.5: critical summary shows engine gyro sensors and life support hits',()=>{
+ for(let engine=0;engine<=3;engine++)for(let gyro=0;gyro<=2;gyro++)for(let sensors=0;sensors<=2;sensors++)for(const lifeSupport of [false,true]){
+  const u=fresh().units[0];Object.assign(u,{engineHits:engine,gyroHits:gyro,sensorHits:sensors,lifeSupport});
+  const html=recordSheet(u);
+  for(const [id,label,count,max] of [['engine','Двигатель',engine,3],['gyro','Гироскоп',gyro,2],['sensors','Датчики',sensors,2],['life','Жизнеобеспечение',Number(lifeSupport),1]]){
+   assert(html.includes('data-critical="'+id+'">'+label+': '+count+' / '+max+' · '+'●'.repeat(count)+'○'.repeat(max-count)));
+  }
+ }
+});
+test('AGoAC p.5: individual ammunition slots report capacity and remaining rounds',()=>{
+ const g=fresh(),u=g.units[0],bins=u.bins;
+ assert(bins.length>=2);
+ const [a,b]=bins;
+ assert.equal(a.weapon,b.weapon);
+ a.shots=4;b.shots=9;g.syncAmmo(u);
+ let html=recordSheet(u);
+ const n=u.weapons[a.weapon].name;
+ assert(html.includes('Боезапас '+n+' · 4 / 12'));
+ assert(html.includes('Боезапас '+n+' · 9 / 12'));
+ a.destroyed=true;g.syncAmmo(u);html=recordSheet(u);
+ assert(html.includes('Боезапас '+n+' · 0 / 12 · уничтожен'));
+ assert(html.includes('Боезапас '+n+' · 9 / 12'));
+});
