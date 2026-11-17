@@ -651,6 +651,23 @@
           "test": "AGoAC pp.3-4: unmarked terrain and level default independently and survive map reload"
         }
       ]
+    },
+    {
+      "id": "agoac-028",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5,
+        37,
+        38
+      ],
+      "statement": "The record-sheet heat scale has levels 0–30, fills from low to high, identifies every effect breakpoint with a star and preserves an explicit overflow field above 30. Heat effect execution is audited separately.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.5,37-38: all heat scale levels mark effects and preserve current overflow"
+        }
+      ]
     }
   ]
 }
