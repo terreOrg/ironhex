@@ -1408,3 +1408,52 @@ test('AGoAC p.38: only maximum damage per shot enters the heat explosion tie',()
  };
  assert.equal(g.heatExplosionBin(u,u.bins),u.bins[1]);
 });
+
+test('AGoAC p.7: last surviving force wins at the movement phase boundary',()=>{
+ for(const winner of [0,1,'draw']){
+  const g=fresh();g.phase='move';g.queue=[];g.activeTeam=null;
+  for(const u of g.units)if(winner==='draw'||u.team!==winner)g.destroyMech(u);
+  assert.equal(g.winner,null);
+  assert(g.nextPhase().ok);assert.equal(g.winner,winner);
+  assert.equal(g.queue.length,0);
+  assert(g.units.filter(u=>u.dead).every(u=>!g.onMap(u)));
+ }
+});
+test('AGoAC p.7: permanent mutual inability to move or deal damage produces a draw',()=>{
+ const g=fresh();g.phase='end';g.queue=[];g.activeTeam=null;
+ for(const u of g.units){
+  for(const limb of ['LA','RA','LL','RL'])u.structure[limb]=0;
+  for(const w of u.weapons)w.destroyed=true;
+  u.heat=0;u.pendingHeat=0;
+ }
+ assert(g.nextPhase().ok);assert.equal(g.winner,'draw');
+ assert(g.log.some(l=>l.includes('не может двигаться')));
+});
+test('AGoAC p.7: temporary shutdown, heat and unconsciousness cannot cause a false stalemate',()=>{
+ for(const disabled of ['shutdown','unconscious','heat']){
+  const g=fresh();g.phase='end';
+  for(const u of g.units){
+   for(const w of u.weapons)w.destroyed=true;
+   if(disabled==='heat')u.heat=30;
+   else u[disabled]=true;
+  }
+  g.checkWin({stalemate:true});assert.equal(g.winner,null,disabled);
+ }
+});
+test('AGoAC p.7: stationary Mechs with a surviving in-range weapon are not a stalemate',()=>{
+ const g=fresh(),u=g.units[0],target=g.units[2];
+ for(const x of g.units){
+  for(const limb of ['LA','RA','LL','RL'])x.structure[limb]=0;
+  for(const w of x.weapons)w.destroyed=true;
+ }
+ Object.assign(u,{q:0,r:0});Object.assign(target,{q:1,r:0});
+ Object.assign(u.weapons[0],{destroyed:false,location:'CT',locations:['CT'],ammo:null,ranges:[3,6,9]});
+ g.checkWin({stalemate:true});assert.equal(g.winner,null);
+ u.weapons[0].destroyed=true;
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+});
+test('AGoAC p.7: unresolved offboard deployment is not a stalemate',()=>{
+ const g=fresh();assert(g.startStandardDeployment().ok);
+ for(const u of g.units)u.abandoned=true;
+ g.checkWin({stalemate:true});assert.equal(g.winner,null);
+});
