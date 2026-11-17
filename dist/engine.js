@@ -1374,13 +1374,21 @@ export class Game extends Legacy{
   this.tiles=tiles;this.rebuildMap();
   this.pendingChoice=null;this._resolutionReplay=null;
  }
+ moveWithChoices(id,q,r,mode='walk',{lateral,humanTeams=[0]}={}){
+  if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');
+  return this.resolveWithChoices({humanTeams,movement:{id,q,r,mode,...(lateral===undefined?{}:{lateral})}});
+ }
  nextPhaseWithChoices({humanTeams=[0],choice}={}){
+  if(this.pendingChoice?.scope==='movement')return this.resolveWithChoices({humanTeams,choice});
   if(!this.pendingChoice&&!['setup','fire','physical','heat'].includes(this.phase)){
    return choice===undefined?this.nextPhase():fail('Нет ожидающего решения');
   }
   if(this.winner!==null||this.queue.length)return fail('Фаза ещё не готова к разрешению');
+  return this.resolveWithChoices({humanTeams,choice});
+ }
+ resolveWithChoices({humanTeams,choice,movement}){
   const journal=this._resolutionReplay?structuredClone(this._resolutionReplay):
-   {draws:[],decisions:[],humanTeams:[...humanTeams]};
+   {draws:[],decisions:[],humanTeams:[...humanTeams],...(movement?{movement}:{})};
   if(this.pendingChoice){
    if(!choice||choice.key!==this.pendingChoice.key||
     !this.pendingChoice.options.some(o=>o.id===choice.option))
@@ -1402,11 +1410,12 @@ export class Game extends Legacy{
      throw Error('resolution_replay_mismatch');
     return saved.option;
    }
-   pending={...request,key};
+   pending={...request,key,...(journal.movement?{scope:'movement'}:{})};
    throw interrupt;
   };
   try{
-   const result=trial.nextPhase();
+   const m=journal.movement;
+   const result=m?trial.move(m.id,m.q,m.r,m.mode,{lateral:m.lateral}):trial.nextPhase();
    if(!result.ok)return result;
    if(decision!==journal.decisions.length||sample!==journal.draws.length)
     throw Error('resolution_replay_incomplete');

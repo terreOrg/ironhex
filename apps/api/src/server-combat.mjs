@@ -78,12 +78,14 @@ export function autoOpponent(game){
 }
 export function runTacticalOrder(game,body){
   const b=validateTacticalOrder(body);
-  const {type,id}=b;
+  let {type,id}=b;
   let r;
   if(game.pendingChoice&&type!=='next')throw new AuthError(409,'resolution_choice_pending');
   if(type==='next'){
-    if(game.queue.length)throw new AuthError(409,'phase_pending_orders');
+    const movement=game.pendingChoice?.scope==='movement'?game._resolutionReplay?.movement:null;
+    if(game.queue.length&&!movement)throw new AuthError(409,'phase_pending_orders');
     r=game.nextPhaseWithChoices({humanTeams:[0],choice:b.choice});
+    if(movement){type='move';id=movement.id;}
   }else if(type==='weather'){
     if(game.phase!=='initiative'||game.round!==1)throw new AuthError(409,'weather_locked');
     game.weather={night:b.night,gale:b.gale};
@@ -94,7 +96,7 @@ export function runTacticalOrder(game,body){
     if(!game.units[id]||game.units[id].team!==0||!game.canAct(game.units[id]))
       throw new AuthError(409,'not_your_turn');
     switch(type){
-      case 'move':r=game.move(id,b.q,b.r,b.mode,{lateral:b.lateral});break;
+      case 'move':r=game.moveWithChoices(id,b.q,b.r,b.mode,{lateral:b.lateral,humanTeams:[0]});break;
       case 'rotate':r=game.rotate(id,b.delta);break;
       case 'stand':r=game.stand(id,b.facing??null,{minimum:b.minimum,mode:b.mode});break;
       case 'drop':r=game.drop(id,{mode:b.mode});break;
@@ -122,7 +124,7 @@ export function runTacticalOrder(game,body){
     if(unit?.dead&&game.actingId===id)game.hold(id);
   }
   const ai=autoOpponent(game);
-  return {type,result:structuredClone(r),rolls,resolution,afterRolls,ai};
+  return {type,...(type==='move'?{id}:{}),result:structuredClone(r),rolls,resolution,afterRolls,ai};
 }
 export function publicSnapshot(saved){
   if(!saved?.game)return null;

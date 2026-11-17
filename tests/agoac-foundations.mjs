@@ -1565,3 +1565,36 @@ test('AGoAC p.9: normal ground movement may pass through a prone friendly Mech b
  assert(g.move(u.id,2,0,'walk').ok);assert.equal(u.distanceMoved,2);
  assert.deepEqual([ally.q,ally.r],[1,0]);
 });
+
+test('AGoAC p.42: movement domino dodge pauses, survives recovery and reuses its dice',()=>{
+ const g=fresh(),u=g.units[0],ally=g.units[1];
+ g.phase='move';g.queue=[0,1,0,1];g.activeTeam=0;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,walk:5,moveStart:{q:0,r:0}});
+ Object.assign(ally,{q:1,r:0,facing:1,walk:4,spent:0});
+ for(const v of g.units.filter(v=>v.team!==u.team))v.dead=true;
+ g.tile(1,0).type='rubble';
+ let draws=0;g.rng=()=>{draws++;return draws<=2?0:.5;};
+ const before=JSON.stringify(g.units);
+ let result=g.moveWithChoices(u.id,2,0,'walk',{humanTeams:[0]});
+ assert(result.pending);assert.equal(g.pendingChoice.scope,'movement');
+ assert.equal(g.pendingChoice.kind,'domino');assert.equal(g.pendingChoice.unitId,ally.id);
+ assert.equal(JSON.stringify(g.units),before);
+ const saved=draws,p=structuredClone(g.pendingChoice);
+ assert(p.options.some(o=>o.id==='forward'));
+ assert.equal(g.moveWithChoices(u.id,2,0,'walk').ok,false);
+ assert.equal(g.nextPhaseWithChoices({choice:{key:p.key,option:'invalid'}}).ok,false);
+ assert.equal(draws,saved);
+ const restored=new Game({rng:()=>{draws++;return .5;}});
+ Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
+ restored.rebuildMap();
+ result=restored.nextPhaseWithChoices({choice:{key:p.key,option:'forward'}});
+ assert(result.ok&&!result.pending);
+ assert.equal(draws,saved);
+ assert.equal(restored.pendingChoice,null);assert.equal(restored.phase,'move');
+ assert.deepEqual([restored.unit(u.id).q,restored.unit(u.id).r],[1,0]);
+ assert.deepEqual([restored.unit(ally.id).q,restored.unit(ally.id).r],[2,-1]);
+ assert.equal(restored.unit(ally.id).spent,1);
+ assert.equal(restored.unit(u.id).prone,true);
+ assert.deepEqual(restored.queue,[0,1,0,1]);
+});
