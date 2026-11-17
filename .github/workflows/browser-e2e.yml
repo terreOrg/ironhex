@@ -2,7 +2,7 @@ name: Ironhex Browser E2E
 
 on:
   push:
-    branches: [main, audit/quad-kick-actuators]
+    branches: [main, audit/quad-water-physical-cover]
   workflow_dispatch:
 
 permissions:
