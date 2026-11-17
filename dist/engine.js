@@ -285,11 +285,11 @@ export class Game extends Legacy{
   if(mode!=='walk'&&(u.dumping.length||u.dumpNext.length))return [];
   const max=this.mp(u,mode==='minimum'?'run':mode);if(max<1)return [];
   const edge=this.deployment.edges[u.team],d=DIRS[edge],routes=new Map();
-  const add=(tile,cost,from)=>{
+  const add=(tile,cost,from,transit=null)=>{
    if(this.occupied(tile.q,tile.r,u.id))return;
    const k=key(tile.q,tile.r),existing=routes.get(k);
-   if(!existing||cost<existing.cost)routes.set(k,{q:tile.q,r:tile.r,cost,facing:edge,entryFrom:from,
-    path:[{q:tile.q,r:tile.r,facing:edge,cost}]});
+   if(!existing||cost<existing.cost)routes.set(k,{q:tile.q,r:tile.r,cost,facing:transit?.facing??edge,entryFrom:from,
+    path:transit?.path??[{q:tile.q,r:tile.r,facing:edge,cost}],...(transit?{transit}: {})});
   };
   for(const first of this.deploymentEdgeTiles(edge)){
    // No external terrain specified: use adjacent virtual origin at the
@@ -304,7 +304,23 @@ export class Game extends Legacy{
      // p.11: a single forward running step when ordinary entry is
      // unaffordable or running into water is normally prohibited.
      if(first.depth||cost>max)add(first,max,from);
-    }else if(!(mode==='run'&&first.depth)&&cost<=max)add(first,cost,from);
+    }else if(!(mode==='run'&&first.depth)&&cost<=max){
+     add(first,cost,from);
+     // p.9: a friendly occupant does not prohibit transit, but may
+     // never be the endpoint. A dry nonhazardous first hex can be
+     // passed using the ordinary ground movement pathfinder.
+     const occupants=this.units.filter(v=>v.id!==u.id&&this.onMap(v)&&!v.airborne&&v.q===first.q&&v.r===first.r);
+     if(occupants.length&&occupants.every(v=>!v.dead&&v.team===u.team)&&
+        !first.depth&&first.type!=='rubble'&&!(first.building?.cf>0)&&
+        !(mode==='run'&&this.isPaved(first))){
+      const origin={q:first.q,r:first.r,facing:edge,cost};
+      const entering={...u,...origin,deployed:true,spent:cost,moveMode:mode,distanceMoved:1,lastMovementDirection:edge};
+      for(const route of this.reachable(entering,mode)){
+       if(!route.path.length||this.occupied(route.q,route.r,u.id))continue;
+       add(route,cost+route.cost,from,{origin,facing:route.facing,path:[origin,...route.path]});
+      }
+     }
+    }
     continue;
    }
    const ceiling=first.surface+max;
@@ -329,6 +345,16 @@ export class Game extends Legacy{
   if(!route)return fail('Недопустимый вход с назначенной стороны');
   this.phaseRolls=[];this.actingId=u.id;
   const from=route.entryFrom,minimum=mode==='minimum';
+  if(route.transit){
+   // Transit begins on the virtual edge, never ends on the ally.
+   // The first hex is known not to require any immediate check.
+   const first=route.transit.origin;
+   Object.assign(u,{q:first.q,r:first.r,deployed:true,facing:first.facing,moveStart:{...from},
+    moveMode:mode,spent:first.cost,distanceMoved:1,lastMovementDirection:first.facing});
+   const result=this.move(u.id,q,r,mode);
+   if(!result.ok)throw Error('deployment_transit_route_mismatch');
+   return {...result,entry:true,from,path:[{q:first.q,r:first.r},...result.path]};
+  }
   if(minimum)mode='run';
   Object.assign(u,{q,r,deployed:true,facing:route.facing,moveStart:{...from},
    moveMode:mode,spent:route.cost,distanceMoved:mode==='jump'?route.cost:1,lastMovementDirection:route.facing});
