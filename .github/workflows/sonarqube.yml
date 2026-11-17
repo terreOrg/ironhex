@@ -1,0 +1,58 @@
+name: Ironhex SonarQube
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ironhex-sonarqube-main
+  cancel-in-progress: true
+
+jobs:
+  sonar:
+    name: SonarQube analysis (baseline)
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 30
+    steps:
+      - name: Check out source with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Run unit tests and generate LCOV report
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p coverage
+          node --test --test-concurrency=1 --experimental-test-coverage \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \
+            tests/agoac-foundations.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs \
+            tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs \
+            tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs \
+            tests/auth.mjs tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs
+          test -s coverage/lcov.info
+      - name: Scan source code and report Quality Gate
+        # The deploy workflow does not require this baseline workflow yet.
+        uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=ironhex
+            -Dsonar.sources=apps/web/src,apps/api/src,packages/engine,scripts
+            -Dsonar.tests=tests
+            -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.qualitygate.wait=true
+            -Dsonar.qualitygate.timeout=300
