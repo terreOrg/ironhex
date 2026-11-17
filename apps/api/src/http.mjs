@@ -46,9 +46,17 @@ async function readJson(req) {
 }
 
 function sameOrigin(req, allowedOrigin) {
-  const expected = allowedOrigin || ('http://' + req.headers.host);
-  return !!req.headers.origin && req.headers.origin === expected &&
-    req.headers['sec-fetch-site'] !== 'cross-site';
+  const origin=req.headers.origin;
+  if(!origin||req.headers['sec-fetch-site']==='cross-site')return false;
+  if(allowedOrigin)return origin===allowedOrigin;
+  // Without an explicit public origin, allow only local HTTP development.
+  // Reverse-proxied deployments must configure their exact browser origin.
+  try{
+    const candidate=new URL(origin);
+    return candidate.origin===origin&&candidate.host===req.headers.host&&
+      candidate.protocol==='http:'&&['127.0.0.1','localhost','[::1]'].includes(candidate.hostname)&&
+      ['127.0.0.1','::1','::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+  }catch{return false;}
 }
 
 function createLimiter(max, windowMs) {
@@ -88,6 +96,8 @@ export function createHttpServer({
   publicOrigin = null,
   secureCookies = false
 } = {}) {
+  if(secureCookies&&(!publicOrigin||new URL(publicOrigin).protocol!=='https:'))
+    throw new Error('Secure session cookies require an HTTPS public origin');
   const loginLimiter = createLimiter(8, 15 * 60_000);
   const registerLimiter = createLimiter(12, 60 * 60_000);
   const emailLimiter = createLimiter(6, 60 * 60_000);

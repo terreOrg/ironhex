@@ -1,3 +1,4 @@
+import { validEmailAddress } from './email-address.mjs';
 // HTTPS-only transactional mail using Brevo API. No SMTP password in the codebase.
 export function createBrevoMailer({
   apiKey = '',
@@ -6,7 +7,7 @@ export function createBrevoMailer({
   fetchImpl = fetch
 } = {}) {
   const enabled = !!apiKey;
-  if (enabled && (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sender) ||
+  if (enabled && (!validEmailAddress(sender) ||
       !/^https:\/\/[a-z0-9.-]+(?::443)?$/i.test(publicOrigin))) {
     throw Error('Email delivery requires a verified sender and an HTTPS public origin');
   }
