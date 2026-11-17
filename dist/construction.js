@@ -39,8 +39,8 @@ export const EQUIPMENT=WEAPON_NAMES;
 export function construct(c,{auditQuad=false}={}){
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
  const chassisConfig=c.config??'Biped';
- const quirks=c.quirks||{};
- if(c.quirks!==undefined&&(
+ const quirks=c.quirks??{};
+ if(c.quirks!==undefined&&(c.quirks===null||
    !quirks||typeof quirks!=='object'||Array.isArray(quirks)||
    Object.keys(quirks).some(k=>!['extendedTorsoTwist','directionalTorsoMounts'].includes(k))||
    (quirks.extendedTorsoTwist!==undefined&&typeof quirks.extendedTorsoTwist!=='boolean')||

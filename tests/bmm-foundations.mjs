@@ -1008,6 +1008,40 @@ test('BMM pp.24-25: all quad leg weapons obey forward/rear arcs, never biped arm
  assert.equal(g.arc(u,sideR,{location:'RL',rear:false}),false);
 });
 
+test('BMM pp.19,27,51,65: Quad front legs submerge, cool and disable jump jets in Depth 1',()=>{
+ const legs=['LA','RA','LL','RL'];
+ const design=construct({...example,name:'Quad water audit',config:'Quad',jump:5,sinks:15,equipment:[
+  ...legs.map(location=>({type:'jump',location,slot:5})),
+  ...legs.map(location=>({type:'sink',location,slot:6})),
+  {type:'jump',location:'CT',slot:12}
+ ]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const g=flatGame(),u=g.units[0];
+ Object.assign(u,structuredClone(design.unit));
+ u.q=0;u.r=0;u.prone=false;u.dead=false;u.shutdown=false;u.unconscious=false;
+ u.breached=[];u.jumpLost=0;u.sinksLost=0;u.heat=20;u.pendingHeat=0;
+ const tile=g.tile(0,0);
+ assert.equal(g.mp(u,'jump'),5);
+ Object.assign(tile,{type:'water',depth:1,height:-1});
+ for(const loc of legs)assert.equal(g.isSubmergedLocation(u,loc),true,loc);
+ for(const loc of ['HD','CT','LT','RT'])assert.equal(g.isSubmergedLocation(u,loc),false,loc);
+ assert.equal(g.mp(u,'jump'),1);
+ g.heatPhase();assert.equal(u.heat,1,'All four functional leg sinks provide bonus cooling');
+ u.heat=20;u.crit.LA[5]=true;u.sinksLost=1;
+ g.heatPhase();assert.equal(u.heat,3,'Destroyed sink loses base and bonus cooling');
+ u.crit.RA[4]=true;u.jumpLost=1;
+ assert.equal(g.mp(u,'jump'),1,'Destroyed submerged jet is not deducted twice');
+ g.breachLocation(u,'LL');
+ assert.equal(g.mp(u,'jump'),1,'Flooded submerged jet is not deducted twice');
+ u.prone=true;assert.equal(g.mp(u,'jump'),0);
+ assert.equal(g.isSubmergedLocation(u,'CT'),true);
+ u.prone=false;tile.depth=2;assert.equal(g.mp(u,'jump'),0);
+ tile.depth=0;assert.equal(g.mp(u,'jump'),3);
+ const biped=g.units[2];biped.config='Biped';biped.q=0;biped.r=0;biped.prone=false;tile.depth=1;
+ assert.equal(g.isSubmergedLocation(biped,'LA'),false);
+ assert.equal(g.isSubmergedLocation(biped,'LL'),true);
+});
+
 test('BMM p.26: partial cover protects all four quad legs and not biped arms',()=>{
  const quad={config:'Quad'},biped={config:'Biped'};
  for(const loc of ['LA','RA','LL','RL']){
@@ -1163,6 +1197,133 @@ test('BMM p.38: a quad may kick front or rear with the correct leg pair and +1 r
  u.config='Biped';u.firedLocations=[];
  assert.equal(g.physicalPreview(u.id,target.id,'kick','LA').legal,false,
   'Biped arms cannot be used as kicking legs');
+});
+
+test('BMM pp.29,38: Quad kick actuator modifiers stack for each eligible leg',()=>{
+ const design=construct({...example,name:'Quad kick actuator audit',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const limb of ['LA','RA','LL','RL']){
+  const g=flatGame(),u=g.units[0],target=g.units[2];
+  Object.assign(u,structuredClone(design.unit));
+  g.phase='physical';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.q=0;u.r=0;u.facing=0;u.prone=false;u.moveMode='stand';u.firedLocations=[];
+  target.q=['LA','RA'].includes(limb)?1:-1;target.r=0;target.prone=false;target.dead=false;
+  const base=g.physicalPreview(u.id,target.id,'kick',limb);
+  assert.equal(base.legal,true,base.reason);
+  for(let mask=0;mask<8;mask++){
+   const upper=!!(mask&1),lower=!!(mask&2),foot=!!(mask&4);
+   Object.assign(u.actuators[limb],{upper,lower,foot});
+   const p=g.physicalPreview(u.id,target.id,'kick',limb);
+   assert.equal(p.legal,true,p.reason);
+   assert.equal(p.targetNumber,base.targetNumber+2*Number(upper)+2*Number(lower)+Number(foot),limb+' mask '+mask);
+   assert.equal(p.damage,Math.floor(base.damage/2**(Number(upper)+Number(lower))),limb+' mask '+mask);
+  }
+ }
+});
+
+test('BMM p.38: Quad kick resolution requests PSR for target on hit and attacker on miss',()=>{
+ const design=construct({...example,name:'Quad PSR audit',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const limb of ['LA','RA','LL','RL'])for(const success of [true,false]){
+  const g=flatGame(),u=g.units[0],target=g.units[2];
+  Object.assign(u,structuredClone(design.unit));
+  g.phase='physical';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.q=0;u.r=0;u.facing=0;u.prone=false;u.moveMode='stand';u.firedLocations=[];
+  target.q=['LA','RA'].includes(limb)?1:-1;target.r=0;target.prone=false;target.dead=false;
+  const base=g.physicalPreview(u.id,target.id,'kick',limb);
+  assert.equal(base.legal,true,base.reason);
+  for(const twist of [-1,0,1]){
+   u.twist=twist;
+   const p=g.physicalPreview(u.id,target.id,'kick',limb);
+   assert.equal(p.legal,true,p.reason);
+   assert.equal(p.targetNumber,base.targetNumber);
+  }
+  const requests=[];
+  g.psr=(unit,modifier,reason)=>{requests.push({id:unit.id,modifier,reason});};
+  g.hit=()=>({damage:base.damage});
+  g.endPSR=()=>{};
+  g.roll=()=>success?base.targetNumber:base.targetNumber-1;
+  g.physicalDeclarations=[{id:u.id,target:target.id,type:'kick',limb,...base}];
+  const result=g.resolvePhysical();
+  assert.equal(result[0].shots[0].hit,success);
+  assert.equal(result[0].shots[0].damage,success?base.damage:0);
+  assert.deepEqual(requests.map(({id,modifier})=>({id,modifier})),[{id:success?target.id:u.id,modifier:0}]);
+ }
+});
+
+test('BMM pp.38,53: Quad kick hit or miss resolves actual deferred PSR and fall',()=>{
+ const design=construct({...example,name:'Quad kick fall audit',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const success of [true,false])for(const pass of [true,false]){
+  const g=flatGame(),u=g.units[0],target=g.units[2];
+  Object.assign(u,structuredClone(design.unit));Object.assign(target,structuredClone(design.unit));
+  // Preserve distinct tactical identities after construction.
+  u.id='quad-attacker';target.id='quad-target';u.team=0;target.team=1;
+  u.q=0;u.r=0;u.facing=0;target.q=1;target.r=0;target.facing=0;
+  for(const v of [u,target]){
+   v.prone=false;v.dead=false;v.shutdown=false;v.unconscious=false;
+   v.gyroHits=0;v.piloting=5;v.moveMode='stand';v.firedLocations=[];v.psrs=[];v.phaseDamage=0;
+  }
+  const p=g.physicalPreview(u.id,target.id,'kick','LA');
+  assert.equal(p.legal,true,p.reason);
+  g.physicalDeclarations=[{id:u.id,target:target.id,type:'kick',limb:'LA',...p}];
+  // Real dice, damage, PSR queue and fall logic; only RNG is scripted.
+  // Successful kick: 12, location 1; missed kick: 2.
+  const values=success?[.99,.99,.01]:[.01,.01];
+  values.push(...(pass?[.99,.99]:[.01,.01]));
+  g.rng=()=>values.length?values.shift():.5;
+  const result=g.resolvePhysical();
+  assert.equal(result[0].shots[0].hit,success);
+  const affected=success?target:u,other=success?u:target;
+  assert.equal(affected.prone,!pass);
+  assert.equal(other.prone,false);
+  assert.deepEqual(affected.psrs,[]);
+  assert(g.afterRolls.some(r=>r.target===3),'Intact Quad fall avoidance PSR is piloting 5 minus 2');
+ }
+});
+
+test('BMM pp.34,36,38: Quad cannot take a club or kick a prone target one level below',()=>{
+ const design=construct({...example,name:'Quad physical restrictions',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const g=flatGame(),u=g.units[0],t=g.units[2];
+ Object.assign(u,structuredClone(design.unit));
+ g.phase='physical';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ u.q=0;u.r=0;u.facing=0;u.prone=false;u.moveMode='stand';u.firedLocations=[];
+ t.q=1;t.r=0;t.dead=false;t.prone=false;
+ g.tile(u.q,u.r).height=1;g.tile(t.q,t.r).height=0;
+ const lower=g.physicalPreview(u.id,t.id,'kick','LA');
+ assert.equal(lower.legal,true,lower.reason);assert.equal(lower.table,'punch');
+ t.prone=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'kick','LA').legal,false);
+ g.tile(t.q,t.r).height=1;
+ assert.equal(g.physicalPreview(u.id,t.id,'kick','LA').legal,true);
+ g.tile(u.q,u.r).type='woods';
+ assert.equal(g.takeClub(u.id).ok,false);
+ assert.notEqual(u.club,true);
+});
+
+test('BMM p.38: Quad kick arcs match every adjacent hex and all six facings',()=>{
+ const design=construct({...example,name:'Quad kick arc matrix',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const g=flatGame(),u=g.units[0],t=g.units[2];
+ Object.assign(u,structuredClone(design.unit));
+ u.q=0;u.r=0;u.prone=false;u.moveMode='stand';u.firedLocations=[];
+ t.prone=false;t.dead=false;
+ for(let facing=0;facing<6;facing++){
+  u.facing=facing;
+  for(let dir=0;dir<6;dir++){
+   [t.q,t.r]=DIRS[dir];
+   const relative=(dir-facing+6)%6,front=[0,1,5].includes(relative);
+   for(const limb of ['LA','RA','LL','RL']){
+    const expected=front===['LA','RA'].includes(limb);
+    for(const twist of [-1,0,1]){
+     u.twist=twist;
+     const p=g.physicalPreview(u.id,t.id,'kick',limb);
+     assert.equal(p.legal,expected,'facing '+facing+' dir '+dir+' leg '+limb+' twist '+twist);
+    }
+   }
+  }
+ }
 });
 
 test('BMM pp.45,65: quad side torso destruction or flooding affects front leg only',()=>{

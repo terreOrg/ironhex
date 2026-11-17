@@ -53,7 +53,7 @@
       "kind": "topic",
       "optional": false,
       "status": "known_missing",
-      "note": "BMM defines quad BattleMechs alongside bipeds; engine's four limb layout and walking/physical arcs currently assume two arms and two legs. Quad-only rules are not implemented; this is an explicit BattleMech-only scope gap."
+      "note": "Quad topology, lateral movement, standing, arcs, prone firing, physical attacks, critical damage, water interaction and optional mounts have partial implementation and regression evidence. Quad construction/market and live-battle admission remain fail-closed pending full source-backed integration audit. This heading is not verified."
     },
     {
       "id": "bmm-p005-game-terms",

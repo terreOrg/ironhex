@@ -2,7 +2,7 @@ name: Ironhex CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, audit/quad-kick-actuators]
   workflow_dispatch:
 
 permissions:
@@ -42,7 +42,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for file in tests/bmm-foundations.mjs tests/combat.mjs tests/construction.mjs \
+          for file in tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs tests/combat.mjs tests/construction.mjs \
             tests/fire-arcs.mjs tests/api.mjs tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs tests/auth.mjs \
             tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs; do
             echo "::group::Testing $file"
