@@ -5,7 +5,7 @@ const fields={
   fire:['id','shots'],physical:['id','target','attack','limb'],
   club:['id'],charge:['id','target','attack'],minimum:['id'],
   shutdown:['id'],dump:['id','bin'],flip:['id','enabled'],brace:['id','limb'],
-  next:[],weather:['night','gale','standingStill','evading','floatingCriticals']
+  next:['choice'],weather:['night','gale','standingStill','evading','floatingCriticals']
 };
 const int=(x,a,b)=>Number.isInteger(x)&&x>=a&&x<=b;
 const shot=x=>x&&typeof x==='object'&&!Array.isArray(x)&&
@@ -20,7 +20,11 @@ export function validateTacticalOrder(b){
      Object.keys(b).some(k=>!['type','version',...fields[b.type]].includes(k)))
     throw new AuthError(422,'invalid_command');
   const ok={
-    next:()=>true,
+    next:()=>b.choice===undefined||(
+      b.choice!==null&&typeof b.choice==='object'&&!Array.isArray(b.choice)&&
+      Object.keys(b.choice).length===2&&Object.hasOwn(b.choice,'key')&&Object.hasOwn(b.choice,'option')&&
+      typeof b.choice.key==='string'&&b.choice.key.length>0&&b.choice.key.length<=80&&
+      typeof b.choice.option==='string'&&b.choice.option.length>0&&b.choice.option.length<=32),
     weather:()=>typeof b.night==='boolean'&&typeof b.gale==='boolean'&&
       (b.standingStill===undefined||typeof b.standingStill==='boolean')&&
       (b.evading===undefined||typeof b.evading==='boolean')&&
@@ -75,9 +79,10 @@ export function runTacticalOrder(game,body){
   const b=validateTacticalOrder(body);
   const {type,id}=b;
   let r;
+  if(game.pendingChoice&&type!=='next')throw new AuthError(409,'resolution_choice_pending');
   if(type==='next'){
     if(game.queue.length)throw new AuthError(409,'phase_pending_orders');
-    r=game.nextPhase();
+    r=game.nextPhaseWithChoices({humanTeams:[0],choice:b.choice});
   }else if(type==='weather'){
     if(game.phase!=='initiative'||game.round!==1)throw new AuthError(409,'weather_locked');
     game.weather={night:b.night,gale:b.gale};
@@ -107,6 +112,7 @@ export function runTacticalOrder(game,body){
     }
   }
   if(!r?.ok)throw new AuthError(422,'illegal_tactical_order');
+  if(r.pending)return {type,result:structuredClone(r),rolls:[],resolution:[],afterRolls:[],ai:[]};
   const rolls=structuredClone(game.phaseRolls||[]);
   const resolution=type==='next'?structuredClone(game.resolution||[]):[];
   const afterRolls=type==='next'?structuredClone(game.afterRolls||[]):[];
@@ -119,5 +125,8 @@ export function runTacticalOrder(game,body){
 }
 export function publicSnapshot(saved){
   if(!saved?.game)return null;
-  return structuredClone(saved.game);
+  const snapshot=structuredClone(saved.game);
+  delete snapshot._resolutionReplay;
+  snapshot.pendingChoice??=null;
+  return snapshot;
 }

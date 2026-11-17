@@ -947,3 +947,76 @@ test('AGoAC pp.27–28: successful and missed DFA land in target hex; impassable
   }
  }
 });
+
+function dominoChoiceGame(){
+ const g=fresh(),[t,b,a,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(a,{q:-1,r:0,facing:0});Object.assign(t,{q:0,r:0});
+ Object.assign(b,{q:1,r:0,facing:1,moveMode:'walk',spent:0});
+ other.dead=true;g.phase='physical';g.initiativeWinner=0;g.queue=[];g.activeTeam=null;
+ const push=g.physicalPreview(a.id,t.id,'push','LA');assert(push.legal,push.reason);
+ g.physicalDeclarations=[{id:a.id,target:t.id,type:'push',limb:'LA',...push}];
+ return {g,t,b,a};
+}
+test('AGoAC p.42: domino dodge eligibility, direction, MP, occupied hexes and movement mode',()=>{
+ const {g,b}=dominoChoiceGame();
+ assert.deepEqual(g.dominoDodgeOptions(b,0).map(o=>o.id),['forward','back']);
+ assert.deepEqual(g.dominoDodgeOptions(b,b.facing),[]);
+ assert.deepEqual(g.dominoDodgeOptions(b,(b.facing+3)%6),[]);
+ for(const mode of ['jump','run','walk']){
+  b.moveMode=mode;b.spent=0;
+  assert.deepEqual(g.dominoDodgeOptions(b,0).map(o=>o.id),mode==='jump'?[]:mode==='run'?['forward']:['forward','back']);
+ }
+ const [ahead,behind]=g.dominoDodgeOptions(b,0);
+ g.tile(ahead.q,ahead.r).type='woods';b.spent=g.mp(b,'walk')-1;
+ assert.deepEqual(g.dominoDodgeOptions(b,0).map(o=>o.id),['back']);
+ Object.assign(g.units[3],{dead:false,q:behind.q,r:behind.r});
+ assert.deepEqual(g.dominoDodgeOptions(b,0),[]);
+ b.spent=0;b.prone=true;assert.deepEqual(g.dominoDodgeOptions(b,0),[]);
+ b.prone=false;b.unconscious=true;assert.deepEqual(g.dominoDodgeOptions(b,0),[]);
+});
+test('AGoAC p.42: voluntary domino choice pauses after successful PSR and restores without rerolling',()=>{
+ for(const option of ['forward','back','decline']){
+  const {g,b}=dominoChoiceGame();let draws=0;g.rng=()=>{draws++;return .99;};
+  const initial=JSON.stringify(g.units);
+  assert.deepEqual(g.nextPhaseWithChoices({humanTeams:[0]}),{ok:true,pending:true});
+  const choice=structuredClone(g.pendingChoice);
+  assert.equal(choice.kind,'domino');assert.equal(choice.unitId,b.id);
+  assert.deepEqual(choice.options.map(o=>o.id),['decline','forward','back']);
+  assert.equal(choice.context.roll.total,12);
+  assert.equal(g.phase,'physical');assert.equal(JSON.stringify(g.units),initial);
+  assert.equal(draws,4);
+  assert.equal(g.nextPhaseWithChoices({choice:{key:choice.key,option:'illegal'}}).ok,false);
+  assert.equal(draws,4);
+  const saved=JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v));
+  const restored=fresh();Object.assign(restored,saved);restored.rebuildMap();
+  restored.rng=()=>{draws++;return .99;};
+  assert(restored.nextPhaseWithChoices({choice:{key:choice.key,option}}).ok);
+  assert.equal(restored.pendingChoice,null);assert.equal(restored._resolutionReplay,null);
+  assert.equal(restored.phase,'heat');assert.equal(draws,6,'previous four samples must not be regenerated');
+  const moved=restored.unit(b.id),chosen=choice.options.find(o=>o.id===option);
+  assert.deepEqual([moved.q,moved.r,moved.spent],option==='decline'?[2,0,0]:[chosen.q,chosen.r,chosen.cost]);
+  assert.equal(restored.phaseRolls.filter(r=>r.kind.includes('Домино')).length,1);
+ }
+});
+test('AGoAC pp.27–28: target controller selects an equal DFA displacement direction after the attack',()=>{
+ const g=fresh(),[t,ally,u,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ ally.dead=other.dead=true;Object.assign(t,{q:1,r:0,facing:0});
+ Object.assign(u,{q:0,r:0,airborne:true,moveMode:'jump',tonnage:55,
+  charge:{target:t.id,type:'dfa',dir:0,targetPos:{q:1,r:0},startPos:{q:-2,r:0}}});
+ g.tile(2,0).height=3;g.phase='physical';g.initiativeWinner=0;g.queue=[];g.activeTeam=null;
+ // 2 for the DFA to-hit; the remaining successful PSR/packet dice use 7.
+ let draws=0;g.rng=()=>{draws++;return draws<=2?0:.5;};
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
+ const choice=structuredClone(g.pendingChoice);
+ assert.equal(choice.kind,'dfa');assert.equal(choice.unitId,t.id);assert.equal(choice.context.hit,false);
+ assert.equal(draws,2);assert(choice.options.length>1);
+ const option=choice.options.at(-1);
+ assert(g.nextPhaseWithChoices({choice:{key:choice.key,option:option.id}}).ok);
+ assert.equal(g.pendingChoice,null);
+ assert.deepEqual([g.unit(t.id).q,g.unit(t.id).r],[option.q,option.r]);
+ assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);
+ assert.equal(g.phaseRolls.filter(r=>r.kind===u.name+' · DFA').length,1);
+ assert(g.unit(u.id).prone||g.unit(u.id).dead);
+});
