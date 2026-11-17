@@ -455,3 +455,27 @@ test('AGoAC pp.6,11,44: unconscious pilot cannot issue voluntary orders but can 
    assert.equal(g.hold(u.id).ok,true);
   }
  });
+
+test('AGoAC p.6: surviving immobile or unarmed units retain declaration selections',()=>{
+ for(const phase of ['move','fire','physical']){
+  const g=fresh(),[unconscious,unarmed,shutdown,destroyed]=g.units;
+  g.phase=phase;g.initiativeWinner=1;
+  unconscious.unconscious=true;unarmed.weapons=[];shutdown.shutdown=true;destroyed.dead=true;
+  g.buildQueue();
+  assert.deepEqual(g.queue,[0,0,1]);
+  for(const u of [unconscious,unarmed,shutdown]){
+   assert.equal(g.canAct(u),true);
+   assert.equal(g.canAct(destroyed),false);
+   assert.equal(g.hold(u.id).ok,true);
+   assert.equal(g.done(u),true);
+  }
+  assert.equal(g.queue.length,0);
+ }
+});
+test('AGoAC p.7: elimination and mutual destruction produce the correct result',()=>{
+ for(const [live0,live1,winner] of [[true,true,null],[true,false,0],[false,true,1],[false,false,'draw']]){
+  const g=fresh();
+  for(const u of g.units)u.dead=!(u.team===0?live0:live1);
+  g.checkWin();assert.equal(g.winner,winner);
+ }
+});
