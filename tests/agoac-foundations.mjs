@@ -700,3 +700,49 @@ test('AGoAC p.42: immobile and prone domino targets do not roll; blocked final t
   assert.equal(dice.length,0);
  }
 });
+
+test('AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR',()=>{
+ for(const submerged of [false,true]){
+  const g=fresh(),[u,t,a,b]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0,tonnage:65,facing:0});
+  Object.assign(t,{q:1,r:0,prone:false,facing:3,distanceMoved:3,moveMode:'walk'});
+  a.dead=b.dead=true;
+  Object.assign(g.tile(0,0),{height:5,surface:5});
+  Object.assign(g.tile(1,0),{type:submerged?'water':'woods',depth:submerged?2:0});
+  const events=[];
+  g.rng=()=>.99;
+  g.hit=(victim,amount,side,table)=>{events.push(['packet',victim.id,amount,side,table]);return {damage:amount,hits:[]};};
+  g.fall=(victim,levels,tn,side)=>{events.push(['fall',victim.id,victim.q,victim.r,levels,side]);victim.prone=true;};
+  g.psr=(victim,mod,reason,immediate)=>{events.push(['psr',victim.id,mod,reason,immediate]);return true;};
+  const expected=submerged?10:21;
+  assert(g.displace(u,0));
+  assert.equal(g.phaseRolls[0].target,submerged?8:9);
+  const packets=events.filter(v=>v[0]==='packet');
+  assert.equal(packets.reduce((n,v)=>n+v[2],0),expected);
+  assert(packets.every(v=>v[1]===t.id&&v[2]<=5&&v[4]==='punch'));
+  assert.deepEqual(events.at(-2),['fall',u.id,1,0,5,'rear']);
+  assert.deepEqual(events.at(-1),['psr',t.id,2,'Падение сверху',true]);
+  assert.equal(distance(u,t),1);assert.notEqual(t.q+','+t.r,'0,0');
+ }
+});
+test('AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys the falling Mech',()=>{
+ for(const blocked of [false,true]){
+  const g=fresh(),[u,t,a,b]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0});Object.assign(t,{q:1,r:0});a.dead=b.dead=true;
+  g.tile(0,0).height=5;
+  if(blocked)for(const [dq,dr] of DIRS)g.tile(t.q+dq,t.r+dr).height=5;
+  g.rng=()=>0;
+  const events=[];g.fall=(victim,levels)=>{events.push([victim.id,victim.q,victim.r,levels]);victim.prone=true;};
+  g.packets=()=>{assert.fail('A missed collision cannot damage its target');};
+  assert(g.displace(u,0));
+  assert.equal(t.dead,false);assert.deepEqual([t.q,t.r],[1,0]);
+  assert.equal(u.dead,blocked);
+  if(blocked)assert.equal(events.length,0);
+  else{
+   assert.equal(distance(u,t),1);assert.equal(distance(u,{q:0,r:0}),1);
+   assert.deepEqual(events,[[u.id,u.q,u.r,5]]);
+  }
+ }
+});

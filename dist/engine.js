@@ -783,6 +783,47 @@ export class Game extends Legacy{
    this.fall(u,drop>=2?drop:0,check.tn);
   }
  }
+ // AGoAC pp.40,44: a forced drop of at least two levels onto
+ // an occupied hex is a possible collision, not ordinary domino movement.
+ fallNeighborOptions(center){
+  return DIRS.map(([dq,dr],dir)=>({dir,tile:this.tile(center.q+dq,center.r+dr)}))
+   .filter(({tile})=>tile&&tile.height-center.height<=2&&!this.occupied(tile.q,tile.r));
+ }
+ chooseFallNeighbor(options){
+  if(!options.length)return null;
+  return options.length===1?options[0]:options[Math.floor(this.rng()*options.length)];
+ }
+ accidentalFallMiss(u,old,destination){
+  const candidates=this.fallNeighborOptions(destination).filter(({tile})=>tile.height<=old.height);
+  const nearest=Math.min(...candidates.map(({tile})=>distance(old,tile)));
+  const landing=this.chooseFallNeighbor(candidates.filter(({tile})=>distance(old,tile)===nearest));
+  if(!landing){this.destroyMech(u);return;}
+  u.q=landing.tile.q;u.r=landing.tile.r;
+  this.fall(u,old.height-landing.tile.height);
+ }
+ accidentalFallHit(u,target,old,destination,depth){
+  const drop=old.height-destination.height;
+  const impactLevels=Math.max(0,drop-(target.prone?1:2));
+  const raw=Math.ceil(u.tonnage/10)*impactLevels;
+  const damage=destination.depth>=(target.prone?1:2)?Math.floor(raw/2):raw;
+  this.packets(target,damage,this.hitSide(target,u),'punch');
+  u.q=destination.q;u.r=destination.r;
+  this.fall(u,drop,null,'rear');
+  if(target.dead)return;
+  const landing=this.chooseFallNeighbor(this.fallNeighborOptions(destination));
+  if(!landing||!this.displace(target,landing.dir,depth+1)){
+   this.destroyMech(target);return;
+  }
+  this.psr(target,2,'Падение сверху',true);
+ }
+ accidentalFall(u,target,old,destination,depth){
+  const terrain=destination.type==='heavy'?2:destination.type==='woods'?1:0;
+  const tn=7+this.tmm(target)+terrain;
+  if(this.roll(u.name+' · Падение сверху',tn)<tn)
+   this.accidentalFallMiss(u,old,destination);
+  else this.accidentalFallHit(u,target,old,destination,depth);
+  return true;
+ }
  displace(u,dir,depth=0){
   if(u.dead||depth>this.units.length+1)return false;
   const d=DIRS[dir],t=this.tile(u.q+d[0],u.r+d[1]);
@@ -790,6 +831,7 @@ export class Game extends Legacy{
   const old=this.tile(u.q,u.r);
   if(t.height-old.height>2)return false;
   const occ=this.units.find(v=>!v.dead&&v.id!==u.id&&v.q===t.q&&v.r===t.r);
+  if(occ&&old.height-t.height>=2)return this.accidentalFall(u,occ,old,t,depth);
   if(occ)this.resolveDomino(occ,dir,depth);
   u.q=t.q;u.r=t.r;
   if(old.height-t.height>=2)this.fall(u,old.height-t.height);
