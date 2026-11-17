@@ -1226,7 +1226,20 @@ export class Game extends Legacy{
   if(tn===99||u.unconscious||u.abandoned)return true;
   return this.roll(u.name+' · '+(was?'Перезапуск':'Реактор'),tn)<tn;
  }
- heatPhase(){this.phaseRolls=[];for(const u of this.units){if(u.dead)continue;const t=this.tile(u.q,u.r),sinks=Math.max(0,u.sinks-u.sinksLost-this.floodedSlots(u,'sink')),sub=t.depth>=(u.prone?1:2),legSinks=Object.keys(u.slots).filter(l=>mechLegLocation(u,l)).reduce((n,l)=>n+u.slots[l].filter((s,i)=>s==='sink'&&!u.crit[l][i]&&!this.isBreached(u,l)).length,0),cool=sinks+Math.min(6,sub?sinks:t.depth?legSinks:0),was=u.shutdown;u.heat=Math.max(0,u.heat+u.pendingHeat+(was?0:this.effectiveEngineHits(u)*5)-cool);u.pendingHeat=0;u.externalHeat=0;const tn=shut(u.heat);if(u.voluntaryShutdown){u.shutdown=true;}else{u.shutdown=this.heatRequiresShutdown(u,tn,was);if(!was&&u.shutdown)this.psr(u,3,'Отключение реактора',true,0,true);}if(u.heat>=19){const bins=u.bins.filter(b=>b.shots&&!b.destroyed);if(bins.length){const at=u.heat>=28?8:u.heat>=23?6:4;if(this.roll(u.name+' · Перегрев боезапаса',at)<at){bins.sort((a,b)=>{const wa=u.weapons[a.weapon],wb=u.weapons[b.weapon];return wb.damage*(wb.rack||1)-wa.damage*(wa.rack||1)||b.shots-a.shots;});this.explode(u,bins[0]);}}}if(u.lifeSupport&&u.heat>=15)this.wound(u,u.heat>=26?2:1);this.consciousness(u);}this.endPSR();this.removeDestroyedMechs();}
+ // AGoAC p.38: choose by damage per shot, not the total stored
+ // ammunition. The owning controller breaks a tie between full bins.
+ heatExplosionBin(u,bins){
+  const damage=b=>{const w=u.weapons[b.weapon];return w.damage*(w.rack||1);};
+  const highest=Math.max(...bins.map(damage));
+  const tied=bins.filter(b=>damage(b)===highest);
+  const fallback=[...tied].sort((a,b)=>b.shots-a.shots)[0];
+  const options=tied.map(b=>({id:String(u.bins.indexOf(b)),location:b.location,
+   slot:b.slot+1,weaponName:u.weapons[b.weapon].name,shots:b.shots,damagePerShot:highest}));
+  const pick=this.chooseResolutionOption('heat-ammo-bin',u,options,String(u.bins.indexOf(fallback)),
+   {heat:u.heat,roll:{total:this.phaseRolls.at(-1)?.total,target:this.phaseRolls.at(-1)?.target}});
+  return u.bins[Number(pick)];
+ }
+ heatPhase(){this.phaseRolls=[];for(const u of this.units){if(u.dead)continue;const t=this.tile(u.q,u.r),sinks=Math.max(0,u.sinks-u.sinksLost-this.floodedSlots(u,'sink')),sub=t.depth>=(u.prone?1:2),legSinks=Object.keys(u.slots).filter(l=>mechLegLocation(u,l)).reduce((n,l)=>n+u.slots[l].filter((s,i)=>s==='sink'&&!u.crit[l][i]&&!this.isBreached(u,l)).length,0),cool=sinks+Math.min(6,sub?sinks:t.depth?legSinks:0),was=u.shutdown;u.heat=Math.max(0,u.heat+u.pendingHeat+(was?0:this.effectiveEngineHits(u)*5)-cool);u.pendingHeat=0;u.externalHeat=0;const tn=shut(u.heat);if(u.voluntaryShutdown){u.shutdown=true;}else{u.shutdown=this.heatRequiresShutdown(u,tn,was);if(!was&&u.shutdown)this.psr(u,3,'Отключение реактора',true,0,true);}if(u.heat>=19){const bins=u.bins.filter(b=>b.shots&&!b.destroyed);if(bins.length){const at=u.heat>=28?8:u.heat>=23?6:4;if(this.roll(u.name+' · Перегрев боезапаса',at)<at){this.explode(u,this.heatExplosionBin(u,bins));}}}if(u.lifeSupport&&u.heat>=15)this.wound(u,u.heat>=26?2:1);this.consciousness(u);}this.endPSR();this.removeDestroyedMechs();}
  endPhase(){this.phaseRolls=[];for(const u of this.units){if(u.dead)continue;if(u.lifeSupport&&this.tile(u.q,u.r).depth>=(u.prone?1:2))this.wound(u,1);this.consciousness(u);if(u.dead)continue;if(u.unconscious&&u.wasUnconscious&&this.roll(u.name+' · Пробуждение',conscious[u.pilotWounds])>=conscious[u.pilotWounds])u.unconscious=false;for(const i of u.dumping){const b=u.bins[i];if(b)b.shots=0;}u.dumping=u.dumpNext;u.dumpNext=[];this.syncAmmo(u);if(u.shutdownNext){u.shutdownNext=false;if(!u.shutdown){u.shutdown=true;u.voluntaryShutdown=true;this.note(`${u.name}: добровольное отключение реактора.`);}else if(u.voluntaryShutdown){const tn=shut(u.heat);if(tn!==99&&(tn===0||this.roll(u.name+' · Добровольный перезапуск',tn)>=tn)){u.shutdown=false;u.voluntaryShutdown=false;this.note(`${u.name}: реактор перезапущен.`);}else this.note(`${u.name}: перезапуск не удался.`);}}u.wasUnconscious=u.unconscious;u.proneAtStart=u.prone;u.moveStart={q:u.q,r:u.r};u.moved=false;u.fired=false;u.physicalDone=false;u.spent=0;u.moveMode='stand';u.distanceMoved=0;u.skidded=false;u.skidDirection=null;u.lastMovementDirection=null;u.skidCollisionPending=null;u.twist=0;u.flip=false;u.firedLocations=[];u.standAttempts=0;u.moveEndedByLegLoss=false;u.charge=null;}this.removeDestroyedMechs();this.round++;}
  // Resolve an interactive phase on a detached rules-state copy. A choice
  // commits no partial damage/movement; recorded RNG samples are replayed
@@ -1253,7 +1266,7 @@ export class Game extends Legacy{
   this.pendingChoice=null;this._resolutionReplay=null;
  }
  nextPhaseWithChoices({humanTeams=[0],choice}={}){
-  if(!this.pendingChoice&&!['setup','fire','physical'].includes(this.phase)){
+  if(!this.pendingChoice&&!['setup','fire','physical','heat'].includes(this.phase)){
    return choice===undefined?this.nextPhase():fail('Нет ожидающего решения');
   }
   if(this.winner!==null||this.queue.length)return fail('Фаза ещё не готова к разрешению');

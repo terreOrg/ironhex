@@ -1373,3 +1373,38 @@ test('AGoAC pp.6,30: controller chooses Mech order independently while preservin
   [b.name+' · B',c.name+' · C',a.name+' · A',d.name+' · D']);
  assert.deepEqual(g.resolution.map(o=>o.id),[a.id,c.id,b.id,d.id]);
 });
+
+test('AGoAC p.38: controller selects tied hottest ammo bin without repeating the failed heat roll',()=>{
+ const g=fresh(),u=g.units[0];
+ g.phase='heat';g.queue=[];g.activeTeam=null;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ const base=u.bins[0],other=base.location==='LT'?'RT':'LT';
+ u.bins=[{...base,shots:1},{...base,location:other,slot:11,shots:5}];
+ u.prone=true;u.shutdown=true;u.voluntaryShutdown=true;u.heat=19+u.sinks;u.pendingHeat=0;
+ let draws=0;g.rng=()=>{draws++;return draws<=2?0:.4;};
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
+ const pending=g.pendingChoice;assert.equal(pending.kind,'heat-ammo-bin');
+ assert.equal(draws,2);assert.equal(pending.context.heat,19);
+ assert.deepEqual(pending.options.map(o=>[o.id,o.shots]),[['0',1],['1',5]]);
+ assert.equal(u.bins[0].shots,1);assert.equal(u.bins[1].shots,5);
+ assert.equal(g.nextPhaseWithChoices({choice:{key:pending.key,option:'forged'}}).ok,false);
+ assert.equal(draws,2);
+ assert(g.nextPhaseWithChoices({choice:{key:pending.key,option:'0'}}).ok);
+ const resolved=g.units[0];
+ assert.equal(g.phase,'end');assert.equal(g.pendingChoice,null);
+ assert.equal(resolved.bins[0].destroyed,true);assert.equal(resolved.bins[0].shots,0);
+ assert.equal(resolved.bins[1].shots,5);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Перегрев боезапаса')).length,1);
+ assert.equal(resolved.pilotWounds,2);
+});
+test('AGoAC p.38: only maximum damage per shot enters the heat explosion tie',()=>{
+ const g=fresh(),u=g.units[0],base=u.bins[0];
+ u.weapons=[{name:'SRM 6',damage:2,rack:6},{name:'LRM 15',damage:1,rack:15},
+  {name:'AC/15 fixture',damage:15,rack:0}];
+ u.bins=[{...base,weapon:0,shots:100},{...base,weapon:1,shots:1},{...base,weapon:2,shots:2}];
+ g._resolutionChooser=(request,fallback)=>{
+  assert.deepEqual(request.options.map(o=>o.id),['1','2']);
+  assert(request.options.every(o=>o.damagePerShot===15));return '1';
+ };
+ assert.equal(g.heatExplosionBin(u,u.bins),u.bins[1]);
+});
