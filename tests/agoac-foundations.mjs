@@ -312,3 +312,15 @@ test('AGoAC pp.3-4,18: logical scale and shortest hex distance independent of he
  }
  for(let round=1;round<=100;round++)assert.equal(elapsedBattleSeconds(round),10*(round-1));
 });
+
+test('AGoAC pp.5,15: rear-mounted weapon is identified in inventory and critical slots',()=>{
+ const u=fresh().units[0],w=u.weapons[0];
+ w.name='Audit Laser';w.rear=true;
+ const rear=recordSheet(u);
+ assert(rear.includes('<td>Audit Laser (R)</td>'));
+ assert(rear.includes('○ Audit Laser (R)</div>'));
+ w.rear=false;const front=recordSheet(u);
+ assert(front.includes('<td>Audit Laser</td>'));
+ assert(front.includes('○ Audit Laser</div>'));
+ assert(!front.includes('Audit Laser (R)'));
+});
