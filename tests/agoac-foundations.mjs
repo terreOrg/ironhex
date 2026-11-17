@@ -371,3 +371,21 @@ test('AGoAC pp.3-4: unmarked terrain and level default independently and survive
  assert.equal(g.tile(7,0).road,true);
  const old=fresh();const before=JSON.stringify(old.tiles);old.rebuildMap();assert.equal(JSON.stringify(old.tiles),before);
 });
+
+test('AGoAC pp.5,37-38: all heat scale levels mark effects and preserve current overflow',()=>{
+ const u=fresh().units[0],effects=new Map([[5,'−1 MP'],[8,'+1 к оружейной атаке'],[10,'−2 MP'],[13,'+2 к оружейной атаке'],[14,'Реактор: 4+'],[15,'−3 MP'],[17,'+3 к оружейной атаке'],[18,'Реактор: 6+'],[19,'Боезапас: 4+'],[20,'−4 MP'],[22,'Реактор: 8+'],[23,'Боезапас: 6+'],[24,'+4 к оружейной атаке'],[25,'−5 MP'],[26,'Реактор: 10+'],[28,'Боезапас: 8+'],[30,'Автоматическое отключение']]);
+ for(let heat=0;heat<=60;heat++){
+  u.heat=heat;const html=recordSheet(u);
+  const cells=[...html.matchAll(/<span data-heat-level="(\d+)" class="([^"]*)"(?: title="([^"]*)")?>([^<]*)<\/span>/g)];
+  assert.equal(cells.length,31);
+  const current=Math.min(heat,30);
+  for(let i=0;i<31;i++){
+   const [,value,cls,title,label]=cells[i],n=30-i;
+   assert.equal(Number(value),n);
+   assert.equal(cls.split(' ').includes('filled'),n>0&&n<=current);
+   assert.equal(cls.split(' ').includes('current'),n===current);
+   assert.equal(title,effects.get(n));assert.equal(label,String(n)+(effects.has(n)?'*':''));
+  }
+  assert(html.includes('title="Heat Overflow / нагрев сверх 30">+'+Math.max(0,heat-30)+'</span>'));
+ }
+});
