@@ -202,5 +202,7 @@ test('API persists mandatory phase choice, rejects forged decisions and redacts 
  const done=runTacticalOrder(restored,{type:'next',version:2,choice:{key:snapshot.pendingChoice.key,option:'back'}});
  assert.equal(done.result.ok,true);assert.equal(draws,6);assert.equal(restored.phase,'heat');
  assert.deepEqual([restored.unit(b.id).q,restored.unit(b.id).r],[back.q,back.r]);
- assert.equal(publicSnapshot({game:restored}).pendingChoice,null);
+ const finalState=JSON.parse(JSON.stringify(restored,(k,v)=>['map','rng'].includes(k)?undefined:v));
+ assert.equal(publicSnapshot({game:finalState}).pendingChoice,null);
+ assert(!Object.hasOwn(publicSnapshot({game:finalState}),'_resolutionReplay'));
 });
