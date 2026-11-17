@@ -1019,3 +1019,26 @@ test('Authoritative displacement choice survives reconnect and submits the selec
    assert.equal(await page.locator('[data-resolution-option]').count(),0);
   });
  });
+
+test('Local standard AGoAC deployment selects an entry edge and enters a first full hex',{timeout:120000},async()=>{
+ await withPage('local-standard-deployment',{noWebGL:true},async page=>{
+  await page.locator('#gamemode').selectOption('hotseat');
+  await page.locator('#new').click();
+  await page.locator('#confirmstandard').click();
+  assert.match(await page.locator('#phase').textContent(),/РАЗВЁРТЫВАНИЕ/);
+  assert.equal(await page.locator('#labels .mechlabel[data-on-map="false"]').count(),4);
+  await page.locator('#next').click();
+  await page.locator('[data-resolution-option="0"]').waitFor({state:'visible'});
+  assert.equal(await page.locator('[data-resolution-option]').count(),6);
+  await page.locator('[data-resolution-option="0"]').click();
+  await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='ИНИЦИАТИВА'&&!document.querySelector('#next')?.disabled,null,{timeout:60000});
+  await page.locator('#next').click();
+  await page.locator('#entry-hex').waitFor({state:'visible',timeout:60000});
+  assert.equal(await page.locator('#entry-hex option').count(),7);
+  await page.locator('#enter-field').click();
+  await page.locator('#hold').waitFor({state:'visible',timeout:60000});
+  await page.waitForFunction(()=>!document.querySelector('#hold')?.disabled&&document.querySelectorAll('#labels [data-on-map="true"]').length===1);
+  assert.match(await page.locator('#actions').textContent(),/1\s*\//);
+  assert.equal(await page.locator('#labels .mechlabel[data-on-map="false"]').count(),3);
+ });
+});
