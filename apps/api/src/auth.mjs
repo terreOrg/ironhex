@@ -1,3 +1,4 @@
+import { validEmailAddress } from './email-address.mjs';
 import { createHash, randomBytes, scrypt as callbackScrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
@@ -27,7 +28,7 @@ export function validateRegistration({ handle, email, password } = {}) {
     throw new AuthError(400, 'invalid_handle');
   }
   if (typeof email !== 'string' || email.length > 254 ||
-      !/^[^\s@]{1,64}@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) {
+      !validEmailAddress(email.trim(),{maxLocalLength:64,minSuffixLength:2})) {
     throw new AuthError(400, 'invalid_email');
   }
   validateNewPassword(password);

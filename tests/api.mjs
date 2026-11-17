@@ -75,3 +75,24 @@ test('CSRF rejects cross-site account mutations before touching auth storage',as
     await new Promise(resolve=>authenticated.close(resolve));
   }
 });
+
+test('secure cookie mode requires an explicit HTTPS origin',()=>{
+  assert.throws(()=>createHttpServer({secureCookies:true}),/HTTPS public origin/);
+  assert.throws(()=>createHttpServer({secureCookies:true,publicOrigin:'http://example.com'}),/HTTPS public origin/);
+  assert.doesNotThrow(()=>createHttpServer({secureCookies:true,publicOrigin:'https://example.com'}));
+});
+test('configured HTTPS origin accepts proxy traffic but rejects HTTP and cross-site mutations',async()=>{
+  const originServer=createHttpServer({publicOrigin:'https://example.com',secureCookies:true,authStore:{
+    register:async()=>({user:{id:'test'},token:'a'.repeat(64)})
+  }});
+  originServer.listen(0,'127.0.0.1');await once(originServer,'listening');
+  try{
+    const base='http://127.0.0.1:'+originServer.address().port;
+    const send=(origin,extra={})=>fetch(base+'/api/v1/auth/register',{method:'POST',
+      headers:{Origin:origin,'Content-Type':'application/json',...extra},body:'{}'});
+    assert.equal((await send('http://example.com')).status,403);
+    assert.equal((await send('https://example.com',{'Sec-Fetch-Site':'cross-site'})).status,403);
+    const accepted=await send('https://example.com');
+    assert.equal(accepted.status,201);assert.match(accepted.headers.get('set-cookie'),/Secure/);
+  }finally{await new Promise(resolve=>originServer.close(resolve));}
+});

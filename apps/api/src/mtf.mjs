@@ -14,7 +14,9 @@ const FIXED=new Set([
   'Hip','Upper Leg Actuator','Lower Leg Actuator','Foot Actuator'
 ]);
 function normalizeWeapon(label){
-  const stripped=label.replace(/\s+\(R\)$/i,'').replace(/^IS /i,'').trim();
+  const rearSuffix=label.toUpperCase().endsWith('(R)')&&/\s/.test(label.at(-4)||'');
+  const unmarked=rearSuffix?label.slice(0,-3).trimEnd():label;
+  const stripped=unmarked.replace(/^IS /i,'').trim();
   const autocannon=stripped.match(/^(?:Autocannon\/|AC\/)(2|5|10|20)$/i);
   if(autocannon)return 'AC/'+autocannon[1];
   const missile=stripped.match(/^(LRM|SRM)[ -]?(\d+)$/i);
@@ -37,9 +39,10 @@ export function importMtf(raw,{sourcePath='unknown'}={}){
   const lines=raw.replace(/\r/g,'').split('\n');
   const properties={};
   for(const line of lines){
-    const m=line.match(/^([^:\n]+):\s*(.+)$/);
-    if(m&&!Object.hasOwn(properties,m[1].trim().toLowerCase()))
-      properties[m[1].trim().toLowerCase()]=m[2].trim();
+    const colon=line.indexOf(':');
+    if(colon<=0||colon===line.length-1)continue;
+    const key=line.slice(0,colon).trim().toLowerCase();
+    if(!Object.hasOwn(properties,key))properties[key]=line.slice(colon+1).trim();
   }
   const required=key=>{
     if(!properties[key])bad('missing_'+key.replace(/\s/g,'_'));

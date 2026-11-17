@@ -150,3 +150,11 @@ test('BMM p.5: hangar accepts explicit biped MTF designs but rejects unsupported
   assert.throws(()=>validateDesign({config:{...griffin.config,config:'Quad'}}),
     /invalid_design|Четырёхногие|unsupported/);
 });
+
+test('MTF parsing handles long property whitespace with unchanged construction',()=>{
+  const entry=sourceManifest.entries.find(x=>x.file.includes('Griffin'));
+  const raw=readFileSync(join(base,entry.file),'utf8');
+  const expected=importMtf(raw);
+  assert.deepEqual(importMtf(raw.replace(/^Config:Biped$/m,'Config:'+' '.repeat(100000)+'Biped')),expected);
+  assert.throws(()=>importMtf(raw.replace(/^Config:Biped$/m,'Config:   \nConfig:Biped')),/unsupported_mtf:missing_config/);
+});
