@@ -126,7 +126,7 @@ function performRound(game) {
     if(['move','fire','physical'].includes(game.phase)){
       let orders=0;
       while(game.queue.length && game.winner===null && orders++<20){
-        const active=game.units.find(u=>game.canAct(u));
+        const active=game.aiSelection();
         if(!active){
           // A mech destroyed after initiative cannot keep a dead team in the queue.
           game.queue.shift();
@@ -136,6 +136,7 @@ function performRound(game) {
         }
         const result=game.phase==='move'?game.aiMove(active.id):
           game.phase==='fire'?game.aiAttack(active.id):game.aiPhysical(active.id);
+        if(result?.code==='deployment_blocked')throw new AuthError(409,'deployment_blocked');
         if(!result?.ok){
           const skip=game.hold(active.id);
           if(!skip?.ok)throw Error('simulation_stalled');

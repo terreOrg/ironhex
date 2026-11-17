@@ -29,7 +29,7 @@ export function validateTacticalOrder(b){
       (b.standingStill===undefined||typeof b.standingStill==='boolean')&&
       (b.evading===undefined||typeof b.evading==='boolean')&&
       (b.floatingCriticals===undefined||typeof b.floatingCriticals==='boolean'),
-    move:()=>int(b.q,-6,6)&&int(b.r,-6,6)&&['walk','run','jump','evade'].includes(b.mode)&&
+    move:()=>int(b.q,-6,6)&&int(b.r,-6,6)&&['walk','run','jump','evade','minimum'].includes(b.mode)&&
       (b.lateral===undefined||['shift-left-forward','shift-right-forward',
         'shift-left-backward','shift-right-backward'].includes(b.lateral)),
     rotate:()=>[-1,1].includes(b.delta),stand:()=> (b.facing===undefined||int(b.facing,0,5))&&
@@ -58,7 +58,7 @@ export function autoOpponent(game){
   while(game.winner===null&&game.activeTeam===1&&
     ['move','fire','physical'].includes(game.phase)){
     if(++turns>20)throw Error('opponent_action_limit');
-    const unit=game.units.find(u=>game.canAct(u));
+    const unit=game.aiSelection();
     if(!unit){
       game.queue.shift();game.activeTeam=game.queue[0]??null;game.actingId=null;
       continue;
@@ -67,6 +67,7 @@ export function autoOpponent(game){
     const phase=game.phase;
     const r=phase==='move'?game.aiMove(unit.id):
       phase==='fire'?game.aiAttack(unit.id):game.aiPhysical(unit.id);
+    if(r?.code==='deployment_blocked')throw new AuthError(409,'deployment_blocked');
     if(!r?.ok&&!game.hold(unit.id)?.ok)throw Error('opponent_stalled');
     actions.push({id:unit.id,phase,
       ...(phase==='move'&&r?.path?.length?{

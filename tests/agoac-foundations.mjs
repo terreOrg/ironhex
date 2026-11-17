@@ -1266,3 +1266,36 @@ test('AGoAC pp.6,8,11–12: jumping entry counts the first full hex, consumes ju
  assert(g.move(u.id,route.q,route.r,'jump').ok);assert(g.onMap(u));assert.equal(u.spent,3);assert.equal(u.distanceMoved,3);
  assert.equal(u.pendingHeat,3);assert.equal(g.reachable(u,'jump').length,0);assert(g.hold(u.id).ok);
 });
+
+// AGoAC pp.6,9–11: minimum movement is a single forward running step;
+ // a truly blocked entry is an unresolved scenario, not automatic destruction.
+test('AGoAC pp.6,11: minimum entry into water spends the movement action and running heat',()=>{
+ const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+ g.rng=()=>.99;
+ const edge=g.deployment.edges[u.team],t=g.deploymentEdgeTiles(edge)[0];
+ Object.assign(t,{type:'water',depth:1,surface:0,height:-1});
+ assert(!g.reachable(u,'run').some(p=>p.q===t.q&&p.r===t.r));
+ assert(g.reachable(u,'minimum').some(p=>p.q===t.q&&p.r===t.r));
+ const total=g.mp(u,'run'),result=g.move(u.id,t.q,t.r,'minimum');
+ assert(result.ok);assert(result.ended);assert.equal(result.mode,'run');
+ assert(u.deployed);assert(u.moved);assert.equal(u.spent,total);
+ assert.equal(u.distanceMoved,1);assert.equal(u.pendingHeat,2);
+ assert.equal(g.rotate(u.id,1).ok,false);
+});
+test('AGoAC pp.6,9: ground entry rejects excessive descent, blocked AI never fabricates a move or death',()=>{
+ const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+ g.rng=()=>.99;
+ for(const t of g.deploymentEdgeTiles(g.deployment.edges[u.team])){
+  Object.assign(t,{type:'water',depth:3,surface:0,height:-3});
+ }
+ u.jump=0;
+ assert.equal(g.deploymentOptions(u).length,0);
+ assert.equal(g.hold(u.id).ok,false);
+ const other=g.units.find(x=>x!==u&&x.team===u.team);
+ other.jump=3;other.jumpLost=0;
+ assert(g.deploymentOptions(other).length>0);
+ assert.equal(g.aiSelection().id,other.id);
+ const before=JSON.stringify(u),result=g.aiMove(u.id);
+ assert.equal(result.code,'deployment_blocked');assert.equal(JSON.stringify(u),before);
+ assert.equal(g.winner,null);assert(!u.dead);assert.equal(u.deployed,false);
+});
