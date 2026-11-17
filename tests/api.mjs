@@ -1,3 +1,5 @@
+import {Game} from '../packages/engine/engine.js';
+import {runTacticalOrder,publicSnapshot,validateTacticalOrder} from '../apps/api/src/server-combat.mjs';
 import {createPilotStore,validatePilot} from '../apps/api/src/pilots.mjs';
 import {AuthError} from '../apps/api/src/auth.mjs';
 import assert from 'node:assert/strict';
@@ -174,4 +176,33 @@ test('pilot assignment checks ownership, permits unassignment and maps uniquenes
   mode='missing';await assert.rejects(store.assign('owner',mechId,pilotId),pilotCode('assignment_not_found'));
   mode='duplicate';await assert.rejects(store.assign('owner',mechId,pilotId),pilotCode('pilot_already_assigned'));
   mode='unexpected';await assert.rejects(store.assign('owner',mechId,pilotId),/database unavailable/);
+});
+
+test('API persists mandatory phase choice, rejects forged decisions and redacts private RNG replay',()=>{
+ let draws=0;
+ const g=new Game({rng:()=>{draws++;return .99;}}),[t,b,a,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(a,{q:-1,r:0,facing:0});Object.assign(t,{q:0,r:0});
+ Object.assign(b,{q:1,r:0,facing:1,moveMode:'walk',spent:0});
+ other.dead=true;g.phase='physical';g.initiativeWinner=0;g.queue=[];g.activeTeam=null;
+ const push=g.physicalPreview(a.id,t.id,'push','LA');assert(push.legal,push.reason);
+ g.physicalDeclarations=[{id:a.id,target:t.id,type:'push',limb:'LA',...push}];
+ const effect=runTacticalOrder(g,{type:'next',version:1});
+ assert.equal(effect.result.pending,true);assert.equal(draws,4);
+ const stored=JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v));
+ const snapshot=publicSnapshot({game:stored});
+ assert(!Object.hasOwn(snapshot,'_resolutionReplay'));assert.equal(snapshot.pendingChoice.kind,'domino');
+ assert.throws(()=>runTacticalOrder(g,{type:'next',version:2,choice:{key:'fake',option:'decline'}}),AuthError);
+ assert.throws(()=>runTacticalOrder(g,{type:'hold',id:0,version:2}),AuthError);
+ assert.throws(()=>validateTacticalOrder({type:'next',version:2,choice:{key:snapshot.pendingChoice.key,option:'back',dice:[6,6]}}),AuthError);
+ assert.equal(draws,4);
+ const restored=new Game({rng:()=>{draws++;return .99;}});
+ Object.assign(restored,stored);restored.rebuildMap();
+ const back=snapshot.pendingChoice.options.find(o=>o.id==='back');
+ const done=runTacticalOrder(restored,{type:'next',version:2,choice:{key:snapshot.pendingChoice.key,option:'back'}});
+ assert.equal(done.result.ok,true);assert.equal(draws,6);assert.equal(restored.phase,'heat');
+ assert.deepEqual([restored.unit(b.id).q,restored.unit(b.id).r],[back.q,back.r]);
+ const finalState=JSON.parse(JSON.stringify(restored,(k,v)=>['map','rng'].includes(k)?undefined:v));
+ assert.equal(publicSnapshot({game:finalState}).pendingChoice,null);
+ assert(!Object.hasOwn(publicSnapshot({game:finalState}),'_resolutionReplay'));
 });
