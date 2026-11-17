@@ -1020,3 +1020,60 @@ test('AGoAC pp.27–28: target controller selects an equal DFA displacement dire
  assert.equal(g.phaseRolls.filter(r=>r.kind===u.name+' · DFA').length,1);
  assert(g.unit(u.id).prone||g.unit(u.id).dead);
 });
+
+function sameSidePriorityGame(){
+ const g=fresh(),[puncher,pusher,t,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(pusher,{q:-1,r:0,facing:0});
+ Object.assign(puncher,{q:0,r:-1,facing:DIRS.findIndex(d=>d[0]===0&&d[1]===1)});
+ Object.assign(t,{q:0,r:0,facing:3});
+ other.dead=true;g.phase='physical';g.initiativeWinner=1;g.queue=[];g.activeTeam=null;
+ const punch=g.physicalPreview(puncher.id,t.id,'punch','LA');
+ const push=g.physicalPreview(pusher.id,t.id,'push','LA');
+ assert(punch.legal,punch.reason);assert(push.legal,push.reason);
+ g.physicalDeclarations=[
+  {id:pusher.id,target:t.id,type:'push',limb:'LA',...push},
+  {id:puncher.id,target:t.id,type:'punch',limb:'LA',...punch}
+ ];
+ return {g,puncher,pusher,t};
+}
+test('AGoAC p.42: controller can order a conflicting punch and push before either is rolled',()=>{
+ for(const first of ['punch','push']){
+  const {g,puncher,pusher,t}=sameSidePriorityGame();let draws=0;g.rng=()=>{draws++;return .99;};
+  assert.equal(g.nextPhaseWithChoices({humanTeams:[0]}).pending,true);
+  const request=structuredClone(g.pendingChoice);
+  assert.equal(request.kind,'physical-order');assert.equal(request.team,0);
+  assert.deepEqual(request.options.map(o=>o.attackerId),[pusher.id,puncher.id]);
+  assert.equal(draws,0,'controller decides before either attack roll');
+  const id=first==='punch'?puncher.id:pusher.id;
+  const result=g.nextPhaseWithChoices({choice:{key:request.key,option:String(id)}});
+  assert(result.ok);assert.equal(g.pendingChoice,null);assert.equal(g.phase,'heat');
+  const punch=g.resolution.find(r=>r.id===puncher.id).shots[0];
+  assert.equal(punch.cancelled,first==='push');assert.equal(punch.hit,first==='punch');
+  assert.equal(g.phaseRolls[0].kind,first==='push'?pusher.name+' · push':puncher.name+' · punch');
+  assert.deepEqual([g.unit(t.id).q,g.unit(t.id).r],[1,0]);
+ }
+});
+test('AGoAC pp.6–7,42: same-side choice groups both punches and leaves opponent initiative priority intact',()=>{
+ const {g,puncher,pusher,t}=sameSidePriorityGame();
+ const original=g.physicalDeclarations[1];
+ g.physicalDeclarations.push({...original,limb:'RA'});
+ const enemy={id:t.id,target:pusher.id,type:'punch',limb:'LA',targetNumber:2,damage:5,side:'front',table:'punch'};
+ g.physicalDeclarations.push(enemy);g.initiativeWinner=0;
+ const ordered=g.physicalOrder(),handled=new Set([enemy]);
+ assert.equal(ordered[0],enemy);
+ let asked=0;g._resolutionChooser=(request)=>{
+  asked++;assert.equal(request.team,0);assert.equal(request.options.length,2);
+  assert.equal(request.options.find(o=>o.attackerId===puncher.id).attacks.length,2);
+  return String(puncher.id);
+ };
+ const group=g.nextPhysicalAttacker(ordered,handled);
+ assert.deepEqual(group.map(d=>d.limb),['LA','RA']);
+ assert(group.every(d=>d.id===puncher.id));assert.equal(asked,1);
+ group.forEach(d=>handled.add(d));
+ assert.deepEqual(g.nextPhysicalAttacker(ordered,handled).map(d=>d.id),[pusher.id]);
+ assert.equal(asked,1,'no choice with only one attacker remaining');
+ g.physicalDeclarations=g.physicalDeclarations.filter(d=>d.type!=='push');
+ assert.equal(g.nextPhysicalAttacker(g.physicalOrder(),new Set([enemy])).length,2);
+ assert.equal(asked,1,'ordinary-only attack order needs no displacement prompt');
+});

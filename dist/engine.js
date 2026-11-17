@@ -950,10 +950,33 @@ export class Game extends Legacy{
    ...this.physicalDeclarations
   ];
   if(this.initiativeWinner!==0&&this.initiativeWinner!==1)return orders;
-  // Stable within each side: use the recorded order as the default.
-  // Interactive same-side ordering remains a separate controller choice.
+  // Stable default for automatic battles. Interactive controllers may choose
+  // which unit attacks first while their side has a displacement attack.
   return orders.sort((a,b)=>Number(this.unit(a.id).team===this.initiativeWinner)-
    Number(this.unit(b.id).team===this.initiativeWinner));
+ }
+ // AGoAC p.42: the lower-Initiative side acts first in displacement
+ // conflicts; within that side, its controller can order its own attacks.
+ // Offer a choice conservatively whenever a remaining special/push attack
+ // could move a participant (including an indirect domino chain).
+ nextPhysicalAttacker(orders,handled){
+  const remaining=orders.filter(d=>!handled.has(d));
+  if(!remaining.length)return [];
+  const first=this.unit(remaining[0].id);
+  const sameSide=remaining.filter(d=>this.unit(d.id).team===first.team);
+  const ids=[...new Set(sameSide.map(d=>d.id))];
+  let id=first.id;
+  if(ids.length>1&&sameSide.some(d=>d.special||d.type==='push')){
+   const options=ids.map(unitId=>({
+    id:String(unitId),attackerId:unitId,
+    attacks:sameSide.filter(d=>d.id===unitId).map(d=>({
+     targetId:d.target,type:d.special?this.unit(d.id).charge.type:d.type,limb:d.limb
+    }))
+   }));
+   id=Number(this.chooseResolutionOption('physical-order',first,options,String(id)));
+  }
+  // A Mech's two declared punches cannot be split between other attackers.
+  return sameSide.filter(d=>d.id===id);
  }
  physicalGeometryChanged(before,now){
   return before.q!==now.q||before.r!==now.r||before.facing!==now.facing||
@@ -996,15 +1019,19 @@ export class Game extends Legacy{
   try{
    const snapshots=new Map(this.units.map(u=>[u.id,structuredClone(u)]));
    const orders=this.physicalOrder(),handled=new Set(),attacks=[];
-   for(const d of orders){
-    if(handled.has(d))continue;
-    if(d.special){this.resolveSpecial(this.unit(d.id));continue;}
-    if(d.type==='push'){
-     const opposed=orders.find(p=>p!==d&&!handled.has(p)&&p.type==='push'&&p.id===d.target&&p.target===d.id);
-     handled.add(d);if(opposed)handled.add(opposed);
-     this.resolvePush(d,opposed);continue;
+   while(handled.size<orders.length){
+    const group=this.nextPhysicalAttacker(orders,handled);
+    for(const d of group){
+     if(handled.has(d))continue;
+     handled.add(d);
+     if(d.special){this.resolveSpecial(this.unit(d.id));continue;}
+     if(d.type==='push'){
+      const opposed=orders.find(p=>p!==d&&!handled.has(p)&&p.type==='push'&&p.id===d.target&&p.target===d.id);
+      if(opposed)handled.add(opposed);
+      this.resolvePush(d,opposed);continue;
+     }
+     attacks.push(this.rollPhysical(d,snapshots));
     }
-    attacks.push(this.rollPhysical(d,snapshots));
    }
    for(const attack of attacks)this.resolveRolledPhysical(attack);
   }finally{this.deferConsciousness=false;}
