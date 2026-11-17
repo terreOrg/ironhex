@@ -275,6 +275,34 @@ async function completeOrders(page, label) {
   assert(await page.locator('#next').isEnabled(),label+' did not complete');
 }
 
+test('AGoAC pp.4,45-48: every unit record remains open throughout all six battle phases', {timeout:180000},async()=>{
+ await withPage('agoac-all-records',{noWebGL:true},async page=>{
+  await page.locator('#gamemode').selectOption('hotseat');
+  async function inspect(){
+   const phase=await page.locator('#phase').textContent();
+   const active=await page.locator('.unitcard.active').getAttribute('data-unit');
+   const enabled=await page.locator('#next').isEnabled();
+   const units=await page.locator('.unitcard').evaluateAll(cards=>cards.map(c=>({id:c.dataset.unit,name:c.querySelector('strong').textContent})));
+   for(const unit of units){
+    await page.locator('#all-records').click();
+    assert.equal(await page.locator('#record-list [data-record-id]').count(),units.length);
+    await page.locator('#record-list [data-record-id="'+unit.id+'"]').click();
+    assert.equal(await page.locator('#modal .recordhead b').textContent(),unit.name);
+    await page.locator('#close').click();
+    assert.equal(await page.locator('.unitcard.active').getAttribute('data-unit'),active);
+    assert.equal(await page.locator('#phase').textContent(),phase);
+    assert.equal(await page.locator('#next').isEnabled(),enabled);
+   }
+  }
+  await inspect();
+  await page.locator('#next').click();await page.locator('#hold').waitFor({timeout:50000});
+  for(const phase of ['movement','fire','physical']){
+   await inspect();await completeOrders(page,phase);await page.locator('#next').click();
+  }
+  await inspect();await page.locator('#next').click();await inspect();
+ });
+});
+
 test('Hotseat completes all battle phases and returns to initiative', { timeout:150000 }, async () => {
   await withPage('round',{ noWebGL:true },async page => {
     await page.locator('#gamemode').selectOption('hotseat');

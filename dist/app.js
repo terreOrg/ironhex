@@ -181,6 +181,9 @@ $('#allies').innerHTML=game.units.filter(u=>u.team===0).map(card).join('');$('#e
 $('#round').textContent=`РАУНД ${String(game.round).padStart(2,'0')}`;$('#round').title=`Завершённое игровое время: ${elapsedBattleSeconds(game.round)} с · ${AGOAC_SCALE.turnSeconds} с/ход`;
 $('#phase').textContent=PHASES[game.phase].toUpperCase();
 $('#selected').innerHTML=`<h2>${u.name.toUpperCase()}</h2><div class="sub">${u.variant} · ${u.tonnage} тонн · Пилот ${u.gunnery}/${u.piloting} · Ранения ${u.pilotWounds}/6</div><div class="stats"><div><b>${sum(u.armor)+sum(u.rear)}</b><small>БРОНЯ</small></div><div><b>${u.heat}<span style="font-size:12px;color:#d9ae6c">+${u.pendingHeat}</span></b><small>НАГРЕВ</small></div><div><b>${game.mp(u,'walk')}/${game.mp(u,'run')}/${game.mp(u,'jump')}</b><small>ХОД / БЕГ / ПРЫЖОК</small></div></div><button class="sheetbtn" id="sheet">▤ &nbsp; ОТКРЫТЬ ЛИСТ МЕХА ↗</button>`;$('#sheet').onclick=()=>sheet(u);
+const recordList=document.createElement('button');
+recordList.type='button';recordList.className='sheetbtn';recordList.id='all-records';recordList.textContent='▤  ВСЕ ЛИСТЫ МЕХОВ ↗';
+recordList.onclick=openRecordList;$('#selected').appendChild(recordList);
 // AGoAC p.4: an opponent's sheet is open information, including while targeting.
 if(target!==null&&game.units[target]&&target!==selected){
  const targetSheet=document.createElement('button');targetSheet.className='sheetbtn';targetSheet.id='target-sheet';targetSheet.textContent='▤  ЛИСТ ЦЕЛИ ↗';
@@ -262,6 +265,17 @@ async function fire(){const entries=[...picked].map(index=>({index,target:weapon
 $('#next').onclick=async()=>{if(remoteMode)return serverCommand({type:'next'});if(busy)return;const r=game.nextPhase();if(!r?.ok){toast(r?.error);return;}busy=true;renderUI();if(game.resolution.length){for(const attack of game.resolution)await animateAttack(attack.id,attack.target,attack);await showRolls(game.afterRolls);}else await showRolls(game.phaseRolls);syncModels();await pumpAI();chooseActive();busy=false;renderUI();toast(game.winner===null?PHASES[game.phase]+'. Следуйте очередности приказов.':'Бой завершён.');};
 function modal(html){$('#modal').classList.remove('recorddialog');$('#modalbody').innerHTML=html;$('#modal').showModal();}$('#close').onclick=()=>$('#modal').close();$('#modal').addEventListener('click',e=>{if(e.target===$('#modal'))$('#modal').close();});
 function sheet(u){modal(recordSheet(u));$('#modal').classList.add('recorddialog');}
+function openRecordList(){
+ modal('<h2>Листы мехов</h2><p>Открытые данные боя. Просмотр не изменяет текущий приказ.</p><div id="record-list"></div>');
+ const list=$('#record-list');
+ for(const unit of game.units){
+  const button=document.createElement('button');
+  button.type='button';button.className='sheetbtn';button.dataset.recordId=String(unit.id);
+  button.textContent=unit.name+' · '+(unit.team?'Красный':'Зелёный')+' · '+(unit.dead?'Уничтожен':'В бою');
+  button.onclick=()=>sheet(unit);
+  list.appendChild(button);
+ }
+}
 
 const rulesURL='https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d+battletech+a+game+of+armored+combat+rulebook.pdf';
 $('#help').onclick=()=>modal(`<div class="eyebrow">ПОЛЕВОЕ РУКОВОДСТВО</div><h2>Цикл боя AGoAC</h2><ol><li>Бросьте инициативу. Проигравший отряд действует первым. Выберите меха, у которого указано «Ваша очередь».</li><li>Двигайтесь по подсвеченным гексам. Повороты стоят MP. Можно продолжить маршрут или повернуться, затем нажмите «Завершить приказ меха».</li><li>В оружейной фазе выберите торс, оружие и цели. Приказы обоих отрядов фиксируются до разрешения стрельбы. Уже заявленный выстрел происходит даже при уничтожении стрелка в этой фазе.</li><li>Затем заявите физические атаки соседним мехам или пропустите их. После разрешения боя пройдите нагрев и конец хода.</li></ol><h3>Повреждения и пилот</h3><p>Учитываются кормовая броня, критические слоты, двигатель, гироскоп, актуаторы, датчики, боезапас, ранения и сознание пилота. Падение и подъём проверяются кубиками. Вода влияет на движение, стрельбу и охлаждение.</p><h3>Покрытие книги</h3><p>Текущая реализация расширяет базовый бой. <a href="coverage.html" target="_blank">Полный перечень реализованных правил и оставшихся ограничений</a>. В интерфейсе не обозначаются реализованными правила, для которых ещё нет управления или проверки.</p><p>Игра вдвоём — на одном устройстве. Сетевого режима нет. <a href="${rulesURL}" target="_blank">Исходная книга правил</a>.</p>`);
