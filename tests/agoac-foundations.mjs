@@ -779,3 +779,53 @@ test('AGoAC p.43: standing in water uses one halved impact and surface and botto
  g.fall(u,3,null,'rear',0,{height:1,depth:0});
  assert.deepEqual(packets,[5,2,5,5],'7 surface plus 10 bottom; do not combine into 17 before packetization');
 });
+
+test('AGoAC pp.26–29: displacement declarations reserve a target across attack types and reject airborne targets',()=>{
+ const prepare=()=>{
+  const g=fresh(),[u,a,t,b]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0});Object.assign(a,{q:2,r:0,facing:3});
+  Object.assign(t,{q:1,r:0,facing:3,moved:true});Object.assign(b,{q:3,r:0});
+  g.phase='physical';g.activeTeam=u.team;g.queue=[u.team,u.team];g.actingId=null;
+  return {g,u,a,t,b};
+ };
+ for(const type of ['charge','dfa']){
+  const {g,u,a,t,b}=prepare();
+  a.charge={type,target:t.id};
+  assert.equal(g.physicalPreview(u.id,t.id,'push','LA').legal,false);
+  const saved=JSON.stringify({units:g.units,queue:g.queue,orders:g.physicalDeclarations});
+  assert.equal(g.declarePhysical(u.id,t.id,'push','LA').ok,false);
+  assert.equal(JSON.stringify({units:g.units,queue:g.queue,orders:g.physicalDeclarations}),saved);
+  a.charge=null;t.charge={type,target:b.id};t.airborne=type==='dfa';
+  assert.equal(g.physicalPreview(u.id,t.id,'push','LA').legal,false);
+  if(type==='dfa')for(const attack of ['punch','kick','club','hatchet']){
+   assert.equal(g.physicalPreview(u.id,t.id,attack,'LA').legal,false);
+  }
+  g.phase='move';g.queue=[u.team];g.activeTeam=u.team;g.actingId=null;
+  const before=JSON.stringify({units:g.units,queue:g.queue});
+  for(const kind of ['charge','dfa'])assert.equal(g.declareCharge(u.id,t.id,kind).ok,false);
+  assert.equal(JSON.stringify({units:g.units,queue:g.queue}),before);
+ }
+ const {g,u,a,t}=prepare();
+ assert(g.declarePhysical(u.id,t.id,'push','LA').ok);
+ assert.equal(g.declarePhysical(a.id,t.id,'push','LA').ok,false);
+ assert.equal(g.physicalDeclarations.length,1);
+ // A reservation restricts displacement attacks, not ordinary kicks.
+ assert.equal(g.physicalPreview(a.id,t.id,'kick','RL').legal,true);
+ // Reciprocal pushes have different target IDs and remain legal.
+ g.activeTeam=t.team;g.queue=[t.team];
+ assert(g.declarePhysical(t.id,u.id,'push','LA').ok);
+});
+test('AGoAC pp.25–27: prone completed target is eligible for DFA but not charge',()=>{
+ const g=fresh(),[u,a,t,b]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:-2,r:0,facing:0,jump:5,jumpLost:0});
+ Object.assign(t,{q:1,r:0,moved:true,prone:true});
+ a.dead=b.dead=true;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert.equal(g.declareCharge(u.id,t.id,'charge').ok,false);
+ const result=g.declareCharge(u.id,t.id,'dfa');
+ assert(result.ok,result.error);
+ assert.equal(u.charge.type,'dfa');assert.equal(u.airborne,true);
+ assert.equal(u.charge.target,t.id);
+});
