@@ -239,6 +239,57 @@
           "test": "AGoAC p.5: base pilot defaults and skill-dependent attack targets"
         }
       ]
+    },
+    {
+      "id": "agoac-009",
+      "topicId": "agoac-foundations",
+      "pages": [
+        4,
+        5,
+        44
+      ],
+      "statement": "Warrior Data shows the assigned pilot identity, skills, current wounds, consciousness and death state.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.4-5,44: Warrior Data displays escaped pilot name, wound state and consciousness threshold"
+        }
+      ]
+    },
+    {
+      "id": "agoac-010",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5
+      ],
+      "statement": "Heat Data distinguishes total installed sinks from lost sinks in addition to the heat scale.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: Heat Data distinguishes installed and destroyed heat sinks"
+        }
+      ]
+    },
+    {
+      "id": "agoac-011",
+      "topicId": "agoac-foundations",
+      "pages": [
+        4
+      ],
+      "statement": "During targeting allow direct opening of opponent record sheet, unless scenario rules restrict information. Browser interaction still requires an explicit regression.",
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-012",
+      "topicId": "agoac-foundations",
+      "pages": [
+        3,
+        4
+      ],
+      "statement": "Audit physical scale abstractions and independent dice results; map-size and scenario geometry are audited under setup.",
+      "status": "not_audited"
     }
   ]
 }
