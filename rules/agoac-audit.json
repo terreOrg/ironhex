@@ -668,6 +668,53 @@
           "test": "AGoAC pp.5,37-38: all heat scale levels mark effects and preserve current overflow"
         }
       ]
+    },
+    {
+      "id": "agoac-029",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5,
+        44
+      ],
+      "statement": "Warrior Data displays all six injury steps, accumulated wounds, the corresponding consciousness thresholds and death at six wounds.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.5,44: Warrior Data shows all six injury steps and the exact consciousness table"
+        }
+      ]
+    },
+    {
+      "id": "agoac-030",
+      "topicId": "agoac-foundations",
+      "pages": [
+        4,
+        5
+      ],
+      "statement": "For each location, track every point of current and starting front armor and internal structure independently, with rear armor limited to the three torso sections.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.4-5: armor and structure dots track every section independently"
+        }
+      ]
+    },
+    {
+      "id": "agoac-031",
+      "topicId": "agoac-foundations",
+      "pages": [
+        5
+      ],
+      "statement": "Mech Data presents actual chassis identity, tonnage and base movement ratings; displayed identity is text rather than executable markup.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: Mech Data uses actual chassis metadata with escaped text"
+        }
+      ]
     }
   ]
 }

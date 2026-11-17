@@ -11,3 +11,6 @@ dialog.recorddialog{width:min(1000px,calc(100% - 16px));max-width:1000px;backgro
 .lablink{color:#c4ee7c;text-decoration:none;padding:10px;font-size:12px}
 
 .weather{display:grid;gap:8px;font-size:12px;margin-top:15px;color:#b0bca7}.weather input{accent-color:#c4ee7c}
+
+/* Record-sheet pilot wounds: accumulated injuries and current consciousness threshold. */
+.recordpaper .warrior-injury{width:100%;table-layout:fixed;border-collapse:collapse;font-size:8px;margin-top:2px}.recordpaper .warrior-injury th:first-child{width:33%;text-align:left}.recordpaper .warrior-injury th,.recordpaper .warrior-injury td{border:1px solid #aaa;padding:3px 1px;text-align:center}.recordpaper .warrior-injury .wound-hit{background:#222;color:#fff}.recordpaper .warrior-injury .wound-current{outline:2px solid #a33;outline-offset:-2px;font-weight:bold}
