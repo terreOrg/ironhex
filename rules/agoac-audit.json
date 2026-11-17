@@ -1167,7 +1167,7 @@
         44
       ],
       "statement": "Distinguish destroyed standard BattleMechs from their temporary map presence until the end of the phase. Clear pending presence at phase resolution while retaining historical state.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1177,7 +1177,35 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.6,7,35: destroyed map presence is cleared at each phase boundary"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Printed pp.35 and 44 specify end-of-phase map removal after destruction including pilot death; p.42 distinguishes destruction by the displacing action from normal displacement. The current standard engine destroyMech marks dead and removalPending, onMap retains pending presence and occupied sees ground occupants until cleanup, canAct rejects dead. Standard lethal damage routes (sixth wound, head, center torso, cockpit critical and third engine hit) and removal at Movement, Weapon, Physical, Heat and End boundaries have explicit passing regressions. Pending removal survives serialization; historical unit remains; absent roster/legacy dead units stay absent, reset restores active presence. Certifies this narrow engine state lifecycle only, not complete physical conflict, DFA, simultaneous attacks, special offboard or advanced skid effects, nor a full renderer audit; agoac-033 stays open.",
+        "verifiedOn": "2026-11-17",
+        "testedSha": "5326749131376733bea7d65da107f560aae8ef9c",
+        "testedTree": "62d44efca120f338ff158837802b1e53e60bafec",
+        "mergedSha": "5326749131376733bea7d65da107f560aae8ef9c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44086465367,
+            "conclusion": "success",
+            "jobId": 134050076362
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44086465401,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44086465343,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-035",
