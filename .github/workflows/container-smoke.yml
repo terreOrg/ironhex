@@ -2,7 +2,7 @@ name: Ironhex Container Smoke
 
 on:
   push:
-    branches: [main, audit/quad-water-physical-cover]
+    branches: [main, 'audit/agoac-*']
   workflow_dispatch:
 
 permissions:

@@ -2,7 +2,7 @@ name: Ironhex Browser E2E
 
 on:
   push:
-    branches: [main, audit/quad-water-physical-cover]
+    branches: [main, 'audit/agoac-*']
   workflow_dispatch:
 
 permissions:

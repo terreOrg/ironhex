@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "book": {
+    "id": "agoac-cat3500d-2018",
+    "title": "BattleTech: A Game of Armored Combat",
+    "copyrightYear": 2018,
+    "source": "https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d+battletech+a+game+of+armored+combat+rulebook.pdf",
+    "printedPagination": true
+  },
+  "scope": {
+    "battlemechsOnly": true,
+    "extensionsDeferred": true
+  },
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached.",
+  "currentTopicId": "agoac-foundations",
+  "topics": [
+    {
+      "id": "agoac-foundations",
+      "title": "Scales, record sheets, pilot skills and injury",
+      "pages": [
+        3,
+        5
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-setup",
+      "title": "Setup and deployment",
+      "pages": [
+        6,
+        6
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-sequence",
+      "title": "Initiative, phase selections and resolution, victory",
+      "pages": [
+        6,
+        7
+      ],
+      "status": "tested_subset"
+    },
+    {
+      "id": "agoac-movement",
+      "title": "Movement modes, terrain, facing, occupied hexes, minimum movement, immobility, jumping, prone movement and water",
+      "pages": [
+        8,
+        12
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-combat",
+      "title": "LOS, firing arcs, declarations, GATOR and weapon attacks",
+      "pages": [
+        13,
+        21
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-hit-location",
+      "title": "Attack direction, hit locations and allocation",
+      "pages": [
+        22,
+        24
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-physical",
+      "title": "Physical attacks, elevation, water, charge, club, DFA, kick, weapons, punch and push",
+      "pages": [
+        24,
+        29
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-damage",
+      "title": "Damage timing, critical damage, location destruction, transfer",
+      "pages": [
+        30,
+        36
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-heat",
+      "title": "Heat production, cooling, effects, shutdown and ammunition",
+      "pages": [
+        37,
+        39
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-psr",
+      "title": "Piloting, displacement, falling and pilot injury",
+      "pages": [
+        40,
+        44
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-scenarios",
+      "title": "Box scenarios, victory and additional variations",
+      "pages": [
+        45,
+        48
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-construction",
+      "title": "Standard chassis, engine, jump jets, control systems, armor, heat sinks and weapons",
+      "pages": [
+        49,
+        55
+      ],
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-equipment",
+      "title": "Weapons and equipment data and references",
+      "pages": [
+        56,
+        57
+      ],
+      "status": "not_audited"
+    }
+  ],
+  "requirements": [
+    {
+      "id": "agoac-001",
+      "topicId": "agoac-foundations",
+      "pages": [
+        3,
+        4,
+        5
+      ],
+      "statement": "Audit scales, sheet definitions, pilot skills and injury rules against state and user-visible sheets.",
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-002",
+      "topicId": "agoac-setup",
+      "pages": [
+        6
+      ],
+      "statement": "Verify scenario setup and general deployment with initiative-selected opposite entry edges, walking/running/jumping entry and MP spent from the first complete hex.",
+      "status": "not_audited"
+    },
+    {
+      "id": "agoac-003",
+      "topicId": "agoac-sequence",
+      "pages": [
+        6
+      ],
+      "statement": "Each side rolls independent 2D6; ties repeat; greater total wins and loser makes first selection.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: initiative handles every non-tied sum and rerolls all tied sums"
+        }
+      ]
+    },
+    {
+      "id": "agoac-004",
+      "topicId": "agoac-sequence",
+      "pages": [
+        6,
+        7
+      ],
+      "statement": "All six phases occur in order; pending selections cannot be skipped; new round begins following End.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6-7: six-phase round and pending-order protection preserve state"
+        }
+      ]
+    },
+    {
+      "id": "agoac-005",
+      "topicId": "agoac-sequence",
+      "pages": [
+        7
+      ],
+      "statement": "Use remaining-force ratios at the start of each declaration pair to determine batch sizes for unequal armies.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.7: unequal force batches match both printed examples and either initiative winner"
+        }
+      ]
+    },
+    {
+      "id": "agoac-006",
+      "topicId": "agoac-sequence",
+      "pages": [
+        6,
+        7
+      ],
+      "statement": "Undestroyed immobile and nonattacking units count for selections; declaration order and simultaneity, consciousness before PSRs, Heat and End actions and victory/draw conditions require independent audit.",
+      "status": "not_audited"
+    }
+  ]
+}
