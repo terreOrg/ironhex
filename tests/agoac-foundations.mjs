@@ -1457,3 +1457,32 @@ test('AGoAC p.7: unresolved offboard deployment is not a stalemate',()=>{
  for(const u of g.units)u.abandoned=true;
  g.checkWin({stalemate:true});assert.equal(g.winner,null);
 });
+
+test('AGoAC pp.6,9,11: ground deployment may pass through a friendly occupied entry hex',()=>{
+ for(const mode of ['walk','run']){
+  const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+  const ally=g.units.find(x=>x!==u&&x.team===u.team),first=g.deploymentEdgeTiles(g.deployment.edges[u.team]).find(t=>t.r===0);
+  assert(first);const [dq,dr]=DIRS[g.deployment.edges[u.team]],q=first.q+dq,r=first.r+dr;
+  Object.assign(ally,{q:first.q,r:first.r,deployed:true,prone:true});
+  assert(!g.reachable(u,mode).some(p=>p.q===first.q&&p.r===first.r));
+  const route=g.reachable(u,mode).find(p=>p.q===q&&p.r===r);
+  assert(route?.transit);assert.equal(route.cost,2);
+  const before=JSON.stringify(ally),result=g.move(u.id,q,r,mode);
+  assert(result.ok);assert(result.entry);assert.deepEqual(result.path,[{q:first.q,r:first.r},{q,r}]);
+  assert.deepEqual([u.q,u.r,u.spent,u.distanceMoved],[q,r,2,2]);
+  assert.equal(JSON.stringify(ally),before);
+  assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,mode==='walk'?1:2);
+ }
+});
+test('AGoAC pp.6,9: occupied enemy entry and insufficient transit MP cannot be bypassed',()=>{
+ const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+ const enemy=g.units.find(x=>x.team!==u.team),ally=g.units.find(x=>x!==u&&x.team===u.team);
+ const first=g.deploymentEdgeTiles(g.deployment.edges[u.team]).find(t=>t.r===0);
+ const [dq,dr]=DIRS[g.deployment.edges[u.team]],q=first.q+dq,r=first.r+dr;
+ Object.assign(enemy,{q:first.q,r:first.r,deployed:true});
+ assert(!g.reachable(u,'walk').some(p=>p.q===q&&p.r===r));
+ enemy.deployed=false;Object.assign(ally,{q:first.q,r:first.r,deployed:true});
+ u.walk=1;
+ assert(!g.reachable(u,'walk').some(p=>p.q===q&&p.r===r));
+ assert.equal(g.move(u.id,q,r,'walk').ok,false);assert.equal(u.deployed,false);
+});
