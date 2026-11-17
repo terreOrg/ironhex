@@ -1165,6 +1165,28 @@ test('BMM p.38: a quad may kick front or rear with the correct leg pair and +1 r
   'Biped arms cannot be used as kicking legs');
 });
 
+test('BMM pp.29,38: Quad kick actuator modifiers stack for each eligible leg',()=>{
+ const design=construct({...example,name:'Quad kick actuator audit',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ for(const limb of ['LA','RA','LL','RL']){
+  const g=flatGame(),u=g.units[0],target=g.units[2];
+  Object.assign(u,structuredClone(design.unit));
+  g.phase='physical';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.q=0;u.r=0;u.facing=0;u.prone=false;u.moveMode='stand';u.firedLocations=[];
+  target.q=['LA','RA'].includes(limb)?1:-1;target.r=0;target.prone=false;target.dead=false;
+  const base=g.physicalPreview(u.id,target.id,'kick',limb);
+  assert.equal(base.legal,true,base.reason);
+  for(let mask=0;mask<8;mask++){
+   const upper=!!(mask&1),lower=!!(mask&2),foot=!!(mask&4);
+   Object.assign(u.actuators[limb],{upper,lower,foot});
+   const p=g.physicalPreview(u.id,target.id,'kick',limb);
+   assert.equal(p.legal,true,p.reason);
+   assert.equal(p.targetNumber,base.targetNumber+2*Number(upper)+2*Number(lower)+Number(foot),limb+' mask '+mask);
+   assert.equal(p.damage,Math.floor(base.damage/2**(Number(upper)+Number(lower))),limb+' mask '+mask);
+  }
+ }
+});
+
 test('BMM pp.45,65: quad side torso destruction or flooding affects front leg only',()=>{
  const fixture=construct({...example,name:'Quad torso coupling',config:'Quad',
   jump:0,sinks:10,equipment:[]},{auditQuad:true});
