@@ -855,8 +855,10 @@ test('AGoAC p.42: displacement does not cancel a still-valid adjacent physical a
   Object.assign(a,{q:-1,r:0,facing:0});Object.assign(t,{q:0,r:0,facing:3});
   Object.assign(ally,{q:3,r:0});enemy.dead=true;
   // a pushes t east and follows; a remains adjacent in t's forward arc.
+  const preview=g.physicalPreview(t.id,a.id,'punch','LA');
+  assert(preview.legal,preview.reason);
   g.physicalDeclarations=[
-   {id:t.id,target:a.id,type:'punch',limb:'LA',targetNumber:2,damage:5,side:'front',table:'punch'},
+   {id:t.id,target:a.id,type:'punch',limb:'LA',...preview},
    {id:a.id,target:t.id,type:'push',limb:'LA',targetNumber:2,damage:0}
   ];
   g.rng=()=>.99;const damage=[];
@@ -867,7 +869,7 @@ test('AGoAC p.42: displacement does not cancel a still-valid adjacent physical a
   // remains adjacent; use a third stationary target to test interruption below.
   assert.equal(punch.cancelled,false);
   assert.equal(punch.hit,true);
-  assert.deepEqual(damage,[[a.id,5]]);
+  assert.deepEqual(damage,[[a.id,preview.damage]]);
  }
 });
 test('AGoAC p.42: displacement invalidates an unmade attack against a stationary third Mech',()=>{
