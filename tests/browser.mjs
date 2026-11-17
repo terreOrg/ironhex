@@ -851,7 +851,7 @@ test('Authoritative 3D mode loads a saved snapshot and never applies a rejected 
       noWebGL:true
     },async page=>{
       const referee=new TestBattleGame();
-      let calls=0;
+      let calls=0,snapshotCalls=0;
       const snapshot=()=>JSON.parse(JSON.stringify(referee,
         (key,value)=>key==='map'||key==='rng'?undefined:value));
       const respond=(route,status,item)=>route.fulfill({
@@ -860,6 +860,7 @@ test('Authoritative 3D mode loads a saved snapshot and never applies a rejected 
       await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
         const url=new URL(route.request().url());
         if(url.pathname.endsWith('/snapshot')){
+          if(++snapshotCalls===1)return respond(route,503,{error:'temporarily_unavailable'});
           return respond(route,200,{item:{
             id:operationId,controlMode:'interactive',status:'active',
             version:1,game:snapshot()
@@ -882,7 +883,10 @@ test('Authoritative 3D mode loads a saved snapshot and never applies a rejected 
         return respond(route,404,{error:'not_found'});
       });
       await loaded(page);
+      const retry=page.getByRole('button',{name:'ПОВТОРИТЬ ПОДКЛЮЧЕНИЕ'});
+      await retry.waitFor();await retry.click();
       await page.getByText('СЕРВЕРНЫЙ БОЙ:',{exact:false}).waitFor();
+      assert.equal(snapshotCalls,2,'A failed snapshot must allow a fresh connection');
       assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/);
       await page.locator('#next').click();
       await page.getByText('СЕРВЕР ОТКЛОНИЛ ПРИКАЗ',{exact:false}).waitFor();

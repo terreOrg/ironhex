@@ -37,7 +37,11 @@ function create() {
     const id=event.data.id;
     if(typeof id!=='string'||!/^[0-9a-f-]{36}$/i.test(id))return;
     openSection('campaigns');
-    import('./operation-ui.js').then(mod=>mod.openOperationReport(id));
+    import('./operation-ui.js').then(mod=>mod.openOperationReport(id)).catch(error=>{
+      console.error('Ironhex operation report failed',error);
+      const status=root.querySelector('#op-message');
+      if(status)status.textContent='Не удалось открыть рапорт. Повторите попытку.';
+    });
   });
   root.querySelector('#hub-profile-button').onclick=()=>onProfile?.();
   root.querySelector('#hub-hangar-button').onclick=()=>{
