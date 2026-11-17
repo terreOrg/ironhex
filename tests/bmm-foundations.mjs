@@ -782,6 +782,46 @@ test('BMM p.44: losing a single Quad leg reduces walking MP by one but preserves
  assert.equal(b.mp(biped,'run'),0,'Biped one-leg running prohibition remains');
 });
 
+test('BMM p.19: restricted Quad standing combines running damage modifiers into exactly one PSR',()=>{
+ const design=construct({...example,name:'Quad single standing PSR',config:'Quad',jump:0,sinks:10,equipment:[]},{auditQuad:true});
+ assert.deepEqual(design.errors,[],design.errors.join('; '));
+ const legs=['LA','RA','LL','RL'];
+ function setup(config='Quad'){
+  const g=flatGame(),u=g.units[0];
+  if(config==='Quad')Object.assign(u,structuredClone(design.unit));
+  else u.config='Biped';
+  for(const v of g.units.slice(1))v.dead=true;
+  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+  u.q=0;u.r=0;u.prone=true;u.spent=0;u.pendingHeat=0;u.standAttempts=0;
+  u.moveMode='stand';u.piloting=1;g.rng=()=>.99;
+  return {g,u};
+ }
+ for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){
+  for(const [gyro,hip] of [[1,0],[0,1],[1,1]]){
+   const {g,u}=setup();
+   u.structure[legs[i]]=0;u.structure[legs[j]]=0;
+   const surviving=legs.find(l=>u.structure[l]>0);
+   u.gyroHits=gyro;u.actuators[surviving].hip=!!hip;
+   assert.equal(g.stand(u.id,3,{mode:'run'}).ok,true);
+   assert.equal(u.prone,false);
+   const roll=g.phaseRolls.find(x=>x.kind.includes('Подъём'));
+   assert.equal(roll.target,1+5+3*gyro+2*hip);
+   assert.equal(g.hold(u.id).ok,true);
+   assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Подъём')||x.kind.includes('Бег с повреждениями')).length,1);
+   assert.equal(u.pendingHeat,3);
+  }
+ }
+ // Normal three-leg standing in running mode still requires its separate running PSR.
+ const {g,u}=setup();u.structure.LA=0;u.gyroHits=1;
+ assert.equal(g.stand(u.id,3,{mode:'run'}).ok,true);assert.equal(g.hold(u.id).ok,true);
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Бег с повреждениями')).length,1);
+ // Shared Biped exception remains consistent with the same printed rule.
+ const b=setup('Biped');b.u.structure.LL=0;b.u.gyroHits=1;
+ assert.equal(b.g.stand(b.u.id,3,{mode:'run'}).ok,true);
+ assert.equal(b.g.hold(b.u.id).ok,true);
+ assert.equal(b.g.phaseRolls.filter(x=>x.kind.includes('Подъём')||x.kind.includes('Бег с повреждениями')).length,1);
+});
+
 test('BMM p.19: a failed two-leg Quad stand remains prone and cannot retry this turn',()=>{
  const design=construct({...example,name:'Quad failed stand',config:'Quad',
   jump:0,sinks:10,equipment:[]},{auditQuad:true});

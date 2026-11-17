@@ -1191,6 +1191,10 @@
         {
           "file": "tests/bmm-foundations.mjs",
           "test": "BMM p.19: declared walk/run controls Quad standing budget and later movement heat"
+        },
+        {
+          "file": "tests/bmm-foundations.mjs",
+          "test": "BMM p.19: restricted Quad standing combines running damage modifiers into exactly one PSR"
         }
       ]
     },

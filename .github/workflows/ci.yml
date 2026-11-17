@@ -2,7 +2,7 @@ name: Ironhex CI
 
 on:
   push:
-    branches: [main, audit/quad-limb-wreckage]
+    branches: [main, audit/quad-limb-wreckage, audit/quad-single-stand-psr]
   workflow_dispatch:
 
 permissions:
