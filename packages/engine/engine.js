@@ -796,23 +796,54 @@ export class Game extends Legacy{
   if(bin&&bin.shots>0)bin.shots--;
   this.syncAmmo(u);
  }
+ // AGoAC pp.6,21,30: each attacker chooses two independent orders.
+ // Targets remain grouped; a missile attack is resolved in its entirety.
+ orderFireStage(u,items,stage,visit){
+  const shot=a=>stage==='roll'?a:a.s;
+  const groups=new Map();
+  for(const a of items){
+   const target=shot(a).target;
+   if(!groups.has(target))groups.set(target,[]);
+   groups.get(target).push(a);
+  }
+  const eligible=a=>stage==='roll'||a.hit;
+  while(groups.size){
+   const first=groups.keys().next().value;
+   const targets=[...groups].filter(([,attacks])=>attacks.some(eligible));
+   const options=targets.map(([targetId,attacks])=>({id:String(targetId),targetId,
+    weaponNames:attacks.filter(eligible).map(a=>shot(a).weapon.name)}));
+   // A group of misses requires no damage decision and consumes no dice.
+   const target=groups.get(first).some(eligible)?
+    Number(this.chooseResolutionOption('fire-'+stage+'-target',u,options,String(first))):first;
+   const pending=groups.get(target);
+   groups.delete(target);
+   while(pending.length){
+    if(!eligible(pending[0])){visit(pending.shift());continue;}
+    const weapons=pending.filter(eligible).map(a=>{
+     const s=shot(a);
+     return {id:String(s.index),weaponIndex:s.index,weaponName:s.weapon.name,targetId:s.target,
+      ...(stage==='damage'?{roll:a.roll,targetNumber:s.preview.targetNumber}:{})};
+    });
+    const pick=this.chooseResolutionOption('fire-'+stage+'-weapon',u,weapons,String(shot(pending[0]).index));
+    const index=pending.findIndex(a=>String(shot(a).index)===pick);
+    visit(pending.splice(index,1)[0]);
+   }
+  }
+ }
  rollDeclaredFire(d){
-  const u=this.unit(d.id),reserved=new Map(),groups=new Map();
+  const u=this.unit(d.id),reserved=new Map(),attacks=[];
   for(const s of d.shots)if(s.bin!==null&&s.weapon.ammo!==null)
    reserved.set(s.bin,(reserved.get(s.bin)||0)+1);
-  for(const s of d.shots){
+  this.orderFireStage(u,d.shots,'roll',s=>{
    const w=s.weapon,p=s.preview;
    const roll=this.roll(u.name+' · '+w.name,p.targetNumber);
    const attackRoll=this.phaseRolls.at(-1);
    u.pendingHeat+=w.heat;
    u.firedLocations.push(...(w.locations?.length?w.locations:[w.location]));
    this.spendDeclaredAmmo(u,s,reserved);
-   if(!groups.has(s.target))groups.set(s.target,[]);
-   groups.get(s.target).push({u,s,roll,attackRoll,hit:roll>=p.targetNumber});
-  }
-  // Preserve controller-declared target order and group that Mech's attacks
-  // against each target before moving to the next (p.21).
-  return [...groups.values()].flat();
+   attacks.push({u,s,roll,attackRoll,hit:roll>=p.targetNumber});
+  });
+  return attacks;
  }
  fireAmounts(s,hit){
   if(!hit||s.heatMode)return [];
@@ -841,8 +872,9 @@ export class Game extends Legacy{
  resolveFire(){
   this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;
   try{
-   const attacks=this.declarations.flatMap(d=>this.rollDeclaredFire(d));
-   for(const attack of attacks)this.resolveRolledFire(attack);
+   const staged=this.declarations.map(d=>({u:this.unit(d.id),attacks:this.rollDeclaredFire(d)}));
+   for(const {u,attacks} of staged)
+    this.orderFireStage(u,attacks,'damage',attack=>this.resolveRolledFire(attack));
   }finally{this.deferConsciousness=false;}
   const start=this.phaseRolls.length;this.endPSR();
   this.afterRolls=this.phaseRolls.slice(start);this.declarations=[];

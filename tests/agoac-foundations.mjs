@@ -1266,3 +1266,38 @@ test('AGoAC pp.6,8,11–12: jumping entry counts the first full hex, consumes ju
  assert(g.move(u.id,route.q,route.r,'jump').ok);assert(g.onMap(u));assert.equal(u.spent,3);assert.equal(u.distanceMoved,3);
  assert.equal(u.pendingHeat,3);assert.equal(g.reachable(u,'jump').length,0);assert(g.hold(u.id).ok);
 });
+
+test('AGoAC pp.6,21,30: independent controller choices for to-hit and damage order replay without rerolling',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+ const shot=(index,name)=>({index,target:t.id,bin:null,aim:null,heatMode:false,
+  weapon:{name,rack:0,ammo:null,heat:1,damage:1,location:'RA'},
+  preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false}});
+ g.declarations=[{id:u.id,shots:[shot(0,'First gun'),shot(1,'Second gun')]}];
+ let draws=0;g.rng=()=>{draws++;return .5;};
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
+ let pending=g.pendingChoice;
+ assert.equal(pending.kind,'fire-roll-weapon');assert.equal(draws,0);
+ assert.deepEqual(pending.options.map(o=>o.id),['0','1']);
+ assert(g.nextPhaseWithChoices({choice:{key:pending.key,option:'1'}}).pending);
+ pending=g.pendingChoice;
+ assert.equal(pending.kind,'fire-damage-weapon');assert.equal(draws,4);
+ assert.deepEqual(pending.options.map(o=>o.id),['1','0']);
+ assert(pending.options.every(o=>o.roll===8));
+ const before=g.units[2].armor.CT;
+ assert.equal(g.nextPhaseWithChoices({choice:{key:pending.key,option:'forged'}}).ok,false);
+ assert.equal(draws,4);assert.equal(g.units[2].armor.CT,before);
+ assert(g.nextPhaseWithChoices({choice:{key:pending.key,option:'0'}}).ok);
+ assert.equal(g.pendingChoice,null);assert.equal(g.phase,'physical');assert.equal(draws,8);
+ assert.deepEqual(g.phaseRolls.slice(0,2).map(o=>o.kind),[u.name+' · Second gun',u.name+' · First gun']);
+ assert.deepEqual(g.resolution.map(o=>o.shots[0].index),[0,1]);
+});
+test('AGoAC p.21: attack and damage order remain grouped by target',()=>{
+ const g=fresh(),u=g.units[0],a=g.units[2],b=g.units[3];
+ const shots=[{index:0,target:a.id,weapon:{name:'A'}},{index:1,target:b.id,weapon:{name:'B'}},
+  {index:2,target:a.id,weapon:{name:'C'}}];
+ const visited=[];
+ g._resolutionChooser=(request,fallback)=>request.kind==='fire-roll-target'?String(b.id):fallback;
+ g.orderFireStage(u,shots,'roll',s=>visited.push([s.target,s.index]));
+ assert.deepEqual(visited,[[b.id,1],[a.id,0],[a.id,2]]);
+});
