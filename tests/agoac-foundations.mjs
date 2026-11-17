@@ -1299,3 +1299,18 @@ test('AGoAC pp.6,9: ground entry rejects excessive descent, blocked AI never fab
  assert.equal(result.code,'deployment_blocked');assert.equal(JSON.stringify(u),before);
  assert.equal(g.winner,null);assert(!u.dead);assert.equal(u.deployed,false);
 });
+
+test('AGoAC p.6: undeployed mechs cannot be targets or phantom displacement occupants',()=>{
+ const g=standardSetupGame(0),u=g.units[0],t=g.units[2];
+ Object.assign(u,{deployed:true,q:0,r:0,facing:0});
+ Object.assign(t,{deployed:false,q:1,r:0,facing:3});
+ assert.equal(g.preview(u.id,t.id,0).legal,false);
+ assert.equal(g.preview(t.id,u.id,0).legal,false);
+ assert.equal(g.physicalPreview(u.id,t.id,'kick','RL').legal,false);
+ assert.equal(g.physicalPreview(t.id,u.id,'kick','RL').legal,false);
+ const before=JSON.stringify(t);
+ g.rng=()=>{throw Error('An undeployed unit cannot trigger domino dice');};
+ assert(g.displace(u,0));
+ assert.deepEqual([u.q,u.r],[1,0]);assert.equal(JSON.stringify(t),before);
+ assert.equal(g.onMap(t),false);
+});
