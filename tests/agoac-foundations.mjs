@@ -599,3 +599,23 @@ test('AGoAC p.38: conscious pilot rolls only the highest thermal threshold and n
   }
  }
 });
+
+test('AGoAC pp.26,42: successful charge against a prohibited displacement hex still deals damage and requires PSRs',()=>{
+ for(const [rise,lethal,expectedAttacker,expectedTarget] of [[0,false,1,2],[3,false,0,1],[3,true,1,1]]){
+  const g=fresh(),u=g.units[0],t=g.units[2];g.phase='physical';
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,tonnage:65,moveMode:'run',piloting:5,
+   charge:{target:t.id,type:'charge',dir:0,hexes:5,targetPos:{q:1,r:0}}});
+  Object.assign(t,{q:1,r:0,tonnage:45,piloting:5,moveMode:'stand',distanceMoved:0});
+  g.tile(2,0).height=rise;g.tile(2,0).surface=rise;g.rng=()=>.99;
+  const damage=[];
+  g.packets=(victim,amount)=>{damage.push([victim.id,amount]);if(victim===t&&lethal)g.destroyMech(t);};
+  g.resolveSpecial(u);
+  assert.equal(g.resolution[0].shots[0].hit,true);
+  assert.deepEqual(damage,[[t.id,33],[u.id,5]],'Round up only after multiplying the attacker tonnage by traveled hexes');
+  assert.equal(t.dead,lethal,'Prohibited displacement is not lethal for an ordinary charge');
+  assert.deepEqual([u.q,t.q],[expectedAttacker,expectedTarget]);
+  assert(u.psrs.some(p=>p.modifier===2),'Attacker must check for falling');
+  if(!lethal)assert(t.psrs.some(p=>p.modifier===2),'Surviving target must check for falling');
+ }
+});
