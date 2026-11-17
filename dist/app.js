@@ -240,11 +240,11 @@ $('#night').disabled=$('#gale').disabled=game.round!==1||game.phase!=='initiativ
 function renderResolutionChoice(panel,choice){
  panel.replaceChildren();
  const title=document.createElement('div');title.className='controltitle';
- title.textContent=choice.kind==='domino'?'УКЛОНЕНИЕ ОТ ДОМИНО':'ВЫТЕСНЕНИЕ ПОСЛЕ DFA';
+ title.textContent=choice.kind==='physical-order'?'ОЧЕРЁДНОСТЬ ФИЗИЧЕСКИХ АТАК':choice.kind==='domino'?'УКЛОНЕНИЕ ОТ ДОМИНО':'ВЫТЕСНЕНИЕ ПОСЛЕ DFA';
  panel.append(title);
  const info=document.createElement('p');info.className='hint';
  const pilot=game.unit(choice.unitId),roll=choice.context?.roll;
- info.textContent=(choice.team?'Красный':'Зелёный')+' отряд · '+(pilot?.name||'Мех')+
+ info.textContent=choice.kind==='physical-order'?(choice.team?'Красный':'Зелёный')+' отряд. Выберите меха, который разрешит свои атаки первым. Вытеснение может изменить доступность остальных атак.':(choice.team?'Красный':'Зелёный')+' отряд · '+(pilot?.name||'Мех')+
   ' · гекс '+choice.q+', '+choice.r+(roll?' · PSR '+roll.total+'/'+roll.target+'+':'')+
   '. Выбор выполняется на текущем этапе расчёта; карта обновится после завершения фазы.';
  panel.append(info);
@@ -253,7 +253,11 @@ function renderResolutionChoice(panel,choice){
   button.type='button';button.dataset.resolutionOption=option.id;
   const label=option.id==='decline'?'Не уклоняться':
    option.id==='forward'?'Шаг вперёд':option.id==='back'?'Шаг назад':'Направление '+(Number(option.id)+1);
-  button.textContent=label+(option.q===undefined?'':' · '+option.q+', '+option.r)+
+  const attackNames={punch:'удар рукой',kick:'удар ногой',push:'толчок',charge:'таран',dfa:'DFA',club:'дубина',hatchet:'топор'};
+  button.textContent=choice.kind==='physical-order'?
+   (game.unit(option.attackerId)?.name||'Мех')+' · '+option.attacks.map(a=>
+    (attackNames[a.type]||a.type)+' → '+(game.unit(a.targetId)?.name||'цель')).join('; '):
+   label+(option.q===undefined?'':' · '+option.q+', '+option.r)+
    (option.cost===undefined?'':' · '+option.cost+' MP')+(option.offboard?' · за край карты':'');
   button.disabled=busy||remoteMode&&!remoteReady;
   button.onclick=()=>advanceInteractivePhase({key:choice.key,option:option.id});
