@@ -58,7 +58,7 @@ function applyServerState(state){
   const original=new Map(game.tiles.map(t=>[t.q+','+t.r,
     {mesh:t.mesh,original:t.original}]));
   Object.assign(game,state);
-  game.map=new Map(game.tiles.map(t=>[t.q+','+t.r,t]));
+  game.rebuildMap();
   for(const tile of game.tiles){
     const old=original.get(tile.q+','+tile.r);
     if(old){tile.mesh=old.mesh;tile.original=old.original;

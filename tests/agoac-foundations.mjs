@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds,normalizeMapHex} from '../dist/engine.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {readFileSync} from 'node:fs';
 
@@ -347,4 +347,18 @@ test('AGoAC p.5: individual ammunition slots report capacity and remaining round
  a.destroyed=true;g.syncAmmo(u);html=recordSheet(u);
  assert(html.includes('Боезапас '+n+' · 0 / 12 · уничтожен'));
  assert(html.includes('Боезапас '+n+' · 9 / 12'));
+});
+
+test('AGoAC pp.3-4: unmarked terrain and level default independently and survive map reload',()=>{
+ const g=fresh();
+ const tiles=[{q:0,r:0},{q:1,r:0,height:3},{q:2,r:0,type:'woods'},{q:3,r:0,type:'heavy',height:-2},{q:4,r:0,type:'water',depth:2},{q:5,r:0,type:'water',depth:1,surface:3},{q:6,r:0,type:'water',height:-1,depth:1,surface:0},{q:7,r:0,type:'pavement',height:0,road:true},{q:8,r:0,type:'rubble',height:2},{q:9,r:0,type:'rough',height:-1}];
+ const expected=[['plain',0,0,0],['plain',3,0,3],['woods',0,0,0],['heavy',-2,0,-2],['water',-2,2,0],['water',2,1,3],['water',-1,1,0],['pavement',0,0,0],['rubble',2,0,2],['rough',-1,0,-1]];
+ g.tiles=JSON.parse(JSON.stringify(tiles));g.rebuildMap();
+ for(let i=0;i<expected.length;i++){
+  const t=g.tile(i,0);assert.equal(t,g.tiles[i]);
+  assert.deepEqual([t.type,t.height,t.depth,t.surface],expected[i]);
+  const before=JSON.stringify(t);assert.equal(normalizeMapHex(t),t);assert.equal(JSON.stringify(t),before);
+ }
+ assert.equal(g.tile(7,0).road,true);
+ const old=fresh();const before=JSON.stringify(old.tiles);old.rebuildMap();assert.equal(JSON.stringify(old.tiles),before);
 });

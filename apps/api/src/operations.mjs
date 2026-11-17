@@ -52,7 +52,7 @@ function makeRuntime(roster,saved=null,contractId='patrol') {
     const {map,rng:ignored,...state}=saved.game;
     Object.assign(game,structuredClone(state));
     // A Map cannot be serialized as JSON. Rebuild it from the stored tile array.
-    game.map=new Map(game.tiles.map(t=>[t.q+','+t.r,t]));
+    game.rebuildMap();
     game.rng=()=>rng.next();
     // Old saved battles may predate the Warrior Data name field.
     for(const u of game.units.filter(u=>u.team===0)){
