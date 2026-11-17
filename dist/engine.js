@@ -897,7 +897,76 @@ export class Game extends Legacy{
    this.note(a.u.name+': push, '+(a.roll??'—')+'/'+a.order.targetNumber+'+, 0 урона.');
   }
  }
- resolvePhysical(){this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;try{for(const u of this.units)if(u.charge)this.resolveSpecial(u);const handled=new Set();for(const d of this.physicalDeclarations){if(handled.has(d))continue;if(d.type==='push'){const opposed=this.physicalDeclarations.find(p=>p!==d&&!handled.has(p)&&p.type==='push'&&p.id===d.target&&p.target===d.id);handled.add(d);if(opposed)handled.add(opposed);this.resolvePush(d,opposed);continue;}const u=this.unit(d.id),t=this.unit(d.target),start=this.phaseRolls.length,roll=this.roll(u.name+' · '+d.type,d.targetNumber),hit=roll>=d.targetNumber;let damage=0;if(hit&&!t.dead){const o=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover);damage=o.damage;if(d.type==='kick')this.psr(t,0,'Удар ногой');if(d.type==='club')u.club=false;}else if(d.type==='kick')this.psr(u,0,'Промах ногой');this.resolution.push({id:d.id,target:d.target,ok:true,shots:[{weapon:d.type,hit,roll,targetNumber:d.targetNumber,damage,rolls:this.phaseRolls.slice(start)}]});this.note(`${u.name}: ${d.type}, ${roll}/${d.targetNumber}+, ${damage} урона.`);}}finally{this.deferConsciousness=false;}const start=this.phaseRolls.length;this.endPSR();this.afterRolls=this.phaseRolls.slice(start);this.physicalDeclarations=[];this.removeDestroyedMechs();return this.resolution;}
+ // AGoAC pp.6–7,29–30,42: normal physical attacks are declared and
+ // rolled before damage. Displacement is an immediate exception and can
+ // interrupt an attack that has not yet been made.
+ physicalOrder(){
+  const orders=[
+   ...this.units.filter(u=>u.charge).map(u=>({id:u.id,target:u.charge.target,special:true})),
+   ...this.physicalDeclarations
+  ];
+  if(this.initiativeWinner!==0&&this.initiativeWinner!==1)return orders;
+  // Stable within each side: use the recorded order as the default.
+  // Interactive same-side ordering remains a separate controller choice.
+  return orders.sort((a,b)=>Number(this.unit(a.id).team===this.initiativeWinner)-
+   Number(this.unit(b.id).team===this.initiativeWinner));
+ }
+ physicalGeometryChanged(before,now){
+  return before.q!==now.q||before.r!==now.r||before.facing!==now.facing||
+   before.prone!==now.prone||!!before.escaped!==!!now.escaped;
+ }
+ physicalAfterDisplacement(d,snapshots){
+  const u=this.unit(d.id),t=this.unit(d.target),originalU=snapshots.get(d.id),originalT=snapshots.get(d.target);
+  if(!this.physicalGeometryChanged(originalU,u)&&!this.physicalGeometryChanged(originalT,t))return d;
+  if(u.escaped||t.escaped)return null;
+  // Reassess geometry using the state from before attacks. Ordinary damage
+  // from this phase cannot remove a declared attack or increase its TN.
+  const atCurrentPosition=(original,current)=>({...original,q:current.q,r:current.r,
+   facing:current.facing,prone:current.prone});
+  const p=this.physicalPreview(atCurrentPosition(originalU,u),atCurrentPosition(originalT,t),d.type,d.limb);
+  return p.legal?{...d,...p}:null;
+ }
+ rollPhysical(d,snapshots){
+  const u=this.unit(d.id),t=this.unit(d.target),effective=this.physicalAfterDisplacement(d,snapshots);
+  if(!effective)return {u,t,d,roll:null,hit:false,cancelled:true,attackRoll:null};
+  const roll=this.roll(u.name+' · '+d.type,effective.targetNumber);
+  return {u,t,d:effective,roll,hit:roll>=effective.targetNumber,cancelled:false,attackRoll:this.phaseRolls.at(-1)};
+ }
+ resolveRolledPhysical({u,t,d,roll,hit,cancelled,attackRoll}){
+  const start=this.phaseRolls.length;let damage=0;
+  if(hit){
+   if(!t.dead){
+    const out=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover);
+    damage=out.damage;
+    if(d.type==='kick')this.psr(t,0,'Удар ногой');
+   }
+   if(d.type==='club')u.club=false;
+  }else if(!cancelled&&d.type==='kick')this.psr(u,0,'Промах ногой');
+  this.resolution.push({id:d.id,target:d.target,ok:true,shots:[{
+   weapon:d.type,hit,roll,targetNumber:d.targetNumber,damage,cancelled,
+   rolls:[...(attackRoll?[attackRoll]:[]),...this.phaseRolls.slice(start)]}]});
+  this.note(u.name+': '+d.type+', '+(roll??'—')+'/'+d.targetNumber+'+, '+damage+' урона.');
+ }
+ resolvePhysical(){
+  this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;
+  try{
+   const snapshots=new Map(this.units.map(u=>[u.id,structuredClone(u)]));
+   const orders=this.physicalOrder(),handled=new Set(),attacks=[];
+   for(const d of orders){
+    if(handled.has(d))continue;
+    if(d.special){this.resolveSpecial(this.unit(d.id));continue;}
+    if(d.type==='push'){
+     const opposed=orders.find(p=>p!==d&&!handled.has(p)&&p.type==='push'&&p.id===d.target&&p.target===d.id);
+     handled.add(d);if(opposed)handled.add(opposed);
+     this.resolvePush(d,opposed);continue;
+    }
+    attacks.push(this.rollPhysical(d,snapshots));
+   }
+   for(const attack of attacks)this.resolveRolledPhysical(attack);
+  }finally{this.deferConsciousness=false;}
+  const start=this.phaseRolls.length;this.endPSR();this.afterRolls=this.phaseRolls.slice(start);
+  this.physicalDeclarations=[];this.removeDestroyedMechs();return this.resolution;
+ }
  // AGoAC p.38: only a conscious pilot may override thermal shutdown.
  // Below 14 heat an involuntarily shut-down reactor restarts automatically,
  // even if the pilot is still unconscious. Voluntary shutdown is separate.
