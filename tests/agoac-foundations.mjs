@@ -114,3 +114,60 @@ test('AGoAC p.5: base pilot defaults and skill-dependent attack targets',()=>{
 test('AGoAC pp.4-5,44: Warrior Data displays escaped pilot name, wound state and consciousness threshold',()=>{const u=fresh().units[0];u.pilotName='<Vega & Co>';for(let wounds=0;wounds<=6;wounds++){u.pilotWounds=wounds;u.unconscious=wounds===2;const html=recordSheet(u);assert(html.includes('&lt;Vega &amp; Co&gt;'));assert(!html.includes('<Vega & Co>'));assert(html.includes('Порог сознания: '+(['—',3,5,7,10,11,'—'][wounds])));if(wounds===6)assert(html.includes('Ранения: 6/6 · Погиб'));}delete u.pilotName;assert(recordSheet(u).includes('Пилот 1 /'));});
 
 test('AGoAC p.5: Heat Data distinguishes installed and destroyed heat sinks',()=>{const u=fresh().units[0];for(let lost=0;lost<=u.sinks;lost++){u.sinksLost=lost;const html=recordSheet(u);assert(html.includes('Теплоотводы: '+(u.sinks-lost)+' / '+u.sinks+' · '+'○'.repeat(u.sinks-lost)+'●'.repeat(lost)));}});
+
+test('AGoAC pp.6,44: delayed consciousness rolls retain each wound threshold',()=>{
+ const thresholds=[0,3,5,7,10,11];
+ for(let start=0;start<5;start++)for(let count=1;count<=5-start;count++){
+  for(const failAt of [-1,...Array.from({length:count},(_,i)=>i)]){
+   const g=fresh(),u=g.units[0];u.pilotWounds=start;
+   g.deferConsciousness=true;g.wound(u,count);
+   assert.equal(g.phaseRolls.length,0);assert.equal(u.pilotWounds,start+count);
+   // A saved phase retains the numeric pending count and total wounds.
+   Object.assign(u,JSON.parse(JSON.stringify(u)));
+   const expected=thresholds.slice(start+1,start+count+1);
+   const dice=expected.slice(0,failAt===-1?count:failAt+1).flatMap((tn,i)=>diceFor(i===failAt?tn-1:tn));
+   g.rng=()=>{assert(dice.length);return dice.shift();};
+   g.deferConsciousness=false;g.consciousness(u);
+   assert.deepEqual(g.phaseRolls.map(r=>r.target),expected.slice(0,failAt===-1?count:failAt+1));
+   assert.equal(u.unconscious,failAt!==-1);assert.equal(u.consciousChecks,0);assert.equal(dice.length,0);
+  }
+ }
+ const g=fresh(),u=g.units[0];u.pilotWounds=4;g.deferConsciousness=true;g.wound(u,2);
+ assert.equal(u.dead,true);assert.equal(u.pilotWounds,6);g.consciousness(u);
+ assert.equal(u.consciousChecks,0);assert.equal(g.phaseRolls.length,0);
+});
+
+test('AGoAC pp.6,44: all pilots roll consciousness before any phase PSR',()=>{
+ const g=fresh();g.deferConsciousness=true;
+ for(const u of g.units){g.wound(u,1);g.psr(u,0,'AGoAC phase PSR');}
+ g.deferConsciousness=false;g.rng=()=>.99;
+ g.endPSR();
+ const labels=g.phaseRolls.map(r=>r.kind.includes('Сознание')?'conscious':r.kind.includes('AGoAC phase PSR')?'psr':'other');
+ assert.deepEqual(labels,['conscious','conscious','conscious','conscious','psr','psr','psr','psr']);
+});
+
+test('AGoAC p.44: recovery starts only in the next turn and uses current wounds',()=>{
+ for(let wounds=1;wounds<=5;wounds++){
+  const g=fresh(),u=g.units[0];u.pilotWounds=wounds;u.unconscious=true;u.wasUnconscious=false;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  const tn=[0,3,5,7,10,11][wounds];
+  g.rng=()=>{throw Error('Should not roll in the turn of unconsciousness');};
+  g.endPhase();assert.equal(u.unconscious,true);assert.equal(u.wasUnconscious,true);
+  let dice=diceFor(tn-1);g.rng=()=>dice.shift();g.endPhase();
+  assert.equal(u.unconscious,true);assert.equal(g.phaseRolls.at(-1).target,tn);
+  dice=diceFor(tn);g.rng=()=>dice.shift();g.endPhase();
+  assert.equal(u.unconscious,false);assert.equal(u.wasUnconscious,false);
+ }
+});
+
+test('AGoAC p.3: all six die faces and all 36 independent two-die combinations',()=>{
+ const g=fresh();
+ for(let a=1;a<=6;a++){
+  let dice=[(a-.5)/6];g.rng=()=>dice.shift();
+  assert.equal(g.d6('1D6'),a);assert.deepEqual(g.lastDice,[a]);assert.equal(dice.length,0);
+  for(let b=1;b<=6;b++){
+   dice=[(a-.5)/6,(b-.5)/6];g.rng=()=>dice.shift();
+   assert.equal(g.roll('2D6'),a+b);assert.deepEqual(g.lastDice,[a,b]);assert.equal(dice.length,0);
+  }
+ }
+});
