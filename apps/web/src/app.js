@@ -5,7 +5,7 @@ import {animateRoll,clearDice} from './dice.js';
 import * as THREE from 'three';
 import {GLTFLoader} from './GLTFLoader.js';
 import {clone} from './SkeletonUtils.js';
-import {Game,LOCATIONS,distance,PHASES} from './engine.js';
+import {Game,LOCATIONS,distance,PHASES,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds} from './engine.js';
 const $=s=>document.querySelector(s),game=new Game();
 const operationId=new URLSearchParams(location.search).get('operation');
 const remoteMode=operationId!==null;
@@ -178,11 +178,13 @@ function refreshHighlights(){updateArcs();reach=(!busy&&game.phase==='move'&&own
 function card(u){const ap=sum(u.armor)+sum(u.rear),max=sum(u.maxArmor)+sum(u.maxRear);return `<button class="unitcard ${u.team?'enemy':''} ${u.id===selected?'active':''} ${u.dead?'dead':''}" data-unit="${u.id}"><strong>${u.name.toUpperCase()}</strong><span class="badge">${u.tonnage} T</span><small>${u.variant} / ${u.dead?'УНИЧТОЖЕН':u.unconscious?'ПИЛОТ БЕЗ СОЗНАНИЯ':u.shutdown?'ОТКЛЮЧЕН':u.prone?'ЛЕЖИТ':game.canAct(u)?'ВАША ОЧЕРЕДЬ':game.done(u)?'ПРИКАЗ ПРИНЯТ':'ОЖИДАНИЕ'}</small><div class="bar"><span style="width:${ap/max*100}%"></span></div><div class="cardmeta"><span>БРОНЯ ${ap}/${max}</span><span>НАГРЕВ ${u.heat}°</span></div></button>`;}
 function renderUI(){tacticalSettings();const u=game.units[selected],acting=game.canAct(u)&&owned(u)&&!busy;team=hotseat?(game.activeTeam??0):0;
 $('#allies').innerHTML=game.units.filter(u=>u.team===0).map(card).join('');$('#enemies').innerHTML=game.units.filter(u=>u.team===1).map(card).join('');document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>selectUnit(+b.dataset.unit));
-$('#round').textContent=`РАУНД ${String(game.round).padStart(2,'0')}`;$('#phase').textContent=PHASES[game.phase].toUpperCase();
+$('#round').textContent=`РАУНД ${String(game.round).padStart(2,'0')}`;$('#round').title=`Завершённое игровое время: ${elapsedBattleSeconds(game.round)} с · ${AGOAC_SCALE.turnSeconds} с/ход`;
+$('#phase').textContent=PHASES[game.phase].toUpperCase();
 $('#selected').innerHTML=`<h2>${u.name.toUpperCase()}</h2><div class="sub">${u.variant} · ${u.tonnage} тонн · Пилот ${u.gunnery}/${u.piloting} · Ранения ${u.pilotWounds}/6</div><div class="stats"><div><b>${sum(u.armor)+sum(u.rear)}</b><small>БРОНЯ</small></div><div><b>${u.heat}<span style="font-size:12px;color:#d9ae6c">+${u.pendingHeat}</span></b><small>НАГРЕВ</small></div><div><b>${game.mp(u,'walk')}/${game.mp(u,'run')}/${game.mp(u,'jump')}</b><small>ХОД / БЕГ / ПРЫЖОК</small></div></div><button class="sheetbtn" id="sheet">▤ &nbsp; ОТКРЫТЬ ЛИСТ МЕХА ↗</button>`;$('#sheet').onclick=()=>sheet(u);
 // AGoAC p.4: an opponent's sheet is open information, including while targeting.
 if(target!==null&&game.units[target]&&target!==selected){
  const targetSheet=document.createElement('button');targetSheet.className='sheetbtn';targetSheet.id='target-sheet';targetSheet.textContent='▤  ЛИСТ ЦЕЛИ ↗';
+ targetSheet.title=`Дистанция: ${distance(u,game.units[target])} гексов (${rangeMeters(u,game.units[target])} м по игровому масштабу)`;
  targetSheet.onclick=()=>sheet(game.units[target]);$('#selected').appendChild(targetSheet);
 }
 const armorRatio=(sum(u.armor)+sum(u.rear))/(sum(u.maxArmor)+sum(u.maxRear));

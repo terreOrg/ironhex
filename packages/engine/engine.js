@@ -1,5 +1,9 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
 export {LOCATIONS,DIRS,distance};
+// AGoAC pp.3–4: logical game scale; visual model dimensions remain illustrative.
+export const AGOAC_SCALE=Object.freeze({hexMeters:30,levelMeters:6,turnSeconds:10,standingMechLevels:2});
+export const rangeMeters=(a,b)=>distance(a,b)*AGOAC_SCALE.hexMeters;
+export const elapsedBattleSeconds=round=>Math.max(0,round-1)*AGOAC_SCALE.turnSeconds;
 const quadLegNames=Object.freeze({
  LA:'Левая передняя нога',RA:'Правая передняя нога',
  LL:'Левая задняя нога',RL:'Правая задняя нога'

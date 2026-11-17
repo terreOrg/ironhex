@@ -292,10 +292,17 @@
       "topicId": "agoac-foundations",
       "pages": [
         3,
-        4
+        4,
+        18
       ],
-      "statement": "Audit hex dimensions, elevation and level abstraction; source p.4 specifies one hex is 30 m and one turn represents ten seconds. Standard map shapes audited under setup.",
-      "status": "not_audited"
+      "statement": "Use the book's logical 30 m hex, 6 m level, two-level standing chassis and ten-second turn. Hex range is shortest horizontal distance independently of elevation; map geometries and LOS height interactions remain separate audited sections.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.3-4,18: logical scale and shortest hex distance independent of height"
+        }
+      ]
     },
     {
       "id": "agoac-013",
