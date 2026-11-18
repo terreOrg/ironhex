@@ -312,3 +312,15 @@ test('API validates jump-only landing facing and executes it without extra movem
  const effect=runTacticalOrder(g,order);
  assert(effect.result.ok);assert.equal(g.unit(u.id).facing,5);assert.equal(g.unit(u.id).spent,1);
 });
+
+test('API preserves declared running mode on rotation and rejects a subsequent mode change',()=>{
+ const g=new Game(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ Object.assign(u,{q:0,r:0,facing:0,walk:4,prone:true});
+ assert.throws(()=>validateTacticalOrder({type:'rotate',id:u.id,version:1,delta:1,mode:'jump'}),AuthError);
+ assert(runTacticalOrder(g,{type:'rotate',id:u.id,version:1,delta:1,mode:'run'}).result.ok);
+ assert.equal(u.moveMode,'run');assert.equal(u.spent,1);
+ assert.throws(()=>runTacticalOrder(g,{type:'stand',id:u.id,version:2,mode:'walk',facing:4}),AuthError);
+ g.rng=()=>.99;
+ assert(runTacticalOrder(g,{type:'stand',id:u.id,version:2,mode:'run',facing:4}).result.ok);
+ assert.equal(u.facing,4);assert.equal(u.spent,3);assert.equal(u.moveMode,'run');
+});

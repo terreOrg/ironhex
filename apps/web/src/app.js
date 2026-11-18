@@ -238,9 +238,28 @@ const a=$('#actions');if(game.phase==='setup'){a.innerHTML='<p class="hint">Ра
   a.append(button);
  }
 }else if(!acting){a.innerHTML=`<p class="hint">${busy?'Выполняется приказ…':game.queue.length?'Очередь: '+(game.activeTeam?'красный':'зелёный')+' отряд. Выберите его меха.':'Все приказы приняты. Перейдите к разрешению фазы.'}</p>`;}else if(game.phase==='move'&&u.deployed===false){renderDeploymentEntry(u,a);}else if(game.phase==='move'){
-a.innerHTML=`<div class="controltitle">ДВИЖЕНИЕ · ${u.spent} / ${game.mp(u,mode)} MP · КУРС ${u.facing+1}</div><div class="segments">${[['walk','Ходьба'],['run','Бег'],['jump','Прыжок'],...(game.tacticalOptions?.evading?[['evade','Уклонение']]:[])].map(([m,t])=>`<button data-mode="${m}" aria-pressed="${mode===m}" class="${mode===m?'on':''}" ${((!u.jump&&m==='jump')||(m==='evade'&&(u.actuators.LL.hip||u.actuators.RL.hip)))||u.moveMode!=='stand'&&u.moveMode!==m?'disabled':''}>${t}</button>`).join('')}</div><div class="segments" style="margin-top:8px"><button id="turnleft" ${mode==='jump'||u.moveMode==='jump'?'disabled':''}>↶ −1 MP</button><button id="turnright" ${mode==='jump'||u.moveMode==='jump'?'disabled':''}>↷ −1 MP</button><button id="stance" ${!u.prone&&(!['walk','run'].includes(mode)||game.mp(u,mode)-u.spent<1)?'disabled':''}>${u.prone?'Встать · 2 MP':'Лечь · 1 MP'}</button></div><p class="hint">Светлые гексы — доступные пути с учётом поворотов. Можно продолжать движение до исчерпания MP. Затем подтвердите приказ.</p><button class="primary" id="hold">ЗАВЕРШИТЬ ПРИКАЗ МЕХА</button>`;
+const legs=u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL'];
+const lostLegs=legs.filter(l=>!u.structure[l]).length;
+const restrictedStand=u.prone&&lostLegs===(u.config==='Quad'?2:1);
+const minStand=u.prone&&u.spent===0&&!u.standAttempts&&Math.max(game.mp(u,'walk'),game.mp(u,'run'))===1;
+if(u.moveMode!=='stand')mode=u.moveMode;
+else if(u.prone&&(minStand||restrictedStand))mode='run';
+else if(u.prone&&!['walk','run'].includes(mode))mode='walk';
+const standBudget=restrictedStand?2:game.mp(u,mode);
+const standDisabled=u.prone&&(!['walk','run'].includes(mode)||restrictedStand&&mode!=='run'||!minStand&&standBudget-u.spent<2||u.gyroHits>=2||u.moveEndedByLegLoss||game.isImmobile(u)||lostLegs>=(u.config==='Quad'?3:2)||restrictedStand&&u.standAttempts>0);
+a.innerHTML=`<div class="controltitle">ДВИЖЕНИЕ · ${u.spent} / ${game.mp(u,mode)} MP · КУРС ${u.facing+1}</div><div class="segments">${[['walk','Ходьба'],['run','Бег'],['jump','Прыжок'],...(game.tacticalOptions?.evading?[['evade','Уклонение']]:[])].map(([m,t])=>`<button data-mode="${m}" aria-pressed="${mode===m}" class="${mode===m?'on':''}" ${((m==='jump'&&(!u.jump||u.prone||u.proneAtStart))||(m==='evade'&&(u.prone||u.actuators.LL.hip||u.actuators.RL.hip)))||u.moveMode!=='stand'&&u.moveMode!==m?'disabled':''}>${t}</button>`).join('')}</div><div class="segments" style="margin-top:8px"><button id="turnleft" ${mode==='jump'||u.moveMode==='jump'?'disabled':''}>↶ −1 MP</button><button id="turnright" ${mode==='jump'||u.moveMode==='jump'?'disabled':''}>↷ −1 MP</button><button id="stance" ${standDisabled||!u.prone&&(!['walk','run'].includes(mode)||game.mp(u,mode)-u.spent<1)?'disabled':''}>${u.prone?(minStand?'Встать · 1 MP (мин.)':'Встать · 2 MP'):'Лечь · 1 MP'}</button></div><p class="hint">Светлые гексы — доступные пути с учётом поворотов. Можно продолжать движение до исчерпания MP. Затем подтвердите приказ.</p><button class="primary" id="hold">ЗАВЕРШИТЬ ПРИКАЗ МЕХА</button>`;
 if(mode==='jump'&&u.moveMode!=='jump')appendJumpFacing(a,u.facing);
-a.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;renderUI();});$('#turnleft').onclick=()=>action(()=>game.rotate(selected,1),false,{type:'rotate',id:selected,delta:1});$('#turnright').onclick=()=>action(()=>game.rotate(selected,-1),false,{type:'rotate',id:selected,delta:-1});$('#stance').onclick=()=>action(()=>u.prone?game.stand(selected):game.drop(selected,{mode}),false,{type:u.prone?'stand':'drop',id:selected,...(u.prone?{}:{mode})});$('#hold').onclick=()=>action(()=>game.hold(selected),true,{type:'hold',id:selected});
+if(u.prone)appendFacingSelector(a,u.facing,'stand-facing','Курс после успешного подъёма (без MP)');
+a.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{mode=b.dataset.mode;renderUI();});
+$('#turnleft').onclick=()=>action(()=>game.rotate(selected,1,{mode}),false,{type:'rotate',id:selected,delta:1,mode});
+$('#turnright').onclick=()=>action(()=>game.rotate(selected,-1,{mode}),false,{type:'rotate',id:selected,delta:-1,mode});
+$('#stance').onclick=()=>{
+ if(u.prone){
+  const facing=Number($('#stand-facing').value),standingMode=minStand||restrictedStand?'run':mode;
+  return action(()=>game.stand(selected,facing,{mode:standingMode,minimum:minStand}),false,{type:'stand',id:selected,facing,mode:standingMode,minimum:minStand});
+ }
+ return action(()=>game.drop(selected,{mode}),false,{type:'drop',id:selected,mode});
+};$('#hold').onclick=()=>action(()=>game.hold(selected),true,{type:'hold',id:selected});
 }else if(game.phase==='fire'){
 a.innerHTML=`<div class="controltitle">ТОРС / СЕКТОР ОГНЯ</div><div class="segments">${[-1,0,1].map(n=>`<button data-twist="${n}" aria-pressed="${u.twist===n}" class="${u.twist===n?'on':''}" ${u.prone?'disabled':''}>${n===0?'Прямо':n===1?'Влево':'Вправо'}</button>`).join('')}</div><p class="hint">Каждому орудию можно выбрать цель. Выстрелы разрешаются после деклараций обоих отрядов.</p>${u.weapons.map((w,i)=>{const tid=weaponTargets[i]??target,p=tid!==null&&tid!==undefined?game.preview(u.id,tid,i):null;return `<div class="weapon"><input aria-label="Стрелять ${w.name}" type="checkbox" data-weapon="${i}" ${picked.has(i)?'checked':''} ${w.destroyed?'disabled':''}><div><b>${w.name}</b><small>${w.rack?w.rack+' ракет':w.damage+' урона'} · ${w.heat} тепла · ${w.ammo??'∞'}<br>${p?(p.legal?p.targetNumber+'+ · '+p.chance+'%':p.reason):'Выберите цель'}</small><select data-target="${i}" aria-label="Цель ${w.name}"><option value="">— цель —</option>${game.units.filter(v=>v.team!==u.team&&!v.dead).map(v=>`<option value="${v.id}" ${tid===v.id?'selected':''}>${v.name}</option>`).join('')}</select></div></div>`;}).join('')}<button class="primary" id="fire">ЗАЯВИТЬ ОГОНЬ</button><button id="hold">Не стрелять</button>`;
 a.querySelectorAll('[data-twist]').forEach(b=>b.onclick=()=>action(()=>game.twist(selected,+b.dataset.twist),false,{type:'twist',id:selected,twist:+b.dataset.twist}));a.querySelectorAll('[data-weapon]').forEach(b=>b.onchange=()=>{b.checked?picked.add(+b.dataset.weapon):picked.delete(+b.dataset.weapon);updateArcs();});a.querySelectorAll('[data-target]').forEach(b=>b.onchange=()=>{weaponTargets[b.dataset.target]=b.value===''?null:+b.value;renderUI();});$('#fire').onclick=fire;$('#hold').onclick=()=>action(()=>game.hold(selected),true,{type:'hold',id:selected});
@@ -251,10 +270,13 @@ $('#night').disabled=$('#gale').disabled=game.round!==1||game.phase!=='initiativ
 }
 // AGoAC p.12: select landing orientation before resolving the landing PSR.
 function appendJumpFacing(panel,facing){
+ return appendFacingSelector(panel,facing,'jump-facing','Курс при приземлении (без MP)');
+}
+function appendFacingSelector(panel,facing,id,title){
  const label=document.createElement('label');label.className='hint';
- label.textContent='Курс при приземлении (без MP)';
- const select=document.createElement('select');select.id='jump-facing';
- select.setAttribute('aria-label','Курс при приземлении');
+ label.textContent=title;
+ const select=document.createElement('select');select.id=id;
+ select.setAttribute('aria-label',title);
  for(let i=0;i<6;i++){
   const option=document.createElement('option');option.value=String(i);
   option.textContent='Направление '+(i+1);select.append(option);
