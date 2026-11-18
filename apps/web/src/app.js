@@ -300,6 +300,13 @@ a.querySelectorAll('[data-twist]').forEach(b=>b.onclick=()=>action(()=>game.twis
 }else if(game.phase==='physical'){
 const p=target!==null?game.physicalPreview(selected,target,physicalType,physicalLimb):null;a.innerHTML=`<div class="controltitle">${target===null?'ВЫБЕРИТЕ СОСЕДНЕГО ВРАГА':'ЦЕЛЬ: '+game.units[target].name.toUpperCase()}</div><select id="ptype"><option value="kick">Удар ногой</option><option value="punch">Удар рукой</option><option value="push">Толчок</option><option value="club">Удар дубиной</option><option value="hatchet">Удар топором</option></select><select id="limb" style="margin-top:8px">${Object.entries({RL:'Правая нога',LL:'Левая нога',RA:'Правая рука',LA:'Левая рука',both:'Обе руки (два броска)'}).map(([v,n])=>`<option value="${v}">${n}</option>`).join('')}</select><p class="hint">${p?(p.legal?p.targetNumber+'+ на 2d6 · '+p.damage+' урона':p.reason):'Физическая атака разрешается после всех деклараций.'}</p><button id="physical" class="primary" ${!p?.legal?'disabled':''}>ЗАЯВИТЬ АТАКУ</button><button id="club">Поднять дубину</button><button id="hold">Пропустить</button>`;$('#ptype').value=physicalType;$('#limb').value=physicalLimb;$('#ptype').onchange=()=>{physicalType=$('#ptype').value;physicalLimb=physicalType==='kick'?'RL':'RA';renderUI();};$('#limb').onchange=()=>{physicalLimb=$('#limb').value;renderUI();};$('#physical').onclick=()=>action(()=>game.declarePhysical(selected,target,physicalType,physicalLimb),true,{type:'physical',id:selected,target,attack:physicalType,limb:physicalLimb});$('#club').onclick=()=>action(()=>game.takeClub(selected),true,{type:'club',id:selected});$('#hold').onclick=()=>action(()=>game.hold(selected),true,{type:'hold',id:selected});
 }
+if(!remoteMode&&hotseat&&game.victoryTerms?.condition){
+ const agreement=document.createElement('p');agreement.className='hint';agreement.id='agreed-victory-condition';agreement.textContent='Согласованное условие: '+game.victoryTerms.condition;a.append(agreement);
+ if(game.canAdjudicateVictory()){
+  const button=document.createElement('button');button.type='button';button.id='adjudicate-victory';button.textContent='Подтвердить исход по соглашению';button.disabled=busy;
+  button.onclick=showVictoryAdjudication;a.append(button);
+ }
+}
 $('#night').disabled=$('#gale').disabled=game.round!==1||game.phase!=='initiative'||remoteMode&&!remoteReady;if(acting&&u.deployed!==false)advancedControls(u,a);if(game.pendingChoice)renderResolutionChoice(a,game.pendingChoice);$('#next').disabled=busy||game.winner!==null||game.queue.length>0||!!game.pendingChoice||remoteMode&&!remoteReady;$('#next').textContent=busy?'ВЫПОЛНЕНИЕ ПРИКАЗА…':game.phase==='setup'?'БРОСИТЬ РАЗВЁРТЫВАНИЕ':game.phase==='initiative'?'БРОСИТЬ ИНИЦИАТИВУ':game.phase==='fire'?'РАЗРЕШИТЬ СТРЕЛЬБУ':game.phase==='physical'?'РАЗРЕШИТЬ БЛИЖНИЙ БОЙ':game.phase==='heat'?'РАССЧИТАТЬ НАГРЕВ':game.phase==='end'?'ЗАВЕРШИТЬ ХОД':'К СТРЕЛЬБЕ →';$('#log').innerHTML=game.log.slice(-18).reverse().map(s=>`<p>${s}</p>`).join('');$('#status').textContent=`${PHASES[game.phase]} / ${game.activeTeam===null?'Все приказы приняты':game.activeTeam?'Красный отряд':'Зелёный отряд'}`;if(remoteMode)$('#status').textContent+=remoteReady?' · SERVER VERIFIED / v'+remoteVersion:' · ПОДКЛЮЧЕНИЕ К СЕРВЕРУ';refreshHighlights();if(!busy)syncModels();if(game.winner!==null)toast(game.winner==='draw'?'НИЧЬЯ':`ПОБЕДА: ${game.winner?'КРАСНЫЙ':'ЗЕЛЁНЫЙ'} ОТРЯД`);
 }
 // AGoAC p.12: select landing orientation before resolving the landing PSR.
@@ -469,14 +476,27 @@ $('#help').onclick=()=>modal(`<div class="eyebrow">ПОЛЕВОЕ РУКОВОД
 $('#credits').onclick=()=>modal(`<div class="eyebrow">ИСТОЧНИКИ / ASSET MANIFEST</div><h2>О проекте</h2><p>Неофициальная фан-игра. BattleTech и названия мехов принадлежат их правообладателям. Проект не связан с Catalyst Game Labs.</p><h3>Правила</h3><p><a target="_blank" rel="noopener" href="${rulesURL}">BattleTech: A Game of Armored Combat — Rulebook</a>. Реализовано тактическое подмножество; перечень упрощений — в разделе «Правила».</p><h3>Модели из интернета</h3><p><a href="https://github.com/RamonLinares/atlas-09" target="_blank" rel="noopener">Ramon Linares / FORGE Character Lab</a> — Atlas-09 и Aether-02, лицензия CC0. Настоящие объёмные GLB-модели со скелетной анимацией ходьбы, бега, стрельбы, попаданий и уничтожения.</p><p>Это оригинальные дизайны — визуальные заменители, а не канонические модели Griffin, Wolverine, Shadow Hawk и Thunderbolt.</p><p><a href="ASSET-LICENSE.md" target="_blank">Лицензия моделей</a> · Графика: Three.js (MIT).</p>`);
 $('#rotateL').onclick=()=>{angle-=Math.PI/6;cam();};$('#rotateR').onclick=()=>{angle+=Math.PI/6;cam();};$('#zoomIn').onclick=()=>{zoom=Math.max(5,zoom-1.5);resize();};$('#zoomOut').onclick=()=>{zoom=Math.min(Math.max(20,fitBoard()*1.7),zoom+1.5);resize();};$('#resetcam').onclick=()=>{zoom=fitBoard();angle=Math.PI/4;cam();};
 function reset(standard=!!game.deployment,setup=null){if(setup){const trial=new Game();const map=trial.configureSetupMap(setup.map);if(!map.ok){toast(map.error);return false;}const valid=trial.configureSetupForces(setup);if(!valid.ok){toast(valid.error);return false;}if(setup.victoryTerms){const result=trial.configureVictoryTerms(setup.victoryTerms);if(!result.ok){toast(result.error);return false;}}}clearDice();game.reset();if(setup){game.configureSetupMap(setup.map);game.configureSetupForces(setup);if(setup.victoryTerms)game.configureVictoryTerms(setup.victoryTerms);}if(standard)game.startStandardDeployment();game.weather={night:$('#night').checked,gale:$('#gale').checked};game.tacticalOptions={standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked};buildTerrain();buildArcMeshes();reconcileModelRecords();zoom=fitBoard();cam();selected=0;arcWeapon='all';target=null;team=0;mode='walk';picked=new Set(game.units[0].weapons.map((_,i)=>i));for(const u of game.units){const rec=records.get(u.id);if(!rec)continue;rec.dead=false;rec.removalAnimation=false;rec.root.visible=true;rec.root.position.copy(world(u.q,u.r));rec.root.position.y=groundY(u.q,u.r);rec.root.rotation.y=u.team?-Math.PI/2:Math.PI/2;rec.label.style.display='block';play(u.id,'Sentinel');}syncModels();renderUI();toast(standard?'Новый бой. Бросьте развёртывание.':'Новый бой. Бросьте инициативу.');return true;}
+function showVictoryAdjudication(){
+ if(remoteMode||!hotseat||busy||!game.canAdjudicateVictory())return;
+ modal('<h2>Итог по согласованному условию</h2><p id="verdict-condition"></p><label>Результат<select id="verdict-outcome"><option value="draw">Ничья</option><option value="0">Победа зелёных</option><option value="1">Победа красных</option></select></label><label><input type="checkbox" id="verdict-green"> Зелёные подтверждают</label><label><input type="checkbox" id="verdict-red"> Красные подтверждают</label><button id="verdict-confirm" class="primary" disabled>ПОДТВЕРДИТЬ ИТОГ</button>');
+ $('#verdict-condition').textContent=game.victoryTerms.condition;
+ const update=()=>{$('#verdict-confirm').disabled = !($('#verdict-green').checked&&$('#verdict-red').checked);};
+ $('#verdict-green').onchange=update;$('#verdict-red').onchange=update;
+ $('#verdict-outcome').onchange=()=>{$('#verdict-green').checked=false;$('#verdict-red').checked=false;update();};
+ $('#verdict-confirm').onclick=()=>{
+  const value=$('#verdict-outcome').value,winner=value==='draw'?value:Number(value);
+  const result=game.adjudicateVictory({winner,approvals:[$('#verdict-green').checked,$('#verdict-red').checked]});
+  if(!result.ok){toast(result.error);return;}$('#modal').close();renderUI();
+ };
+}
 function showBattleSetup({preferCustom=false}={}){
  const stock=new Game().units,custom=readCustomDesign();
  modal('<h2>Подготовка нового боя</h2><p>Сначала выберите карту, затем состав сторон. Текущий бой будет сброшен.</p><label class="hint">Поле боя<select id="setup-layout"><option value="hex">Шестиугольное (127 гексов)</option><option value="sheet">Одна прямоугольная секция</option><option value="horizontal">Две секции рядом</option><option value="vertical">Две секции в глубину</option></select></label><label class="hint">Карта 1<select id="setup-map"></select></label><label class="hint">Ориентация<select id="setup-map-rotation"></select></label><div id="setup-second-sheet" hidden><label class="hint">Карта 2<select id="setup-map-2"></select></label><label class="hint">Ориентация 2<select id="setup-map-rotation-2"></select></label></div><div id="setup-forces"></div><div id="setup-extra"></div><div class="segments"><button type="button" id="setup-add-green">+ Зелёный мех</button><button type="button" id="setup-add-red">+ Красный мех</button></div>'+
   '<div id="setup-custom-consent" hidden><p>Нестандартный мех: согласие обеих сторон обязательно.</p>'+
   '<label><input type="checkbox" id="setup-approve-green"> Зелёная сторона согласна</label>'+
   '<label><input type="checkbox" id="setup-approve-red"> Красная сторона согласна</label></div>'+
-  '<label class="hint">Условия победы<select id="setup-victory"><option value="standard">Стандартные AGoAC</option><option value="limit">Ничья по лимиту раундов (по соглашению)</option></select></label>'+
-  '<div id="setup-victory-consent" hidden><label>Лимит раундов <input type="number" id="setup-round-limit" min="1" max="1000" value="12"></label><label><input type="checkbox" id="setup-victory-green"> Зелёная сторона согласна</label><label><input type="checkbox" id="setup-victory-red"> Красная сторона согласна</label></div>'+
+  '<label class="hint">Условия победы<select id="setup-victory"><option value="standard">Стандартные AGoAC</option><option value="limit">Ничья по лимиту раундов (по соглашению)</option><option value="custom">Свои условия (два игрока)</option></select></label>'+
+  '<div id="setup-victory-consent" hidden><label id="setup-limit-label">Лимит раундов <input type="number" id="setup-round-limit" min="1" max="1000" value="12"></label><label id="setup-condition-label" hidden>Условие победы (итог подтверждают оба игрока между раундами или после окончания боя)<textarea id="setup-condition" maxlength="500"></textarea></label><label><input type="checkbox" id="setup-victory-green"> Зелёная сторона согласна</label><label><input type="checkbox" id="setup-victory-red"> Красная сторона согласна</label></div>'+
   '<button class="primary" id="confirmstandard">СТАНДАРТНОЕ РАЗВЁРТЫВАНИЕ AGoAC</button><button id="confirmreset">НАЧАТЬ ЗАНОВО · ГОТОВАЯ РАССТАНОВКА</button>');
  for(const id of ['#setup-map','#setup-map-2'])for(const p of AGOAC_MAP_PRESETS){const option=document.createElement('option');option.value=p.id;option.textContent=p.name;$(id).append(option);}
  function updateLayout(){
@@ -528,11 +548,15 @@ function showBattleSetup({preferCustom=false}={}){
   $('#setup-approve-red').disabled=!hotseat;
   if(!hotseat)$('#setup-approve-red').checked=true;
   const valid=sizes.every(n=>n<=8)&&count<=1&&(count===0||$('#setup-approve-green').checked&&$('#setup-approve-red').checked);
-  const limited=$('#setup-victory').value==='limit',roundLimit=Number($('#setup-round-limit').value);
-  $('#setup-victory-consent').hidden=!limited;
-  $('#setup-victory-red').disabled=!hotseat;
+  const victoryMode=$('#setup-victory').value,limited=victoryMode==='limit',manual=victoryMode==='custom';
+  const roundLimit=Number($('#setup-round-limit').value),condition=$('#setup-condition').value.trim();
+  $('#setup-victory-consent').hidden = victoryMode==='standard';
+  $('#setup-limit-label').hidden = !limited;$('#setup-condition-label').hidden = !manual;
+  $('#setup-victory').querySelector('[value="custom"]').disabled = !hotseat;
+  $('#setup-victory-red').disabled = !hotseat;
   if(!hotseat)$('#setup-victory-red').checked=true;
-  const agreed=!limited||Number.isInteger(roundLimit)&&roundLimit>=1&&roundLimit<=1000&&$('#setup-victory-green').checked&&$('#setup-victory-red').checked;
+  const validTerms=limited?Number.isInteger(roundLimit)&&roundLimit>=1&&roundLimit<=1000:hotseat&&condition.length>0&&condition.length<=500;
+  const agreed=victoryMode==='standard'||validTerms&&$('#setup-victory-green').checked&&$('#setup-victory-red').checked;
   const canStart=valid&&agreed;
   for(const id of ['#confirmstandard','#confirmreset'])$(id).disabled = !canStart;
  }
@@ -542,14 +566,20 @@ function showBattleSetup({preferCustom=false}={}){
   $('#setup-approve-red').checked=false;update();
  };
  for(const id of ['#setup-approve-green','#setup-approve-red','#setup-victory-green','#setup-victory-red'])$(id).onchange=update;
- for(const id of ['#setup-victory','#setup-round-limit'])$(id).onchange=()=>{$('#setup-victory-green').checked=false;$('#setup-victory-red').checked=false;update();};
+ const resetVictoryConsent=()=>{$('#setup-victory-green').checked=false;$('#setup-victory-red').checked=false;update();};
+ for(const id of ['#setup-victory','#setup-round-limit','#setup-condition'])$(id).onchange=resetVictoryConsent;
+ $('#setup-condition').oninput=resetVictoryConsent;
  function begin(standard){
   const slots=fields.map(x=>x.value==='custom'?'custom':x.value==='none'?null:Number(x.value));
   const approvals=[$('#setup-approve-green').checked,$('#setup-approve-red').checked];
   const layout=$('#setup-layout').value,first={id:$('#setup-map').value,rotation:Number($('#setup-map-rotation').value)};
   const map=layout==='hex'?first:{layout,sheets:layout==='sheet'?[first]:[first,{id:$('#setup-map-2').value,rotation:Number($('#setup-map-rotation-2').value)}]};
   const extra=extraFields.map(x=>({team:Number(x.dataset.extraTeam),stock:x.value==='custom'?'custom':Number(x.value)}));
-  const victoryTerms=$('#setup-victory').value==='limit'?{roundLimit:Number($('#setup-round-limit').value),approvals:[$('#setup-victory-green').checked,$('#setup-victory-red').checked]}:null;
+  const verdictApprovals=[$('#setup-victory-green').checked,$('#setup-victory-red').checked];
+  const victoryMode=$('#setup-victory').value;
+  let victoryTerms=null;
+  if(victoryMode==='limit')victoryTerms={roundLimit:Number($('#setup-round-limit').value),approvals:verdictApprovals};
+  if(victoryMode==='custom')victoryTerms={condition:$('#setup-condition').value,approvals:verdictApprovals};
   if(reset(standard,{slots,extra,custom,approvals,map,victoryTerms}))$('#modal').close();
  }
  $('#confirmstandard').onclick=()=>begin(true);
