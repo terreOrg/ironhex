@@ -763,7 +763,7 @@ export class Game extends Legacy{
  const quad=u.config==='Quad',legs=quad?['LA','RA','LL','RL']:['LL','RL'];
  const lost=legs.filter(l=>u.structure[l]===0).length;
  if(mode==='jump'){
-  if(quad&&lost>=3)return 0;
+  if(quad?lost>=3:lost>0)return 0;
   const depth=u.deployed===false?0:this.tile(u.q,u.r)?.depth??0;
   if(depth>=2||(depth>=1&&u.prone))return 0;
   const submergedJets=depth===1?legs.reduce((n,l)=>n+(this.isBreached(u,l)?0:u.slots[l].filter((slot,i)=>slot==='jump'&&!u.crit[l][i]).length),0):0;

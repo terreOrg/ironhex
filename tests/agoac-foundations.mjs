@@ -2964,3 +2964,21 @@ test('AGoAC p.8: standing still spends no MP and unsupported movement modes cann
   assert.deepEqual([u.q,u.r,u.facing],[0,0,0]);
  }
 });
+
+
+test('AGoAC p.8: one-legged bipeds cannot select jumping even with intact jets',()=>{
+ for(const limb of ['LL','RL']){
+  const g=fresh(),u=g.units[0];
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,jump:3,jumpLost:0,heat:0,moveMode:'stand',spent:0,prone:false,proneAtStart:false});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  assert.equal(g.mp(u,'jump'),3);
+  u.structure[limb]=0;
+  assert.equal(g.mp(u,'walk'),1);assert.equal(g.mp(u,'run'),0);assert.equal(g.mp(u,'jump'),0);
+  const before=JSON.stringify(u);
+  assert.deepEqual(g.reachable(u,'jump'),[]);assert.deepEqual(g.reachable(u,'run'),[]);
+  assert.equal(g.move(u.id,0,0,'jump').ok,false);
+  assert.equal(g.move(u.id,1,0,'run').ok,false);
+  assert.equal(JSON.stringify(u),before);
+ }
+});

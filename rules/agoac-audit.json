@@ -3524,9 +3524,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.12,32: ordinary damaged running still requires its separate PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: one-legged bipeds cannot select jumping even with intact jets"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Printed p.8 visually reviewed: one-legged bipeds may walk or stand still only. Fixed jump allowance for missing leg; new regression pending checks. Damage-related PSR triggers remain to audit."
     },
     {
       "id": "agoac-060",
