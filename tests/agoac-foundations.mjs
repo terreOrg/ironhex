@@ -2544,3 +2544,24 @@ test('AGoAC p.7: End Phase restores torso and arm orientation and starts a fresh
  assert(g.nextPhase().ok);assert.equal(g.phase,'move');assert.equal(g.queue.length,4);assert.equal(g.activeTeam,0);
  assert.equal(dice.length,0);
 });
+
+test('AGoAC pp.6,40: damage from movement cannot contribute to the weapon phase 20-point PSR',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.queue=[];g.activeTeam=null;
+ g.rng=()=>{throw Error('Damage below 20 in either phase cannot trigger a PSR');};
+ g.damage(u,'CT',19);assert.equal(u.phaseDamage,19);
+ assert(g.nextPhase().ok);assert.equal(g.phase,'fire');assert.equal(u.phaseDamage,0);
+ g.damage(u,'CT',1);assert.equal(u.phaseDamage,1);
+ while(g.queue.length){const v=g.units.find(v=>g.canAct(v));assert(v);assert(g.hold(v.id).ok);}
+ assert(g.nextPhase().ok);assert.equal(g.phase,'physical');assert.equal(u.phaseDamage,0);
+ assert.equal(u.prone,false);assert(!g.phaseRolls.some(r=>r.kind.includes('20+ урона')));
+});
+test('AGoAC pp.6,40: unresolved movement damage checks finish before weapon declarations',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.queue=[];g.activeTeam=null;
+ u.phaseDamage=20;u.psrs.push({modifier:0,reason:'Актуатор LL'});
+ const dice=[...diceFor(12),...diceFor(12)];g.rng=()=>{assert(dice.length);return dice.shift();};
+ assert(g.nextPhase().ok);assert.equal(g.phase,'fire');assert.equal(dice.length,0);
+ assert.equal(u.phaseDamage,0);assert.deepEqual(u.psrs,[]);
+ assert(u.prone===false);assert.equal(g.afterRolls.length,2);
+ assert(g.afterRolls.every(r=>r.target===u.piloting+1));
+ assert.deepEqual(g.phaseRolls.map(r=>r.kind),g.afterRolls.map(r=>r.kind));
+});
