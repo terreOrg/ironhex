@@ -2654,10 +2654,13 @@ test('AGoAC pp.7,13,21: immutable high ridge prevents direct fire but preserves 
  const w=u.weapons[0];Object.assign(w,{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,rack:0,ranges:[3,6,9]});
  assert(g.permanentHillBlocks(u,v));assert(g.permanentHillBlocks(v,u));
  assert(!g.canEverDamage(u,[v]));
- // An indirect-capable LRM may still be used if a spotter is available;
- // the conservative stalemate test must not discard this possibility.
+ // No other friendly unit is alive, so even an LRM cannot fire.
  Object.assign(w,{name:'LRM-5',rack:5});
+ assert(!g.canEverDamage(u,[v]));
+ const spotter=g.units[1];
+ Object.assign(spotter,{dead:false,q:2,r:-1});
  assert(g.canEverDamage(u,[v]));
+ spotter.dead=true;
  Object.assign(w,{name:'Medium Laser',rack:0});
  hill.height=1;hill.surface=1;assert(g.canEverDamage(u,[v]));
  hill.height=3;hill.surface=3;
@@ -2691,5 +2694,21 @@ test('AGoAC pp.7,13: an adjacent immutable hill blocks fire independently of the
  near.height=0;near.surface=0;middle.height=2;middle.surface=2;
  assert(!g.permanentHillBlocks(u,v));assert(g.canEverDamage(u,[v]));
  middle.height=0;middle.surface=0;near.height=2;near.surface=2;
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+});
+
+
+test('AGoAC pp.7,21: blocked LRM needs another possible spotter and SRM cannot fire indirectly',()=>{
+ const g=fixedStandingBipeds(),u=g.units[0],s=g.units[1],v=g.units[2];
+ g.units[3].dead=true;
+ Object.assign(u,{q:-2,r:0});Object.assign(s,{q:-1,r:0});Object.assign(v,{q:2,r:0});
+ Object.assign(g.tile(0,0),{type:'hill',height:3,depth:0,surface:3});
+ const w=u.weapons[0];Object.assign(w,{name:'LRM-5',destroyed:false,location:'CT',locations:['CT'],ammo:null,rack:5,ranges:[3,6,9]});
+ assert(!g.canEverDamage(u,[v]));
+ Object.assign(s,{q:2,r:-1});assert(g.canEverDamage(u,[v]));
+ s.abandoned=true;assert(!g.canEverDamage(u,[v]));s.abandoned=false;
+ s.dead=true;assert(!g.canEverDamage(u,[v]));s.dead=false;
+ w.name='SRM-6';w.rack=6;assert(!g.canEverDamage(u,[v]));
+ w.name='LRM-5';w.rack=5;s.dead=true;
  g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
 });

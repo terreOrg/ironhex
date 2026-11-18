@@ -336,14 +336,19 @@ export class Game extends Legacy{
     const targetDepth=this.tile(t.q,t.r).depth,range=distance(u,t);
     if(submerged&&targetDepth===0||depth===0&&targetDepth>=2)return false;
     if(!range||range>ranges[2])return false;
-    // AGoAC pp.13,21: direct-only weapons cannot bypass an immutable
-    // ridge. Retain possible indirect missile fire (including spotters).
-    if(!w.rack&&!w.indirect&&!/LRM/i.test(w.name)&&!this.canEverMove(u)&&!this.canEverMove(t)){
-     if(this.permanentHillBlocks(u,t))return false;
-     // A permanently prone biped cannot turn, twist or flip its arms.
-     // Use a copy so the live declaration and mount state stay intact.
+    // AGoAC pp.13,21: only LRMs can bypass an immutable ridge,
+    // and only with a different friendly Mech able to see the target.
+    // A possible future spotter is sufficient; do not assume temporary
+    // shutdown, posture, or a past charge makes spotting impossible.
+    if(!this.canEverMove(u)&&!this.canEverMove(t)){
      if(stuckProne&&u.config!=='Quad'&&!u.directionalTorsoMounts?.length&&
         !this.arc({...u,twist:0,flip:false},t,w))return false;
+     if(this.permanentHillBlocks(u,t)){
+      if(!/LRM/i.test(w.name))return false;
+      return this.units.some(s=>s.id!==u.id&&s.team===u.team&&!s.dead&&
+       !s.abandoned&&s.deployed!==false&&
+       (this.canEverMove(s)||!this.permanentHillBlocks(s,t)));
+     }
     }
     return true;
    });
