@@ -732,6 +732,9 @@ export class Game extends Legacy{
   const standingBudget=restricted?2:this.mp(u,selected);
   if(!minimum&&u.spent+2>standingBudget)return fail('Нужно 2 MP');
   this.phaseRolls=[];u.standAttempts++;u.spent+=minimum?1:2;u.pendingHeat++;
+  // AGoAC p.12: a one-legged biped's restricted standing attempt
+  // includes every applicable modifier in its one required PSR.
+  if(!quad&&restricted)u.restrictedStandThisTurn=true;
   u.moveMode=selected;
   u.prone=false;this.actingId=id;
   // BMM p.19: a Quad with all four legs intact stands automatically.
@@ -751,7 +754,7 @@ export class Game extends Legacy{
   u.moveMode=mode;u.spent++;u.prone=true;this.actingId=id;
   this.checkExistingHullBreaches(u);return {ok:true};
  }
- hold(id){const u=this.unit(id);if(u?.deployed===false&&!u.dead)return fail('Сначала войдите на поле');if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(u.gyroHits||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip))this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
+ hold(id){const u=this.unit(id);if(u?.deployed===false&&!u.dead)return fail('Сначала войдите на поле');if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(!(u.config!=='Quad'&&u.restrictedStandThisTurn)&&(u.gyroHits||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip)))this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
  relative(a,b,f=a.facing){const x=Math.sqrt(3)*(b.q-a.q+(b.r-a.r)/2),y=-1.5*(b.r-a.r),v=Math.atan2(y,x)-f*Math.PI/3;return Math.atan2(Math.sin(v),Math.cos(v))*180/Math.PI;}
  hitSide(u,a){const v=this.relative(u,a);return Math.abs(v)<=60.00001?'front':Math.abs(v)>=120-.00001?'rear':v>0?'left':'right';}
  arc(u,t,w){
@@ -1374,7 +1377,7 @@ export class Game extends Legacy{
      {heat:u.heat,shutdown:u.shutdown,roll:{total:roll.total,target:roll.target}});
     u.shutdownNext=selected===action;
    }
-  }for(const i of u.dumping){const b=u.bins[i];if(b)b.shots=0;}u.dumping=u.dumpNext;u.dumpNext=[];this.syncAmmo(u);if(u.shutdownNext){u.shutdownNext=false;if(u.unconscious||u.abandoned){this.note(u.name+': приказ реактору отменён — пилот недоступен.');}else if(!u.shutdown){u.shutdown=true;u.voluntaryShutdown=true;this.note(`${u.name}: добровольное отключение реактора.`);}else if(u.voluntaryShutdown){const tn=shut(u.heat);if(tn!==99&&(tn===0||this.roll(u.name+' · Добровольный перезапуск',tn)>=tn)){u.shutdown=false;u.voluntaryShutdown=false;this.note(`${u.name}: реактор перезапущен.`);}else this.note(`${u.name}: перезапуск не удался.`);}}u.wasUnconscious=u.unconscious;u.proneAtStart=u.prone;u.moveStart={q:u.q,r:u.r};u.moved=false;u.fired=false;u.physicalDone=false;u.spent=0;u.moveMode='stand';u.distanceMoved=0;u.skidded=false;u.skidDirection=null;u.lastMovementDirection=null;u.skidCollisionPending=null;u.twist=0;u.flip=false;u.firedLocations=[];u.standAttempts=0;u.moveEndedByLegLoss=false;u.charge=null;}this.removeDestroyedMechs();this.round++;}
+  }for(const i of u.dumping){const b=u.bins[i];if(b)b.shots=0;}u.dumping=u.dumpNext;u.dumpNext=[];this.syncAmmo(u);if(u.shutdownNext){u.shutdownNext=false;if(u.unconscious||u.abandoned){this.note(u.name+': приказ реактору отменён — пилот недоступен.');}else if(!u.shutdown){u.shutdown=true;u.voluntaryShutdown=true;this.note(`${u.name}: добровольное отключение реактора.`);}else if(u.voluntaryShutdown){const tn=shut(u.heat);if(tn!==99&&(tn===0||this.roll(u.name+' · Добровольный перезапуск',tn)>=tn)){u.shutdown=false;u.voluntaryShutdown=false;this.note(`${u.name}: реактор перезапущен.`);}else this.note(`${u.name}: перезапуск не удался.`);}}u.wasUnconscious=u.unconscious;u.proneAtStart=u.prone;u.moveStart={q:u.q,r:u.r};u.moved=false;u.fired=false;u.physicalDone=false;u.spent=0;u.moveMode='stand';u.distanceMoved=0;u.skidded=false;u.skidDirection=null;u.lastMovementDirection=null;u.skidCollisionPending=null;u.twist=0;u.flip=false;u.firedLocations=[];u.standAttempts=0;u.restrictedStandThisTurn=false;u.moveEndedByLegLoss=false;u.charge=null;}this.removeDestroyedMechs();this.round++;}
  // Resolve an interactive phase on a detached rules-state copy. A choice
  // commits no partial damage/movement; recorded RNG samples are replayed
  // exactly once, even after restoring an authoritative saved battle.
