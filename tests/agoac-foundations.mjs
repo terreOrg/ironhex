@@ -2733,8 +2733,10 @@ test('AGoAC pp.7,25,28–29: fixed biped physical attack capability respects fac
  Object.assign(u,{q:0,r:0,facing:0});Object.assign(v,{q:1,r:0});
  u.structure.LA=1;u.structure.RA=1;
  assert(g.canEverDamage(u,[v]));
- u.facing=3;assert(!g.canEverDamage(u,[v]));
- u.twist=1;assert(!g.canEverDamage(u,[v]));
+ u.facing=3;assert(g.canEverDamage(u,[v]),'future torso twist can enable a side punch');
+ u.twist=1;assert(g.canEverDamage(u,[v]));
+ u.actuators.LA.shoulder=true;u.actuators.RA.shoulder=true;
+ assert(!g.canEverDamage(u,[v]),'push uses feet and both shoulders prevent punches');
  g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
 });
 
@@ -2767,4 +2769,42 @@ test('AGoAC pp.7,19: permanently submerged prone targets and depth-one leg weapo
  Object.assign(a.weapons[0],{name:'Medium Laser',destroyed:false,location:'LL',locations:['LL'],ammo:null,ranges:[3,6,9]});
  assert(!h.canEverDamage(a,[b]));
  Object.assign(a.weapons[0],{location:'CT',locations:['CT']});assert(h.canEverDamage(a,[b]));
+});
+
+
+test('AGoAC p.25: a prone target one level below cannot receive an ordinary physical attack',()=>{
+ const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+ g.units[1].dead=true;g.units[3].dead=true;
+ u.structure.LA=1;u.structure.RA=1;v.prone=true;
+ Object.assign(g.tile(v.q,v.r),{type:'plain',height:-1,surface:-1});
+ assert(!g.canEverMove(u));assert(!g.canEverMove(v));
+ assert(!g.canEverDamage(u,[v]));g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+ const h=fresh(),a=h.units[0],b=h.units[2];
+ for(const tile of h.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,facing:0,prone:false});Object.assign(b,{q:1,r:0,prone:true});
+ Object.assign(h.tile(b.q,b.r),{height:-1,surface:-1});
+ assert(!h.physicalPreview(a.id,b.id,'kick','RL').legal);
+ b.prone=false;assert(h.physicalPreview(a.id,b.id,'kick','RL').legal);
+ b.prone=true;Object.assign(h.tile(b.q,b.r),{height:0,surface:0});
+ assert(h.physicalPreview(a.id,b.id,'kick','RL').legal);
+});
+
+
+test('AGoAC pp.15,25–29: physical upper-body arcs follow torso twist but kicks and pushes follow feet',()=>{
+ const g=fresh(),u=g.units[0],v=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:3,twist:0,prone:false,config:'Biped',club:true});
+ Object.assign(v,{q:1,r:0,prone:false});
+ for(const l of ['LA','RA']){u.slots[l][3]='hand';u.actuators[l].shoulder=false;u.actuators[l].hand=false;}
+ assert(!g.physicalPreview(u.id,v.id,'punch','LA').legal);
+ u.twist=1;assert(g.physicalPreview(u.id,v.id,'punch','LA').legal);
+ assert(!g.physicalPreview(u.id,v.id,'punch','RA').legal);
+ assert(!g.physicalPreview(u.id,v.id,'kick','RL').legal);
+ assert(!g.physicalPreview(u.id,v.id,'push','RA').legal);
+ u.facing=1;u.twist=-1;
+ assert(g.physicalPreview(u.id,v.id,'club','RA').legal);
+ v.prone=true;Object.assign(g.tile(v.q,v.r),{height:-1,surface:-1});
+ assert(!g.physicalPreview(u.id,v.id,'club','RA').legal);
+ u.facing=0;u.twist=0;v.prone=false;
+ assert(g.physicalPreview(u.id,v.id,'club','RA').legal);
 });
