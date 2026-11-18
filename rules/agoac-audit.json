@@ -21,7 +21,8 @@
         3,
         5
       ],
-      "status": "tested_subset"
+      "status": "tested_subset",
+      "reviewNote": "Explicit introduction inventory completed against printed pages 3–5; 31 of 32 child requirements verified in this branch, last umbrella tests pending. Full later chapter mechanics remain separately auditable. No later chapter begins until this topic is verified."
     },
     {
       "id": "agoac-setup",
@@ -143,7 +144,7 @@
       ],
       "statement": "Audit scales, sheet definitions, pilot skills and injury rules against state and user-visible sheets.",
       "status": "tested_case",
-      "reviewNote": "The printed introduction was reviewed against the current scale constants, pilot data and record sheet. Existing tests establish concrete cases; this is an umbrella entry, not a claim of complete coverage. The remaining child requirements and scenario cross-references must be individually verified before closing foundations. 2026-11-18 strict chapter-first review: pp.3–5 and direct cross-references re-read; exact merged #113 evidence reconciled for individually reviewed children. Remaining: pilot-death edge case review agoac-033 and new record-sheet test agoac-046, then explicit full chapter inventory closure. Packaging fiction/materials and later chapter mechanics not counted as missing digital gameplay features.",
+      "reviewNote": "The printed introduction was reviewed against the current scale constants, pilot data and record sheet. Existing tests establish concrete cases; this is an umbrella entry, not a claim of complete coverage. The remaining child requirements and scenario cross-references must be individually verified before closing foundations. 2026-11-18 strict chapter-first review: pp.3–5 and direct cross-references re-read; exact merged #113 evidence reconciled for individually reviewed children. Remaining: pilot-death edge case review agoac-033 and new record-sheet test agoac-046, then explicit full chapter inventory closure. Packaging fiction/materials and later chapter mechanics not counted as missing digital gameplay features. Final printed pp.3–5 inventory review: page 3 physical counters and mapsheet representation (digital hex/terrain state; later scenario terrain variations p.48), 1D6/2D6, horizontal map and level/sublevel data; page 4 seven terrain types and introductory movement/LOS examples, logical scale, open sheets, armor/internal/rear points and transfer diagram; page 5 Mech Data, Warrior Data, Critical Hit Table, heat scale/data, independent skill bases and injury causes. Printed p.44 and pp.30,35,42 pilot-death cross-references reviewed. Physical box contents, printed sheet dimensions and fiction are not software gameplay mechanics; later chapters retain full movement, LOS, construction, scenario and damage implementation audits, rather than requiring those chapters to close this introductory inventory. Remaining acceptance evidence is these three direct page 4/5 regressions; do not promote umbrella or chapter before their exact CI passes.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -168,6 +169,18 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.5,44: Warrior Data shows all six injury steps and the exact consciousness table"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.4: all seven illustrated terrain types have the stated basic movement costs and rubble requires a PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.4: three intervening light woods or either light-heavy order block LOS"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: piloting skill is the independent base for a required terrain PSR"
         }
       ]
     },
@@ -1783,8 +1796,8 @@
         44
       ],
       "statement": "A Mech whose pilot dies is removed from the map at the end of that phase; preserve same-phase attack declarations and resolve occupancy and displacement until removal.",
-      "status": "tested_case",
-      "reviewNote": "Printed pp.35 and 44 require phase-end map removal. Actual wound/destroyLocation marks dead immediately; movement occupancy and displacement ignore dead units before phase transition; the UI collapses a dead model but has no explicit phase-boundary removal state. Already-declared ordinary weapon attacks can still roll. Keep destruction and on-map presence distinct and audit displacement, immediate fall damage, persistence, and presentation together. Partial implementation in follow-up: standard lethal damage records pending phase-end map removal; historical state and ordinary attack declarations are retained. Full domino, fall, charge/DFA and simultaneous damage ordering remain to be independently audited. Keep known_missing until those interactions are covered. Ordinary weapon attack staging now spends ammunition and rolls all attacks before damage; pending verification in CI. Follow-up corrects ordinary charge into prohibited displacement terrain (pp.26,42): both units retain positions and damage/PSRs remain; lethal target is not displaced. Existing fractional charge-damage rounding is confirmed by the 65-ton/5-hex example. DFA alternatives, dominoes and physical interruption remain unresolved. Follow-up: opposed pushes resolve both attempts before any displacement, both successful attempts leave both positions unchanged and require immediate PSRs; prohibited push retains positions and requires PSR. Domino and accidental falls remain outstanding. Domino chain now checks standing targets before displacement, falls in destination on failure, ignores fall-avoidance checks for prone targets and destroys a blocked terminal target. Optional controller-chosen dodge and occupied downward displacement (accidental falls from above) remain missing; no claim of complete rule. Accidental fall branch now distinguishes occupied downward displacement, target movement/terrain to-hit, punch packet damage with full-submersion halving, rear fall, destination selection and victim PSR. Remaining: interactive dodge, already occupied alternative landing candidates, exact two-stage water falling damage and full physical precedence audit. p.43 follow-up: forced dry-to-water descent passes origin elevation into fall; surface and bottom independently rounded and packetized. Same-water fall remains halved once. Voluntary water-entry and jump-landing semantics pending separate Movement audit. Follow-up (pp.25–29): reserve each displacement target across charge/DFA/push, reject charge/DFA against unfinished special attackers and ordinary physical attacks against DFA, preserve reciprocal pushes, permit DFA against prone completed targets. General displacement priority and optional dodge remain unresolved. Physical phase follows losing-side priority for conflicting orders, then checks current geometry against pre-attack damage state. Ordinary attack rolls are staged before ordinary damage; displacement can invalidate an unmade attack. Same-side order is a stable default, not yet interactive. Special damage/displacement interleaving and geometric effects are bounded to current implementation. DFA landing follow-up (pp.27–28): legal angular alternative groups for successful DFA, all legal adjacent options on missed DFA (including occupied and offboard), forbidden all-neighbor destruction, airborne stacking exemption, rear fall on miss and original start hex attack direction. Resolver still defaults to first legal direction; interactive controller choice remains missing. Interactive displacement: successful side-entry domino PSR now offers optional forward/backward dodge under unused MP, legal geometry, standing/mobile and movement-mode restrictions; DFA target controller chooses legal displacement destination. Local and authoritative phase resolution pauses on a controller choice, replays previous RNG samples instead of rerolling, redacts private journal from public snapshots and validates decisions. Automated battles retain deterministic default. Full browser interaction and immediate Weapon Phase DFA miss/PSR semantics require separate verification. Browser regression now covers pause, reload, exact server version/choice payload, no phase transition until selection, and the resulting selected hex (server route fixture backed by the shared rules engine). Same-controller physical ordering: before a side's pending displacement-capable attacks, offer successive attacker selection; keep initiative priority and pair reciprocal pushes. Conservatively offer the choice even when a possible domino chain ultimately does not interrupt another attack. UI uses saved choice mechanism. This does not yet certify every immediate-damage interaction. Weapon Attack Phase airborne DFA fall exception: a failed PSR or automatic fall immediately resolves the missed DFA landing and rear two-level impact, using the triggering PSR TN for the seat-belt check. Retain resolved declaration reservation, clear airborne and suppress repeated Physical Phase DFA; target chooses legal adjacent displacement using the existing phase-choice mechanism. Direct regressions cover pass/fail, unconsciousness, leg/gyro automatic fall and interactive selection. Source p27–28,40,44; LOS height, destroyed airborne unit and full special-attack timing remain separately auditable. Consolidated scope review of original CAT3500D pp.30,35,42,44. The recorded requirement is about pilot death, phase-end removal, same-phase declarations and displacement effects, not a certificate for every rule in the physical-combat chapter. Added actual lethal head-hit tests through both full attack phases (including outgoing damage after death, temporary occupancy, inability to act, preserved historical unit, removal on transition), and real push/PSR/seat-belt death invalidating an unmade kick. Corrected physical revalidation for immediate deaths during displacement/falls. Standard movement occupancy uses pending map presence; displace explicitly does not apply domino/PSR to a destroyed unit (p.42 no displacement for a unit destroyed by the action; p.35 no further effects after removal). The source does not explicitly define an independent forced entry into a pending destroyed unit's hex; no new behavior invented for this ambiguous interaction. Partial progress notes above refer to earlier revisions; dome dodge and player choice now implemented. Keep as tested_case until exact new CI, Smoke, Browser, and independent source/edge-case review. Broader attack-damage timing/order, deployment and other DFA details are not certified by closing this scoped requirement and remain in subsequent audit scope.",
+      "status": "verified",
+      "reviewNote": "Printed pp.35 and 44 require phase-end map removal. Actual wound/destroyLocation marks dead immediately; movement occupancy and displacement ignore dead units before phase transition; the UI collapses a dead model but has no explicit phase-boundary removal state. Already-declared ordinary weapon attacks can still roll. Keep destruction and on-map presence distinct and audit displacement, immediate fall damage, persistence, and presentation together. Partial implementation in follow-up: standard lethal damage records pending phase-end map removal; historical state and ordinary attack declarations are retained. Full domino, fall, charge/DFA and simultaneous damage ordering remain to be independently audited. Keep known_missing until those interactions are covered. Ordinary weapon attack staging now spends ammunition and rolls all attacks before damage; pending verification in CI. Follow-up corrects ordinary charge into prohibited displacement terrain (pp.26,42): both units retain positions and damage/PSRs remain; lethal target is not displaced. Existing fractional charge-damage rounding is confirmed by the 65-ton/5-hex example. DFA alternatives, dominoes and physical interruption remain unresolved. Follow-up: opposed pushes resolve both attempts before any displacement, both successful attempts leave both positions unchanged and require immediate PSRs; prohibited push retains positions and requires PSR. Domino and accidental falls remain outstanding. Domino chain now checks standing targets before displacement, falls in destination on failure, ignores fall-avoidance checks for prone targets and destroys a blocked terminal target. Optional controller-chosen dodge and occupied downward displacement (accidental falls from above) remain missing; no claim of complete rule. Accidental fall branch now distinguishes occupied downward displacement, target movement/terrain to-hit, punch packet damage with full-submersion halving, rear fall, destination selection and victim PSR. Remaining: interactive dodge, already occupied alternative landing candidates, exact two-stage water falling damage and full physical precedence audit. p.43 follow-up: forced dry-to-water descent passes origin elevation into fall; surface and bottom independently rounded and packetized. Same-water fall remains halved once. Voluntary water-entry and jump-landing semantics pending separate Movement audit. Follow-up (pp.25–29): reserve each displacement target across charge/DFA/push, reject charge/DFA against unfinished special attackers and ordinary physical attacks against DFA, preserve reciprocal pushes, permit DFA against prone completed targets. General displacement priority and optional dodge remain unresolved. Physical phase follows losing-side priority for conflicting orders, then checks current geometry against pre-attack damage state. Ordinary attack rolls are staged before ordinary damage; displacement can invalidate an unmade attack. Same-side order is a stable default, not yet interactive. Special damage/displacement interleaving and geometric effects are bounded to current implementation. DFA landing follow-up (pp.27–28): legal angular alternative groups for successful DFA, all legal adjacent options on missed DFA (including occupied and offboard), forbidden all-neighbor destruction, airborne stacking exemption, rear fall on miss and original start hex attack direction. Resolver still defaults to first legal direction; interactive controller choice remains missing. Interactive displacement: successful side-entry domino PSR now offers optional forward/backward dodge under unused MP, legal geometry, standing/mobile and movement-mode restrictions; DFA target controller chooses legal displacement destination. Local and authoritative phase resolution pauses on a controller choice, replays previous RNG samples instead of rerolling, redacts private journal from public snapshots and validates decisions. Automated battles retain deterministic default. Full browser interaction and immediate Weapon Phase DFA miss/PSR semantics require separate verification. Browser regression now covers pause, reload, exact server version/choice payload, no phase transition until selection, and the resulting selected hex (server route fixture backed by the shared rules engine). Same-controller physical ordering: before a side's pending displacement-capable attacks, offer successive attacker selection; keep initiative priority and pair reciprocal pushes. Conservatively offer the choice even when a possible domino chain ultimately does not interrupt another attack. UI uses saved choice mechanism. This does not yet certify every immediate-damage interaction. Weapon Attack Phase airborne DFA fall exception: a failed PSR or automatic fall immediately resolves the missed DFA landing and rear two-level impact, using the triggering PSR TN for the seat-belt check. Retain resolved declaration reservation, clear airborne and suppress repeated Physical Phase DFA; target chooses legal adjacent displacement using the existing phase-choice mechanism. Direct regressions cover pass/fail, unconsciousness, leg/gyro automatic fall and interactive selection. Source p27–28,40,44; LOS height, destroyed airborne unit and full special-attack timing remain separately auditable. Consolidated scope review of original CAT3500D pp.30,35,42,44. The recorded requirement is about pilot death, phase-end removal, same-phase declarations and displacement effects, not a certificate for every rule in the physical-combat chapter. Added actual lethal head-hit tests through both full attack phases (including outgoing damage after death, temporary occupancy, inability to act, preserved historical unit, removal on transition), and real push/PSR/seat-belt death invalidating an unmade kick. Corrected physical revalidation for immediate deaths during displacement/falls. Standard movement occupancy uses pending map presence; displace explicitly does not apply domino/PSR to a destroyed unit (p.42 no displacement for a unit destroyed by the action; p.35 no further effects after removal). The source does not explicitly define an independent forced entry into a pending destroyed unit's hex; no new behavior invented for this ambiguous interaction. Partial progress notes above refer to earlier revisions; dome dodge and player choice now implemented. Keep as tested_case until exact new CI, Smoke, Browser, and independent source/edge-case review. Broader attack-damage timing/order, deployment and other DFA details are not certified by closing this scoped requirement and remain in subsequent audit scope. Final scoped source and log review: all named tests passed in #114; merged tree equals tested tree.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -1906,7 +1919,37 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical attack against the fallen Mech"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Printed pp.30,35,42,44 checked in source PDF. Attacks declared in a phase survive attack damage, displacement/fall effects apply immediately and a destroyed target of displacement is not displaced. The exact successful CI logs contain all 28 linked regressions, including actual lethal sixth head wound in both attack phases, reserved return attacks, pending occupancy and cleanup, lethal immediate fall invalidating an unmade physical attack, API replay and browser choice recovery. Scope is pilot-death and phase-removal semantics, not certification of every special-attack or displacement rule. The book does not explicitly specify a separate forced entry into a dead pending-removal unit's hex; no extra rule is claimed for that ambiguous situation.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "c9c5028fdfa88b21a34de6926813bde9473de11a",
+        "testedTree": "69371d2838164d9de5cd4ee80fb6f3eb37535cc0",
+        "mergedSha": "366597ac05c900af9039cd1b1a67e9e1d75d0e62",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44300202234,
+            "jobId": 134787652162,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44300202252,
+            "jobId": 134787649397,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44300202318,
+            "jobId": 134787656090,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-034",
@@ -2440,7 +2483,7 @@
         35
       ],
       "statement": "The record sheet distinguishes empty critical slots from intact/destroyed equipment, shows every weapon inventory entry and its combat statistics, and identifies standard inward transfer routes and no transfer from head/center torso.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -2451,7 +2494,37 @@
           "test": "AGoAC p.5: weapons inventory reflects names locations ranges heat damage and ammunition"
         }
       ],
-      "reviewNote": "Introduction pp.4–5 re-read; empty slots shown as reroll rather than as intact equipment, no-transfer note added, weapon inventory row regression. Exact CI pending. Actual damage and construction data correctness separate."
+      "reviewNote": "Introduction pp.4–5 re-read; empty slots shown as reroll rather than as intact equipment, no-transfer note added, weapon inventory row regression. Exact CI pending. Actual damage and construction data correctness separate. Final scoped source and log review: all named tests passed in #114; merged tree equals tested tree.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Printed pp.4–5,34–35 inspected including sample record sheet and transfer diagram. Both new exact-tree tests passed: blank slots distinguish rerolls even if marked by destruction, intact and destroyed equipment are distinct, inward transfer and terminal locations displayed, weapons inventory enumerates every starting unit's rows and statistics. Actual combat execution and construction data belong to later chapters.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "c9c5028fdfa88b21a34de6926813bde9473de11a",
+        "testedTree": "69371d2838164d9de5cd4ee80fb6f3eb37535cc0",
+        "mergedSha": "366597ac05c900af9039cd1b1a67e9e1d75d0e62",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44300202234,
+            "jobId": 134787652162,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44300202252,
+            "jobId": 134787649397,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44300202318,
+            "jobId": 134787656090,
+            "conclusion": "success"
+          }
+        ]
+      }
     }
   ]
 }

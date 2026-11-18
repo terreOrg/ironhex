@@ -2234,3 +2234,49 @@ test('AGoAC p.5: weapons inventory reflects names locations ranges heat damage a
   }
  }
 });
+
+test('AGoAC p.4: all seven illustrated terrain types have the stated basic movement costs and rubble requires a PSR',()=>{
+ for(const [type,cost] of [['plain',1],['pavement',1],['rough',2],['rubble',2],['woods',2],['heavy',3]]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=u.team;g.queue=[u.team,1-u.team];g.actingId=null;
+  for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,walk:6,moveStart:{q:0,r:0},moveMode:'stand'});
+  for(const other of g.units.filter(v=>v!==u))other.dead=true;
+  const tile=g.tile(1,0);Object.assign(tile,{type});
+  assert.equal(g.terrainCost(tile),cost);
+  assert.equal(g.reachable(u,'walk').find(p=>p.q===1&&p.r===0)?.cost,cost);
+  g.rng=()=>.99;
+  assert(g.move(u.id,1,0,'walk').ok);assert.equal(u.spent,cost);
+  assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Обломки')).length,type==='rubble'?1:0);
+  assert.equal(u.prone,false);
+ }
+ const g=fresh();for(const [depth,cost] of [[1,2],[2,4],[3,4]]){
+  assert.equal(g.terrainCost({type:'water',depth,height:-depth,surface:0}),cost);
+ }
+});
+test('AGoAC p.4: three intervening light woods or either light-heavy order block LOS',()=>{
+ for(const [terrain,blocked] of [
+  [[],false],[['woods'],false],[['woods','woods'],false],
+  [['heavy'],false],[['woods','woods','woods'],true],
+  [['woods','heavy'],true],[['heavy','woods'],true]
+ ]){
+  const g=fresh(),a=g.units[0],b=g.units[2];
+  for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:4,r:0,prone:false});
+  for(const [i,type] of terrain.entries())g.tile(i+1,0).type=type;
+  const los=g.los(a,b);
+  assert.equal(los.woods,terrain.reduce((n,t)=>n+(t==='heavy'?2:1),0));
+  assert.equal(los.blocked,blocked);
+ }
+});
+test('AGoAC p.5: piloting skill is the independent base for a required terrain PSR',()=>{
+ for(const [gunnery,piloting] of [[4,5],[2,7],[7,2]]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=u.team;g.queue=[u.team,1-u.team];g.actingId=null;
+  for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+  for(const v of g.units.filter(v=>v!==u))v.dead=true;
+  Object.assign(u,{q:0,r:0,facing:0,walk:6,gunnery,piloting,moveMode:'stand',moveStart:{q:0,r:0}});
+  g.tile(1,0).type='rubble';
+  const dice=diceFor(12);g.rng=()=>{assert(dice.length);return dice.shift();};
+  assert(g.move(u.id,1,0,'walk').ok);assert.equal(dice.length,0);
+  assert.equal(g.phaseRolls.length,1);assert.equal(g.phaseRolls[0].target,piloting);
+ }
+});
