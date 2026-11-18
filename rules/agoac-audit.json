@@ -1609,7 +1609,7 @@
         34
       ],
       "statement": "Biped kick TN increases with every damaged upper/lower leg actuator and foot on either leg; each upper/lower leg hit halves kick damage cumulatively, rounded down. Both hips must work and a fired leg cannot kick. A zero-damage successful kick still requires the target PSR but causes no damage or critical hit.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1624,7 +1624,120 @@
           "test": "AGoAC p.28: zero-damage kick cannot trigger a through-armor critical but still requires a PSR"
         }
       ],
-      "reviewNote": "Printed pp.28,32–34 checked: both legs contribute to all biped kicks, including accumulated damage reduction down to zero; no minimum-one exception stated for kicks. Quad extensions kept unchanged. Tests cover all 64 actuator states at three weights, both kick choices, leg-specific firing and zero-damage edge. CI pending."
+      "reviewNote": "Printed pp.28,32–34 checked: both legs contribute to all biped kicks, including accumulated damage reduction down to zero; no minimum-one exception stated for kicks. Quad extensions kept unchanged. Tests cover all 64 actuator states at three weights, both kick choices, leg-specific firing and zero-damage edge. CI passed; merged tree equals tested tree.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Re-read printed pp.28,32–34. All 64 two-leg damage masks at three tonnages, both leg declarations, hip damage, fired leg and zero-damage hit/PSR tested. Narrow actuator effect requirement, not full physical geometry or attacks.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "b89869f0bf6b88f66a5698c3e712c007362071ad",
+        "testedTree": "84957d096516cc9f8b7107a8da44daef596190ea",
+        "mergedSha": "0d8576f0e64f2968e072050f7f0a4e552bcf3b59",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44295582212,
+            "jobId": 134771646170,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44295582132,
+            "jobId": 134771646434,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44295582189,
+            "jobId": 134771648429,
+            "conclusion": "success"
+          }
+        ]
+      }
+    },
+    {
+      "id": "agoac-039",
+      "topicId": "agoac-damage",
+      "pages": [
+        32,
+        34,
+        35,
+        37,
+        38
+      ],
+      "statement": "Engine hits give five heat each up to two hits unless shut down; three hits destroy the Mech and mark it for end-of-phase removal. Engine slots destroyed with their torso count once.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,37–38: engine criticals add five heat each unless shut down and third destroys"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,34–35: side torso destruction counts critical and remaining engine slots once"
+        }
+      ],
+      "reviewNote": "Corrected destruction accounting for side torso engine slots, including slots marked in the final critical check; existing saves cannot repair earlier unrecorded component losses. Exact CI pending."
+    },
+    {
+      "id": "agoac-040",
+      "topicId": "agoac-damage",
+      "pages": [
+        33,
+        34
+      ],
+      "statement": "Each destroyed heat sink and jump jet is lost once, including when a final-section critical marks the slot before location destruction.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33–34: destroyed section counts sink and jump slots marked by final critical roll"
+        }
+      ],
+      "reviewNote": "Fixed loss accounting in final critical checks; standalone critical effects already present. Exact CI pending."
+    },
+    {
+      "id": "agoac-041",
+      "topicId": "agoac-damage",
+      "pages": [
+        33
+      ],
+      "statement": "First sensor critical adds two to weapon TN; second prevents weapon fire; physical attacks are unchanged.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.33: both sensor criticals affect weapons only and the second prevents fire"
+        }
+      ],
+      "reviewNote": "Existing implementation reviewed and tested via both actual head criticals. Exact CI pending."
+    },
+    {
+      "id": "agoac-042",
+      "topicId": "agoac-damage",
+      "pages": [
+        33,
+        39,
+        44
+      ],
+      "statement": "Either life-support critical disables the system, while the second has no extra effect. Heat and submerged wound thresholds apply once.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33,39: second life support critical marks its slot without stacking wounds"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33,39,44: damaged life support heat wounds at exact thresholds"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,33,44: submerged life support wounds and lethal wounds cannot recover"
+        }
+      ],
+      "reviewNote": "Actual two-slot critical regression; existing thresholds and submerged tests referenced. Exact CI pending."
     }
   ]
 }
