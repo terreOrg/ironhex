@@ -2499,3 +2499,48 @@ test('AGoAC pp.6–7: expanded unequal forces enter and make exactly one selecti
  assert(g.nextPhase().ok);assert.equal(g.phase,'fire');assert.equal(g.queue.length,7);
  assert.equal(g.queue.filter(t=>t===0).length,5);assert.equal(g.queue.filter(t=>t===1).length,2);
 });
+
+test('AGoAC pp.6–7: incomplete deployment cannot advance or erase the completed movement results',()=>{
+ const g=fresh();assert(g.startStandardDeployment().ok);
+ g.phase='move';g.queue=[];g.activeTeam=null;
+ g.phaseRolls=[{kind:'Movement',total:7}];g.resolution=[{id:0}];g.afterRolls=[{kind:'PSR',total:9}];
+ const before=JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v);
+ g.rng=()=>{throw Error('Rejected phase advance cannot roll dice');};
+ assert(!g.nextPhase().ok);
+ assert.equal(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v),before);
+});
+test('AGoAC p.6: weapon declarations and facing commitments cannot change after selection',()=>{
+ const g=fresh(),[u,ally,a,b]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0});Object.assign(a,{q:1,r:0});Object.assign(b,{q:2,r:0});Object.assign(ally,{q:-2,r:0});
+ g.phase='fire';g.initiativeWinner=1;g.buildQueue();
+ assert(g.twist(u.id,1).ok);
+ const shot=u.weapons.findIndex((w,i)=>g.preview(u.id,a.id,i).legal);
+ assert(shot>=0);g.rng=()=>{throw Error('Declaration cannot roll dice');};
+ const before=g.phaseRolls.length;
+ assert(g.attack(u.id,a.id,[shot]).ok);
+ assert.equal(g.phaseRolls.length,before);assert.equal(g.declarations.length,1);
+ const declaration=JSON.stringify(g.declarations),twist=u.twist,flip=u.flip;
+ assert(!g.attack(u.id,b.id,[shot]).ok);
+ assert(!g.twist(u.id,0).ok);assert(!g.flipArms(u.id,true).ok);
+ assert(!g.hold(u.id).ok);assert(!g.nextPhase().ok);
+ assert.equal(JSON.stringify(g.declarations),declaration);assert.equal(u.twist,twist);assert.equal(u.flip,flip);
+ while(g.queue.length){const v=g.units.find(v=>g.canAct(v));assert(v);assert(g.hold(v.id).ok);}
+ assert.equal(g.declarations.length,1);assert.equal(g.phase,'fire');
+});
+test('AGoAC p.7: End Phase restores torso and arm orientation and starts a fresh selection cycle',()=>{
+ const g=fresh(),[a,b]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ g.phase='end';g.queue=[];g.activeTeam=null;
+ for(const u of g.units)Object.assign(u,{moved:true,fired:true,physicalDone:true,moveMode:'walk',spent:2,distanceMoved:2});
+ a.twist=1;b.flip=true;
+ const facing=g.units.map(u=>u.facing),oldRound=g.round;
+ g.rng=()=>{throw Error('Resetting orientation has no dice cost');};
+ assert(g.nextPhase().ok);
+ assert.equal(g.phase,'initiative');assert.equal(g.round,oldRound+1);
+ assert.deepEqual(g.units.map(u=>u.facing),facing);
+ assert(g.units.every(u=>u.twist===0&&u.flip===false&&!u.moved&&!u.fired&&!u.physicalDone&&u.spent===0&&u.distanceMoved===0));
+ const dice=[...diceFor(2),...diceFor(12)];g.rng=()=>{assert(dice.length);return dice.shift();};
+ assert(g.nextPhase().ok);assert.equal(g.phase,'move');assert.equal(g.queue.length,4);assert.equal(g.activeTeam,0);
+ assert.equal(dice.length,0);
+});
