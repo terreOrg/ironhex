@@ -696,9 +696,9 @@
         6,
         7
       ],
-      "statement": "Undestroyed immobile and nonattacking units count for selections; declaration order and simultaneity, consciousness before PSRs, Heat and End actions and victory/draw conditions require independent audit.",
+      "statement": "Remaining Sequence of Play exceptions and victory conditions: initiative-consistent resolution including no-fire selections and displacement exceptions; permanent mutual inability to move and damage; alternatives agreed before play.",
       "status": "known_missing",
-      "reviewNote": "Printed pp.6-7 and 30: buildQueue includes surviving immobile and unarmed units and declarations are stored. However resolveFire interleaves to-hit rolls with damage rather than an all-attacks-first stage; resolvePhysical processes charge declarations in unit-array order before other declarations; heat avoidance lacks an explicit conscious-pilot restriction; inherited checkWin handles last-side elimination but has no stalemate draw predicate. Split these into atomic follow-up implementation and regression requirements; do not infer complete timing from green CI. Follow-up separates ordinary weapon to-hit and ammo expenditure from damage and groups damage by target. Physical staging, selectable independent damage ordering, heat and stalemate remain outstanding. Thermal avoidance now distinguishes unconscious/unavailable pilots and automatic below-14 restart; voluntary shutdown/restart and phase PSR interactions remain independently auditable. Ordinary physical attack rolls now staged before ordinary damage, using initiative and immediate displacement exception. Same-side interactive resolution and full charge/DFA effects remain incomplete. Controller can now choose physical attacker order when their side has a remaining displacement-capable attack, grouped by attacker; ordinary weapon damage order is separate. Weapon resolution now offers independent controller choices of target group and weapon for to-hit rolls and successful damage, using the existing replay journal. All declared attacks still roll before any damage. Target groups stay contiguous and each cluster resolves fully. AI uses deterministic declaration order. Controller choice of Mech resolution order and complete victory/heat audit remain open. Browser regression exercises the independent order prompts, authoritative payload and reconnect. At the Mech level, the player can independently select a remaining attacker in each existing initiative-based team slot for the to-hit and damage stage, before selecting that Mech's target/weapon order. Existing declaration ordering supplies the team slots; AI uses declaration order. Added replay regression, with victory/End Phase edge cases and exact CI still pending. Heat ammunition explosion follows p.38 maximum damage per shot; equal-value nonempty bins are now a controller decision, journaled after the failed avoidance roll with no reroll on resume. AI retains deterministic most-rounds fallback. Added deterministic tests; other victory/End Phase cases and exact CI remain pending. Printed p.7: elimination is now checked at the movement boundary too. Permanent mutual lack of movement and damage is checked after End Phase using recovered/cooled capability bounds; surviving in-range weapons and possible adjacent physical attacks prevent a draw. Conservative detection deliberately does not certify map-trapped cases or permanently blocked LOS/attack arcs. The campaign's documented 12-round limit is a separate scenario policy, not the standard AGoAC victory rule. Five new engine regressions; exact CI and remaining cases not yet verified. Original pp.7,38,44: voluntary shutdown/restart is available directly in End Phase, with existing Movement preselection retained as a shortcut. Controller must be available when executing a queued command. Server End Phase authorization is restricted to the owning side. Initiative snapshots actual unconsciousness before the turn, avoiding stale recovery eligibility. Four engine/API regressions. Selection by a pilot who first recovers during End Phase remains a separate UI timing case; exact CI pending. Printed pp.7,38,44: a newly recovered pilot receives the otherwise unavailable End Phase voluntary reactor choice after the successful consciousness roll. Interactive End Phase replay retains the roll, restart is excluded at 30+ heat, and unsuccessful recovery does not prompt. AI fallback retains state. Three engine/API regressions; CI pending. Printed pp.6–7: after a selection, remove queue slots exceeding the count of surviving unselected Mechs, preserving immobile survivors and relative order. Recomputing later pair ratios after mid-phase casualties remains open. Three new regressions; exact CI pending. Pair-aware rebatching implemented in this PR; legacy save limitation documented under agoac-005. Exact CI pending. Re-reviewed printed pp.6–7, including attack declaration immutability and all five listed End Phase actions. Added a no-reroll immutable declaration and torso/arm lock test. Remaining detailed phase resolution and victory/stalemate audit stays open. Do not treat passing ratio tests as complete resolution-order evidence. Printed pp.6,40: movement-phase damage must not accumulate into weapon-phase PSRs. Found missing movement boundary cleanup; ensure remaining pending PSRs and consciousness rolls are resolved before building fire declarations, with their roll record retained. Two exact regressions prepared; this boundary safety net does not certify precise immediate triggering of PSRs during every damaging movement action, which remains part of movement/PSR audit. Printed pp.7,19,25: correct conservative stalemate detection for permanently prone bipeds. They cannot perform physical attacks; cannot fire with a destroyed arm or fire leg weapons. A temporarily prone unit with recoverable movement does not trigger a draw. Three regressions prepared. Other conservative false negatives (e.g. permanent LOS obstacles and permanently unusable facing) remain explicitly open. Exact #125 CI + browser: all 36 previously linked cases passed, tested and merged trees match (9d3b1d14028c90de4194d0a3f81bcb5666de6ab2). Printed pp.7,19,28–29: refine conservative stalemate capability for zero-ground-MP standing bipeds with unusable hip/arm combinations; preserve a possible push with two arms and shoulder modifiers. Permanently separate dry and fully submerged firing domains, use underwater range for a permanently submerged shooter. Three new regressions pending. Depth-one transitions, permanently blocked LOS/facing, map trapping, and alternative victory conditions by mutual agreement still not fully certified. No chapter completion claimed.",
+      "reviewNote": "Printed pp.6-7 and 30: buildQueue includes surviving immobile and unarmed units and declarations are stored. However resolveFire interleaves to-hit rolls with damage rather than an all-attacks-first stage; resolvePhysical processes charge declarations in unit-array order before other declarations; heat avoidance lacks an explicit conscious-pilot restriction; inherited checkWin handles last-side elimination but has no stalemate draw predicate. Split these into atomic follow-up implementation and regression requirements; do not infer complete timing from green CI. Follow-up separates ordinary weapon to-hit and ammo expenditure from damage and groups damage by target. Physical staging, selectable independent damage ordering, heat and stalemate remain outstanding. Thermal avoidance now distinguishes unconscious/unavailable pilots and automatic below-14 restart; voluntary shutdown/restart and phase PSR interactions remain independently auditable. Ordinary physical attack rolls now staged before ordinary damage, using initiative and immediate displacement exception. Same-side interactive resolution and full charge/DFA effects remain incomplete. Controller can now choose physical attacker order when their side has a remaining displacement-capable attack, grouped by attacker; ordinary weapon damage order is separate. Weapon resolution now offers independent controller choices of target group and weapon for to-hit rolls and successful damage, using the existing replay journal. All declared attacks still roll before any damage. Target groups stay contiguous and each cluster resolves fully. AI uses deterministic declaration order. Controller choice of Mech resolution order and complete victory/heat audit remain open. Browser regression exercises the independent order prompts, authoritative payload and reconnect. At the Mech level, the player can independently select a remaining attacker in each existing initiative-based team slot for the to-hit and damage stage, before selecting that Mech's target/weapon order. Existing declaration ordering supplies the team slots; AI uses declaration order. Added replay regression, with victory/End Phase edge cases and exact CI still pending. Heat ammunition explosion follows p.38 maximum damage per shot; equal-value nonempty bins are now a controller decision, journaled after the failed avoidance roll with no reroll on resume. AI retains deterministic most-rounds fallback. Added deterministic tests; other victory/End Phase cases and exact CI remain pending. Printed p.7: elimination is now checked at the movement boundary too. Permanent mutual lack of movement and damage is checked after End Phase using recovered/cooled capability bounds; surviving in-range weapons and possible adjacent physical attacks prevent a draw. Conservative detection deliberately does not certify map-trapped cases or permanently blocked LOS/attack arcs. The campaign's documented 12-round limit is a separate scenario policy, not the standard AGoAC victory rule. Five new engine regressions; exact CI and remaining cases not yet verified. Original pp.7,38,44: voluntary shutdown/restart is available directly in End Phase, with existing Movement preselection retained as a shortcut. Controller must be available when executing a queued command. Server End Phase authorization is restricted to the owning side. Initiative snapshots actual unconsciousness before the turn, avoiding stale recovery eligibility. Four engine/API regressions. Selection by a pilot who first recovers during End Phase remains a separate UI timing case; exact CI pending. Printed pp.7,38,44: a newly recovered pilot receives the otherwise unavailable End Phase voluntary reactor choice after the successful consciousness roll. Interactive End Phase replay retains the roll, restart is excluded at 30+ heat, and unsuccessful recovery does not prompt. AI fallback retains state. Three engine/API regressions; CI pending. Printed pp.6–7: after a selection, remove queue slots exceeding the count of surviving unselected Mechs, preserving immobile survivors and relative order. Recomputing later pair ratios after mid-phase casualties remains open. Three new regressions; exact CI pending. Pair-aware rebatching implemented in this PR; legacy save limitation documented under agoac-005. Exact CI pending. Re-reviewed printed pp.6–7, including attack declaration immutability and all five listed End Phase actions. Added a no-reroll immutable declaration and torso/arm lock test. Remaining detailed phase resolution and victory/stalemate audit stays open. Do not treat passing ratio tests as complete resolution-order evidence. Printed pp.6,40: movement-phase damage must not accumulate into weapon-phase PSRs. Found missing movement boundary cleanup; ensure remaining pending PSRs and consciousness rolls are resolved before building fire declarations, with their roll record retained. Two exact regressions prepared; this boundary safety net does not certify precise immediate triggering of PSRs during every damaging movement action, which remains part of movement/PSR audit. Printed pp.7,19,25: correct conservative stalemate detection for permanently prone bipeds. They cannot perform physical attacks; cannot fire with a destroyed arm or fire leg weapons. A temporarily prone unit with recoverable movement does not trigger a draw. Three regressions prepared. Other conservative false negatives (e.g. permanent LOS obstacles and permanently unusable facing) remain explicitly open. Exact #125 CI + browser: all 36 previously linked cases passed, tested and merged trees match (9d3b1d14028c90de4194d0a3f81bcb5666de6ab2). Printed pp.7,19,28–29: refine conservative stalemate capability for zero-ground-MP standing bipeds with unusable hip/arm combinations; preserve a possible push with two arms and shoulder modifiers. Permanently separate dry and fully submerged firing domains, use underwater range for a permanently submerged shooter. Three new regressions pending. Depth-one transitions, permanently blocked LOS/facing, map trapping, and alternative victory conditions by mutual agreement still not fully certified. No chapter completion claimed. Exact #126: all 39 linked cases passed; four independently scoped completed requirements extracted as 051–054 without certifying the whole chapter. Printed pp.7,13,19–21: immutable high dry hill on a straight full-hex row can block direct fire permanently; retain possible indirect fire. A permanently prone biped has fixed facing. Two new tests pending. Conservative map trapping, split LOS, indirect spotter eligibility and arbitrary agreed victory conditions remain open; do not infer full overall victory parity.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -863,6 +863,14 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.7,19: immobile units separated by water cannot exchange weapon fire"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,13,21: immutable high ridge prevents direct fire but preserves possible indirect fire"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,19–21: permanently prone fixed-facing Mechs cannot use an out-of-arc weapon"
         }
       ]
     },
@@ -3029,6 +3037,264 @@
           }
         ],
         "review": "Printed p.6 players choose forces; p.7 unequal numbers. Three named regressions passed on the exact #121 tree: up to eight local fielded units per side, independent IDs and damage, unequal entry and phase selections, dynamic models/records. Resource cap is software, not a rule. Not a certification of arbitrary roster sizes, complete catalog or campaign economy."
+      }
+    },
+    {
+      "id": "agoac-051",
+      "topicId": "agoac-sequence",
+      "pages": [
+        6,
+        7
+      ],
+      "statement": "Every surviving unit consumes a selection in the declaration phases, including immobile/unarmed units; a weapon declaration cannot be amended after selection.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: surviving immobile or unarmed units retain declaration selections"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6–7: casualties before selection cannot leave impossible orders"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6–7: an immobile survivor keeps its order when a teammate is destroyed"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: weapon declarations and facing commitments cannot change after selection"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "df9913af706b590ac141c13dea32d990ab3ee45e",
+        "testedTree": "8ff9cbe859956ebaad02507ce8833fab06a919c1",
+        "mergedSha": "e68b5d60cccff8104ef602df47a20b9bdd314fcc",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44323822323,
+            "jobId": 134869598750,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44323822329,
+            "jobId": 134869598865,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44323822347,
+            "jobId": 134869600320,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct p.6 review: standing still/no fire are valid selections and declared attacks and facing commitments cannot subsequently change. Scoped selection and declaration immutability only. All attached test names passed on exact #126 CI/browser tree, identical merged tree."
+      }
+    },
+    {
+      "id": "agoac-052",
+      "topicId": "agoac-sequence",
+      "pages": [
+        6,
+        7,
+        21,
+        30
+      ],
+      "statement": "Ordinary declared weapon and physical attacks roll before their ordinary damage; declared attacks survive attack-phase damage. Weapon roll and damage ordering can differ, grouped by Mech and target.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Declared shot survives destruction of shooter"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,29–30: ordinary physical attacks all roll before damage, including a destroyed attacker"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,21,30: independent controller choices for to-hit and damage order replay without rerolling"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.21: attack and damage order remain grouped by target"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "Authoritative weapon roll and damage order are independent and survive reconnect"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,30: controller chooses Mech order independently while preserving team slots"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "df9913af706b590ac141c13dea32d990ab3ee45e",
+        "testedTree": "8ff9cbe859956ebaad02507ce8833fab06a919c1",
+        "mergedSha": "e68b5d60cccff8104ef602df47a20b9bdd314fcc",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44323822323,
+            "jobId": 134869598750,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44323822329,
+            "jobId": 134869598865,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44323822347,
+            "jobId": 134869600320,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct pp.6,7,21,30 review: all attacks declared and made before damage; controller chooses ordering independently and completes each target group. Scope ordinary attacks, not displacement/fall exceptions, not indirect fire target calculations. All attached test names passed on exact #126 CI/browser tree, identical merged tree."
+      }
+    },
+    {
+      "id": "agoac-053",
+      "topicId": "agoac-sequence",
+      "pages": [
+        7
+      ],
+      "statement": "End Phase handles eligible consciousness recovery, submerged damaged life support wounds, neutral torso/arm orientation and voluntary reactor decisions.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,38: optional reactor orders can be made and cancelled during End Phase"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,38,44: an unavailable pilot cannot execute a previously queued reactor command"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,44: Initiative captures actual recovery eligibility for the current turn"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "API permits optional friendly reactor orders at End Phase without a movement selection"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,38,44: recovered pilot can choose reactor state with exactly-once recovery and restart dice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,44: unsuccessful recovery does not offer reactor choice"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "API End Phase recovery choice is resumable and does not expose replay journal"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.7: End Phase restores torso and arm orientation and starts a fresh selection cycle"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,33,44: submerged life support wounds and lethal wounds cannot recover"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "df9913af706b590ac141c13dea32d990ab3ee45e",
+        "testedTree": "8ff9cbe859956ebaad02507ce8833fab06a919c1",
+        "mergedSha": "e68b5d60cccff8104ef602df47a20b9bdd314fcc",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44323822323,
+            "jobId": 134869598750,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44323822329,
+            "jobId": 134869598865,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44323822347,
+            "jobId": 134869600320,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct p.7 review of five listed End Phase actions; includes recovery eligibility on Initiative, replay and unavailable-pilot restrictions; orientation and life-support regressions attached. Scope timing and state transitions, not all heat/damage details. All attached test names passed on exact #126 CI/browser tree, identical merged tree."
+      }
+    },
+    {
+      "id": "agoac-054",
+      "topicId": "agoac-sequence",
+      "pages": [
+        6,
+        7,
+        40
+      ],
+      "statement": "Resolve queued attack-phase consciousness rolls before phase-end PSRs, with a separate damage accumulator per phase.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,40: damage from movement cannot contribute to the weapon phase 20-point PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,40: unresolved movement damage checks finish before weapon declarations"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,44: all pilots roll consciousness before any phase PSR"
+        }
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "df9913af706b590ac141c13dea32d990ab3ee45e",
+        "testedTree": "8ff9cbe859956ebaad02507ce8833fab06a919c1",
+        "mergedSha": "e68b5d60cccff8104ef602df47a20b9bdd314fcc",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44323822323,
+            "jobId": 134869598750,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44323822329,
+            "jobId": 134869598865,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44323822347,
+            "jobId": 134869600320,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct pp.6,7,40 review of phase-end checks; movement boundary retains pending PSR dice and does not transfer damage to Weapon Attack Phase. Scope phase-end isolation only, not every immediate movement/displacement check. All attached test names passed on exact #126 CI/browser tree, identical merged tree."
       }
     }
   ]

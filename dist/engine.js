@@ -295,6 +295,21 @@ export class Game extends Legacy{
   // A prone Mech cannot jump, and without any ground MP it cannot stand.
   return !u.prone&&this.mp(ready,'jump')>0;
  }
+ // Conservative immutable obstruction: only a straight row of full
+ // dry hexes with a hill at or above both maximum standing heights.
+ // Do not infer a draw from woods, split LOS, buildings or water.
+ permanentHillBlocks(a,b){
+  const start=this.tile(a.q,a.r),end=this.tile(b.q,b.r),n=distance(a,b);
+  if(!start||!end||start.depth||end.depth||n<2)return false;
+  const dir=DIRS.find(([dq,dr])=>a.q+n*dq===b.q&&a.r+n*dr===b.r);
+  if(!dir)return false;
+  const ceiling=Math.max(start.height,end.height)+2,[dq,dr]=dir;
+  for(let i=1;i<n;i++){
+   const tile=this.tile(a.q+i*dq,a.r+i*dr);
+   if(tile&&!tile.depth&&!tile.building&&tile.height>=ceiling)return true;
+  }
+  return false;
+ }
  canEverDamage(u,enemies){
   if(u.abandoned)return false;
   const stuckProne=u.prone&&!this.canEverMove(u);
@@ -318,7 +333,17 @@ export class Game extends Legacy{
    return enemies.some(t=>{
     const targetDepth=this.tile(t.q,t.r).depth,range=distance(u,t);
     if(submerged&&targetDepth===0||depth===0&&targetDepth>=2)return false;
-    return range>0&&range<=ranges[2];
+    if(!range||range>ranges[2])return false;
+    // AGoAC pp.13,21: direct-only weapons cannot bypass an immutable
+    // ridge. Retain possible indirect missile fire (including spotters).
+    if(!w.rack&&!w.indirect&&!/LRM/i.test(w.name)&&!this.canEverMove(u)&&!this.canEverMove(t)){
+     if(this.permanentHillBlocks(u,t))return false;
+     // A permanently prone biped cannot turn, twist or flip its arms.
+     // Use a copy so the live declaration and mount state stay intact.
+     if(stuckProne&&u.config!=='Quad'&&!u.directionalTorsoMounts?.length&&
+        !this.arc({...u,twist:0,flip:false},t,w))return false;
+    }
+    return true;
    });
   }))return true;
   // AGoAC pp.28–29: both hips must permit a kick; punch and physical
