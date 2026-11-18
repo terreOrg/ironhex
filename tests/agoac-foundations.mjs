@@ -2061,3 +2061,73 @@ test('AGoAC p.28: zero-damage kick cannot trigger a through-armor critical but s
  assert.equal(t.psrs.at(-1).reason,'Удар ногой');
  assert.equal(g.resolution.at(-1).shots[0].damage,0);
 });
+
+test('AGoAC pp.32,37–38: engine criticals add five heat each unless shut down and third destroys',()=>{
+ for(const shut of [false,true]){
+  const g=fresh(),u=g.units[0];for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+  u.sinks=10;for(const b of u.bins)b.shots=0;
+  for(let n=0;n<=3;n++){
+   if(n){
+    const dice=[...diceFor(8),.5/6,(n-.5)/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+    g.criticalHit(u,'CT');assert.equal(dice.length,0);assert.equal(u.engineHits,n);
+   }
+   if(n===3){assert(u.dead);assert(g.onMap(u));assert.equal(u.pilotWounds,0);g.removeDestroyedMechs();assert(!g.onMap(u));break;}
+   assert(!u.dead);
+   Object.assign(u,{shutdown:shut,voluntaryShutdown:shut,heat:0,pendingHeat:10});
+   g.rng=()=>.99;g.heatPhase();assert.equal(u.heat,shut?0:n*5);
+  }
+ }
+});
+test('AGoAC pp.32,34–35: side torso destruction counts critical and remaining engine slots once',()=>{
+ for(const count of [2,3])for(const side of ['LT','RT']){
+  const g=fresh(),u=g.units[0];g.phase='fire';
+  u.slots[side]=Array.from({length:12},(_,i)=>i<count?'engine':null);
+  u.crit[side]=Array(12).fill(false);u.bins=u.bins.filter(b=>b.location!==side);
+  const roll=(slot)=>{const dice=[...diceFor(8),(slot+.5)/6];g.rng=()=>{assert(dice.length);return dice.shift();};return dice;};
+  let dice=roll(0);g.criticalHit(u,side);assert.equal(dice.length,0);assert.equal(u.engineHits,1);
+  dice=roll(1);g.damage(u,side,u.structure[side],{internal:true});
+  assert.equal(dice.length,0);assert.equal(u.engineHits,count);assert.equal(u.structure[side],0);
+  assert(u.crit[side].every(Boolean));assert.equal(u.dead,count===3);
+  assert.equal(u.structure[side==='LT'?'LA':'RA'],0);
+  assert.equal(u.pilotWounds,0);
+  g.destroyLocation(u,side);assert.equal(u.engineHits,count);
+  if(count===3){assert(g.onMap(u));g.removeDestroyedMechs();assert(!g.onMap(u));}
+ }
+});
+test('AGoAC pp.33–34: destroyed section counts sink and jump slots marked by final critical roll',()=>{
+ for(const type of ['sink','jump']){
+  const g=fresh(),u=g.units[0],loc='LT';
+  u.slots[loc]=[type,type,...Array(10).fill(null)];u.crit[loc]=Array(12).fill(false);
+  const dice=[...diceFor(8),.5/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+  g.damage(u,loc,u.structure[loc],{internal:true});
+  const field=type==='sink'?'sinksLost':'jumpLost';
+  assert.equal(dice.length,0);assert.equal(u[field],2);g.destroyLocation(u,loc);assert.equal(u[field],2);
+ }
+});
+test('AGoAC p.33: both sensor criticals affect weapons only and the second prevents fire',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];g.phase='fire';
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand'});
+ Object.assign(t,{q:1,r:0,moveMode:'stand'});
+ const fire=g.preview(u.id,t.id,0),kick=g.physicalPreview(u.id,t.id,'kick','RL');
+ assert(fire.legal,fire.reason);assert(kick.legal,kick.reason);
+ for(const [i,slot] of [1,4].entries()){
+  const dice=[...diceFor(8),(slot+.5)/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+  g.criticalHit(u,'HD');assert.equal(dice.length,0);assert.equal(u.sensorHits,i+1);
+  const current=g.preview(u.id,t.id,0),physical=g.physicalPreview(u.id,t.id,'kick','RL');
+  assert.equal(current.legal,i===0);
+  if(i===0)assert.equal(current.targetNumber,fire.targetNumber+2);
+  assert.deepEqual(physical,kick);
+ }
+});
+test('AGoAC pp.33,39: second life support critical marks its slot without stacking wounds',()=>{
+ for(const heat of [15,26]){
+  const g=fresh(),u=g.units[0];for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+  for(const slot of [0,5]){
+   const dice=[...diceFor(8),(slot+.5)/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+   g.criticalHit(u,'HD');assert.equal(dice.length,0);assert.equal(u.lifeSupport,true);assert.equal(u.crit.HD[slot],true);
+  }
+  for(const b of u.bins)b.shots=0;Object.assign(u,{shutdown:true,voluntaryShutdown:true,prone:true,heat:heat+u.sinks,pendingHeat:0});
+  g.rng=()=>.99;g.heatPhase();assert.equal(u.heat,heat);assert.equal(u.pilotWounds,heat===26?2:1);
+ }
+});
