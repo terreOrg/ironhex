@@ -1875,3 +1875,47 @@ test('AGoAC p.11: one-MP minimum stand consumes movement and permits free facing
  assert.equal(u.moveMode,'run');assert(!g.reachable(u,'run').length);
  assert(!g.rotate(u.id,1,{mode:'run'}).ok);assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,3);
 });
+
+test('AGoAC pp.6–7: casualties before selection cannot leave impossible orders',()=>{
+ const g=fresh(),[a,b,c,d]=g.units;
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ assert.deepEqual(g.queue,[0,1,0,1]);
+ // The last surviving opponent is destroyed before receiving an order.
+ g.destroyMech(c);g.destroyMech(d);
+ assert(g.onMap(c));assert(g.onMap(d));
+ assert(g.hold(a.id).ok);
+ assert.deepEqual(g.queue,[0]);assert.equal(g.activeTeam,0);
+ assert(g.canAct(b));assert(g.hold(b.id).ok);
+ assert.deepEqual(g.queue,[]);assert.equal(g.activeTeam,null);
+ assert(g.nextPhase().ok);assert.equal(g.winner,0);
+ assert(!g.onMap(c));assert(!g.onMap(d));
+});
+test('AGoAC pp.6–7: an immobile survivor keeps its order when a teammate is destroyed',()=>{
+ const g=fresh(),[a,b,c,d]=g.units;
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ g.destroyMech(c);d.shutdown=true;
+ assert(g.hold(a.id).ok);assert.deepEqual(g.queue,[1,0]);
+ assert(g.canAct(d));assert(g.isImmobile(d));assert(g.hold(d.id).ok);
+ assert(g.canAct(b));assert(g.hold(b.id).ok);
+ assert.deepEqual(g.queue,[]);assert.equal(g.winner,null);
+ assert(g.nextPhase().ok);assert.equal(g.phase,'fire');
+});
+test('AGoAC p.7: declaration batches obey remaining-force ratio for forces of one to twenty',()=>{
+ const g=fresh();
+ for(let left=1;left<=20;left++)for(let right=1;right<=20;right++)for(const winner of [0,1]){
+  g.initiativeWinner=winner;g.phase='move';
+  g.units=[...Array.from({length:left},(_,i)=>({id:i,team:0,dead:false})),
+   ...Array.from({length:right},(_,i)=>({id:left+i,team:1,dead:false})),
+   {id:left+right,team:0,dead:true},{id:left+right+1,team:1,dead:true}];
+  g.buildQueue();
+  let cursor=0,a=left,b=right;
+  while(a&&b){
+   const n0=a>=2*b?Math.floor(a/b):1,n1=b>=2*a?Math.floor(b/a):1;
+   const pair=winner===0?[...Array(n1).fill(1),...Array(n0).fill(0)]:[...Array(n0).fill(0),...Array(n1).fill(1)];
+   assert.deepEqual(g.queue.slice(cursor,cursor+pair.length),pair,`${left}:${right}, winner ${winner}`);
+   cursor+=pair.length;a-=n0;b-=n1;
+  }
+  assert.deepEqual(g.queue.slice(cursor),[...Array(a).fill(0),...Array(b).fill(1)]);
+  assert.equal(g.queue.length,left+right);
+ }
+});

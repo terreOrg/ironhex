@@ -213,7 +213,18 @@ export class Game extends Legacy{
  done(u){return this.phase==='move'?u.moved:this.phase==='fire'?u.fired:u.physicalDone;}
  canAct(u){return !!u&&this.winner===null&&!u.dead&&u.team===this.activeTeam&&!this.done(u)&&(this.actingId===null||this.actingId===u.id);}
  buildQueue(){let counts=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead).length),order=[1-this.initiativeWinner,this.initiativeWinner];this.queue=[];while(counts.some(Boolean)){let batches=counts.map((n,i)=>n?Math.min(n,Math.max(1,Math.floor(n/Math.max(1,counts[1-i])))):0);for(const t of order)for(let k=0;k<batches[t];k++)this.queue.push(t);counts=counts.map((n,i)=>n-batches[i]);}this.activeTeam=this.queue[0]??null;this.actingId=null;}
- finish(u){if(this.phase==='move')u.moved=true;else if(this.phase==='fire')u.fired=true;else u.physicalDone=true;this.queue.shift();this.activeTeam=this.queue[0]??null;this.actingId=null;}
+ // AGoAC p.6: selections belong to surviving Mechs, including
+ // immobile ones. A casualty before its selection cannot leave an
+ // impossible order at the head of the queue.
+ skipExhaustedSelections(){
+  const remaining=[0,1].map(team=>this.units.filter(v=>v.team===team&&!v.dead&&!this.done(v)).length);
+  this.queue=this.queue.filter(team=>remaining[team]>0&&(remaining[team]--,true));
+  this.activeTeam=this.queue[0]??null;
+ }
+ finish(u){
+  if(this.phase==='move')u.moved=true;else if(this.phase==='fire')u.fired=true;else u.physicalDone=true;
+  this.queue.shift();this.actingId=null;this.skipExhaustedSelections();
+ }
  // AGoAC p.7: a stalemate requires both sides to lack any future
  // movement AND any means of damaging their opponents. Use a cooled,
  // recovered copy so temporary shutdown, unconsciousness or heat cannot
