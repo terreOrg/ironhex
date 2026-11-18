@@ -1659,7 +1659,7 @@ test('AGoAC p.42: AI movement pauses for a human domino victim and resumes the s
 });
 test('AGoAC pp.26,42: interrupted charge approach cannot declare a phantom attack',()=>{
  const g=fresh(),[u,ally,t,other]=g.units;
- g.phase='move';g.activeTeam=0;g.queue=[0,1,0,1];
+ g.phase='move';g.activeTeam=0;g.initiativeWinner=0;g.queue=[0,1,0];
  for(const hex of g.tiles)Object.assign(hex,{type:'plain',depth:0,height:0,surface:0});
  Object.assign(u,{q:0,r:0,facing:0,walk:4,moveStart:{q:0,r:0}});
  Object.assign(ally,{q:1,r:0,facing:1,walk:4,spent:0});
@@ -1673,7 +1673,7 @@ test('AGoAC pp.26,42: interrupted charge approach cannot declare a phantom attac
  assert(choice);const result=g.nextPhaseWithChoices({choice:{key:p.key,option:choice.id}});
  assert(result.ok&&result.chargeInterrupted);assert.equal(g.unit(u.id).charge,null);
  assert.equal(g.unit(u.id).prone,true);assert.equal(g.unit(u.id).moved,true);
- assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);assert.equal(g.queue.length,3);
+ assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);assert.deepEqual(g.queue,[1,0]);
 });
 
 test('AGoAC pp.9,11: minimum movement cannot bypass phase, declared mode or ammunition restrictions',()=>{
@@ -1918,4 +1918,37 @@ test('AGoAC p.7: declaration batches obey remaining-force ratio for forces of on
   assert.deepEqual(g.queue.slice(cursor),[...Array(a).fill(0),...Array(b).fill(1)]);
   assert.equal(g.queue.length,left+right);
  }
+});
+
+test('AGoAC p.7: casualties change the next declaration pair ratio, not the unfinished pair',()=>{
+ const g=fresh(),template=structuredClone(g.units[0]);
+ g.units=Array.from({length:7},(_,id)=>({...structuredClone(template),id,team:id<4?0:1}));
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ assert.deepEqual(g.queue,[0,1,0,1,0,0,1]);
+ g.destroyMech(g.units[6]);
+ assert(g.hold(0).ok);
+ assert.deepEqual(g.queue,[1,0,0,0,1]);
+ assert.equal(g.selectionBatch.remaining,1);
+ assert(g.hold(4).ok);
+ assert.deepEqual(g.queue,[0,0,0,1]);
+ assert.equal(g.selectionBatch.remaining,4);
+ for(const id of [1,2,3,5])assert(g.hold(id).ok);
+ assert.deepEqual(g.queue,[]);assert.equal(g.activeTeam,null);
+});
+test('AGoAC p.7: a large-side batch already in progress survives casualty and JSON restore',()=>{
+ const g=fresh(),template=structuredClone(g.units[0]);
+ g.units=Array.from({length:9},(_,id)=>({...structuredClone(template),id,team:id<6?0:1}));
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ assert.deepEqual(g.queue,[0,0,1,0,0,1,0,0,1]);
+ g.destroyMech(g.units[7]);g.destroyMech(g.units[8]);
+ assert(g.hold(0).ok);
+ assert.deepEqual(g.queue,[0,1,0,0,0,0]);
+ assert.equal(g.selectionBatch.remaining,2);
+ const restored=new Game({rng:()=>.5});
+ Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
+ restored.rebuildMap();
+ assert(restored.hold(1).ok);assert.equal(restored.activeTeam,1);
+ assert(restored.hold(6).ok);assert.deepEqual(restored.queue,[0,0,0,0]);
+ for(const id of [2,3,4,5])assert(restored.hold(id).ok);
+ assert.deepEqual(restored.queue,[]);assert.equal(restored.activeTeam,null);
 });

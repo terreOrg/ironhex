@@ -212,18 +212,53 @@ export class Game extends Legacy{
  isImmobile(u){return !this.mobile(u)||['LA','RA','LL','RL'].every(l=>u.structure?.[l]===0);}
  done(u){return this.phase==='move'?u.moved:this.phase==='fire'?u.fired:u.physicalDone;}
  canAct(u){return !!u&&this.winner===null&&!u.dead&&u.team===this.activeTeam&&!this.done(u)&&(this.actingId===null||this.actingId===u.id);}
- buildQueue(){let counts=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead).length),order=[1-this.initiativeWinner,this.initiativeWinner];this.queue=[];while(counts.some(Boolean)){let batches=counts.map((n,i)=>n?Math.min(n,Math.max(1,Math.floor(n/Math.max(1,counts[1-i])))):0);for(const t of order)for(let k=0;k<batches[t];k++)this.queue.push(t);counts=counts.map((n,i)=>n-batches[i]);}this.activeTeam=this.queue[0]??null;this.actingId=null;}
- // AGoAC p.6: selections belong to surviving Mechs, including
- // immobile ones. A casualty before its selection cannot leave an
- // impossible order at the head of the queue.
- skipExhaustedSelections(){
-  const remaining=[0,1].map(team=>this.units.filter(v=>v.team===team&&!v.dead&&!this.done(v)).length);
-  this.queue=this.queue.filter(team=>remaining[team]>0&&(remaining[team]--,true));
+ // AGoAC p.7: ratios are established before each declaration pair,
+ // not continuously while the two sides are completing that pair.
+ selectionPlan(remaining){
+  const counts=[...remaining],order=[1-this.initiativeWinner,this.initiativeWinner],slots=[];
+  let firstPair=0;
+  while(counts.some(Boolean)){
+   const batches=counts.map((n,i)=>n?Math.min(n,Math.max(1,Math.floor(n/Math.max(1,counts[1-i])))):0);
+   if(!slots.length)firstPair=batches[0]+batches[1];
+   for(const t of order)for(let k=0;k<batches[t];k++)slots.push(t);
+   for(const t of order)counts[t]-=batches[t];
+  }
+  return {slots,firstPair};
+ }
+ saveSelectionPlan(pairLength){
+  this.selectionBatch={phase:this.phase,remaining:pairLength,signature:this.queue.join(',')};
   this.activeTeam=this.queue[0]??null;
  }
+ buildQueue(){
+  const remaining=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead).length);
+  const {slots,firstPair}=this.selectionPlan(remaining);
+  this.queue=slots;this.actingId=null;this.saveSelectionPlan(firstPair);
+ }
+ // Preserve the unfinished pair and recompute later pairs from surviving
+ // unselected Mechs. Incapacitated but living Mechs still count.
+ // Older saves without pair metadata retain their existing order until
+ // the next phase rather than guessing where their partial pair began.
+ skipExhaustedSelections(pairLength=null){
+  const remaining=[0,1].map(team=>this.units.filter(v=>v.team===team&&!v.dead&&!this.done(v)).length);
+  const keep=team=>{
+   if(remaining[team]<=0)return false;
+   remaining[team]--;return true;
+  };
+  if(pairLength===null){
+   this.queue=this.queue.filter(keep);
+   this.selectionBatch=null;this.activeTeam=this.queue[0]??null;return;
+  }
+  const current=this.queue.slice(0,pairLength).filter(keep);
+  const {slots,firstPair}=this.selectionPlan(remaining);
+  this.queue=[...current,...slots];
+  this.saveSelectionPlan(current.length||firstPair);
+ }
  finish(u){
+  const batch=this.selectionBatch;
+  const tracked=batch?.phase===this.phase&&batch.signature===this.queue.join(',')&&batch.remaining>0;
   if(this.phase==='move')u.moved=true;else if(this.phase==='fire')u.fired=true;else u.physicalDone=true;
-  this.queue.shift();this.actingId=null;this.skipExhaustedSelections();
+  this.queue.shift();this.actingId=null;
+  this.skipExhaustedSelections(tracked?batch.remaining-1:null);
  }
  // AGoAC p.7: a stalemate requires both sides to lack any future
  // movement AND any means of damaging their opponents. Use a cooled,
