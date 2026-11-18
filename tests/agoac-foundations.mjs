@@ -2768,3 +2768,16 @@ test('AGoAC pp.7,19: permanently submerged prone targets and depth-one leg weapo
  assert(!h.canEverDamage(a,[b]));
  Object.assign(a.weapons[0],{location:'CT',locations:['CT']});assert(h.canEverDamage(a,[b]));
 });
+
+
+test('AGoAC pp.6–7: victory terminates the current phase without announcing or executing a following phase',()=>{
+ for(const [phase,method] of [['fire','resolveFire'],['physical','resolvePhysical'],['heat','heatPhase'],['end','endPhase']])for(const result of [0,1,'draw']){
+  const g=fresh();g.phase=phase;g.queue=[];g.activeTeam=null;g.actingId=null;
+  let calls=0;
+  g[method]=()=>{calls++;for(const u of g.units)if(result==='draw'||u.team!==result)g.destroyMech(u);g.removeDestroyedMechs();};
+  assert(g.nextPhase().ok);assert.equal(g.winner,result,phase);assert.equal(g.phase,phase);
+  assert.equal(g.activeTeam,null);assert.equal(g.actingId,null);assert.equal(calls,1);
+  const old=JSON.stringify({phase:g.phase,round:g.round,log:g.log,queue:g.queue});
+  assert(!g.nextPhase().ok);assert.equal(calls,1);assert.equal(JSON.stringify({phase:g.phase,round:g.round,log:g.log,queue:g.queue}),old);
+ }
+});
