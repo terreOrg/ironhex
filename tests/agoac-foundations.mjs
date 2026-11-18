@@ -2009,3 +2009,55 @@ test('AGoAC p.33: hip-limited movement cannot use the extra hex from rounding up
  const before=JSON.stringify(u);assert.equal(g.move(u.id,4,0,'run').ok,false);
  assert.equal(JSON.stringify(u),before);
 });
+
+test('AGoAC pp.28,32–34: all biped kick actuator penalties accumulate across both legs',()=>{
+ const parts=['upper','lower','foot'];
+ for(const tonnage of [20,55,100]){
+  const g=fresh(),u=g.units[0],t=g.units[2];
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand',tonnage});
+  Object.assign(t,{q:1,r:0,moveMode:'stand'});
+  const base=g.physicalPreview(u.id,t.id,'kick','LL');
+  assert(base.legal,base.reason);
+  for(let mask=0;mask<64;mask++){
+   let halves=0,feet=0;
+   for(const [i,leg] of ['LL','RL'].entries())for(const [j,part] of parts.entries()){
+    const damaged=!!(mask&(1<<(i*3+j)));
+    u.actuators[leg][part]=damaged;
+    if(damaged){if(part==='foot')feet++;else halves++;}
+   }
+   for(const leg of ['LL','RL']){
+    const p=g.physicalPreview(u.id,t.id,'kick',leg);
+    assert(p.legal,p.reason);
+    assert.equal(p.targetNumber,base.targetNumber+2*halves+feet);
+    assert.equal(p.damage,Math.floor(tonnage/5/2**halves));
+   }
+  }
+ }
+});
+test('AGoAC p.28: either damaged hip forbids kicking and firing a leg forbids its own kick',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand'});
+ Object.assign(t,{q:1,r:0,moveMode:'stand'});
+ for(const leg of ['LL','RL']){
+  u.actuators[leg].hip=true;
+  for(const kick of ['LL','RL'])assert.equal(g.physicalPreview(u.id,t.id,'kick',kick).legal,false);
+  u.actuators[leg].hip=false;
+  u.firedLocations=[leg];
+  assert.equal(g.physicalPreview(u.id,t.id,'kick',leg).legal,false);
+  assert.equal(g.physicalPreview(u.id,t.id,'kick',leg==='LL'?'RL':'LL').legal,true);
+  u.firedLocations=[];
+ }
+ assert.equal(g.physicalPreview(u.id,t.id,'kick','CT').legal,false);
+});
+test('AGoAC p.28: zero-damage kick cannot trigger a through-armor critical but still requires a PSR',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ const dice=diceFor(2);g.rng=()=>{assert(dice.length,'Zero damage must not roll criticals');return dice.shift();};
+ let damageCalls=0;g.damage=()=>{damageCalls++;return [];};
+ g.resolveRolledPhysical({u,t,d:{type:'kick',damage:0,side:'front',table:'normal',targetNumber:2},roll:12,hit:true,cancelled:false,attackRoll:null});
+ assert.equal(damageCalls,0);
+ assert.equal(dice.length,0);
+ assert.equal(t.psrs.at(-1).reason,'Удар ногой');
+ assert.equal(g.resolution.at(-1).shots[0].damage,0);
+});
