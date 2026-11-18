@@ -1781,3 +1781,36 @@ test('AGoAC pp.7,44: unsuccessful recovery does not offer reactor choice',()=>{
  g.rng=()=>0;const r=g.nextPhaseWithChoices({humanTeams:[0]});
  assert(r.ok&&!r.pending);assert(g.unit(u.id).unconscious);assert.equal(g.pendingChoice,null);
 });
+
+test('AGoAC pp.11–12: jump chooses any landing facing at no MP cost and cannot rotate after landing',()=>{
+ for(let facing=0;facing<6;facing++){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,moveStart:{q:0,r:0},jump:2,jumpLost:0,proneAtStart:false});
+  for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+  const result=g.moveWithChoices(u.id,1,0,'jump',{facing,humanTeams:[0]});
+  const moved=g.unit(u.id);assert(result.ok&&!result.pending);
+  assert.equal(moved.facing,facing);assert.equal(moved.spent,1);assert.equal(moved.pendingHeat,3);
+  assert.equal(g.rotate(u.id,1).ok,false);assert.equal(moved.facing,facing);
+ }
+});
+test('AGoAC p.12: failed water landing determines fall facing relative to selected landing orientation',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ Object.assign(u,{q:0,r:0,facing:0,moveStart:{q:0,r:0},jump:2,jumpLost:0,proneAtStart:false});
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(g.tile(1,0),{type:'water',depth:1,height:-1,surface:0});
+ const dice=[...diceFor(2),(3-.5)/6];g.rng=()=>dice.shift()??.5;
+ assert(g.move(u.id,1,0,'jump',{facing:5}).ok);
+ assert(u.prone);assert.equal(u.facing,3);assert.equal(g.rotate(u.id,1).ok,false);
+});
+test('AGoAC pp.6,12: deployment jump can choose landing facing while ground entry cannot override facing',()=>{
+ for(let facing=0;facing<6;facing++){
+  const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+  const before=JSON.stringify(u),t=g.reachable(u,'walk')[0];
+  assert.equal(g.move(u.id,t.q,t.r,'walk',{facing}).ok,false);
+  assert.equal(JSON.stringify(u),before);
+  const j=g.reachable(u,'jump').find(x=>x.cost===1);
+  assert(g.move(u.id,j.q,j.r,'jump',{facing}).ok);
+  assert.equal(u.facing,facing);assert.equal(u.spent,1);
+  assert.equal(g.rotate(u.id,1).ok,false);
+ }
+});
