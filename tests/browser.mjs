@@ -1145,6 +1145,13 @@ test('AGoAC p.6: new battle selects and displays the battlefield and resets to a
 test('AGoAC p.6: joined mapsheets can be selected independently in local battle setup',{timeout:120000},async()=>{
  await withPage('setup-sheets',{noWebGL:true},async page=>{
   await page.locator('#new').click();
+  assert.equal(await page.locator('#setup-second-sheet').isVisible(),false);
+  await page.locator('#setup-layout').selectOption('horizontal');
+  assert.equal(await page.locator('#setup-second-sheet').isVisible(),true);
+  await page.locator('#setup-layout').selectOption('sheet');
+  assert.equal(await page.locator('#setup-second-sheet').isVisible(),false);
+  await page.locator('#setup-layout').selectOption('vertical');
+  assert.equal(await page.locator('#setup-second-sheet').isVisible(),true);
   await page.locator('#setup-layout').selectOption('horizontal');
   await page.locator('#setup-map').selectOption('clear');
   await page.locator('#setup-map-2').selectOption('river');

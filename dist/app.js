@@ -479,7 +479,8 @@ function showBattleSetup({preferCustom=false}={}){
  for(const id of ['#setup-map','#setup-map-2'])for(const p of AGOAC_MAP_PRESETS){const option=document.createElement('option');option.value=p.id;option.textContent=p.name;$(id).append(option);}
  function updateLayout(){
   const layout=$('#setup-layout').value;
-  $('#setup-second-sheet').hidden=!(layout==='horizontal'||layout==='vertical');
+  const joined = layout === 'horizontal' || layout === 'vertical';
+  $('#setup-second-sheet').hidden = !joined;
   for(const [id,angles] of [['#setup-map-rotation',layout==='hex'?[0,1,2,3,4,5]:[0,3]],['#setup-map-rotation-2',[0,3]]]){
    const select=$(id),previous=select.value;select.replaceChildren();
    for(const n of angles){const option=document.createElement('option');option.value=String(n);option.textContent=(n*60)+'°';select.append(option);}
