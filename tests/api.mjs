@@ -276,3 +276,14 @@ test('API rejects a minimum movement order during weapon declaration',()=>{
  assert.throws(()=>runTacticalOrder(g,{type:'minimum',id:u.id,version:1}),AuthError);
  assert.equal(JSON.stringify(u),before);
 });
+
+test('API permits optional friendly reactor orders at End Phase without a movement selection',()=>{
+ const g=new Game(),u=g.units[0];g.phase='end';g.activeTeam=null;g.queue=[];
+ const result=runTacticalOrder(g,{type:'shutdown',id:u.id,version:1});
+ assert.equal(result.result.ok,true);assert.equal(u.shutdownNext,true);
+ assert.equal(u.shutdown,false);assert.equal(g.phase,'end');
+ assert.throws(()=>runTacticalOrder(g,{type:'shutdown',id:2,version:2}),AuthError);
+ assert.throws(()=>runTacticalOrder(g,{type:'hold',id:u.id,version:2}),AuthError);
+ assert(runTacticalOrder(g,{type:'next',version:2}).result.ok);
+ assert.equal(g.unit(u.id).shutdown,true);
+});

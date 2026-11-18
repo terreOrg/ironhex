@@ -1716,3 +1716,33 @@ test('AGoAC pp.11–12: minimum water step resolves required terrain PSR and con
  assert.equal(u.pendingHeat,2);assert.equal(u.distanceMoved,1);assert.equal(u.moved,true);
  assert.equal(g.rotate(u.id,1).ok,false);
 });
+
+test('AGoAC pp.7,38: optional reactor orders can be made and cancelled during End Phase',()=>{
+ const g=fresh(),u=g.units[0];g.phase='end';g.queue=[];g.activeTeam=null;
+ assert(g.canOrderShutdown(u));assert(g.orderShutdown(u.id).ok);assert(u.shutdownNext);
+ assert(!u.shutdown);assert(g.orderShutdown(u.id).ok);assert(!u.shutdownNext);
+ assert(g.orderShutdown(u.id).ok);g.endPhase();
+ assert(u.shutdown&&u.voluntaryShutdown);assert(!u.shutdownNext);
+ g.phase='end';u.heat=14;let dice=diceFor(3);g.rng=()=>dice.shift()??.5;
+ assert(g.orderShutdown(u.id).ok);g.endPhase();assert(u.shutdown);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Добровольный перезапуск')).length,1);
+ g.phase='end';dice=diceFor(4);assert(g.orderShutdown(u.id).ok);g.endPhase();
+ assert(!u.shutdown&&!u.voluntaryShutdown);
+});
+test('AGoAC pp.7,38,44: an unavailable pilot cannot execute a previously queued reactor command',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ assert(g.orderShutdown(u.id).ok);u.unconscious=true;u.pilotWounds=1;
+ g.phase='end';g.activeTeam=null;g.queue=[];
+ g.endPhase();assert.equal(u.shutdown,false);assert.equal(u.shutdownNext,false);
+ assert.equal(g.canOrderShutdown(u),false);
+});
+test('AGoAC pp.7,44: Initiative captures actual recovery eligibility for the current turn',()=>{
+ const g=fresh(),u=g.units[0],v=g.units[1];
+ Object.assign(u,{unconscious:true,pilotWounds:1,wasUnconscious:false});
+ Object.assign(v,{unconscious:false,pilotWounds:0,wasUnconscious:true});
+ let dice=[...diceFor(12),...diceFor(2)];g.rng=()=>dice.shift()??.99;
+ g.initiative();assert.equal(u.wasUnconscious,true);assert.equal(v.wasUnconscious,false);
+ v.unconscious=true;v.pilotWounds=1;g.endPhase();
+ assert.equal(u.unconscious,false);assert.equal(v.unconscious,true);
+ assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Пробуждение')).length,1);
+});
