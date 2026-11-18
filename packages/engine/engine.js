@@ -1730,11 +1730,44 @@ export class Game extends Legacy{
    rolls:[...(attackRoll?[attackRoll]:[]),...this.phaseRolls.slice(start)]}]});
   this.note(u.name+': '+d.type+', '+(roll??'—')+'/'+d.targetNumber+'+, '+damage+' урона.');
  }
+ // AGoAC pp.6–7: ordinary physical attacks repeat the weapon phase's
+ // resolution sequence. Keep a fixed sequence of team slots even if
+ // the controller chooses a different Mech from their remaining group.
+ orderOrdinaryPhysicalMechs(groups,stage,visit){
+  const teamOf=g=>this.unit(g.id).team;
+  const remaining=[groups.filter(g=>teamOf(g)===0),groups.filter(g=>teamOf(g)===1)];
+  for(const slot of groups){
+   const list=remaining[teamOf(slot)],fallback=list[0];
+   const options=list.map(g=>({id:String(g.id),attackerId:g.id,
+    attacks:(stage==='roll'?g.attacks:g.attacks.filter(a=>a.hit).map(a=>a.d))
+     .map(d=>({targetId:d.target,type:d.type,limb:d.limb}))}));
+   const pick=this.chooseResolutionOption('physical-order',this.unit(fallback.id),options,String(fallback.id),{stage});
+   visit(list.splice(list.findIndex(g=>String(g.id)===pick),1)[0]);
+  }
+ }
+ resolveOrdinaryPhysical(orders,snapshots){
+  const grouped=new Map();
+  for(const d of orders){
+   if(!grouped.has(d.id))grouped.set(d.id,{id:d.id,attacks:[]});
+   grouped.get(d.id).attacks.push(d);
+  }
+  const groups=[...grouped.values()],staged=new Map();
+  this.orderOrdinaryPhysicalMechs(groups,'roll',g=>{
+   staged.set(g.id,{id:g.id,attacks:g.attacks.map(d=>this.rollPhysical(d,snapshots))});
+  });
+  this.orderOrdinaryPhysicalMechs(groups.map(g=>staged.get(g.id)),'damage',g=>{
+   for(const attack of g.attacks)this.resolveRolledPhysical(attack);
+  });
+ }
  resolvePhysical(){
   this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;
   try{
    const snapshots=new Map(this.units.map(u=>[u.id,structuredClone(u)]));
-   const orders=this.physicalOrder(),handled=new Set(),attacks=[];
+   const orders=this.physicalOrder();
+   if(!orders.some(d=>d.special||d.type==='push')){
+    this.resolveOrdinaryPhysical(orders,snapshots);
+   }else{
+   const handled=new Set(),attacks=[];
    while(handled.size<orders.length){
     const group=this.nextPhysicalAttacker(orders,handled);
     for(const d of group){
@@ -1750,6 +1783,7 @@ export class Game extends Legacy{
     }
    }
    for(const attack of attacks)this.resolveRolledPhysical(attack);
+   }
   }finally{this.deferConsciousness=false;}
   const start=this.phaseRolls.length;this.endPSR();this.afterRolls=this.phaseRolls.slice(start);
   this.physicalDeclarations=[];this.removeDestroyedMechs();return this.resolution;

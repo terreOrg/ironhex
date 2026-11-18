@@ -1239,3 +1239,41 @@ test('AGoAC p.7: standard two-player stalemate confirmation is available only at
   await page.locator('#stalemate-confirm').click();assert(await page.locator('#next').isDisabled());assert.equal(await page.locator('#adjudicate-stalemate').count(),0);
  });
 });
+
+
+test('AGoAC pp.6–7: ordinary physical Mech order choices survive reconnect and keep every attack roll',{timeout:120000},async()=>{
+ const operationId='88888888-8888-4888-8888-888888888888';
+ await withPage('server-physical-order',{path:'/index.html?battle=1&operation='+operationId,noWebGL:true},async page=>{
+  let draws=0,version=1;
+  const referee=new TestBattleGame({rng:()=>{draws++;return .5;}}),[a,b,t]=referee.units;
+  referee.phase='physical';referee.queue=[];referee.activeTeam=null;referee.initiativeWinner=1;
+  referee.physicalDeclarations=[a,b].map(u=>({id:u.id,target:t.id,type:'punch',limb:'LA',targetNumber:2,damage:1,side:'front',table:'punch'}));
+  const snapshot=()=>JSON.parse(JSON.stringify(referee,(key,value)=>['map','rng','_resolutionReplay'].includes(key)?undefined:value));
+  const send=(route,status,body)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
+   const url=new URL(route.request().url());
+   const item=()=>({id:operationId,controlMode:'interactive',status:'active',version,game:snapshot()});
+   if(url.pathname.endsWith('/snapshot'))return send(route,200,{item:item()});
+   if(url.pathname.endsWith('/command')){
+    const payload=route.request().postDataJSON();assert.equal(payload.type,'next');assert.equal(payload.version,version);
+    if(version===2)assert.equal(payload.choice.option,String(b.id));
+    if(version===3)assert.equal(payload.choice.option,String(a.id));
+    const result=referee.nextPhaseWithChoices({humanTeams:[0],choice:payload.choice});assert(result.ok);version++;
+    return send(route,200,{item:{...item(),effect:{type:'next',result,rolls:[],resolution:[],afterRolls:[],ai:[]}}});
+   }
+   return send(route,404,{error:'not_found'});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v1'));
+  await page.locator('#next').click();
+  const second=page.locator('[data-resolution-option="'+b.id+'"]'),first=page.locator('[data-resolution-option="'+a.id+'"]');
+  await second.waitFor({state:'visible'});assert.match(await page.locator('#actions').textContent(),/ПОРЯДОК БРОСКОВ/);assert.equal(draws,0);
+  await second.click();await page.waitForFunction(()=>document.querySelector('#actions')?.textContent.includes('ПОРЯДОК УРОНА'));
+  assert.equal(draws,4);assert.equal(referee.pendingChoice.context.stage,'damage');
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);await first.waitFor({state:'visible'});
+  assert.match(await page.locator('#actions').textContent(),/ПОРЯДОК УРОНА/);assert.equal(draws,4);
+  await first.click();await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='НАГРЕВ');
+  assert.equal(version,4);assert.equal(referee.pendingChoice,null);assert(draws>4);
+  assert.deepEqual(referee.resolution.map(o=>o.id),[a.id,b.id]);
+ });
+});
