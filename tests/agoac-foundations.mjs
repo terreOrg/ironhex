@@ -2894,3 +2894,27 @@ test('AGoAC p.6: a destroyed intended target never cancels previously declared o
   if(phase==='fire'){assert.equal(a.pendingHeat,1);assert.equal(b.pendingHeat,1);assert(a.firedLocations.includes('CT'));assert(b.firedLocations.includes('CT'));}
  }
 });
+
+
+test('AGoAC pp.6–7: ordinary physical resolution lets controllers choose Mechs without changing team slots',()=>{
+ for(const winner of [0,1]){
+  const g=fresh(),[a,b]=g.units.filter(u=>u.team!==winner),[c,d]=g.units.filter(u=>u.team===winner);
+  g.phase='physical';g.initiativeWinner=winner;g.queue=[];g.activeTeam=null;g.rng=()=>.99;
+  const punch=(u,t,limb)=>({id:u.id,target:t.id,type:'punch',limb,targetNumber:2,damage:1,side:'front',table:'punch'});
+  g.physicalDeclarations=[punch(a,c,'LA'),punch(a,c,'RA'),punch(b,d,'LA'),punch(c,a,'LA'),punch(d,b,'LA')];
+  const rollOrder=[],damageOrder=[],requests=[];
+  const roll=g.rollPhysical.bind(g),damage=g.resolveRolledPhysical.bind(g);
+  g.rollPhysical=(order,snapshot)=>{rollOrder.push(order.id);return roll(order,snapshot);};
+  g.resolveRolledPhysical=attack=>{assert.equal(rollOrder.length,5);damageOrder.push(attack.d.id);return damage(attack);};
+  g.hit=(target,amount)=>({location:'CT',damage:amount,hits:[]});
+  g._resolutionChooser=(request,fallback)=>{
+   assert.equal(request.kind,'physical-order');requests.push([request.context.stage,request.team]);
+   if(request.context.stage==='roll')return request.options.at(-1).id;
+   assert.equal(rollOrder.length,5);return fallback;
+  };
+  g.resolvePhysical();
+  assert.deepEqual(rollOrder,[b.id,d.id,a.id,a.id,c.id]);
+  assert.deepEqual(damageOrder,[a.id,a.id,c.id,b.id,d.id]);
+  assert.deepEqual(requests,[['roll',1-winner],['roll',winner],['damage',1-winner],['damage',winner]]);
+ }
+});
