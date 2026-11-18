@@ -1552,7 +1552,7 @@
         34
       ],
       "statement": "A biped hip critical halves Walking MP rounding down; recompute Running MP rounding up. Two hip criticals reduce ground MP to zero without alone causing immobility. Other same-leg actuator criticals from prior turns are ignored for movement, whereas hits in the hip-hit turn or later still apply; PSR hip modifier overrides the same-leg actuator modifiers.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1567,7 +1567,64 @@
           "test": "AGoAC p.33: hip-limited movement cannot use the extra hex from rounding up"
         }
       ],
-      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI pending."
+      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI completed successfully; tested and squashed main trees are identical.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Printed p.33 rechecked against the merged biped MP and PSR-modifier implementation. Both hip locations, walking/run rounding, heat, previous/same/later-turn damage, serialized dates, legal reach and legacy undated snapshots considered. This requirement excludes kick damage and movement-triggered PSR timing; old saves cannot reconstruct absent acquisition turns.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "254fa4a356e6ed64108584fc25676ddac2de2149",
+        "testedTree": "7b253a44b0889f38c9d84895170f7d678905962e",
+        "mergedSha": "be28c31a179f7a234d05aa2132147426c0a94ef1",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44294607280,
+            "jobId": 134768237019,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44294607077,
+            "jobId": 134768235835,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44294607196,
+            "jobId": 134768236337,
+            "conclusion": "success"
+          }
+        ]
+      }
+    },
+    {
+      "id": "agoac-038",
+      "topicId": "agoac-physical",
+      "pages": [
+        28,
+        32,
+        33,
+        34
+      ],
+      "statement": "Biped kick TN increases with every damaged upper/lower leg actuator and foot on either leg; each upper/lower leg hit halves kick damage cumulatively, rounded down. Both hips must work and a fired leg cannot kick. A zero-damage successful kick still requires the target PSR but causes no damage or critical hit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.28,32–34: all biped kick actuator penalties accumulate across both legs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: either damaged hip forbids kicking and firing a leg forbids its own kick"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: zero-damage kick cannot trigger a through-armor critical but still requires a PSR"
+        }
+      ],
+      "reviewNote": "Printed pp.28,32–34 checked: both legs contribute to all biped kicks, including accumulated damage reduction down to zero; no minimum-one exception stated for kicks. Quad extensions kept unchanged. Tests cover all 64 actuator states at three weights, both kick choices, leg-specific firing and zero-damage edge. CI pending."
     }
   ]
 }

@@ -968,7 +968,7 @@ export class Game extends Legacy{
  }
  this.phaseRolls.at(-1).result=locationNameForMech(u,loc)+(obscured(loc)?' · укрытие':` · ${amount} урона`);
  if(obscured(loc))return {location:loc,hits:[],damage:0};
- return {location:loc,hits:this.damage(u,loc,amount,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}),damage:amount};
+ return {location:loc,hits:amount>0?this.damage(u,loc,amount,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}):[],damage:amount};
 }
  damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
  if(explosion&&this.hasCASEII(u,loc)){
@@ -1150,8 +1150,14 @@ export class Game extends Legacy{
  if(u.config==='Quad'&&['punch','push','club','hatchet'].includes(type))
   return {legal:false,reason:'У четырёхногого меха нет рук для этой атаки',targetNumber:99};
  if(type==='punch'&&limb==='both'){const a=this.physicalPreview(id,target,type,'LA'),b=this.physicalPreview(id,target,type,'RA');return {...a,legal:a.legal&&b.legal,reason:a.reason||b.reason,damage:a.damage+b.damage,targetNumber:Math.max(a.targetNumber,b.targetNumber)};}const attackerTile=this.tile(u.q,u.r),targetTile=this.tile(t.q,t.r),attackerSub=attackerTile.depth>=(u.prone?1:2),targetSub=targetTile.depth>=(t.prone?1:2),attackerWaterline=attackerTile.depth===1&&!u.prone,targetWaterline=targetTile.depth===1&&!t.prone,range=distance(u,t),dh=targetTile.height-attackerTile.height,side=this.hitSide(t,u),a=this.relative(u,t),act=u.actuators[limb]||{};let reason='',mod=0,damage=0,table='normal';if(!this.mobile(u)||u.prone||u.team===t.team||t.dead||u.charge||t.airborne||u.moveMode==='evade')reason='Атака недоступна';else if(range!==1&&!(range===0&&t.prone))reason='Нужна соседняя цель';else if(Math.abs(dh)>1)reason='Разница высот слишком велика';else if(attackerSub&&!targetSub&&!targetWaterline||targetSub&&!attackerSub&&!attackerWaterline)reason='Атака через поверхность воды запрещена';else if(attackerWaterline&&targetSub&&type!=='kick')reason='По погружённой цели с глубины 1 допустим только удар ногой';let arm=limb==='LA'||limb==='RA';if(type==='punch'){mod=Number(act.upper)*2+Number(act.lower)*2+Number(act.hand);damage=Math.max(1,Math.floor(Math.ceil(u.tonnage/10)/2**(Number(act.upper)+Number(act.lower))));table='punch';if(!arm||!u.structure[limb]||act.shoulder||u.firedLocations.includes(limb)||t.prone&&dh<=0||Math.abs(a)>120||limb==='LA'&&a< -60||limb==='RA'&&a>60)reason='Рука/цель недоступна для удара';if(dh===1)table='kick';}else if(type==='kick'){
- mod=-2+2*Number(act.upper)+2*Number(act.lower)+Number(act.foot);
- damage=Math.max(1,Math.floor(u.tonnage/5/2**(Number(act.upper)+Number(act.lower))));
+ // AGoAC pp.28,32–34: biped kick penalties apply across both legs.
+ // Quad behavior is intentionally unchanged here.
+ const kickActuators=u.config==='Quad'?[act]:['LL','RL'].map(l=>u.actuators[l]);
+ const damagedLegParts=kickActuators.reduce((n,a)=>n+Number(a.upper)+Number(a.lower),0);
+ const damagedFeet=kickActuators.reduce((n,a)=>n+Number(a.foot),0);
+ mod=-2+2*damagedLegParts+damagedFeet;
+ damage=Math.floor(u.tonnage/5/2**damagedLegParts);
+ if(u.config==='Quad')damage=Math.max(1,damage);
  table=t.prone?'normal':'kick';
  if(u.config==='Quad'){
   const front=['LA','RA'].includes(limb),rear=['LL','RL'].includes(limb);
@@ -1162,7 +1168,7 @@ export class Game extends Legacy{
   if(rear)mod+=1; // BMM p.38: additional +1 for quad backward kick.
   if(!available||!inArc||u.firedLocations.includes(limb)||dh===1||(dh===-1&&t.prone))
    reason='Нога/цель недоступна для удара';
- }else if(arm||!u.structure.LL||!u.structure.RL||u.actuators.LL.hip||
+ }else if(!['LL','RL'].includes(limb)||!u.structure.LL||!u.structure.RL||u.actuators.LL.hip||
   u.actuators.RL.hip||u.firedLocations.includes(limb)||Math.abs(a)>60||dh===1)
   reason='Нога/цель недоступна для удара';
  if(dh===-1&&!t.prone)table='punch';
