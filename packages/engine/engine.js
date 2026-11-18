@@ -308,11 +308,28 @@ export class Game extends Legacy{
    if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||
     w.locations?.some(l=>this.isBreached(u,l)))return false;
    if(w.ammo!==null&&!u.bins.some(b=>b.weapon===(w.shared??i)&&b.shots>0&&!b.destroyed&&!this.isBreached(u,b.location)))return false;
-   return enemies.some(t=>distance(u,t)>0&&distance(u,t)<=w.ranges[2]);
+   const depth=this.tile(u.q,u.r).depth;
+   // A depth-two-or-deeper shooter is always submerged. A dry hex
+   // and a fully submerged target cannot exchange weapons fire.
+   // Keep depth-one and changing posture conservative until LOS audit.
+   const submerged=depth>=2||stuckProne&&depth>=1;
+   const ranges=submerged?UNDERWATER_RANGES[w.name]:w.ranges;
+   if(!ranges)return false;
+   return enemies.some(t=>{
+    const targetDepth=this.tile(t.q,t.r).depth,range=distance(u,t);
+    if(submerged&&targetDepth===0||depth===0&&targetDepth>=2)return false;
+    return range>0&&range<=ranges[2];
+   });
   }))return true;
-  // Preserve possible physical attacks, even if the current facing or
-  // temporary pilot state would prohibit them.
-  return !stuckProne&&enemies.some(t=>distance(u,t)<=1)&&['LA','RA','LL','RL'].some(l=>u.structure[l]>0);
+  // AGoAC pp.28–29: both hips must permit a kick; punch and physical
+  // weapon attacks need an intact arm and shoulder; a push needs two
+  // arms, but damaged shoulders only penalize its roll. Preserve
+  // possible pushes even though the damage would be indirect.
+  if(stuckProne||!enemies.some(t=>distance(u,t)<=1))return false;
+  if(u.config==='Quad')return ['LA','RA','LL','RL'].some(l=>u.structure[l]>0);
+  const arms=['LA','RA'].filter(l=>u.structure[l]>0);
+  if(arms.length===2||arms.some(l=>!physicalArmActuators(u,l).shoulder))return true;
+  return ['LL','RL'].every(l=>u.structure[l]>0&&!u.actuators[l].hip);
  }
  checkWin({stalemate=false}={}){
   if(this.winner!==null)return;
