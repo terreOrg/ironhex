@@ -2798,3 +2798,29 @@ test('AGoAC p.7: optional agreed pregame victory terms are locked and checked on
  const win=fresh();assert(win.configureVictoryTerms({roundLimit:1,approvals:[true,true]}).ok);win.phase='end';win.queue=[];for(const u of win.units.filter(u=>u.team===1))win.destroyMech(u);assert(win.nextPhase().ok);assert.equal(win.winner,0);
  const standard=fresh();standard.round=1001;standard.checkWin({stalemate:true});assert.equal(standard.winner,null);
 });
+
+
+test('AGoAC pp.6–7: fire resolution restarts with initiative loser even after no-fire declarations',()=>{
+ for(const winner of [0,1]){
+  const g=fresh();g.phase='fire';g.initiativeWinner=winner;
+  const losing=g.units.filter(u=>u.team!==winner),winning=g.units.filter(u=>u.team===winner);
+  const shot=(target,name)=>({index:0,target:target.id,bin:null,aim:null,heatMode:false,
+   weapon:{name,rack:0,ammo:null,heat:0,damage:1,location:'CT'},
+   preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false}});
+  const empty={id:losing[0].id,shots:[]},firstWinner={id:winning[0].id,shots:[shot(losing[1],'W1')]},
+   laterLoser={id:losing[1].id,shots:[shot(winning[0],'L2')]},secondWinner={id:winning[1].id,shots:[shot(losing[1],'W2')]};
+  // The loser used its first selection without firing. Test both empty
+  // declaration and hold (no declaration object) representations.
+  for(const declarations of [[empty,firstWinner,laterLoser,secondWinner],[firstWinner,laterLoser,secondWinner]]){
+   const actual=[];g.orderFireMechs(declarations,'roll',d=>actual.push(d.id));
+   assert.deepEqual(actual,[losing[1].id,winning[0].id,winning[1].id]);
+   const damage=[];g.orderFireMechs(declarations.map(d=>({id:d.id,attacks:d.shots.map(s=>({s,hit:false}))})),'damage',d=>damage.push(d.id));
+   assert.deepEqual(damage,actual);
+  }
+  g.declarations=[empty,firstWinner,laterLoser,secondWinner];g.rng=()=>.99;
+  g.hit=(target,damage)=>({location:'CT',damage,hits:[]});
+  const results=g.resolveFire();
+  assert.deepEqual(results.map(r=>r.id),[losing[1].id,winning[0].id,winning[1].id]);
+  assert.equal(g.phaseRolls.length,3);
+ }
+});

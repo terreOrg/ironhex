@@ -533,7 +533,8 @@ function showBattleSetup({preferCustom=false}={}){
   $('#setup-victory-red').disabled=!hotseat;
   if(!hotseat)$('#setup-victory-red').checked=true;
   const agreed=!limited||Number.isInteger(roundLimit)&&roundLimit>=1&&roundLimit<=1000&&$('#setup-victory-green').checked&&$('#setup-victory-red').checked;
-  for(const id of ['#confirmstandard','#confirmreset'])$(id).disabled=!(valid&&agreed);
+  const canStart=valid&&agreed;
+  for(const id of ['#confirmstandard','#confirmreset'])$(id).disabled = !canStart;
  }
  for(const field of fields)field.onchange=()=>{
   // Consent covers the currently displayed composition, not a previous one.

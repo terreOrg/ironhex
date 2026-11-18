@@ -1358,14 +1358,22 @@ export class Game extends Legacy{
    rolls:[attackRoll,...this.phaseRolls.slice(start)]}]});
   this.note(u.name+' → '+t.name+' '+w.name+': '+roll+'/'+p.targetNumber+'+ — '+damage+' урона.');
  }
- // Preserve the initiative-based team selection slots. A controller
- // may choose a different one of their remaining declared Mechs at
- // each slot; finish that Mech's entire stage before the next slot.
+ // AGoAC p.6: resolution starts with the initiative loser again,
+ // one Mech at a time. A no-fire selection counts during declarations
+ // but does not consume an attack-resolution turn. Unequal force batches
+ // on p.7 apply to declarations, not the subsequent resolution stage.
  orderFireMechs(declarations,stage,visit){
+  const eligible=declarations.filter(d=>stage==='roll'?d.shots.length:d.attacks.length);
   const teamOf=d=>this.unit(d.id).team;
-  const remaining=[declarations.filter(d=>teamOf(d)===0),declarations.filter(d=>teamOf(d)===1)];
-  for(const slot of declarations){
-   const list=remaining[teamOf(slot)],fallback=list[0];
+  const remaining=[eligible.filter(d=>teamOf(d)===0),eligible.filter(d=>teamOf(d)===1)];
+  let slots=eligible.map(teamOf);
+  if(this.initiativeWinner===0||this.initiativeWinner===1){
+   const counts=remaining.map(list=>list.length),order=[1-this.initiativeWinner,this.initiativeWinner];
+   slots=[];
+   while(counts.some(Boolean))for(const team of order)if(counts[team]>0){slots.push(team);counts[team]--;}
+  }
+  for(const team of slots){
+   const list=remaining[team],fallback=list[0];
    const options=list.map(d=>({id:String(d.id),attackerId:d.id,
     weaponNames:stage==='roll'?d.shots.map(s=>s.weapon.name):
      d.attacks.filter(a=>a.hit).map(a=>a.s.weapon.name)}));
@@ -1381,8 +1389,8 @@ export class Game extends Legacy{
    this.orderFireMechs(this.declarations,'roll',d=>{
     staged.set(d.id,{id:d.id,attacks:this.rollDeclaredFire(d)});
    });
-   // Damage order is independent, with the same team slots as declaration.
-   this.orderFireMechs(this.declarations.map(d=>staged.get(d.id)),'damage',d=>{
+   // Damage order is independent and restarts with the initiative loser.
+   this.orderFireMechs(this.declarations.filter(d=>staged.has(d.id)).map(d=>staged.get(d.id)),'damage',d=>{
     this.orderFireStage(this.unit(d.id),d.attacks,'damage',attack=>this.resolveRolledFire(attack));
    });
   }finally{this.deferConsciousness=false;}
