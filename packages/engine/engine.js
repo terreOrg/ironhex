@@ -167,7 +167,7 @@ export function defaultMechWarriorSkills(techBase='Inner Sphere'){
  return techBase==='Clan'?{gunnery:3,piloting:4}:{gunnery:4,piloting:5};
 }
 export class Game extends Legacy{
- reset(){super.reset();this.victoryTerms=null;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
+ reset(){super.reset();this.victoryTerms=null;this.victoryAdjudicated=false;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
  this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
@@ -384,22 +384,38 @@ export class Game extends Legacy{
  }
  // CAT3500D p.7 permits victory conditions agreed before play.
  // This digital preset is optional: draw when a negotiated turn limit ends.
- configureVictoryTerms({roundLimit,approvals=[]}={}){
+ configureVictoryTerms({roundLimit,condition,approvals=[]}={}){
   if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
    this.winner!==null||this.victoryTerms!=null||this.queue.length||
    this.units.some(u=>u.moved||u.fired||u.physicalDone))
    return fail('Условия победы можно согласовать только до боя');
-  if(!Number.isInteger(roundLimit)||roundLimit<1||roundLimit>1000||
+  const agreed=Array.isArray(approvals)&&approvals.length===2&&approvals.every(v=>v===true);
+  const limit=condition===undefined&&Number.isInteger(roundLimit)&&roundLimit>=1&&roundLimit<=1000;
+  const custom=roundLimit===undefined&&typeof condition==='string'&&condition.trim().length>0&&condition.trim().length<=500;
+  if(!agreed||!(limit||custom))return fail('Нужны допустимые условия победы и согласие обеих сторон');
+  this.victoryTerms=custom?{condition:condition.trim(),approvals:[true,true]}:{roundLimit,approvals:[true,true]};
+  return {ok:true};
+ }
+ // Custom scenario text is interpreted by the two players, never executed.
+ // A result is finalized once, at a completed-round boundary or after a
+ // standard terminal result. An agreed custom result can differ from it.
+ canAdjudicateVictory(){
+  return typeof this.victoryTerms?.condition==='string'&&!this.victoryAdjudicated&&
+   !this.pendingChoice&&!this.queue.length&&(this.winner!==null||this.phase==='initiative'&&this.round>1);
+ }
+ adjudicateVictory({winner,approvals=[]}={}){
+  if(!this.canAdjudicateVictory()||![0,1,'draw'].includes(winner)||
    !Array.isArray(approvals)||approvals.length!==2||approvals.some(v=>v!==true))
-   return fail('Нужны допустимый лимит раундов и согласие обеих сторон');
-  this.victoryTerms={roundLimit,approvals:[true,true]};
+   return fail('Нужно согласие обеих сторон на итог по заранее согласованному условию');
+  this.winner=winner;this.victoryAdjudicated=true;this.activeTeam=null;this.actingId=null;
+  this.note('Итог по согласованным условиям: '+(winner==='draw'?'ничья':winner===0?'победа зелёных':'победа красных')+'.');
   return {ok:true};
  }
  checkWin({stalemate=false}={}){
   if(this.winner!==null)return;
   const alive=this.units.filter(u=>!u.dead),sides=[0,1].map(t=>alive.filter(u=>u.team===t));
   if(!sides[0].length||!sides[1].length){super.checkWin();return;}
-  if(stalemate&&this.victoryTerms&&this.round>this.victoryTerms.roundLimit){
+  if(stalemate&&Number.isInteger(this.victoryTerms?.roundLimit)&&this.round>this.victoryTerms.roundLimit){
    this.winner='draw';this.note('Ничья: достигнут согласованный лимит раундов.');return;
   }
   if(!stalemate||alive.some(u=>u.deployed===false)||alive.some(u=>this.canEverMove(u)))return;
@@ -1614,10 +1630,25 @@ export class Game extends Legacy{
    ...this.physicalDeclarations
   ];
   if(this.initiativeWinner!==0&&this.initiativeWinner!==1)return orders;
-  // Stable default for automatic battles. Interactive controllers may choose
-  // which unit attacks first while their side has a displacement attack.
-  return orders.sort((a,b)=>Number(this.unit(a.id).team===this.initiativeWinner)-
-   Number(this.unit(b.id).team===this.initiativeWinner));
+  // AGoAC pp.6–7: the ordinary Physical Attack Phase repeats the
+  // weapon resolution sequence, starting again with the initiative loser.
+  // Preserve established displacement exception ordering; its detailed
+  // adjudication is outside this ordinary phase scheduling path.
+  if(orders.some(d=>d.special||d.type==='push'))
+   return orders.sort((a,b)=>Number(this.unit(a.id).team===this.initiativeWinner)-
+    Number(this.unit(b.id).team===this.initiativeWinner));
+  const groups=[new Map(),new Map()];
+  for(const d of orders){
+   const group=groups[this.unit(d.id).team];
+   if(!group.has(d.id))group.set(d.id,[]);
+   group.get(d.id).push(d);
+  }
+  const sides=groups.map(group=>[...group.values()]),ordered=[];
+  const first=1-this.initiativeWinner;
+  for(let slot=0;slot<Math.max(sides[0].length,sides[1].length);slot++){
+   ordered.push(...(sides[first][slot]??[]),...(sides[1-first][slot]??[]));
+  }
+  return ordered;
  }
  // AGoAC p.42: the lower-Initiative side acts first in displacement
  // conflicts; within that side, its controller can order its own attacks.

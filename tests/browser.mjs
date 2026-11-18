@@ -1199,3 +1199,28 @@ test('AGoAC p.7: hotseat round-limit victory terms require fresh approval by bot
   assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/);
  });
 });
+
+
+test('AGoAC p.7: custom local victory terms require agreement and are rendered as plain text',{timeout:180000},async()=>{
+ await withPage('custom-victory-consent',{noWebGL:true},async page=>{
+  await page.locator('#new').click();
+  assert.equal(await page.locator('#setup-victory option[value="custom"]').evaluate(option=>option.disabled),true);
+  await page.locator('#close').click();
+  await page.locator('#gamemode').selectOption('hotseat');await page.locator('#new').click();await page.locator('#setup-victory').selectOption('custom');
+  await page.locator('#setup-condition').fill('Hold <b>A</b>');await page.locator('#setup-victory-green').check();assert(await page.locator('#confirmreset').isDisabled());
+  await page.locator('#setup-victory-red').check();assert(await page.locator('#confirmreset').isEnabled());
+  await page.locator('#setup-condition').fill('Hold <b>B</b>');assert(await page.locator('#confirmreset').isDisabled());
+  await page.locator('#setup-victory-green').check();await page.locator('#setup-victory-red').check();await page.locator('#confirmreset').click();
+  assert.match(await page.locator('#agreed-victory-condition').textContent(),/Hold <b>B<\/b>/);assert.equal(await page.locator('#agreed-victory-condition b').count(),0);assert.equal(await page.locator('#adjudicate-victory').count(),0);
+  await page.locator('#next').click();await page.locator('#hold').waitFor({timeout:50000});
+  for(const phase of ['movement','fire','physical']){await completeOrders(page,phase);await page.locator('#next').click();}
+  await page.locator('#next').click();await page.locator('#next').click();
+  await page.locator('#adjudicate-victory').click();
+  assert.equal(await page.locator('#verdict-condition').textContent(),'Hold <b>B</b>');
+  await page.locator('#verdict-green').check();assert(await page.locator('#verdict-confirm').isDisabled());
+  await page.locator('#verdict-red').check();assert(await page.locator('#verdict-confirm').isEnabled());
+  await page.locator('#verdict-outcome').selectOption('1');assert(await page.locator('#verdict-confirm').isDisabled());
+  await page.locator('#verdict-green').check();await page.locator('#verdict-red').check();
+  await page.locator('#verdict-confirm').click();assert(await page.locator('#next').isDisabled());assert.equal(await page.locator('#adjudicate-victory').count(),0);
+ });
+});

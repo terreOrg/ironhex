@@ -2824,3 +2824,36 @@ test('AGoAC pp.6–7: fire resolution restarts with initiative loser even after 
   assert.equal(g.phaseRolls.length,3);
  }
 });
+
+
+test('AGoAC pp.6–7: ordinary physical resolution alternates grouped Mechs from initiative loser',()=>{
+ for(const winner of [0,1]){
+  const g=fresh();g.phase='physical';g.initiativeWinner=winner;
+  const losing=g.units.filter(u=>u.team!==winner),winning=g.units.filter(u=>u.team===winner);
+  const punch=(u,t,limb='LA')=>({id:u.id,target:t.id,type:'punch',limb,targetNumber:2,damage:1,side:'front',table:'punch'});
+  const a=punch(losing[0],winning[0]),b=punch(winning[0],losing[0]),c=punch(losing[1],winning[1]),d=punch(winning[1],losing[1]),second={...a,limb:'RA'};
+  g.physicalDeclarations=[b,d,a,c,second];
+  assert.deepEqual(g.physicalOrder(),[a,second,b,c,d]);
+  g.rng=()=>.99;const hits=[];
+  g.hit=(target,damage)=>{hits.push(target.id);assert.equal(g.phaseRolls.length,5,'all ordinary attacks rolled first');return {location:'CT',damage,hits:[]};};
+  assert.deepEqual(g.resolvePhysical().map(r=>r.id),[a.id,a.id,b.id,c.id,d.id]);
+  assert.deepEqual(hits,[a.target,a.target,b.target,c.target,d.target]);
+  g.physicalDeclarations=[b,d,c];
+  assert.deepEqual(g.physicalOrder(),[c,b,d],'no-attack selection does not take the first resolution turn');
+  const push={...a,type:'push'};g.physicalDeclarations=[b,c,push,d];
+  assert.deepEqual(g.physicalOrder(),[c,push,b,d],'preserve displacement exception scheduling');
+ }
+});
+
+
+test('AGoAC p.7: arbitrary pregame victory agreement is immutable and jointly adjudicated at a round boundary',()=>{
+ const g=fresh();for(const bad of [{condition:' '},{condition:'a'.repeat(501)},{condition:'x',roundLimit:2},{condition:'x',approvals:[true,false]}])assert(!g.configureVictoryTerms({approvals:[true,true],...bad}).ok);
+ assert(g.configureVictoryTerms({condition:'  Hold objective A  ',approvals:[true,true]}).ok);assert.equal(g.victoryTerms.condition,'Hold objective A');
+ assert(!g.canAdjudicateVictory());assert(!g.adjudicateVictory({winner:0,approvals:[true,true]}).ok);
+ assert(!g.configureVictoryTerms({condition:'Changed',approvals:[true,true]}).ok);
+ g.phase='end';g.queue=[];assert(g.nextPhase().ok);assert.equal(g.round,2);assert(g.canAdjudicateVictory());
+ for(const bad of [{winner:'0',approvals:[true,true]},{winner:0,approvals:[true,false]}])assert(!g.adjudicateVictory(bad).ok);
+ assert(g.adjudicateVictory({winner:1,approvals:[true,true]}).ok);assert.equal(g.winner,1);assert(!g.canAdjudicateVictory());assert(!g.nextPhase().ok);
+ const override=fresh();assert(override.configureVictoryTerms({condition:'Alternative outcome',approvals:[true,true]}).ok);override.winner=0;assert(override.adjudicateVictory({winner:'draw',approvals:[true,true]}).ok);assert.equal(override.winner,'draw');
+ override.reset();assert.equal(override.victoryTerms,null);assert.equal(override.victoryAdjudicated,false);
+});
