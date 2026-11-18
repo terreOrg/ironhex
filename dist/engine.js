@@ -222,7 +222,9 @@ export class Game extends Legacy{
  canEverMove(u){
   if(u.abandoned||['LA','RA','LL','RL'].every(l=>u.structure[l]===0))return false;
   const ready={...u,heat:0,shutdown:false,unconscious:false,prone:false};
-  return this.mp(ready,'walk')>0||this.mp(ready,'run')>0||this.mp(ready,'jump')>0;
+  if(this.mp(ready,'walk')>0||this.mp(ready,'run')>0)return true;
+  // A prone Mech cannot jump, and without any ground MP it cannot stand.
+  return !u.prone&&this.mp(ready,'jump')>0;
  }
  canEverDamage(u,enemies){
   if(u.abandoned)return false;
