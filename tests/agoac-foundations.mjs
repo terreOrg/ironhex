@@ -1814,3 +1814,24 @@ test('AGoAC pp.6,12: deployment jump can choose landing facing while ground entr
   assert.equal(g.rotate(u.id,1).ok,false);
  }
 });
+
+test('AGoAC p.12: one-legged biped stand includes cumulative modifiers in a single PSR',()=>{
+ for(const {hip,gyro} of [{hip:true,gyro:0},{hip:false,gyro:1},{hip:true,gyro:1}]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  u.structure.LL=0;u.actuators.RL.hip=hip;u.gyroHits=gyro;u.piloting=1;u.prone=true;
+  let draws=0;g.rng=()=>{draws++;return .99;};
+  assert(g.stand(u.id).ok);assert(!u.prone);
+  assert.equal(g.phaseRolls[0].target,1+5+(hip?2:0)+gyro*3);
+  assert.equal(draws,2);assert.equal(u.spent,2);assert.equal(u.pendingHeat,1);
+  assert(g.hold(u.id).ok);assert.equal(draws,2);
+  assert.equal(u.pendingHeat,3);assert.equal(u.moved,true);
+  g.endPhase();assert.equal(u.restrictedStandThisTurn,false);
+ }
+});
+test('AGoAC pp.12,32: ordinary damaged running still requires its separate PSR',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ Object.assign(u,{gyroHits:1,moveMode:'run',spent:2,piloting:2});
+ let draws=0;g.rng=()=>{draws++;return .99;};
+ assert(g.hold(u.id).ok);assert.equal(draws,2);
+ assert.equal(g.phaseRolls[0].target,5);
+});
