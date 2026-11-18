@@ -2712,3 +2712,16 @@ test('AGoAC pp.7,21: blocked LRM needs another possible spotter and SRM cannot f
  w.name='LRM-5';w.rack=5;s.dead=true;
  g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
 });
+
+
+test('AGoAC pp.7,25: fixed adjacent Mechs separated by more than one level cannot make ordinary physical attacks',()=>{
+ for(const level of [-2,-1,0,1,2]){
+  const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+  g.units[1].dead=true;g.units[3].dead=true;
+  u.structure.LA=1;u.structure.RA=1;
+  Object.assign(g.tile(v.q,v.r),{type:'hill',height:level,surface:level});
+  assert(!g.canEverMove(u));assert(!g.canEverMove(v));
+  assert.equal(g.canEverDamage(u,[v]),Math.abs(level)<=1);
+  g.checkWin({stalemate:true});assert.equal(g.winner,Math.abs(level)>1?'draw':null);
+ }
+});

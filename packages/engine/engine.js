@@ -357,7 +357,15 @@ export class Game extends Legacy{
   // weapon attacks need an intact arm and shoulder; a push needs two
   // arms, but damaged shoulders only penalize its roll. Preserve
   // possible pushes even though the damage would be indirect.
-  if(stuckProne||!enemies.some(t=>distance(u,t)<=1))return false;
+  // AGoAC p.25: ordinary physical attacks cannot cross a level
+  // difference greater than one. Retain the possibility of movement
+  // or DFA when either participant can still move.
+  if(stuckProne||!enemies.some(t=>{
+   if(distance(u,t)>1)return false;
+   if(this.canEverMove(u)||this.canEverMove(t))return true;
+   const a=this.tile(u.q,u.r),b=this.tile(t.q,t.r);
+   return !a||!b||Math.abs(a.height-b.height)<=1;
+  }))return false;
   if(u.config==='Quad')return ['LA','RA','LL','RL'].some(l=>u.structure[l]>0);
   const arms=['LA','RA'].filter(l=>u.structure[l]>0);
   if(arms.length===2||arms.some(l=>!physicalArmActuators(u,l).shoulder))return true;
