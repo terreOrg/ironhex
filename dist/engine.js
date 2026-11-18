@@ -312,7 +312,7 @@ export class Game extends Legacy{
  }
  // AGoAC p.6: separate setup initiative from turn initiative.
  startStandardDeployment(){
-  if(this.round!==1||this.phase!=='initiative'||this.queue.length||
+  if(this.deployment!==null||this.round!==1||this.phase!=='initiative'||this.queue.length||
    this.units.some(u=>u.moved||u.fired||u.physicalDone))return fail('Развёртывание возможно только перед боем');
   this.deployment={winner:null,edges:null};this.phase='setup';this.phaseRolls=[];
   for(const u of this.units)if(!u.dead)u.deployed=false;
@@ -345,6 +345,7 @@ export class Game extends Legacy{
    u.prone||!['walk','run','jump','minimum'].includes(mode)||!this.deployment?.edges||u.spent)return [];
   const legs=u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL'],lost=legs.filter(l=>!u.structure[l]).length;
   if(mode==='run'&&lost>=(u.config==='Quad'?2:1))return [];
+  if(mode==='jump'&&u.proneAtStart)return [];
   if(mode!=='walk'&&(u.dumping.length||u.dumpNext.length))return [];
   // Minimum movement requires one ground MP, even if ordinary running
   // is prohibited by a lost leg (p.11); the step still counts as running.
@@ -377,8 +378,7 @@ export class Game extends Legacy{
      // never be the endpoint. Check difficult terrain immediately;
      // involuntary stops that create stacking use displacement.
      const occupants=this.units.filter(v=>v.id!==u.id&&this.onMap(v)&&!v.airborne&&v.q===first.q&&v.r===first.r);
-     if(occupants.length&&occupants.every(v=>!v.dead&&v.team===u.team)&&
-        !(first.building?.cf>0)&&!(mode==='run'&&this.isPaved(first))){
+     if(occupants.length&&occupants.every(v=>!v.dead&&v.team===u.team)){
       const origin={q:first.q,r:first.r,facing:edge,cost};
       const entering={...u,...origin,deployed:true,spent:cost,moveMode:mode,distanceMoved:1,lastMovementDirection:edge};
       for(const route of this.reachable(entering,mode)){
@@ -419,6 +419,10 @@ export class Game extends Legacy{
    const first=route.transit.origin,entryPath=[{q:first.q,r:first.r}];
    Object.assign(u,{q:first.q,r:first.r,deployed:true,facing:first.facing,moveStart:{...from},
     moveMode:mode,spent:first.cost,distanceMoved:1,lastMovementDirection:first.facing});
+   // Resolve entry exactly once before the shared on-map move processes
+   // later terrain, turning and skid checks. A friendly occupant alone
+   // does not prevent entry transit (AGoAC pp.6,9).
+   this.resolveVoluntaryBuildingEntry(u,from,{q:first.q,r:first.r},1);
    this.checkExistingHullBreaches(u);
    const tile=this.tile(u.q,u.r);
    if(!u.dead&&!u.moveEndedByLegLoss&&(tile.depth||tile.type==='rubble'))
