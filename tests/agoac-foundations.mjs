@@ -2565,3 +2565,37 @@ test('AGoAC pp.6,40: unresolved movement damage checks finish before weapon decl
  assert(g.afterRolls.every(r=>r.target===u.piloting+1));
  assert.deepEqual(g.phaseRolls.map(r=>r.kind),g.afterRolls.map(r=>r.kind));
 });
+
+function strandedBipeds(){
+ const g=fresh();
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ for(const u of g.units){
+  Object.assign(u,{config:'Biped',prone:true,heat:0,shutdown:false,unconscious:false});
+  u.structure.LL=0;u.structure.RL=0;
+  for(const w of u.weapons)w.destroyed=true;
+ }
+ Object.assign(g.units[0],{q:0,r:0,facing:0});
+ Object.assign(g.units[2],{q:1,r:0,facing:3});
+ return g;
+}
+test('AGoAC pp.7,25: permanently prone Mechs with only intact arms cannot prevent a draw',()=>{
+ const g=strandedBipeds();
+ assert(g.units.every(u=>!g.canEverMove(u)&&u.structure.LA>0&&u.structure.RA>0));
+ assert(g.units.every(u=>!g.canEverDamage(u,g.units.filter(t=>t.team!==u.team))));
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+});
+test('AGoAC pp.7,19: permanently prone bipeds may prevent a draw with legal torso weapons but not leg weapons or a destroyed arm',()=>{
+ const g=strandedBipeds(),u=g.units[0],w=u.weapons[0];
+ Object.assign(w,{destroyed:false,location:'CT',locations:['CT'],ammo:null,ranges:[3,6,9]});
+ g.checkWin({stalemate:true});assert.equal(g.winner,null);
+ u.structure.RA=0;
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+ const other=strandedBipeds(),v=other.units[0];
+ Object.assign(v.weapons[0],{destroyed:false,location:'LL',locations:['LL'],ammo:null,ranges:[3,6,9]});
+ other.checkWin({stalemate:true});assert.equal(other.winner,'draw');
+});
+test('AGoAC p.7: a prone Mech that can recover must not trigger a premature draw',()=>{
+ const g=strandedBipeds(),u=g.units[0];u.structure.LL=1;
+ assert(g.canEverMove(u));
+ g.checkWin({stalemate:true});assert.equal(g.winner,null);
+});
