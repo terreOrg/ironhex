@@ -12,7 +12,7 @@
     "extensionsDeferred": true
   },
   "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached.",
-  "currentTopicId": "agoac-setup",
+  "currentTopicId": "agoac-sequence",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -96,8 +96,46 @@
         6,
         6
       ],
-      "status": "tested_subset",
-      "reviewNote": "Printed CAT3500D p.6 reviewed. Standard deployment has substantial implementation and regressions; map/force selection and custom design agreement remain open. No later chapter until setup inventory is complete."
+      "status": "verified",
+      "reviewNote": "Verified generic Setup procedure from p.6; five requirements verified. Native digital map formats and eight-per-side local limit are documented. Printed scenario-specific configurations and roster content deferred to the Scenarios audit, construction legality to Construction. No certification of these chapters.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "d6c10e88699f0f30ad77f90ecdcd92c2072eb17e",
+        "testedTree": "d0a881cb4c2dfb8c5048d5746388a9a9586b836c",
+        "mergedSha": "91da61929a00397e31114d39bd3befc51fb291ca",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44312942136,
+            "jobId": 134831519047,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44312942294,
+            "jobId": 134831517934,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44312942086,
+            "jobId": 134831518320,
+            "conclusion": "success"
+          }
+        ],
+        "inventoryComplete": true,
+        "requirementIds": [
+          "agoac-002",
+          "agoac-047",
+          "agoac-048",
+          "agoac-049",
+          "agoac-050"
+        ],
+        "review": "Complete direct inventory of printed p.6 Setup: select and arrange maps, choose forces, mutual consent for custom designs, general deployment initiative, opposing edges, movement declaration and first-full-hex MP. Verified five scoped requirements; all 52 linked named regressions passed in exact #121 CI/browser checks, also standard PostgreSQL smoke. Scope is generic tactical setup in supported local digital board configurations and server's standard entry. Actual printed scenario maps/forces and construction are expressly referred to pp.45 and 49; they are not certified by this section. Digital limits and fixed server contract maps are product limitations, not new game rules."
+      }
     },
     {
       "id": "agoac-sequence",
@@ -178,7 +216,8 @@
         45,
         48
       ],
-      "status": "not_audited"
+      "status": "not_audited",
+      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios."
     },
     {
       "id": "agoac-construction",
@@ -286,9 +325,9 @@
       "pages": [
         6
       ],
-      "statement": "Verify scenario setup and general deployment with initiative-selected opposite entry edges, walking/running/jumping entry and MP spent from the first complete hex.",
-      "status": "known_missing",
-      "reviewNote": "Printed p.6 general setup: current Legacy.reset initializes all units inside the board at fixed coordinates; initiative goes directly to move and makeRuntime preserves that placement. The non-scenario initiative edge choice, opposite entry edges and border entry MP accounting are absent. Scenario-specific placement remains separate. Initial engine implementation: separate setup initiative and replay-safe choice, six opposite axial edges, offboard exclusion from occupancy, walk/run first full hex terrain cost and continuation, jump first-hex accounting. Existing scenario unchanged. Layout convention: facing along inward axis and external origin at first full hex surface. UI/server configuration, blocked or immobile entry and complete browser/server tests remain; status stays known_missing. Local browser now exposes standard setup from New Battle, edge selection for hotseat/player winners, entry mode and legal hex selection, hides undeployed models/arcs, animates entry from virtual origin, preserves scenario restart option. Browser regression covers edge selection then first entry. Fixed offboard jump MP using no inherited dummy water depth. Server contract selection and no-legal-entry behavior still pending. Server operations now store explicit scenario/standard deployment on the draft, default old records to scenario, initialize standard mode only on launch, and resume from persisted Game state. Integration test covers invalid selection, edge choice, mandatory entry, MP and phase transition; browser mission briefing verifies explicit standard selection. Blocked/immobile edge handling and full CI verification remain open. Follow-up: p.11 minimum running entry consumes the movement selection and running heat; p.9 limits ground descent to two levels given the documented external-surface convention. AI prefers another legally selectable mech before reporting blocked deployment. Truly blocked entry is reported without inventing destruction, forfeiture, reward or deferred entry; scenario adjudication remains outside the explicit p.6 rule. Keep known_missing until remaining setup edge cases and CI are verified. Undeployed units are additionally excluded from weapon and physical previews, AI target scoring, skids and displacement occupancy, preventing phantom contacts at their legacy coordinates. Passing through a friendly occupied entry hex and complete no-entry scenario behavior still require review. Printed pp.6,9,11 friendly occupancy: ground entry can transit a dry nonhazardous friendly-occupied first hex using the normal remaining-MP pathfinder; the full first-hex cost and both travel hexes are recorded, endpoints remain unoccupied, enemy occupancy is not bypassed. Hazardous occupied first hexes (immediate PSR or skid) and full blocked scenario adjudication remain explicitly open. Two regression tests; exact CI pending. Subsequent original-book pp.11–12 comparison: normal on-map jumping now uses a monotonic shortest-path search, matching standard deployment rather than a single interpolated line; both occupied intermediate hexes and wooded terrain remain passable. Voluntary prone posture consumes one MP and rejects jumping, no MP, or wrong phase. UI and API preserve declared ground mode. Added three engine and one validation regressions, exact CI pending. Broader movement rules remain separately auditable. Original pp.9,11,40,42: friendly-occupied water/rubble entry resolves terrain PSR before any onward movement, retains its dice, and resolves involuntary stacking with the existing domino routine. Ordinary transit permits prone friendly occupants but never them as destinations. Building/skid first-hex transit and completely blocked initial deployment remain explicitly outside this patch; movement-time optional domino dodge still uses existing fallback, not an interactive choice. Two deterministic regressions; exact CI pending. Human ground-move orders (including entry) now use the replay journal for an interactive domino choice before committing the move; the choice resumes the original server-authorized command even with a nonempty movement queue. The replay journal is private, and resumed animation identifies the original moving Mech. AI-initiated movement and charge-generated displacement still use fallback; exact CI pending. Follow-up: movement replay now covers AI-generated moves and charge/DFA approach orders. The server pauses its AI loop for a human domino victim and resumes the original authorized action without accepting direct client AI commands. An involuntarily interrupted approach consumes the selection but cannot fabricate a physical declaration. Added two engine and one API regression, exact CI pending. AGoAC pp.6,9,11–12: minimum movement uses one available walking MP even when a lost leg forbids ordinary running, including offboard entry; it is limited to the Movement Phase, cannot change a committed mode or bypass ammo dumping, resolves entry terrain checks, and consumes the selection. Four regressions. Exact CI pending. Printed pp.6,11–12: jumping entry and ordinary jumping now accept a free six-way landing orientation before terrain PSRs; a failed water landing uses this orientation for fall facing, and subsequent ordinary rotate is forbidden after jumping. UI/API expose and validate jump-only facing; four regressions. CI pending. AI continues to choose its default facing; charge/DFA approach is a separate declaration path. Printed p.12: one-legged biped standing now records its single cumulative PSR and suppresses the duplicate running-damage PSR at selection completion, retaining standing and running heat and ordinary running PSRs. Flag resets at End Phase. Two regressions; exact CI pending. Quad extensions remain outside this AGoAC change. Printed pp.9,11–12: rotation commits the selected ground movement mode, including while prone; standing may not change a committed mode and the UI/API now convey the chosen mode and free successful-standing facing, including minimum stand. Five engine/API regressions; exact CI pending. Advanced rules unchanged except shared command validation. 2026-11-18 printed p.6 checked against p.9 and p.11: fixed first-hex friendly transit on pavement and buildings without adding new building/skid rules; call existing building resolution before normal on-map transit; reject repeated setup and jumping when prone at start. All 12 combinations of winning team and hexagonal-map edge now have a complete ground entry regression. The original does not adjudicate a scenario where no legal entry exists; continue to surface that blocker instead of inventing damage or forfeiture. Remaining p.6 inventory: map/force selection prior to play and mutual agreement for custom mechs, plus exact CI for new tests. Fixed single hexagonal board is a digital layout convention, not the printed mapsheet layout. Setup force selection is now separately tracked in agoac-047. Entry-transit patch #117 passed all three workflow checks and was merged. General mapa selection and complete acceptance still pending; do not treat 047 tests as certification of every setup combination. Digital map selection and six-way rotation tracked separately in 048. Original mapsheet composition and scenario-fixed layouts remain outstanding. Local scoped slot selection is verified; larger rosters, full original map arrangements, scenario setup and authoritative campaign choices remain unverified. Joined rectangular native map layout added under 049; Setup remains open for complete original scenarios, arbitrary maps, larger forces and full acceptance. Scoped one/two-sheet composition verified after #120; expanded local forces tracked under agoac-050. Setup inventory remains open for broader map/roster and scenario options.",
+      "statement": "Apply the general p.6 deployment procedure when no scenario specifies deployment: both sides roll initiative, winner chooses entry edge and loser takes the opposite, and each selected Mech walks, runs or jumps onto its assigned edge counting MP from the first full hex.",
+      "status": "verified",
+      "reviewNote": "Printed p.6 general setup: current Legacy.reset initializes all units inside the board at fixed coordinates; initiative goes directly to move and makeRuntime preserves that placement. The non-scenario initiative edge choice, opposite entry edges and border entry MP accounting are absent. Scenario-specific placement remains separate. Initial engine implementation: separate setup initiative and replay-safe choice, six opposite axial edges, offboard exclusion from occupancy, walk/run first full hex terrain cost and continuation, jump first-hex accounting. Existing scenario unchanged. Layout convention: facing along inward axis and external origin at first full hex surface. UI/server configuration, blocked or immobile entry and complete browser/server tests remain; status stays known_missing. Local browser now exposes standard setup from New Battle, edge selection for hotseat/player winners, entry mode and legal hex selection, hides undeployed models/arcs, animates entry from virtual origin, preserves scenario restart option. Browser regression covers edge selection then first entry. Fixed offboard jump MP using no inherited dummy water depth. Server contract selection and no-legal-entry behavior still pending. Server operations now store explicit scenario/standard deployment on the draft, default old records to scenario, initialize standard mode only on launch, and resume from persisted Game state. Integration test covers invalid selection, edge choice, mandatory entry, MP and phase transition; browser mission briefing verifies explicit standard selection. Blocked/immobile edge handling and full CI verification remain open. Follow-up: p.11 minimum running entry consumes the movement selection and running heat; p.9 limits ground descent to two levels given the documented external-surface convention. AI prefers another legally selectable mech before reporting blocked deployment. Truly blocked entry is reported without inventing destruction, forfeiture, reward or deferred entry; scenario adjudication remains outside the explicit p.6 rule. Keep known_missing until remaining setup edge cases and CI are verified. Undeployed units are additionally excluded from weapon and physical previews, AI target scoring, skids and displacement occupancy, preventing phantom contacts at their legacy coordinates. Passing through a friendly occupied entry hex and complete no-entry scenario behavior still require review. Printed pp.6,9,11 friendly occupancy: ground entry can transit a dry nonhazardous friendly-occupied first hex using the normal remaining-MP pathfinder; the full first-hex cost and both travel hexes are recorded, endpoints remain unoccupied, enemy occupancy is not bypassed. Hazardous occupied first hexes (immediate PSR or skid) and full blocked scenario adjudication remain explicitly open. Two regression tests; exact CI pending. Subsequent original-book pp.11–12 comparison: normal on-map jumping now uses a monotonic shortest-path search, matching standard deployment rather than a single interpolated line; both occupied intermediate hexes and wooded terrain remain passable. Voluntary prone posture consumes one MP and rejects jumping, no MP, or wrong phase. UI and API preserve declared ground mode. Added three engine and one validation regressions, exact CI pending. Broader movement rules remain separately auditable. Original pp.9,11,40,42: friendly-occupied water/rubble entry resolves terrain PSR before any onward movement, retains its dice, and resolves involuntary stacking with the existing domino routine. Ordinary transit permits prone friendly occupants but never them as destinations. Building/skid first-hex transit and completely blocked initial deployment remain explicitly outside this patch; movement-time optional domino dodge still uses existing fallback, not an interactive choice. Two deterministic regressions; exact CI pending. Human ground-move orders (including entry) now use the replay journal for an interactive domino choice before committing the move; the choice resumes the original server-authorized command even with a nonempty movement queue. The replay journal is private, and resumed animation identifies the original moving Mech. AI-initiated movement and charge-generated displacement still use fallback; exact CI pending. Follow-up: movement replay now covers AI-generated moves and charge/DFA approach orders. The server pauses its AI loop for a human domino victim and resumes the original authorized action without accepting direct client AI commands. An involuntarily interrupted approach consumes the selection but cannot fabricate a physical declaration. Added two engine and one API regression, exact CI pending. AGoAC pp.6,9,11–12: minimum movement uses one available walking MP even when a lost leg forbids ordinary running, including offboard entry; it is limited to the Movement Phase, cannot change a committed mode or bypass ammo dumping, resolves entry terrain checks, and consumes the selection. Four regressions. Exact CI pending. Printed pp.6,11–12: jumping entry and ordinary jumping now accept a free six-way landing orientation before terrain PSRs; a failed water landing uses this orientation for fall facing, and subsequent ordinary rotate is forbidden after jumping. UI/API expose and validate jump-only facing; four regressions. CI pending. AI continues to choose its default facing; charge/DFA approach is a separate declaration path. Printed p.12: one-legged biped standing now records its single cumulative PSR and suppresses the duplicate running-damage PSR at selection completion, retaining standing and running heat and ordinary running PSRs. Flag resets at End Phase. Two regressions; exact CI pending. Quad extensions remain outside this AGoAC change. Printed pp.9,11–12: rotation commits the selected ground movement mode, including while prone; standing may not change a committed mode and the UI/API now convey the chosen mode and free successful-standing facing, including minimum stand. Five engine/API regressions; exact CI pending. Advanced rules unchanged except shared command validation. 2026-11-18 printed p.6 checked against p.9 and p.11: fixed first-hex friendly transit on pavement and buildings without adding new building/skid rules; call existing building resolution before normal on-map transit; reject repeated setup and jumping when prone at start. All 12 combinations of winning team and hexagonal-map edge now have a complete ground entry regression. The original does not adjudicate a scenario where no legal entry exists; continue to surface that blocker instead of inventing damage or forfeiture. Remaining p.6 inventory: map/force selection prior to play and mutual agreement for custom mechs, plus exact CI for new tests. Fixed single hexagonal board is a digital layout convention, not the printed mapsheet layout. Setup force selection is now separately tracked in agoac-047. Entry-transit patch #117 passed all three workflow checks and was merged. General mapa selection and complete acceptance still pending; do not treat 047 tests as certification of every setup combination. Digital map selection and six-way rotation tracked separately in 048. Original mapsheet composition and scenario-fixed layouts remain outstanding. Local scoped slot selection is verified; larger rosters, full original map arrangements, scenario setup and authoritative campaign choices remain unverified. Joined rectangular native map layout added under 049; Setup remains open for complete original scenarios, arbitrary maps, larger forces and full acceptance. Scoped one/two-sheet composition verified after #120; expanded local forces tracked under agoac-050. Setup inventory remains open for broader map/roster and scenario options. Final exact #121 CI review: all 40 linked cases passed; server standard deployment smoke passed. Scope restricted to p.6 generic deployment. Specific printed scenarios remain open under agoac-scenarios, and general movement/advanced timing remain in their chapters.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -458,7 +497,37 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.6: both sides enter their assigned opposite full hex edges and complete deployment"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "d6c10e88699f0f30ad77f90ecdcd92c2072eb17e",
+        "testedTree": "d0a881cb4c2dfb8c5048d5746388a9a9586b836c",
+        "mergedSha": "91da61929a00397e31114d39bd3befc51fb291ca",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44312942136,
+            "jobId": 134831519047,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44312942294,
+            "jobId": 134831517934,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44312942086,
+            "jobId": 134831518320,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct source review of printed p.6 (PDF page index 7), including page image. The setup paragraph explicitly defers specific scenario force/map/deployment details to Scenarios p.45 and valid custom construction to p.49. All 40 linked regression names passed on #121, exact merged tree identical; PostgreSQL container integration also reports persisted standard deployment choice, edge, entry and phase transition. Existing preplaced scenario mode is a software option, not evidence for any particular printed scenario. No special outcome is invented for completely blocked entry, which the general paragraph does not adjudicate. Broader movement details, full scenario data and construction remain in their respective later topic audits."
+      }
     },
     {
       "id": "agoac-003",
@@ -2810,7 +2879,7 @@
         7
       ],
       "statement": "Support unequal local force composition with up to eight fielded Mechs per side, independent state and actual model/record representation; all living selected units participate in normal phase selection.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -2825,7 +2894,37 @@
           "test": "AGoAC p.6: additional local Mech models and records follow roster changes"
         }
       ],
-      "reviewNote": "Printed p.6 permits player-chosen forces and p.7 defines unequal counts. Eight per side is a local software resource limit, not a rule. Retain legacy first four IDs, compact extras, reserve unique dry staging positions, deep-copy chassis state, require unanimous custom consent also for additional slots. Model records added/removed with roster. Existing authoritative contracts remain limited. Exact CI pending; no claim of unrestricted force sizes or full catalog."
+      "reviewNote": "Printed p.6 permits player-chosen forces and p.7 defines unequal counts. Eight per side is a local software resource limit, not a rule. Retain legacy first four IDs, compact extras, reserve unique dry staging positions, deep-copy chassis state, require unanimous custom consent also for additional slots. Model records added/removed with roster. Existing authoritative contracts remain limited. Exact CI pending; no claim of unrestricted force sizes or full catalog. Exact #121 named regressions passed and merged tree matches.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "d6c10e88699f0f30ad77f90ecdcd92c2072eb17e",
+        "testedTree": "d0a881cb4c2dfb8c5048d5746388a9a9586b836c",
+        "mergedSha": "91da61929a00397e31114d39bd3befc51fb291ca",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44312942136,
+            "jobId": 134831519047,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44312942294,
+            "jobId": 134831517934,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44312942086,
+            "jobId": 134831518320,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.6 players choose forces; p.7 unequal numbers. Three named regressions passed on the exact #121 tree: up to eight local fielded units per side, independent IDs and damage, unequal entry and phase selections, dynamic models/records. Resource cap is software, not a rule. Not a certification of arbitrary roster sizes, complete catalog or campaign economy."
+      }
     }
   ]
 }

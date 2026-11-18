@@ -1,14 +1,8 @@
 name: Ironhex Deploy
 
-# Deploy only after all four workflows have passed for the same main commit.
-# Triggered by GitHub Actions on the self-hosted runner, not a public webhook.
+# Manual deployment only during the AGoAC audit.
+# The existing four-workflow Quality Gate remains mandatory on main.
 on:
-  workflow_run:
-    # Trigger a single deploy check per main commit. The script waits for all four CI suites.
-    workflows:
-      - Ironhex SonarQube
-    branches: [main]
-    types: [completed]
   workflow_dispatch:
 
 permissions:
@@ -22,14 +16,14 @@ concurrency:
 jobs:
   deploy:
     name: Gate checks and trigger local Komodo
-    if: ${{ github.event_name == 'workflow_dispatch' || (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, Linux, X64, spellfire]
     timeout-minutes: 10
     steps:
       - name: Checkout trusted main branch
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.sha }}
           persist-credentials: false
       - name: Install Node.js 24
         uses: actions/setup-node@v4
@@ -38,7 +32,7 @@ jobs:
       - name: Verify all CI results and trigger private Komodo webhook
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          SOURCE_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          SOURCE_SHA: ${{ github.sha }}
           KOMODO_WEBHOOK_URL: ${{ secrets.KOMODO_WEBHOOK_URL }}
           KOMODO_WEBHOOK_SECRET: ${{ secrets.KOMODO_WEBHOOK_SECRET }}
         run: node scripts/deploy-after-ci.mjs
