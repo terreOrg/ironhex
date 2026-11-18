@@ -1675,3 +1675,44 @@ test('AGoAC pp.26,42: interrupted charge approach cannot declare a phantom attac
  assert.equal(g.unit(u.id).prone,true);assert.equal(g.unit(u.id).moved,true);
  assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);assert.equal(g.queue.length,3);
 });
+
+test('AGoAC pp.9,11: minimum movement cannot bypass phase, declared mode or ammunition restrictions',()=>{
+ for(const cause of ['fire','physical','walk','jump','dumping','dumpNext','spent']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:5});
+  Object.assign(g.tile(0,0),{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(g.tile(1,0),{type:'plain',depth:0,height:0,surface:0});
+  if(cause==='fire'||cause==='physical')g.phase=cause;
+  if(cause==='walk'||cause==='jump')u.moveMode=cause;
+  if(cause==='dumping'||cause==='dumpNext')u[cause]=[0];
+  if(cause==='spent')u.spent=1;
+  const before=JSON.stringify(u),queue=[...g.queue];
+  assert.equal(g.minimumMove(u.id).ok,false,cause);
+  assert.equal(JSON.stringify(u),before);assert.deepEqual(g.queue,queue);
+ }
+});
+test('AGoAC pp.6,11: one remaining walking MP permits minimum entry without ordinary running',()=>{
+ const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+ g.rng=()=>.5;u.structure.LL=0;
+ const t=g.deploymentEdgeTiles(g.deployment.edges[u.team])[0];
+ Object.assign(t,{type:'heavy',depth:0,height:0,surface:0});
+ assert.equal(g.mp(u,'walk'),1);assert.equal(g.mp(u,'run'),0);
+ assert(!g.reachable(u,'walk').some(p=>p.q===t.q&&p.r===t.r));
+ assert(!g.reachable(u,'run').some(p=>p.q===t.q&&p.r===t.r));
+ assert(g.reachable(u,'minimum').some(p=>p.q===t.q&&p.r===t.r&&p.cost===1));
+ const result=g.move(u.id,t.q,t.r,'minimum');
+ assert(result.ok&&result.ended);assert.equal(u.pendingHeat,2);
+ assert.equal(u.spent,1);assert.equal(u.moveMode,'run');assert.equal(u.moved,true);
+});
+test('AGoAC pp.11–12: minimum water step resolves required terrain PSR and consumes selection',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ Object.assign(u,{q:0,r:0,facing:0,walk:1,moveStart:{q:0,r:0}});
+ Object.assign(g.tile(0,0),{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(g.tile(1,0),{type:'water',depth:1,height:-1,surface:0});
+ let draws=0;g.rng=()=>{draws++;return .5;};
+ const result=g.minimumMove(u.id);
+ assert(result.ok&&result.ended);assert.deepEqual(result.path,[{q:1,r:0}]);
+ assert.equal(draws,2);assert.equal(result.rolls[0].target,u.piloting-1);
+ assert.equal(u.pendingHeat,2);assert.equal(u.distanceMoved,1);assert.equal(u.moved,true);
+ assert.equal(g.rotate(u.id,1).ok,false);
+});
