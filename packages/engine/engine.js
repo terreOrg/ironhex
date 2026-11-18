@@ -360,16 +360,26 @@ export class Game extends Legacy{
   // AGoAC p.25: ordinary physical attacks cannot cross a level
   // difference greater than one. Retain the possibility of movement
   // or DFA when either participant can still move.
-  if(stuckProne||!enemies.some(t=>{
+  if(stuckProne)return false;
+  const arms=['LA','RA'].filter(l=>u.structure[l]>0&&!this.isBreached(u,l));
+  const kick=['LL','RL'].every(l=>u.structure[l]>0&&!u.actuators[l].hip&&!this.isBreached(u,l));
+  return enemies.some(t=>{
    if(distance(u,t)>1)return false;
-   if(this.canEverMove(u)||this.canEverMove(t))return true;
+   if(u.config==='Quad')return ['LA','RA','LL','RL'].some(l=>u.structure[l]>0);
+   const movable=this.canEverMove(u)||this.canEverMove(t);
    const a=this.tile(u.q,u.r),b=this.tile(t.q,t.r);
-   return !a||!b||Math.abs(a.height-b.height)<=1;
-  }))return false;
-  if(u.config==='Quad')return ['LA','RA','LL','RL'].some(l=>u.structure[l]>0);
-  const arms=['LA','RA'].filter(l=>u.structure[l]>0);
-  if(arms.length===2||arms.some(l=>!physicalArmActuators(u,l).shoulder))return true;
-  return ['LL','RL'].every(l=>u.structure[l]>0&&!u.actuators[l].hip);
+   if(!movable&&a&&b){
+    if(Math.abs(a.height-b.height)>1)return false;
+    // No physical attack can cross between dry and fully submerged hexes.
+    if(a.depth===0&&b.depth>=2||a.depth>=2&&b.depth===0)return false;
+   }
+   // A fixed biped uses its feet's facing for physical attacks.
+   // Keep future movement, coincident hexes and non-base quirks conservative.
+   const angle=movable||distance(u,t)===0?0:this.relative({...u,twist:0},t);
+   if(Math.abs(angle)<=60.00001&&(arms.length===2||kick))return true;
+   return arms.some(l=>!physicalArmActuators(u,l).shoulder&&
+    Math.abs(angle)<=120.00001&&(l==='LA'?angle>=-60.00001:angle<=60.00001));
+  });
  }
  checkWin({stalemate=false}={}){
   if(this.winner!==null)return;

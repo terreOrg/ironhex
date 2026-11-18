@@ -2725,3 +2725,15 @@ test('AGoAC pp.7,25: fixed adjacent Mechs separated by more than one level canno
   g.checkWin({stalemate:true});assert.equal(g.winner,Math.abs(level)>1?'draw':null);
  }
 });
+
+
+test('AGoAC pp.7,25,28–29: fixed biped physical attack capability respects facing and intact limbs',()=>{
+ const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+ g.units[1].dead=true;g.units[3].dead=true;
+ Object.assign(u,{q:0,r:0,facing:0});Object.assign(v,{q:1,r:0});
+ u.structure.LA=1;u.structure.RA=1;
+ assert(g.canEverDamage(u,[v]));
+ u.facing=3;assert(!g.canEverDamage(u,[v]));
+ u.twist=1;assert(!g.canEverDamage(u,[v]));
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+});
