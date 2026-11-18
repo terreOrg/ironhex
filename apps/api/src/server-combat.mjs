@@ -94,7 +94,8 @@ export function runTacticalOrder(game,body){
       floatingCriticals:!!b.floatingCriticals};
     r={ok:true};
   }else{
-    if(!game.units[id]||game.units[id].team!==0||!game.canAct(game.units[id]))
+    if(!game.units[id]||game.units[id].team!==0||
+       !(type==='shutdown'&&game.phase==='end'||game.canAct(game.units[id])))
       throw new AuthError(409,'not_your_turn');
     switch(type){
       case 'move':r=game.moveWithChoices(id,b.q,b.r,b.mode,{lateral:b.lateral,humanTeams:[0]});break;
