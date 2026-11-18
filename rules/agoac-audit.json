@@ -1667,7 +1667,7 @@
         38
       ],
       "statement": "Engine hits give five heat each up to two hits unless shut down; three hits destroy the Mech and mark it for end-of-phase removal. Engine slots destroyed with their torso count once.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1678,7 +1678,37 @@
           "test": "AGoAC pp.32,34–35: side torso destruction counts critical and remaining engine slots once"
         }
       ],
-      "reviewNote": "Corrected destruction accounting for side torso engine slots, including slots marked in the final critical check; existing saves cannot repair earlier unrecorded component losses. Exact CI pending."
+      "reviewNote": "Corrected destruction accounting for side torso engine slots, including slots marked in the final critical check; existing saves cannot repair earlier unrecorded component losses. Exact CI passed; squash tree matches tested tree.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Corrected destruction accounting for side torso engine slots, including slots marked in the final critical check; existing saves cannot repair earlier unrecorded component losses. Exact CI passed; squash tree matches tested tree. Narrow requirement; no claim of complete damage chapter coverage.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ad4cbb2d187d60c55331a9fde3615d4196f891d2",
+        "testedTree": "442f7b1691f83ef45fd649ac0440f40371350e8e",
+        "mergedSha": "f232bee857976ed58c361f81eb5fda2f298e0f07",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44297143450,
+            "jobId": 134777024291,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44297143417,
+            "jobId": 134777025378,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44297143533,
+            "jobId": 134777023887,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-040",
@@ -1688,14 +1718,44 @@
         34
       ],
       "statement": "Each destroyed heat sink and jump jet is lost once, including when a final-section critical marks the slot before location destruction.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.33–34: destroyed section counts sink and jump slots marked by final critical roll"
         }
       ],
-      "reviewNote": "Fixed loss accounting in final critical checks; standalone critical effects already present. Exact CI pending."
+      "reviewNote": "Fixed loss accounting in final critical checks; standalone critical effects already present. Exact CI passed; squash tree matches tested tree.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Fixed loss accounting in final critical checks; standalone critical effects already present. Exact CI passed; squash tree matches tested tree. Narrow requirement; no claim of complete damage chapter coverage.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ad4cbb2d187d60c55331a9fde3615d4196f891d2",
+        "testedTree": "442f7b1691f83ef45fd649ac0440f40371350e8e",
+        "mergedSha": "f232bee857976ed58c361f81eb5fda2f298e0f07",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44297143450,
+            "jobId": 134777024291,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44297143417,
+            "jobId": 134777025378,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44297143533,
+            "jobId": 134777023887,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-041",
@@ -1704,14 +1764,44 @@
         33
       ],
       "statement": "First sensor critical adds two to weapon TN; second prevents weapon fire; physical attacks are unchanged.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.33: both sensor criticals affect weapons only and the second prevents fire"
         }
       ],
-      "reviewNote": "Existing implementation reviewed and tested via both actual head criticals. Exact CI pending."
+      "reviewNote": "Existing implementation reviewed and tested via both actual head criticals. Exact CI passed; squash tree matches tested tree.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Existing implementation reviewed and tested via both actual head criticals. Exact CI passed; squash tree matches tested tree. Narrow requirement; no claim of complete damage chapter coverage.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ad4cbb2d187d60c55331a9fde3615d4196f891d2",
+        "testedTree": "442f7b1691f83ef45fd649ac0440f40371350e8e",
+        "mergedSha": "f232bee857976ed58c361f81eb5fda2f298e0f07",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44297143450,
+            "jobId": 134777024291,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44297143417,
+            "jobId": 134777025378,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44297143533,
+            "jobId": 134777023887,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-042",
@@ -1722,7 +1812,7 @@
         44
       ],
       "statement": "Either life-support critical disables the system, while the second has no extra effect. Heat and submerged wound thresholds apply once.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1737,7 +1827,95 @@
           "test": "AGoAC pp.7,33,44: submerged life support wounds and lethal wounds cannot recover"
         }
       ],
-      "reviewNote": "Actual two-slot critical regression; existing thresholds and submerged tests referenced. Exact CI pending."
+      "reviewNote": "Actual two-slot critical regression; existing thresholds and submerged tests referenced. Exact CI passed; squash tree matches tested tree.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Actual two-slot critical regression; existing thresholds and submerged tests referenced. Exact CI passed; squash tree matches tested tree. Narrow requirement; no claim of complete damage chapter coverage.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ad4cbb2d187d60c55331a9fde3615d4196f891d2",
+        "testedTree": "442f7b1691f83ef45fd649ac0440f40371350e8e",
+        "mergedSha": "f232bee857976ed58c361f81eb5fda2f298e0f07",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44297143450,
+            "jobId": 134777024291,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44297143417,
+            "jobId": 134777025378,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44297143533,
+            "jobId": 134777023887,
+            "conclusion": "success"
+          }
+        ]
+      }
+    },
+    {
+      "id": "agoac-043",
+      "topicId": "agoac-physical",
+      "pages": [
+        28,
+        32,
+        33
+      ],
+      "statement": "Punches apply missing or damaged arm actuator modifiers and cumulative damage reduction with minimum one; intact physical weapon prevents punch with its arm. Weapon TN ignores missing-by-design actuators and leg actuator damage.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.28,32–33: missing and damaged arm actuators affect punches but only damage affects weapon fire"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: intact arm-mounted hatchet prevents a punch until destroyed"
+        }
+      ],
+      "reviewNote": "Original pages 28,32–33 checked. Weapon fire arm effects only; hatchet attack modifiers and multi-target punch declaration remain separate. Exact CI pending."
+    },
+    {
+      "id": "agoac-044",
+      "topicId": "agoac-physical",
+      "pages": [
+        26,
+        32,
+        33
+      ],
+      "statement": "Club attacks require both working hands and shoulders; damaged upper/lower arm actuators add two each without reducing club damage. Picking up a club prohibits weapon attacks that turn.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.26,32–33: clubbing requires working shoulders and hands but damaged arm joints only add modifiers"
+        }
+      ],
+      "reviewNote": "Club finding checks fired locations; club life-cycle, limb wreckage and absent upper/lower club modifiers remain separately audited. Exact CI pending."
+    },
+    {
+      "id": "agoac-045",
+      "topicId": "agoac-damage",
+      "pages": [
+        32,
+        40,
+        43
+      ],
+      "statement": "First gyro hit adds three to PSRs, second adds another three and causes automatic fall; additional gyro slots may be marked without further PSR increases. Destroyed gyro prevents standing but permits a single facing change if MP allows and is not immobility.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hits never raise modifier beyond six"
+        }
+      ],
+      "reviewNote": "Gyro critical and movement restriction regression; running/jumping PSR timing and seatbelt roll integration remain separate. Exact CI pending."
     }
   ]
 }
