@@ -2750,3 +2750,21 @@ test('AGoAC p.15: split arm-torso weapon prevents arm reversal and reversed arms
  assert(!g.twist(u.id,1).ok);assert.equal(u.twist,0);assert.equal(u.flip,true);
  assert(g.flipArms(u.id,false).ok);assert(g.twist(u.id,1).ok);
 });
+
+
+test('AGoAC pp.7,19: permanently submerged prone targets and depth-one leg weapons cannot fire across the water surface',()=>{
+ const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+ g.units[1].dead=true;g.units[3].dead=true;
+ Object.assign(u,{q:0,r:0,facing:0});Object.assign(v,{q:2,r:0,prone:true});
+ Object.assign(g.tile(v.q,v.r),{type:'water',depth:1,height:-1,surface:0});
+ Object.assign(u.weapons[0],{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,ranges:[3,6,9]});
+ assert(!g.canEverMove(v));assert(!g.canEverDamage(u,[v]));
+ v.prone=false;assert(g.canEverDamage(u,[v]));
+ const h=fixedStandingBipeds(),a=h.units[0],b=h.units[2];
+ h.units[1].dead=true;h.units[3].dead=true;
+ Object.assign(a,{q:0,r:0,facing:0});Object.assign(b,{q:2,r:0});
+ Object.assign(h.tile(a.q,a.r),{type:'water',depth:1,height:-1,surface:0});
+ Object.assign(a.weapons[0],{name:'Medium Laser',destroyed:false,location:'LL',locations:['LL'],ammo:null,ranges:[3,6,9]});
+ assert(!h.canEverDamage(a,[b]));
+ Object.assign(a.weapons[0],{location:'CT',locations:['CT']});assert(h.canEverDamage(a,[b]));
+});

@@ -329,12 +329,13 @@ export class Game extends Legacy{
    // A depth-two-or-deeper shooter is always submerged. A dry hex
    // and a fully submerged target cannot exchange weapons fire.
    // Keep depth-one and changing posture conservative until LOS audit.
-   const submerged=depth>=2||stuckProne&&depth>=1;
+   const submerged=depth>=2||stuckProne&&depth>=1||depth===1&&mechLegLocation(u,w.location);
    const ranges=submerged?UNDERWATER_RANGES[w.name]:w.ranges;
    if(!ranges)return false;
    return enemies.some(t=>{
     const targetDepth=this.tile(t.q,t.r).depth,range=distance(u,t);
-    if(submerged&&targetDepth===0||depth===0&&targetDepth>=2)return false;
+    const targetPermanentlySubmerged=targetDepth>=2||targetDepth===1&&t.prone&&!this.canEverMove(t);
+    if(submerged&&targetDepth===0||depth===0&&targetPermanentlySubmerged)return false;
     if(!range||range>ranges[2])return false;
     // AGoAC pp.13,21: only LRMs can bypass an immutable ridge,
     // and only with a different friendly Mech able to see the target.
