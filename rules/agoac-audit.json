@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval.",
   "currentTopicId": "agoac-movement",
   "topics": [
     {
@@ -195,7 +195,8 @@
         8,
         12
       ],
-      "status": "not_audited"
+      "status": "tested_subset",
+      "reviewNote": "Initial direct inventory of printed pp.8–12 (movement-only scope). Existing regression references are candidates, not verification; start with movement mode validation. Optional movement dice are not a mandatory rule. Later combat/heat/damage/PSR internals are explicitly deferred."
     },
     {
       "id": "agoac-combat",
@@ -3452,6 +3453,335 @@
         ],
         "review": "Direct pp.6,7,40 review of phase-end checks; movement boundary retains pending PSR dice and does not transfer damage to Weapon Attack Phase. Scope phase-end isolation only, not every immediate movement/displacement check. All attached test names passed on exact #126 CI/browser tree, identical merged tree."
       }
+    },
+    {
+      "id": "agoac-055",
+      "topicId": "agoac-movement",
+      "pages": [
+        8
+      ],
+      "statement": "Choose one permitted movement mode; standing still spends no MP or movement heat, changes neither location nor facing, and consumes a selection.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: standing still spends no MP and unsupported movement modes cannot move"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: surviving immobile or unarmed units retain declaration selections"
+        }
+      ],
+      "reviewNote": "Printed p.8 reviewed. Guard on-board reachable() against unsupported movement mode values (including stand as a movement command); stand-still remains hold. Prepared regression checks state immutability and zero heat/MP. Existing evade extension remains gated; exact CI pending. Other movement-mode outputs and edge cases tracked separately."
+    },
+    {
+      "id": "agoac-056",
+      "topicId": "agoac-movement",
+      "pages": [
+        8
+      ],
+      "statement": "Walk within walking allowance; allow reverse travel; report walking heat and attacker/target movement outputs.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-057",
+      "topicId": "agoac-movement",
+      "pages": [
+        8
+      ],
+      "statement": "Run within rounded-up 1.5 times walking allowance; no reverse travel; report running heat and movement outputs.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.33: biped hip damage halves Walking MP downward and derives Running MP upward"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-058",
+      "topicId": "agoac-movement",
+      "pages": [
+        8
+      ],
+      "statement": "Jump mode eligibility, available jump jets, distance-based heat with minimum, and movement modifier outputs.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-059",
+      "topicId": "agoac-movement",
+      "pages": [
+        8
+      ],
+      "statement": "One-leg restrictions and running/jumping damage-related PSR triggers; verify movement integration, not critical/fall algorithms.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.12,32: ordinary damaged running still requires its separate PSR"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-060",
+      "topicId": "agoac-movement",
+      "pages": [
+        9
+      ],
+      "statement": "Unused MP expires; committed mode cannot change; six discrete facings and one MP per hexside; torso orientation is independent.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.9,12: ground facing change commits the declared movement mode even while prone"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.7: End Phase restores torso and arm orientation and starts a fresh selection cycle"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-061",
+      "topicId": "agoac-movement",
+      "pages": [
+        9
+      ],
+      "statement": "Ground movement follows forward/rear adjacent hexes; reverse only walking and no level transition; reject partial/offboard voluntary destinations.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-062",
+      "topicId": "agoac-movement",
+      "pages": [
+        9
+      ],
+      "statement": "Forward elevation changes of one or two levels cost additional MP; reject larger voluntary differences and upward forced transitions beyond two. Define movement restriction only; detailed displacement deferred.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-063",
+      "topicId": "agoac-movement",
+      "pages": [
+        9
+      ],
+      "statement": "Friendly transit, enemy blocking except declared charge, no occupied voluntary destination.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.9: normal ground movement may pass through a prone friendly Mech but not stop on it"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-064",
+      "topicId": "agoac-movement",
+      "pages": [
+        10
+      ],
+      "statement": "All printed movement cost table entries: base, clear/paved/bridge/road, rough/woods, rubble, depth and elevation; road only along road; terrain PSR triggers/modifiers.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.4: all seven illustrated terrain types have the stated basic movement costs and rubble requires a PSR"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-065",
+      "topicId": "agoac-movement",
+      "pages": [
+        11
+      ],
+      "statement": "Minimum movement: at least one MP, legal forward hex, exclusive expenditure, counted running; water exception and one-MP prone stand.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.9,11: minimum movement cannot bypass phase, declared mode or ammunition restrictions"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11–12: minimum water step resolves required terrain PSR and consumes selection"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.11: one-MP minimum stand consumes movement and permits free facing on success"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-066",
+      "topicId": "agoac-movement",
+      "pages": [
+        11
+      ],
+      "statement": "Immobile classifications versus zero MP, prone or damaged gyro; may select only stand still; automatic required PSR failure unless prone. Combat consumption deferred.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-067",
+      "topicId": "agoac-movement",
+      "pages": [
+        11
+      ],
+      "statement": "Movement stacking boundary permits one remaining Mech per hex; involuntary stacking calls existing displacement procedure without auditing its internals.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.9,11,40,42: hazardous friendly entry checks terrain before continuing or displacing"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-068",
+      "topicId": "agoac-movement",
+      "pages": [
+        11,
+        12
+      ],
+      "statement": "Jump shortest path and terrain level ceiling; intermediate occupants/woods ignored, same-hex jump costs one, landing obeys occupancy and normal terrain checks.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11–12: jumping can use any legal shortest path but not a longer detour"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-069",
+      "topicId": "agoac-movement",
+      "pages": [
+        12
+      ],
+      "statement": "Jump landing chooses free facing; no jumping into occupied hex except DFA declaration; downward height unrestricted within legal path.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11–12: jump chooses any landing facing at no MP cost and cannot rotate after landing"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-070",
+      "topicId": "agoac-movement",
+      "pages": [
+        12
+      ],
+      "statement": "Jump into water requires landing PSR; submerged jets unavailable for takeoff, including leg jets at depth one; fall integration only.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: failed water landing determines fall facing relative to selected landing orientation"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-071",
+      "topicId": "agoac-movement",
+      "pages": [
+        12
+      ],
+      "statement": "Voluntary prone posture preserves facing, costs one MP without added heat/damage, unavailable after jump; prone height one level.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: voluntary prone posture costs exactly one ground MP, without extra heat or damage"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: voluntary drop is rejected after a jump, without MP, or outside movement"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-072",
+      "topicId": "agoac-movement",
+      "pages": [
+        12
+      ],
+      "statement": "Prone movement declares walk/run before standing, only turn/stand while prone; no jumping when prone at start.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: declared ground mode and free facing are retained on successful standing"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,12: prone Mechs with no ground MP cannot escape by jumping"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-073",
+      "topicId": "agoac-movement",
+      "pages": [
+        12
+      ],
+      "statement": "Standing eligibility by limb counts; two MP and one heat per attempt, required PSR, repeats while sufficient MP, successful free facing; one-leg single attempt and cumulative PSR.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: one-legged biped stand includes cumulative modifiers in a single PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: declared ground mode and free facing are retained on successful standing"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+    },
+    {
+      "id": "agoac-074",
+      "topicId": "agoac-movement",
+      "pages": [
+        12
+      ],
+      "statement": "Water entry costs combine base, depth and elevation; PSR on each entry including water-to-water, not facing or standing; running restriction and exception; immersion state.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11–12: minimum water step resolves required terrain PSR and consumes selection"
+        }
+      ],
+      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
     }
   ]
 }

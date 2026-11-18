@@ -2946,3 +2946,21 @@ test('AGoAC pp.6–7: two ordinary punches have independent roll and damage orde
   assert.deepEqual(requests,oneMiss?['roll']:['roll','damage']);
  }
 });
+
+
+test('AGoAC p.8: standing still spends no MP and unsupported movement modes cannot move',()=>{
+ for(const mode of ['stand','invalid','minimum','evade']){
+  const g=fresh(),u=g.units[0];
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,moveMode:'stand',spent:0});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  const before=JSON.stringify(u);
+  assert.deepEqual(g.reachable(u,mode),[]);
+  assert.equal(g.move(u.id,1,0,mode).ok,false);
+  assert.equal(JSON.stringify(u),before);
+  assert(g.hold(u.id).ok);
+  assert.equal(u.moveMode,'stand');assert.equal(u.spent,0);
+  assert.equal(u.pendingHeat,0);assert.equal(u.distanceMoved,0);
+  assert.deepEqual([u.q,u.r,u.facing],[0,0,0]);
+ }
+});
