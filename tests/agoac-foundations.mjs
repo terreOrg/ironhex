@@ -2280,3 +2280,70 @@ test('AGoAC p.5: piloting skill is the independent base for a required terrain P
   assert.equal(g.phaseRolls.length,1);assert.equal(g.phaseRolls[0].target,piloting);
  }
 });
+
+test('AGoAC pp.6,9: friendly occupied paved entry is traversable without an invented skid roll',()=>{
+ for(const type of ['pavement','road'])for(const mode of ['walk','run']){
+  const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x)),ally=g.units.find(x=>x!==u&&x.team===u.team);
+  const first=g.deploymentEdgeTiles(g.deployment.edges[u.team]).find(t=>t.r===0);
+  const [dq,dr]=DIRS[g.deployment.edges[u.team]],q=first.q+dq,r=first.r+dr;
+  Object.assign(first,{type});Object.assign(ally,{q:first.q,r:first.r,deployed:true});
+  assert(!g.reachable(u,mode).some(p=>p.q===first.q&&p.r===first.r));
+  const route=g.reachable(u,mode).find(p=>p.q===q&&p.r===r);assert(route?.transit);assert.equal(route.cost,2);
+  g.rng=()=>{throw Error('Straight entry and transit must not roll for skid');};
+  const before=JSON.stringify(ally),result=g.move(u.id,q,r,mode);
+  assert(result.ok&&result.entry);
+  assert.deepEqual(result.path,[{q:first.q,r:first.r},{q,r}]);
+  assert.deepEqual([u.q,u.r,u.spent,u.distanceMoved],[q,r,2,2]);
+  assert.equal(JSON.stringify(ally),before);
+  assert.equal(g.phaseRolls.length,0);
+ }
+});
+test('AGoAC pp.6,9: friendly occupied building entry uses the existing building check once before transit',()=>{
+ for(const mode of ['walk','run'])for(const success of [false,true]){
+  const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x)),ally=g.units.find(x=>x!==u&&x.team===u.team);
+  const first=g.deploymentEdgeTiles(g.deployment.edges[u.team]).find(t=>t.r===0);
+  const [dq,dr]=DIRS[g.deployment.edges[u.team]],q=first.q+dq,r=first.r+dr;
+  Object.assign(first,{building:{type:'light',cf:15}});u.walk=6;
+  Object.assign(ally,{q:first.q,r:first.r,deployed:true});
+  const route=g.reachable(u,mode).find(p=>p.q===q&&p.r===r);assert(route?.transit);assert.equal(route.cost,3);
+  let damage=[];g.packets=(v,n,side)=>{damage.push([v.id,n,side]);};
+  const dice=diceFor(success?12:2);g.rng=()=>{assert(dice.length,'only the first building entry should roll');return dice.shift();};
+  const before=JSON.stringify(ally),result=g.move(u.id,q,r,mode);
+  assert(result.ok&&result.entry);assert.equal(dice.length,0);
+  assert.equal(result.rolls.filter(r=>r.kind.includes('Вход в здание')).length,1);
+  assert.deepEqual(damage,success?[]:[[u.id,2,'front']]);
+  assert.equal(first.building.cf,15-Math.ceil(u.tonnage/10));
+  assert.deepEqual([u.q,u.r,u.spent,u.distanceMoved],[q,r,3,2]);
+  assert.equal(JSON.stringify(ally),before);
+ }
+});
+test('AGoAC pp.6,11: setup cannot be restarted and a prone-at-start Mech cannot jump in',()=>{
+ const g=fresh();assert(g.startStandardDeployment().ok);
+ g.rng=()=>.99;
+ const dice=[...diceFor(12),...diceFor(2)];g.rng=()=>dice.shift()??.99;
+ assert(g.resolveDeploymentSetup().ok);
+ const before=JSON.stringify(g.deployment);
+ assert.equal(g.startStandardDeployment().ok,false);assert.equal(JSON.stringify(g.deployment),before);
+ const next=[...diceFor(2),...diceFor(12)];g.rng=()=>next.shift()??.99;
+ g.initiative();const u=g.units.find(x=>g.canAct(x));u.jump=3;u.proneAtStart=true;
+ assert.equal(g.reachable(u,'jump').length,0);assert(g.reachable(u,'walk').length>0);
+ u.proneAtStart=false;assert(g.reachable(u,'jump').length>0);
+});
+test('AGoAC p.6: both sides enter their assigned opposite full hex edges and complete deployment',()=>{
+ for(const winner of [0,1])for(let edge=0;edge<6;edge++){
+  const g=standardSetupGame(edge,winner);g.rng=()=>.99;
+  let count=0;
+  while(g.queue.length){
+   const u=g.units.find(x=>g.canAct(x));assert(u);assert.equal(u.deployed,false);
+   const mode=count%2?'run':'walk',assigned=g.deployment.edges[u.team],routes=g.reachable(u,mode);
+   const route=routes.find(p=>!p.transit&&g.deploymentEdgeTiles(assigned).some(t=>t.q===p.q&&t.r===p.r));
+   assert(route);assert(g.move(u.id,route.q,route.r,mode).ok);
+   assert.equal(u.facing,assigned);assert.equal(u.spent,1);assert.equal(u.distanceMoved,1);
+   assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,mode==='run'?2:1);
+   count++;
+  }
+  assert.equal(count,4);assert(g.units.every(u=>g.onMap(u)));
+  assert.equal(new Set(g.units.map(u=>u.q+','+u.r)).size,4);
+  assert(g.nextPhase().ok);assert.equal(g.phase,'fire');
+ }
+});
