@@ -1952,3 +1952,16 @@ test('AGoAC p.7: a large-side batch already in progress survives casualty and JS
  for(const id of [2,3,4,5])assert(restored.hold(id).ok);
  assert.deepEqual(restored.queue,[]);assert.equal(restored.activeTeam,null);
 });
+
+test('AGoAC p.7: selection planning terminates for legacy states without an initiative result',()=>{
+ for(const missing of [undefined,null]){
+  const g=fresh();g.phase='move';g.initiativeWinner=missing;
+  g.buildQueue();assert.deepEqual(g.queue,[0,1,0,1]);
+  assert.equal(g.activeTeam,0);
+  for(const id of [0,2,1,3])assert(g.hold(id).ok);
+  assert.deepEqual(g.queue,[]);assert.equal(g.activeTeam,null);
+  assert(g.nextPhase().ok);assert.equal(g.phase,'fire');
+  assert.deepEqual(g.queue,[0,1,0,1]);
+  g.reset();assert.equal(g.selectionBatch,null);
+ }
+});

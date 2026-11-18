@@ -418,9 +418,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.7: a large-side batch already in progress survives casualty and JSON restore"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.7: selection planning terminates for legacy states without an initiative result"
         }
       ],
-      "reviewNote": " Printed p.7: regression expands the two printed examples to 800 initial force/initiative combinations with casualty-excluded counts. Rebatching after mid-phase losses remains a distinct edge case; exact CI pending. Re-reviewed original CAT3500D printed p.7: the ratio is determined before each pair. The tracked unfinished pair is preserved, surplus slots are culled, and future pairs are recalculated from surviving unselected units. Pair metadata persists across JSON; legacy saves without it retain existing order until next phase. Two regressions; corrected pre-existing interrupted-charge fixture which had a completed target still in the queue. Exact CI pending."
+      "reviewNote": " Printed p.7: regression expands the two printed examples to 800 initial force/initiative combinations with casualty-excluded counts. Rebatching after mid-phase losses remains a distinct edge case; exact CI pending. Re-reviewed original CAT3500D printed p.7: the ratio is determined before each pair. The tracked unfinished pair is preserved, surplus slots are culled, and future pairs are recalculated from surviving unselected units. Pair metadata persists across JSON; legacy saves without it retain existing order until next phase. Two regressions; corrected pre-existing interrupted-charge fixture which had a completed target still in the queue. Exact CI pending. During the pending CI audit, a nonterminating planning path was discovered for snapshots without an initiative winner. Fix: always use valid team indices and decrement both remaining counts independently; synthetic/legacy missing-initiative states use a documented green-first fallback, normal initiative untouched. Reset drops stale pair metadata. Added regression; exact CI pending."
     },
     {
       "id": "agoac-006",
