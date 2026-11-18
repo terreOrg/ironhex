@@ -1224,3 +1224,18 @@ test('AGoAC p.7: custom local victory terms require agreement and are rendered a
   await page.locator('#verdict-confirm').click();assert(await page.locator('#next').isDisabled());assert.equal(await page.locator('#adjudicate-victory').count(),0);
  });
 });
+
+
+test('AGoAC p.7: standard two-player stalemate confirmation is available only at the round boundary',{timeout:180000},async()=>{
+ await withPage('local-stalemate-verdict',{noWebGL:true},async page=>{
+  await page.locator('#gamemode').selectOption('hotseat');
+  assert.equal(await page.locator('#adjudicate-stalemate').count(),0);
+  await page.locator('#next').click();await page.locator('#hold').waitFor({timeout:50000});
+  for(const phase of ['movement','fire','physical']){await completeOrders(page,phase);await page.locator('#next').click();}
+  await page.locator('#next').click();await page.locator('#next').click();
+  await page.locator('#adjudicate-stalemate').click();assert(await page.locator('#stalemate-confirm').isDisabled());
+  await page.locator('#stalemate-green').check();assert(await page.locator('#stalemate-confirm').isDisabled());
+  await page.locator('#stalemate-red').check();assert(await page.locator('#stalemate-confirm').isEnabled());
+  await page.locator('#stalemate-confirm').click();assert(await page.locator('#next').isDisabled());assert.equal(await page.locator('#adjudicate-stalemate').count(),0);
+ });
+});

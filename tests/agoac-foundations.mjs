@@ -2857,3 +2857,40 @@ test('AGoAC p.7: arbitrary pregame victory agreement is immutable and jointly ad
  const override=fresh();assert(override.configureVictoryTerms({condition:'Alternative outcome',approvals:[true,true]}).ok);override.winner=0;assert(override.adjudicateVictory({winner:'draw',approvals:[true,true]}).ok);assert.equal(override.winner,'draw');
  override.reset();assert.equal(override.victoryTerms,null);assert.equal(override.victoryAdjudicated,false);
 });
+
+
+test('AGoAC p.7: exceptional standard stalemate requires both conditions confirmed by both sides at a round boundary',()=>{
+ const g=fresh(),yes={cannotMove:true,cannotDamage:true},confirmed=[yes,yes];
+ assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);g.phase='end';g.queue=[];assert(g.nextPhase().ok);assert(g.canAdjudicateStalemate());assert.equal(g.winner,null);
+ for(const confirmations of [[],[yes],[yes,{cannotMove:true,cannotDamage:false}],[{cannotMove:false,cannotDamage:true},yes]]){
+  assert(!g.adjudicateStalemate({confirmations}).ok);assert.equal(g.winner,null);
+ }
+ g.pendingChoice={kind:'x'};assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);g.pendingChoice=null;
+ g.units[0].deployed=false;assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);g.units[0].deployed=true;
+ assert(g.adjudicateStalemate({confirmations:confirmed}).ok);assert.equal(g.winner,'draw');assert(!g.nextPhase().ok);assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);
+ const custom=fresh();assert(custom.configureVictoryTerms({roundLimit:5,approvals:[true,true]}).ok);custom.phase='end';custom.queue=[];assert(custom.nextPhase().ok);assert(!custom.canAdjudicateStalemate());
+});
+
+
+test('AGoAC p.6: a destroyed intended target never cancels previously declared ordinary attacks',()=>{
+ for(const phase of ['fire','physical']){
+  const g=fresh(),[a,b,t,other]=g.units;
+  g.phase=phase;g.initiativeWinner=1;g.queue=[];g.activeTeam=null;g.rng=()=>.99;
+  const weapon=(id,name)=>({id,shots:[{index:0,target:t.id,bin:null,aim:null,heatMode:false,
+   weapon:{name,rack:0,ammo:null,heat:1,damage:1,location:'CT'},preview:{targetNumber:2,side:'front',cover:false,underwaterCover:false}}]});
+  const physical=id=>({id,target:t.id,type:'punch',limb:'LA',targetNumber:2,damage:1,side:'front',table:'punch'});
+  if(phase==='fire')g.declarations=[weapon(a.id,'First declared gun'),weapon(b.id,'Second declared gun')];
+  else g.physicalDeclarations=[physical(a.id),physical(b.id)];
+  let applied=0;
+  g.hit=(target,damage)=>{
+   assert.equal(target.id,t.id);assert.equal(g.phaseRolls.filter(r=>r.target===2).length,2,'every declaration rolled before damage');
+   if(++applied===1)g.destroyMech(target);
+   return {location:'CT',damage,hits:[]};
+  };
+  const results=phase==='fire'?g.resolveFire():g.resolvePhysical();
+  assert.equal(t.dead,true);assert.equal(other.dead,false);assert.equal(g.onMap(t),false);
+  assert.deepEqual(results.map(r=>r.id),[a.id,b.id]);
+  for(const r of results){assert.equal(r.target,t.id);assert.equal(r.shots[0].roll,12);assert.equal(r.shots[0].hit,true);assert.notEqual(r.shots[0].cancelled,true);}
+  if(phase==='fire'){assert.equal(a.pendingHeat,1);assert.equal(b.pendingHeat,1);assert(a.firedLocations.includes('CT'));assert(b.firedLocations.includes('CT'));}
+ }
+});
