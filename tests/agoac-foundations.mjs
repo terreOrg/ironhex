@@ -2908,7 +2908,9 @@ test('AGoAC pp.6–7: ordinary physical resolution lets controllers choose Mechs
   g.resolveRolledPhysical=attack=>{assert.equal(rollOrder.length,5);damageOrder.push(attack.d.id);return damage(attack);};
   g.hit=(target,amount)=>({location:'CT',damage:amount,hits:[]});
   g._resolutionChooser=(request,fallback)=>{
-   assert.equal(request.kind,'physical-order');requests.push([request.context.stage,request.team]);
+   assert.equal(request.kind,'physical-order');
+   if(request.context.scope==='attack')return fallback;
+   requests.push([request.context.stage,request.team]);
    if(request.context.stage==='roll')return request.options.at(-1).id;
    assert.equal(rollOrder.length,5);return fallback;
   };
@@ -2916,5 +2918,31 @@ test('AGoAC pp.6–7: ordinary physical resolution lets controllers choose Mechs
   assert.deepEqual(rollOrder,[b.id,d.id,a.id,a.id,c.id]);
   assert.deepEqual(damageOrder,[a.id,a.id,c.id,b.id,d.id]);
   assert.deepEqual(requests,[['roll',1-winner],['roll',winner],['damage',1-winner],['damage',winner]]);
+ }
+});
+
+
+test('AGoAC pp.6–7: two ordinary punches have independent roll and damage order',()=>{
+ for(const oneMiss of [false,true]){
+  const g=fresh(),[u]=g.units.filter(x=>x.team===0),[t]=g.units.filter(x=>x.team===1);
+  g.phase='physical';g.initiativeWinner=1;g.queue=[];g.activeTeam=null;
+  const punch=(limb,targetNumber)=>({id:u.id,target:t.id,type:'punch',limb,targetNumber,damage:1,side:'front',table:'punch'});
+  g.physicalDeclarations=[punch('LA',oneMiss?12:2),punch('RA',2)];
+  g.rng=()=>.5;
+  const rollOrder=[],damageOrder=[],requests=[];
+  const roll=g.rollPhysical.bind(g),damage=g.resolveRolledPhysical.bind(g);
+  g.rollPhysical=(order,snapshot)=>{rollOrder.push(order.limb);return roll(order,snapshot);};
+  g.resolveRolledPhysical=attack=>{assert.equal(rollOrder.length,2);damageOrder.push([attack.d.limb,attack.hit]);return damage(attack);};
+  g.hit=(target,amount)=>({location:'CT',damage:amount,hits:[]});
+  g._resolutionChooser=(request)=>{
+   assert.equal(request.kind,'physical-order');assert.equal(request.context.scope,'attack');
+   assert.equal(request.unitId,u.id);requests.push(request.context.stage);
+   const desired=request.context.stage==='roll'?'RA':'LA';
+   return request.options.find(o=>o.attacks[0].limb===desired).id;
+  };
+  g.resolvePhysical();
+  assert.deepEqual(rollOrder,['RA','LA']);
+  assert.deepEqual(damageOrder,oneMiss?[['RA',true],['LA',false]]:[['LA',true],['RA',true]]);
+  assert.deepEqual(requests,oneMiss?['roll']:['roll','damage']);
  }
 });

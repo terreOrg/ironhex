@@ -1745,6 +1745,23 @@ export class Game extends Legacy{
    visit(list.splice(list.findIndex(g=>String(g.id)===pick),1)[0]);
   }
  }
+ // AGoAC pp.6–7,30: each controller orders a Mech's individual
+ // attacks independently for rolls and successful-hit damage.
+ orderOrdinaryPhysicalAttacks(g,stage,visit){
+  const pending=g.attacks.map((attack,index)=>({attack,id:String(index)}));
+  const declaration=entry=>stage==='roll'?entry.attack:entry.attack.d;
+  const eligible=entry=>stage==='roll'||entry.attack.hit;
+  while(pending.length){
+   const first=pending[0];
+   if(!eligible(first)){visit(pending.shift().attack);continue;}
+   const options=pending.filter(eligible).map(entry=>{
+    const d=declaration(entry);
+    return {id:entry.id,attackerId:g.id,attacks:[{targetId:d.target,type:d.type,limb:d.limb}]};
+   });
+   const pick=this.chooseResolutionOption('physical-order',this.unit(g.id),options,first.id,{stage,scope:'attack'});
+   visit(pending.splice(pending.findIndex(entry=>entry.id===pick),1)[0].attack);
+  }
+ }
  resolveOrdinaryPhysical(orders,snapshots){
   const grouped=new Map();
   for(const d of orders){
@@ -1753,10 +1770,12 @@ export class Game extends Legacy{
   }
   const groups=[...grouped.values()],staged=new Map();
   this.orderOrdinaryPhysicalMechs(groups,'roll',g=>{
-   staged.set(g.id,{id:g.id,attacks:g.attacks.map(d=>this.rollPhysical(d,snapshots))});
+   const attacks=[];
+   this.orderOrdinaryPhysicalAttacks(g,'roll',d=>attacks.push(this.rollPhysical(d,snapshots)));
+   staged.set(g.id,{id:g.id,attacks});
   });
   this.orderOrdinaryPhysicalMechs(groups.map(g=>staged.get(g.id)),'damage',g=>{
-   for(const attack of g.attacks)this.resolveRolledPhysical(attack);
+   this.orderOrdinaryPhysicalAttacks(g,'damage',attack=>this.resolveRolledPhysical(attack));
   });
  }
  resolvePhysical(){
