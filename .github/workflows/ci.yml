@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 # CI runs one job on one self-hosted runner; a matrix of seven jobs
 # caused tests to be stuck in GitHub's queue despite idle capacity.
@@ -23,14 +24,42 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       - name: Set up Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Plan coverage reuse from verified merge parent
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/coverage-plan.mjs
+      - name: Restore verified unit coverage
+        id: restore_unit
+        if: steps.plan.outputs.reuse_ci != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ironhex-unit-lcov-${{ steps.plan.outputs.parent_sha }}
+          run-id: ${{ steps.plan.outputs.reuse_ci }}
+          github-token: ${{ github.token }}
+          path: coverage
+      - name: Validate restored unit report
+        id: valid_unit
+        shell: bash
+        run: |
+          if [ "${{ steps.restore_unit.outcome }}" = success ] && [ -s coverage/lcov.info ]; then
+            echo 'reuse=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'reuse=false' >> "$GITHUB_OUTPUT"
+            rm -f coverage/lcov.info
+          fi
       - name: Validate generated browser sources
+        if: steps.valid_unit.outputs.reuse != 'true'
         run: node scripts/build-web.mjs --check
       - name: Validate JavaScript syntax
+        if: steps.valid_unit.outputs.reuse != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -38,17 +67,27 @@ jobs:
             apps/api/src/*.mjs scripts/*.mjs tests/*.mjs; do
             node --check "$file"
           done
-      - name: Run all unit tests
+      - name: Run unit tests and generate LCOV report
+        if: steps.valid_unit.outputs.reuse != 'true'
         shell: bash
         run: |
           set -euo pipefail
-          for file in tests/agoac-foundations.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs tests/combat.mjs tests/construction.mjs \
-            tests/fire-arcs.mjs tests/api.mjs tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs tests/auth.mjs \
-            tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs; do
-            echo "::group::Testing $file"
-            node --test "$file"
-            echo "::endgroup::"
-          done
-
+          mkdir -p coverage
+          node --test --test-concurrency=1 --experimental-test-coverage \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \
+            tests/agoac-foundations.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs \
+            tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs \
+            tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs \
+            tests/auth.mjs tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs
+          test -s coverage/lcov.info
+          node scripts/normalize-sonar-coverage.mjs coverage/lcov.info
+      - name: Upload unit LCOV report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ironhex-unit-lcov-${{ github.sha }}
+          path: coverage/lcov.info
+          if-no-files-found: error
+          retention-days: 7
       - name: Publish rulebook coverage audit to job log
         run: node scripts/rules-coverage.mjs --json

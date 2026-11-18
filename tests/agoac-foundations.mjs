@@ -2737,3 +2737,16 @@ test('AGoAC pp.7,25,28–29: fixed biped physical attack capability respects fac
  u.twist=1;assert(!g.canEverDamage(u,[v]));
  g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
 });
+
+
+test('AGoAC p.15: split arm-torso weapon prevents arm reversal and reversed arms cannot twist',()=>{
+ const g=fresh(),u=g.units[0];
+ g.phase='fire';g.initiativeWinner=1;g.buildQueue();
+ for(const l of ['LA','RA']){u.slots[l][2]=null;u.slots[l][3]=null;}
+ const w=u.weapons[0];w.locations=['LA','LT'];
+ assert(!g.flipArms(u.id,true).ok);assert.equal(u.flip,false);
+ w.locations=['LA'];
+ assert(g.flipArms(u.id,true).ok);assert.equal(u.flip,true);
+ assert(!g.twist(u.id,1).ok);assert.equal(u.twist,0);assert.equal(u.flip,true);
+ assert(g.flipArms(u.id,false).ok);assert(g.twist(u.id,1).ok);
+});

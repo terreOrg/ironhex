@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: ironhex-sonarqube-main
@@ -28,9 +29,55 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
+      - name: Plan coverage reuse from verified merge parent
+        id: plan
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/coverage-plan.mjs
+      - name: Restore verified unit coverage
+        id: restore_unit
+        if: steps.plan.outputs.reuse_ci != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ironhex-unit-lcov-${{ steps.plan.outputs.parent_sha }}
+          run-id: ${{ steps.plan.outputs.reuse_ci }}
+          github-token: ${{ github.token }}
+          path: coverage
+      - name: Validate restored unit report
+        id: valid_unit
+        shell: bash
+        run: |
+          if [ "${{ steps.restore_unit.outcome }}" = success ] && [ -s coverage/lcov.info ]; then
+            echo 'reuse=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'reuse=false' >> "$GITHUB_OUTPUT"
+            rm -f coverage/lcov.info
+          fi
+      - name: Restore verified browser coverage
+        id: restore_browser
+        if: steps.plan.outputs.reuse_browser != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: ironhex-browser-lcov-${{ steps.plan.outputs.parent_sha }}
+          run-id: ${{ steps.plan.outputs.reuse_browser }}
+          github-token: ${{ github.token }}
+          path: coverage
+      - name: Validate restored browser report
+        id: valid_browser
+        shell: bash
+        run: |
+          if [ "${{ steps.restore_browser.outcome }}" = success ] && [ -s coverage/browser.info ]; then
+            echo 'reuse=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'reuse=false' >> "$GITHUB_OUTPUT"
+            rm -f coverage/browser.info
+          fi
       - name: Verify generated files match their original sources
         run: node scripts/build-web.mjs --check
       - name: Run unit tests and generate LCOV report
+        if: steps.valid_unit.outputs.reuse != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -44,13 +91,14 @@ jobs:
             tests/auth.mjs tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs
           test -s coverage/lcov.info
           node scripts/normalize-sonar-coverage.mjs coverage/lcov.info
-      # Collect browser coverage on the same checked-out commit. Keep the
-      # independently required Browser E2E workflow until report handoff is verified.
       - name: Install pinned browser-test and coverage tools
+        if: steps.valid_browser.outputs.reuse != 'true'
         run: npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1 v8-to-istanbul@9.3.0 istanbul-lib-coverage@3.2.2 istanbul-lib-report@3.0.1 istanbul-reports@3.1.7
       - name: Install headless Chromium
+        if: steps.valid_browser.outputs.reuse != 'true'
         run: npx --no-install playwright install chromium
       - name: Run browser tests and collect UI LCOV
+        if: steps.valid_browser.outputs.reuse != 'true'
         env:
           IRONHEX_BROWSER_COVERAGE: '1'
         run: |
