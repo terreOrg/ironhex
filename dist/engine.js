@@ -297,10 +297,14 @@ export class Game extends Legacy{
  }
  canEverDamage(u,enemies){
   if(u.abandoned)return false;
-  // Do not require the current facing, heat, or target number to be
-  // favorable: those may change. Range is an upper bound on future fire
-  // when no living unit can change hexes.
-  if(u.sensorHits<2&&u.weapons.some((w,i)=>{
+  const stuckProne=u.prone&&!this.canEverMove(u);
+  // A permanently prone biped cannot fire with a destroyed arm,
+  // and cannot fire leg weapons. Do not confuse a temporary fall
+  // with a permanent loss of the ability to recover.
+  const canBrace=!stuckProne||u.config==='Quad'||(u.structure.LA>0&&u.structure.RA>0);
+  // Range remains a conservative upper bound on future fire.
+  if(canBrace&&u.sensorHits<2&&u.weapons.some((w,i)=>{
+   if(stuckProne&&u.config!=='Quad'&&['LL','RL'].some(l=>w.location===l||w.locations?.includes(l)))return false;
    if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||
     w.locations?.some(l=>this.isBreached(u,l)))return false;
    if(w.ammo!==null&&!u.bins.some(b=>b.weapon===(w.shared??i)&&b.shots>0&&!b.destroyed&&!this.isBreached(u,b.location)))return false;
@@ -308,7 +312,7 @@ export class Game extends Legacy{
   }))return true;
   // Preserve possible physical attacks, even if the current facing or
   // temporary pilot state would prohibit them.
-  return enemies.some(t=>distance(u,t)<=1)&&['LA','RA','LL','RL'].some(l=>u.structure[l]>0);
+  return !stuckProne&&enemies.some(t=>distance(u,t)<=1)&&['LA','RA','LL','RL'].some(l=>u.structure[l]>0);
  }
  checkWin({stalemate=false}={}){
   if(this.winner!==null)return;
