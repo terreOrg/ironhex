@@ -1,4 +1,5 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
+import {construct} from './construction.js';
 export {LOCATIONS,DIRS,distance};
 // AGoAC pp.3–4: logical game scale; visual model dimensions remain illustrative.
 export const AGOAC_SCALE=Object.freeze({hexMeters:30,levelMeters:6,turnSeconds:10,standingMechLevels:2});
@@ -159,7 +160,7 @@ export function defaultMechWarriorSkills(techBase='Inner Sphere'){
  return techBase==='Clan'?{gunnery:3,piloting:4}:{gunnery:4,piloting:5};
 }
 export class Game extends Legacy{
- reset(){super.reset();this.deployment=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
+ reset(){super.reset();this.deployment=null;this.setupForces=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
  this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
@@ -311,6 +312,39 @@ export class Game extends Legacy{
   this.winner='draw';this.note('Ничья: ни одна сторона больше не может двигаться или наносить урон.');
  }
  // AGoAC p.6: separate setup initiative from turn initiative.
+ // AGoAC p.6: choose forces before deployment, with unanimous
+ // consent for custom designs. Stable slot IDs keep the existing local
+ // renderer's four model instances; empty secondary slots are not fielded.
+ configureSetupForces({slots,custom=null,approvals=[]}={}){
+  if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
+   this.setupForces!==null||this.queue.length||this.units.some(u=>u.moved||u.fired||u.physicalDone))
+   return fail('Состав можно выбрать только перед боем');
+  if(!Array.isArray(slots)||slots.length!==4||slots.some((v,i)=>
+   !(v==='custom'||Number.isInteger(v)&&v>=0&&v<4||v===null&&i%2===1))||
+   slots.filter(v=>v==='custom').length>1)return fail('Недопустимый состав отрядов');
+  let design=null;
+  if(slots.includes('custom')){
+   if(!Array.isArray(approvals)||approvals.length!==2||approvals.some(v=>v!==true))
+    return fail('Нужно согласие обеих сторон на нестандартный мех');
+   if(!custom||!custom.config||typeof custom.config!=='object')return fail('Нет проекта меха');
+   try{design=construct(custom.config);}catch{return fail('Некорректный проект меха');}
+   if(!design.unit||design.errors.length)return fail('Некорректный проект меха');
+   const p=custom.pilot;
+   if(p!=null&&(!Number.isInteger(p.gunnery)||!Number.isInteger(p.piloting)||
+     p.gunnery<0||p.gunnery>8||p.piloting<0||p.piloting>8))return fail('Некорректные навыки пилота');
+  }
+  const stock=structuredClone(this.units);
+  this.units=stock.map((position,i)=>{
+   const v=slots[i];
+   if(v===null)return {...position,notFielded:true,dead:true,deployed:false};
+   const unit=v==='custom'?{...structuredClone(position),...structuredClone(design.unit)}:structuredClone(stock[v]);
+   if(v==='custom'&&custom.pilot)Object.assign(unit,{gunnery:custom.pilot.gunnery,piloting:custom.pilot.piloting});
+   return {...unit,id:i,team:position.team,q:position.q,r:position.r,facing:position.facing,
+    moveStart:{q:position.q,r:position.r},notFielded:false};
+  });
+  this.setupForces={slots:[...slots],customApproved:slots.includes('custom')?[true,true]:null};
+  return {ok:true};
+ }
  startStandardDeployment(){
   if(this.deployment!==null||this.round!==1||this.phase!=='initiative'||this.queue.length||
    this.units.some(u=>u.moved||u.fired||u.physicalDone))return fail('Развёртывание возможно только перед боем');

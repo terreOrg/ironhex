@@ -340,6 +340,10 @@ test('Mechlab validates and launches a custom chassis', { timeout:120000 }, asyn
     await page.locator('#launch').click();
     await page.waitForURL('**/index.html?custom=1');
     await loaded(page);
+    await page.locator('#setup-approve-green').waitFor({state:'visible'});
+    assert(await page.locator('#confirmreset').isDisabled());
+    await page.locator('#setup-approve-green').check();
+    await page.locator('#confirmreset').click();
     assert.match(await page.locator('#selected h2').textContent(),/IRONHEX CI/);
   });
 });
@@ -1093,5 +1097,29 @@ test('Authoritative weapon roll and damage order are independent and survive rec
   await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='ФИЗИЧЕСКИЕ АТАКИ');
   assert.equal(draws,8);assert.equal(version,4);assert.equal(referee.pendingChoice,null);
   assert.deepEqual(referee.resolution.map(o=>o.shots[0].index),[0,1]);
+ });
+});
+
+test('AGoAC p.6: hotseat setup selects forces and requires both players to approve custom design',{timeout:120000},async()=>{
+ await withPage('setup-forces-consent',{path:'/mechlab.html',noWebGL:true},async page=>{
+  await page.locator('#name').fill('CONSENT CI');
+  await page.locator('#check').click();await page.locator('#launch').click();
+  await page.waitForURL('**/index.html?custom=1');await loaded(page);
+  await page.locator('#setup-approve-green').waitFor({state:'visible'});await page.locator('#close').click();
+  await page.locator('#gamemode').selectOption('hotseat');await page.locator('#new').click();
+  await page.locator('[data-setup-slot="0"]').selectOption('custom');
+  await page.locator('[data-setup-slot="1"]').selectOption('none');
+  await page.locator('[data-setup-slot="2"]').selectOption('0');
+  assert(await page.locator('#confirmstandard').isDisabled());
+  await page.locator('#setup-approve-green').check();assert(await page.locator('#confirmstandard').isDisabled());
+  await page.locator('#setup-approve-red').check();assert(await page.locator('#confirmstandard').isEnabled());
+  await page.locator('[data-setup-slot="3"]').selectOption('none');
+  assert(await page.locator('#confirmstandard').isDisabled());
+  await page.locator('#setup-approve-green').check();await page.locator('#setup-approve-red').check();
+  await page.locator('#confirmstandard').click();
+  assert.equal(await page.locator('#allies .unitcard').count(),1);assert.equal(await page.locator('#enemies .unitcard').count(),1);
+  assert.match(await page.locator('#allies .unitcard strong').textContent(),/CONSENT CI/);
+  assert.match(await page.locator('#phase').textContent(),/РАЗВЁРТЫВАНИЕ/);
+  await page.locator('#all-records').click();assert.equal(await page.locator('#record-list [data-record-id]').count(),2);
  });
 });
