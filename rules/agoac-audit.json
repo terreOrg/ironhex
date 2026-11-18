@@ -12,7 +12,7 @@
     "extensionsDeferred": true
   },
   "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached.",
-  "currentTopicId": "agoac-foundations",
+  "currentTopicId": "agoac-setup",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -21,8 +21,73 @@
         3,
         5
       ],
-      "status": "tested_subset",
-      "reviewNote": "Explicit introduction inventory completed against printed pages 3–5; 31 of 32 child requirements verified in this branch, last umbrella tests pending. Full later chapter mechanics remain separately auditable. No later chapter begins until this topic is verified."
+      "status": "verified",
+      "reviewNote": "Introduction verified: 32/32 scoped requirements; source inventory complete and #115 exact successful CI evidence reconciled. Chapter closure is recorded in this metadata-only change.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "e29ea66ab2d8023b41e0feec6b9a928cbf93a9c2",
+        "testedTree": "9ea958a722c3d1415bb3c6065f5910b0039c6602",
+        "mergedSha": "970b7f587b7a3ef4eccf64c9b20b68190b3eeabd",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44302009099,
+            "jobId": 134793851631,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44302009167,
+            "jobId": 134793850837,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44302009135,
+            "jobId": 134793850894,
+            "conclusion": "success"
+          }
+        ],
+        "inventoryComplete": true,
+        "requirementIds": [
+          "agoac-001",
+          "agoac-007",
+          "agoac-008",
+          "agoac-009",
+          "agoac-010",
+          "agoac-011",
+          "agoac-012",
+          "agoac-013",
+          "agoac-014",
+          "agoac-015",
+          "agoac-016",
+          "agoac-017",
+          "agoac-018",
+          "agoac-019",
+          "agoac-020",
+          "agoac-021",
+          "agoac-022",
+          "agoac-023",
+          "agoac-024",
+          "agoac-025",
+          "agoac-026",
+          "agoac-027",
+          "agoac-028",
+          "agoac-029",
+          "agoac-030",
+          "agoac-031",
+          "agoac-032",
+          "agoac-033",
+          "agoac-034",
+          "agoac-035",
+          "agoac-036",
+          "agoac-046"
+        ],
+        "review": "Printed pp.3–5: introductory gameplay scale, terrain examples, dice, record-sheet availability and sections, pilot data and related injury/phase cross-references. All 32 registered child requirements individually verified; the final seven umbrella tests passed on the exact merged tree. Later chapters retain full detailed movement, combat, construction and scenarios. No claim about complete rulebook parity."
+      }
     },
     {
       "id": "agoac-setup",
@@ -143,15 +208,15 @@
         5
       ],
       "statement": "Audit scales, sheet definitions, pilot skills and injury rules against state and user-visible sheets.",
-      "status": "tested_case",
-      "reviewNote": "The printed introduction was reviewed against the current scale constants, pilot data and record sheet. Existing tests establish concrete cases; this is an umbrella entry, not a claim of complete coverage. The remaining child requirements and scenario cross-references must be individually verified before closing foundations. 2026-11-18 strict chapter-first review: pp.3–5 and direct cross-references re-read; exact merged #113 evidence reconciled for individually reviewed children. Remaining: pilot-death edge case review agoac-033 and new record-sheet test agoac-046, then explicit full chapter inventory closure. Packaging fiction/materials and later chapter mechanics not counted as missing digital gameplay features. Final printed pp.3–5 inventory review: page 3 physical counters and mapsheet representation (digital hex/terrain state; later scenario terrain variations p.48), 1D6/2D6, horizontal map and level/sublevel data; page 4 seven terrain types and introductory movement/LOS examples, logical scale, open sheets, armor/internal/rear points and transfer diagram; page 5 Mech Data, Warrior Data, Critical Hit Table, heat scale/data, independent skill bases and injury causes. Printed p.44 and pp.30,35,42 pilot-death cross-references reviewed. Physical box contents, printed sheet dimensions and fiction are not software gameplay mechanics; later chapters retain full movement, LOS, construction, scenario and damage implementation audits, rather than requiring those chapters to close this introductory inventory. Remaining acceptance evidence is these three direct page 4/5 regressions; do not promote umbrella or chapter before their exact CI passes.",
+      "status": "verified",
+      "reviewNote": "The printed introduction was reviewed against the current scale constants, pilot data and record sheet. Existing tests establish concrete cases; this is an umbrella entry, not a claim of complete coverage. The remaining child requirements and scenario cross-references must be individually verified before closing foundations. 2026-11-18 strict chapter-first review: pp.3–5 and direct cross-references re-read; exact merged #113 evidence reconciled for individually reviewed children. Remaining: pilot-death edge case review agoac-033 and new record-sheet test agoac-046, then explicit full chapter inventory closure. Packaging fiction/materials and later chapter mechanics not counted as missing digital gameplay features. Final printed pp.3–5 inventory review: page 3 physical counters and mapsheet representation (digital hex/terrain state; later scenario terrain variations p.48), 1D6/2D6, horizontal map and level/sublevel data; page 4 seven terrain types and introductory movement/LOS examples, logical scale, open sheets, armor/internal/rear points and transfer diagram; page 5 Mech Data, Warrior Data, Critical Hit Table, heat scale/data, independent skill bases and injury causes. Printed p.44 and pp.30,35,42 pilot-death cross-references reviewed. Physical box contents, printed sheet dimensions and fiction are not software gameplay mechanics; later chapters retain full movement, LOS, construction, scenario and damage implementation audits, rather than requiring those chapters to close this introductory inventory. Remaining acceptance evidence is these three direct page 4/5 regressions; do not promote umbrella or chapter before their exact CI passes. Final acceptance: #115 passed CI, smoke and browser E2E; all seven umbrella regression names confirmed in logs. Chapter inventory and 32/32 child requirements closed.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
-        "reviewedOn": "2026-11-17",
-        "reviewedSha": "1d804a813bce00d29871bb3f1b77de573d17bfac",
+        "reviewedOn": "2026-11-18",
+        "reviewedSha": "970b7f587b7a3ef4eccf64c9b20b68190b3eeabd",
         "report": "rules/agoac-not-audited-review.md",
         "sourceChecked": true,
-        "edgeCasesChecked": false
+        "edgeCasesChecked": true
       },
       "evidence": [
         {
@@ -182,7 +247,37 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.5: piloting skill is the independent base for a required terrain PSR"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "e29ea66ab2d8023b41e0feec6b9a928cbf93a9c2",
+        "testedTree": "9ea958a722c3d1415bb3c6065f5910b0039c6602",
+        "mergedSha": "970b7f587b7a3ef4eccf64c9b20b68190b3eeabd",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44302009099,
+            "jobId": 134793851631,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44302009167,
+            "jobId": 134793850837,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44302009135,
+            "jobId": 134793850894,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Final acceptance of the printed Introduction pp.3–5 inventory documented in the prior chapter-specific source review. All 31 other children have individual source, edge-case and exact CI evidence. All seven umbrella test names are present as passes in #115 CI, including terrain examples, independent skill bases and visual record sheet. The tested and merged trees match. This verifies the introductory scope, not entire later chapters, optional extensions, printed physical components or fiction."
+      }
     },
     {
       "id": "agoac-002",
