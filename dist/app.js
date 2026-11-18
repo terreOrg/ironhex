@@ -480,7 +480,7 @@ function showVictoryAdjudication(){
  if(remoteMode||!hotseat||busy||!game.canAdjudicateVictory())return;
  modal('<h2>Итог по согласованному условию</h2><p id="verdict-condition"></p><label>Результат<select id="verdict-outcome"><option value="draw">Ничья</option><option value="0">Победа зелёных</option><option value="1">Победа красных</option></select></label><label><input type="checkbox" id="verdict-green"> Зелёные подтверждают</label><label><input type="checkbox" id="verdict-red"> Красные подтверждают</label><button id="verdict-confirm" class="primary" disabled>ПОДТВЕРДИТЬ ИТОГ</button>');
  $('#verdict-condition').textContent=game.victoryTerms.condition;
- const update=()=>{$('#verdict-confirm').disabled = !($('#verdict-green').checked&&$('#verdict-red').checked);};
+ const update=()=>{const approved=$('#verdict-green').checked&&$('#verdict-red').checked;$('#verdict-confirm').disabled = !approved;};
  $('#verdict-green').onchange=update;$('#verdict-red').onchange=update;
  $('#verdict-outcome').onchange=()=>{$('#verdict-green').checked=false;$('#verdict-red').checked=false;update();};
  $('#verdict-confirm').onclick=()=>{
