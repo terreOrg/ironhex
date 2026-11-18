@@ -1835,3 +1835,43 @@ test('AGoAC pp.12,32: ordinary damaged running still requires its separate PSR',
  assert(g.hold(u.id).ok);assert.equal(draws,2);
  assert.equal(g.phaseRolls[0].target,5);
 });
+
+test('AGoAC pp.9,12: ground facing change commits the declared movement mode even while prone',()=>{
+ for(const prone of [false,true]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,prone});
+  assert(g.rotate(u.id,1,{mode:'run'}).ok);
+  assert.equal(u.moveMode,'run');assert.equal(u.spent,1);assert.equal(u.facing,1);
+  const before=JSON.stringify(u);
+  assert.equal(g.rotate(u.id,-1,{mode:'walk'}).ok,false);
+  assert.equal(JSON.stringify(u),before);
+  assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,2);
+ }
+});
+test('AGoAC p.12: declared ground mode and free facing are retained on successful standing',()=>{
+ for(const mode of ['walk','run']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,prone:true,proneAtStart:true});
+  g.rng=()=>.99;
+  assert(g.stand(u.id,5,{mode}).ok);assert.equal(u.prone,false);assert.equal(u.facing,5);
+  assert.equal(u.spent,2);assert.equal(u.moveMode,mode);assert.equal(u.pendingHeat,1);
+  assert.equal(g.rotate(u.id,1,{mode:mode==='walk'?'run':'walk'}).ok,false);
+  assert(!g.reachable(u,'jump').length);assert(g.hold(u.id).ok);
+  assert.equal(u.pendingHeat,mode==='walk'?2:3);
+ }
+});
+test('AGoAC pp.9,12: restricted stand cannot silently change a committed walking mode',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ Object.assign(u,{prone:true,moveMode:'walk',spent:1});u.structure.LL=0;
+ const before=JSON.stringify(u);assert.equal(g.stand(u.id).ok,false);
+ assert.equal(JSON.stringify(u),before);
+});
+test('AGoAC p.11: one-MP minimum stand consumes movement and permits free facing on success',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ Object.assign(u,{q:0,r:0,prone:true,proneAtStart:true,piloting:1});u.structure.LL=0;
+ g.rng=()=>.99;
+ assert(g.stand(u.id,4,{minimum:true,mode:'run'}).ok);
+ assert(!u.prone);assert.equal(u.facing,4);assert.equal(u.spent,1);
+ assert.equal(u.moveMode,'run');assert(!g.reachable(u,'run').length);
+ assert(!g.rotate(u.id,1,{mode:'run'}).ok);assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,3);
+});

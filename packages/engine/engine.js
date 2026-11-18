@@ -631,7 +631,26 @@ export class Game extends Legacy{
   u.skidCollisionPending=null;
   return {hit:true,continueSkid:t.dead,damage:targetDamage,selfDamage};
  }
- rotate(id,delta){const u=this.unit(id);if(u?.deployed===false)return fail('Сначала войдите на поле');if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.moveMode==='jump')return fail('Разворот недоступен');const cost=Math.abs(delta);if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');if(u.moveMode!=='jump'){const mode=u.moveMode==='stand'?'walk':u.moveMode;if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');u.spent+=cost;u.moveMode=mode;}if(u.moveMode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)u.skidDirection=u.lastMovementDirection??u.facing;u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};}
+ // AGoAC pp.9,12: facing changes spend the already declared ground
+ // movement mode's MP, including when the Mech starts prone.
+ rotate(id,delta,options={}){
+  const u=this.unit(id);
+  if(u?.deployed===false)return fail('Сначала войдите на поле');
+  if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.moveMode==='jump'||u.moveEndedByLegLoss)
+   return fail('Разворот недоступен');
+  const cost=Math.abs(delta);
+  if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');
+  const mode=options.mode??(u.moveMode==='stand'?'walk':u.moveMode);
+  if(!['walk','run','evade'].includes(mode)||u.moveMode!=='stand'&&u.moveMode!==mode||
+     u.prone&&mode==='evade'||mode!=='walk'&&(u.dumping.length||u.dumpNext.length))
+   return fail('Неверный режим движения для разворота');
+  if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');
+  if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');
+  u.spent+=cost;u.moveMode=mode;
+  if(mode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)
+   u.skidDirection=u.lastMovementDirection??u.facing;
+  u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};
+ }
  // AGoAC pp.9,11,42: transit through a friendly hex is legal;
  // if an immediate fall or other involuntary stop leaves two live
  // ground Mechs there, resolve the resulting stacking via domino.
@@ -727,8 +746,10 @@ export class Game extends Legacy{
     (u.spent+2<=this.mp(u,'walk')?'walk':'run');
   if((minimum||restricted)&&options?.mode==='walk')
     return fail('Минимальный и двухногий подъём считаются бегом');
-  if(committed&&options?.mode&&options.mode!==committed)
+  if(committed&&selected!==committed)
     return fail('Нельзя сменить объявленный режим движения');
+  if(selected==='run'&&(u.dumping.length||u.dumpNext.length))
+    return fail('Сброс боезапаса запрещает бег');
   const standingBudget=restricted?2:this.mp(u,selected);
   if(!minimum&&u.spent+2>standingBudget)return fail('Нужно 2 MP');
   this.phaseRolls=[];u.standAttempts++;u.spent+=minimum?1:2;u.pendingHeat++;
