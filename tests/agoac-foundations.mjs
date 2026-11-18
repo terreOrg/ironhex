@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds,normalizeMapHex} from '../dist/engine.js';
 import {recordSheet} from '../dist/record-sheet.js';
+import {example as setupExample} from '../dist/construction.js';
 import {readFileSync} from 'node:fs';
 
 const fresh=()=>new Game({rng:()=>.5});
@@ -2346,4 +2347,41 @@ test('AGoAC p.6: both sides enter their assigned opposite full hex edges and com
   assert.equal(new Set(g.units.map(u=>u.q+','+u.r)).size,4);
   assert(g.nextPhase().ok);assert.equal(g.phase,'fire');
  }
+});
+
+test('AGoAC p.6: selected stock forces preserve slots and absent secondary units are never fielded',()=>{
+ const g=fresh(),stock=structuredClone(g.units);
+ assert(g.configureSetupForces({slots:[3,null,0,1]}).ok);
+ assert.deepEqual(g.units.map(u=>u.name),[stock[3].name,stock[1].name,stock[0].name,stock[1].name]);
+ assert.deepEqual(g.units.map(u=>[u.id,u.team,u.q,u.r,u.facing]),stock.map(u=>[u.id,u.team,u.q,u.r,u.facing]));
+ assert.equal(g.units[1].notFielded,true);assert.equal(g.onMap(g.units[1]),false);
+ assert.equal(g.units[0].weapons[0].name,stock[3].weapons[0].name);
+ assert.notEqual(g.units[3].armor,stock[1].armor);
+ const configured=JSON.stringify(g.units);assert(!g.configureSetupForces({slots:[0,1,2,3]}).ok);
+ assert.equal(JSON.stringify(g.units),configured);
+ assert(g.startStandardDeployment().ok);
+ let dice=[...diceFor(12),...diceFor(2),...diceFor(2),...diceFor(12)];g.rng=()=>dice.shift()??.99;
+ assert(g.resolveDeploymentSetup().ok);g.initiative();
+ assert.equal(g.queue.length,3);assert(!g.canAct(g.units[1]));
+ let count=0;while(g.queue.length){
+  const u=g.units.find(x=>g.canAct(x));assert(u&&!u.notFielded);
+  const route=g.reachable(u,'walk')[0];assert(route);assert(g.move(u.id,route.q,route.r,'walk').ok);
+  assert(g.hold(u.id).ok);count++;
+ }
+ assert.equal(count,3);assert(!g.onMap(g.units[1]));assert(g.nextPhase().ok);assert.equal(g.queue.length,3);
+});
+test('AGoAC p.6: custom force requires unanimous consent and valid construction before any mutation',()=>{
+ const custom={config:{...structuredClone(setupExample),name:'Setup Consent'},pilot:{gunnery:3,piloting:4}};
+ for(const approvals of [[],[true,false],[false,true],[1,true],[true,true,true]]){
+  const g=fresh(),before=JSON.stringify(g.units);assert(!g.configureSetupForces({slots:['custom',1,2,3],custom,approvals}).ok);
+  assert.equal(JSON.stringify(g.units),before);assert.equal(g.setupForces,null);
+ }
+ for(const slots of [[null,1,2,3],[0,1,null,3],[0,9,2,3],['custom',1,'custom',3]]){
+  const g=fresh();assert(!g.configureSetupForces({slots,custom,approvals:[true,true]}).ok);assert.equal(g.setupForces,null);
+ }
+ const g=fresh();assert(!g.configureSetupForces({slots:['custom',1,2,3],custom:{config:{...custom.config,tonnage:1}},approvals:[true,true]}).ok);
+ assert(g.configureSetupForces({slots:['custom',null,2,3],custom,approvals:[true,true]}).ok);
+ assert.equal(g.units[0].name,'Setup Consent');assert.equal(g.units[0].gunnery,3);assert.equal(g.units[0].piloting,4);
+ assert.deepEqual(g.setupForces.customApproved,[true,true]);assert(g.startStandardDeployment().ok);
+ const locked=fresh();locked.phase='move';assert(!locked.configureSetupForces({slots:[0,1,2,3]}).ok);
 });

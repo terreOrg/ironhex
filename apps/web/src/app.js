@@ -171,14 +171,11 @@ async function serverCommand(order){
 }
 
 function owned(u){return !!u&&!u.dead&&(hotseat?u.team===game.activeTeam:u.team===0);}
-function applyCustom(){if(!new URLSearchParams(location.search).has('custom'))return;try{const d=JSON.parse(localStorage.getItem('ironhex-design')),r=construct(d.config);if(!r.errors.length&&game.units[d.position]){
-  Object.assign(game.units[d.position],r.unit);
-  const p=d.pilot;
-  if(p&&Number.isInteger(p.gunnery)&&Number.isInteger(p.piloting)&&
-     p.gunnery>=0&&p.gunnery<=8&&p.piloting>=0&&p.piloting<=8)
-    Object.assign(game.units[d.position],{gunnery:p.gunnery,piloting:p.piloting});
-}}catch(e){console.warn('Custom design unavailable',e);}}
-applyCustom();
+function readCustomDesign(){
+ try{const d=JSON.parse(localStorage.getItem('ironhex-design'));if(!d?.config)return null;
+  const result=construct(d.config);return result.errors.length?null:{...d,name:result.unit.name};
+ }catch{return null;}
+}
 let aimLocation='',weaponBins={},flamerHeat=false,weaponTargets={},physicalType='kick',physicalLimb='RL';
 function syncModels(){
  for(const u of game.units){
@@ -213,7 +210,7 @@ function syncModels(){
 function refreshHighlights(){updateArcs();reach=(!busy&&game.phase==='move'&&owned(game.units[selected]))?game.reachable(selected,mode):[];const keys=new Set(reach.map(t=>t.q+','+t.r));for(const t of game.tiles){if(!t.mesh)continue;t.mesh.material.color.copy(t.original);t.mesh.material.emissive.setHex(keys.has(t.q+','+t.r)?0x254111:0);t.mesh.material.emissiveIntensity=.55;}const u=game.units[selected];selection.visible=game.onMap(u)&&!u.dead;selection.position.copy(world(u.q,u.r));selection.position.y=groundY(u.q,u.r)+.04;targetRing.visible=target!==null&&!game.units[target].dead;if(targetRing.visible){const t=game.units[target];targetRing.position.copy(world(t.q,t.r));targetRing.position.y=groundY(t.q,t.r)+.05;}}
 function card(u){const ap=sum(u.armor)+sum(u.rear),max=sum(u.maxArmor)+sum(u.maxRear);return `<button class="unitcard ${u.team?'enemy':''} ${u.id===selected?'active':''} ${u.dead?'dead':''}" data-unit="${u.id}"><strong>${u.name.toUpperCase()}</strong><span class="badge">${u.tonnage} T</span><small>${u.variant} / ${u.dead?'УНИЧТОЖЕН':u.deployed===false?'ЗА ПРЕДЕЛАМИ ПОЛЯ':u.unconscious?'ПИЛОТ БЕЗ СОЗНАНИЯ':u.shutdown?'ОТКЛЮЧЕН':u.prone?'ЛЕЖИТ':game.canAct(u)?'ВАША ОЧЕРЕДЬ':game.done(u)?'ПРИКАЗ ПРИНЯТ':'ОЖИДАНИЕ'}</small><div class="bar"><span style="width:${ap/max*100}%"></span></div><div class="cardmeta"><span>БРОНЯ ${ap}/${max}</span><span>НАГРЕВ ${u.heat}°</span></div></button>`;}
 function renderUI(){tacticalSettings();const u=game.units[selected],acting=game.canAct(u)&&owned(u)&&!busy;team=hotseat?(game.activeTeam??0):0;
-$('#allies').innerHTML=game.units.filter(u=>u.team===0).map(card).join('');$('#enemies').innerHTML=game.units.filter(u=>u.team===1).map(card).join('');document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>selectUnit(+b.dataset.unit));
+$('#allies').innerHTML=game.units.filter(u=>u.team===0&&!u.notFielded).map(card).join('');$('#enemies').innerHTML=game.units.filter(u=>u.team===1&&!u.notFielded).map(card).join('');for(const [id,t] of [['#allies',0],['#enemies',1]])$(id).previousElementSibling.querySelector('span').textContent=String(game.units.filter(u=>u.team===t&&!u.notFielded).length).padStart(2,'0');document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>selectUnit(+b.dataset.unit));
 $('#round').textContent=`РАУНД ${String(game.round).padStart(2,'0')}`;$('#round').title=`Завершённое игровое время: ${elapsedBattleSeconds(game.round)} с · ${AGOAC_SCALE.turnSeconds} с/ход`;
 $('#phase').textContent=PHASES[game.phase].toUpperCase();
 $('#selected').innerHTML=`<h2>${u.name.toUpperCase()}</h2><div class="sub">${u.variant} · ${u.tonnage} тонн · Пилот ${u.gunnery}/${u.piloting} · Ранения ${u.pilotWounds}/6</div><div class="stats"><div><b>${sum(u.armor)+sum(u.rear)}</b><small>БРОНЯ</small></div><div><b>${u.heat}<span style="font-size:12px;color:#d9ae6c">+${u.pendingHeat}</span></b><small>НАГРЕВ</small></div><div><b>${game.mp(u,'walk')}/${game.mp(u,'run')}/${game.mp(u,'jump')}</b><small>ХОД / БЕГ / ПРЫЖОК</small></div></div><button class="sheetbtn" id="sheet">▤ &nbsp; ОТКРЫТЬ ЛИСТ МЕХА ↗</button>`;$('#sheet').onclick=()=>sheet(u);
@@ -421,7 +418,7 @@ function sheet(u){modal(recordSheet(u));$('#modal').classList.add('recorddialog'
 function openRecordList(){
  modal('<h2>Листы мехов</h2><p>Открытые данные боя. Просмотр не изменяет текущий приказ.</p><div id="record-list"></div>');
  const list=$('#record-list');
- for(const unit of game.units){
+ for(const unit of game.units.filter(u=>!u.notFielded)){
   const button=document.createElement('button');
   button.type='button';button.className='sheetbtn';button.dataset.recordId=String(unit.id);
   button.textContent=unit.name+' · '+(unit.team?'Красный':'Зелёный')+' · '+(unit.dead?'Уничтожен':'В бою');
@@ -434,13 +431,51 @@ const rulesURL='https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/
 $('#help').onclick=()=>modal(`<div class="eyebrow">ПОЛЕВОЕ РУКОВОДСТВО</div><h2>Цикл боя AGoAC</h2><ol><li>Бросьте инициативу. Проигравший отряд действует первым. Выберите меха, у которого указано «Ваша очередь».</li><li>Двигайтесь по подсвеченным гексам. Повороты стоят MP. Можно продолжить маршрут или повернуться, затем нажмите «Завершить приказ меха».</li><li>В оружейной фазе выберите торс, оружие и цели. Приказы обоих отрядов фиксируются до разрешения стрельбы. Уже заявленный выстрел происходит даже при уничтожении стрелка в этой фазе.</li><li>Затем заявите физические атаки соседним мехам или пропустите их. После разрешения боя пройдите нагрев и конец хода.</li></ol><h3>Повреждения и пилот</h3><p>Учитываются кормовая броня, критические слоты, двигатель, гироскоп, актуаторы, датчики, боезапас, ранения и сознание пилота. Падение и подъём проверяются кубиками. Вода влияет на движение, стрельбу и охлаждение.</p><h3>Покрытие книги</h3><p>Текущая реализация расширяет базовый бой. <a href="coverage.html" target="_blank">Полный перечень реализованных правил и оставшихся ограничений</a>. В интерфейсе не обозначаются реализованными правила, для которых ещё нет управления или проверки.</p><p>Игра вдвоём — на одном устройстве. Сетевого режима нет. <a href="${rulesURL}" target="_blank">Исходная книга правил</a>.</p>`);
 $('#credits').onclick=()=>modal(`<div class="eyebrow">ИСТОЧНИКИ / ASSET MANIFEST</div><h2>О проекте</h2><p>Неофициальная фан-игра. BattleTech и названия мехов принадлежат их правообладателям. Проект не связан с Catalyst Game Labs.</p><h3>Правила</h3><p><a target="_blank" rel="noopener" href="${rulesURL}">BattleTech: A Game of Armored Combat — Rulebook</a>. Реализовано тактическое подмножество; перечень упрощений — в разделе «Правила».</p><h3>Модели из интернета</h3><p><a href="https://github.com/RamonLinares/atlas-09" target="_blank" rel="noopener">Ramon Linares / FORGE Character Lab</a> — Atlas-09 и Aether-02, лицензия CC0. Настоящие объёмные GLB-модели со скелетной анимацией ходьбы, бега, стрельбы, попаданий и уничтожения.</p><p>Это оригинальные дизайны — визуальные заменители, а не канонические модели Griffin, Wolverine, Shadow Hawk и Thunderbolt.</p><p><a href="ASSET-LICENSE.md" target="_blank">Лицензия моделей</a> · Графика: Three.js (MIT).</p>`);
 $('#rotateL').onclick=()=>{angle-=Math.PI/6;cam();};$('#rotateR').onclick=()=>{angle+=Math.PI/6;cam();};$('#zoomIn').onclick=()=>{zoom=Math.max(5,zoom-1.5);resize();};$('#zoomOut').onclick=()=>{zoom=Math.min(20,zoom+1.5);resize();};$('#resetcam').onclick=()=>{zoom=12;angle=Math.PI/4;cam();};
-function reset(standard=!!game.deployment){clearDice();game.reset();applyCustom();if(standard)game.startStandardDeployment();game.weather={night:$('#night').checked,gale:$('#gale').checked};game.tacticalOptions={standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked};for(const mesh of tileMeshes){const old=mesh.userData.tile,t=game.tile(old.q,old.r);t.mesh=mesh;t.original=old.original;mesh.userData.tile=t;}selected=0;arcWeapon='all';target=null;team=0;mode='walk';picked=new Set(game.units[0].weapons.map((_,i)=>i));for(const u of game.units){const rec=records.get(u.id);if(!rec)continue;rec.dead=false;rec.removalAnimation=false;rec.root.visible=true;rec.root.position.copy(world(u.q,u.r));rec.root.position.y=groundY(u.q,u.r);rec.root.rotation.y=u.team?-Math.PI/2:Math.PI/2;rec.label.style.display='block';play(u.id,'Sentinel');}renderUI();toast(standard?'Новый бой. Бросьте развёртывание.':'Новый бой. Бросьте инициативу.');}
+function reset(standard=!!game.deployment,setup=null){if(setup){const trial=new Game();const valid=trial.configureSetupForces(setup);if(!valid.ok){toast(valid.error);return false;}}clearDice();game.reset();if(setup)game.configureSetupForces(setup);if(standard)game.startStandardDeployment();game.weather={night:$('#night').checked,gale:$('#gale').checked};game.tacticalOptions={standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked};for(const mesh of tileMeshes){const old=mesh.userData.tile,t=game.tile(old.q,old.r);t.mesh=mesh;t.original=old.original;mesh.userData.tile=t;}selected=0;arcWeapon='all';target=null;team=0;mode='walk';picked=new Set(game.units[0].weapons.map((_,i)=>i));for(const u of game.units){const rec=records.get(u.id);if(!rec)continue;rec.dead=false;rec.removalAnimation=false;rec.root.visible=true;rec.root.position.copy(world(u.q,u.r));rec.root.position.y=groundY(u.q,u.r);rec.root.rotation.y=u.team?-Math.PI/2:Math.PI/2;rec.label.style.display='block';play(u.id,'Sentinel');}syncModels();renderUI();toast(standard?'Новый бой. Бросьте развёртывание.':'Новый бой. Бросьте инициативу.');return true;}
+function showBattleSetup({preferCustom=false}={}){
+ const stock=new Game().units,custom=readCustomDesign();
+ modal('<h2>Подготовка нового боя</h2><p>Согласуйте состав сторон до броска развёртывания. Текущий бой будет сброшен.</p><div id="setup-forces"></div>'+
+  '<div id="setup-custom-consent" hidden><p>Нестандартный мех: согласие обеих сторон обязательно.</p>'+
+  '<label><input type="checkbox" id="setup-approve-green"> Зелёная сторона согласна</label>'+
+  '<label><input type="checkbox" id="setup-approve-red"> Красная сторона согласна</label></div>'+
+  '<button class="primary" id="confirmstandard">СТАНДАРТНОЕ РАЗВЁРТЫВАНИЕ AGoAC</button><button id="confirmreset">НАЧАТЬ ЗАНОВО · ГОТОВАЯ РАССТАНОВКА</button>');
+ const fields=[];
+ for(const [i,unit] of stock.entries()){
+  const label=document.createElement('label');label.className='hint';
+  label.textContent=(unit.team?'Красная':'Зелёная')+' сторона · мех '+(i%2+1);
+  const select=document.createElement('select');select.dataset.setupSlot=String(i);
+  const add=(value,name)=>{const option=document.createElement('option');option.value=value;option.textContent=name;select.append(option);};
+  for(const s of stock)add(String(s.id),s.name+' '+s.variant+' · '+s.tonnage+' т');
+  if(i%2===1)add('none','Не выставлять меха');
+  if(custom)add('custom',custom.name+' · нестандартный');
+  select.value=preferCustom&&custom&&Number(custom.position)===i?'custom':String(i);
+  label.append(select);$('#setup-forces').append(label);fields.push(select);
+ }
+ function update(){
+  const count=fields.filter(x=>x.value==='custom').length;
+  $('#setup-custom-consent').hidden=count===0;
+  $('#setup-approve-red').disabled=!hotseat;
+  if(!hotseat)$('#setup-approve-red').checked=true;
+  const valid=count<=1&&(count===0||$('#setup-approve-green').checked&&$('#setup-approve-red').checked);
+  for(const id of ['#confirmstandard','#confirmreset'])$(id).disabled=!valid;
+ }
+ for(const field of fields)field.onchange=()=>{
+  // Consent covers the currently displayed composition, not a previous one.
+  $('#setup-approve-green').checked=false;
+  $('#setup-approve-red').checked=false;update();
+ };
+ for(const id of ['#setup-approve-green','#setup-approve-red'])$(id).onchange=update;
+ function begin(standard){
+  const slots=fields.map(x=>x.value==='custom'?'custom':x.value==='none'?null:Number(x.value));
+  const approvals=[$('#setup-approve-green').checked,$('#setup-approve-red').checked];
+  if(reset(standard,{slots,custom,approvals}))$('#modal').close();
+ }
+ $('#confirmstandard').onclick=()=>begin(true);
+ $('#confirmreset').onclick=()=>begin(false);update();
+}
 $('#new').onclick=()=>{
  if(remoteMode){toast('Перезапуск серверной операции недоступен. Откройте новый боевой контракт в штабе.');return;}
- if(busy)return;
- modal('<h2>Начать новый бой?</h2><p>Текущий бой будет сброшен.</p><button class="primary" id="confirmstandard">СТАНДАРТНОЕ РАЗВЁРТЫВАНИЕ AGoAC</button><button id="confirmreset">НАЧАТЬ ЗАНОВО · ГОТОВАЯ РАССТАНОВКА</button>');
- $('#confirmstandard').onclick=()=>{$('#modal').close();reset(true);};
- $('#confirmreset').onclick=()=>{$('#modal').close();reset(false);};
+ if(busy)return;showBattleSetup();
 };$('#night').onchange=()=>{if(remoteMode)return void serverCommand({type:'weather',night:$('#night').checked,gale:$('#gale').checked,standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked});game.weather.night=$('#night').checked;renderUI();};$('#gale').onchange=()=>{if(remoteMode)return void serverCommand({type:'weather',night:$('#night').checked,gale:$('#gale').checked,standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked});game.weather.gale=$('#gale').checked;renderUI();};function tacticalSettings(){
   const locked=game.phase!=='initiative'||game.round!==1;
   for(const id of ['#to-still','#to-evade','#bmm-floating']){
@@ -471,4 +506,4 @@ $('#gamemode').disabled=remoteMode;$('#gamemode').onchange=()=>{if(remoteMode)re
 function project(v){v=v.clone().project(camera);return {x:(v.x*.5+.5)*renderer.domElement.width,y:(-v.y*.5+.5)*renderer.domElement.height};}
 function drawFallback(){const c=renderer.domElement,ctx=c.getContext('2d');if(!ctx)return;ctx.fillStyle='#28362d';ctx.fillRect(0,0,c.width,c.height);for(const t of [...game.tiles].sort((a,b)=>project(world(a.q,a.r)).y-project(world(b.q,b.r)).y)){const center=world(t.q,t.r);center.y=groundY(t.q,t.r);ctx.beginPath();for(let j=0;j<6;j++){let p=project(center.clone().add(new THREE.Vector3(Math.sin(j*Math.PI/3)*.97,0,Math.cos(j*Math.PI/3)*.97)));j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}ctx.closePath();ctx.fillStyle='#'+t.mesh.material.color.getHexString();ctx.fill();if(reach.some(p=>p.q===t.q&&p.r===t.r)){ctx.fillStyle='#b4e56c44';ctx.fill();}const arcBand=arcTiles.get(t.q+','+t.r);if(arcBand!==undefined){ctx.fillStyle=['#59dccc45','#e5c57838','#c88d692d'][arcBand];ctx.fill();ctx.strokeStyle=['#73efe0aa','#f4d89188','#e9ab8477'][arcBand];ctx.lineWidth=1.6;ctx.stroke();}else{ctx.strokeStyle='#18251f';ctx.lineWidth=1;ctx.stroke();}const p=project(center);if(t.type==='woods'||t.type==='heavy'){ctx.fillStyle='#243d2c';ctx.font='22px sans-serif';ctx.fillText('♠',p.x-8,p.y);}}
 for(const u of game.units){if(!game.onMap(u))continue;const rec=records.get(u.id);let p=project(rec?rec.root.position:world(u.q,u.r));let sc=12/zoom;ctx.save();ctx.translate(p.x,p.y);ctx.scale(sc,sc);ctx.fillStyle=u.team?'#e68e74':'#c3ee78';ctx.strokeStyle='#18221b';ctx.lineWidth=2;for(const [x,y,w,h] of [[-11,-31,22,18],[-7,-43,14,11],[-19,-29,7,22],[12,-29,7,22],[-10,-12,8,14],[3,-12,8,14]]){ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);}ctx.restore();const d=game.units[u.id].facing,tip=project(world(u.q+Math.cos(d*Math.PI/3)*.3,u.r).add(new THREE.Vector3(0,.05,0)));const dv=[ [1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1] ][d],to=project(world(u.q+dv[0]*.65,u.r+dv[1]*.65));ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle=u.team?'#ffb38e':'#e4ffa5';ctx.lineWidth=3;ctx.stroke();}ctx.fillStyle='#d8dfcb';ctx.font='10px sans-serif';ctx.fillText('РЕЗЕРВНЫЙ РЕЖИМ · WebGL недоступен',18,c.height-42);}
-const clock=new THREE.Clock();function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.05);for(const rec of records.values()){rec.mixer.update(dt);if(!rec.dead){let p=rec.root.position.clone();p.y+=2.5;p.project(camera);rec.label.style.left=(p.x*.5+.5)*$('#viewport').clientWidth+'px';rec.label.style.top=(-p.y*.5+.5)*$('#viewport').clientHeight+'px';}}for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.time+=dt;const t=Math.min(1,e.time/e.duration);if(e.type==='move'){e.rec.root.position.lerpVectors(e.start,e.end,t);if(e.jump)e.rec.root.position.y+=Math.sin(t*Math.PI)*2;}else if(e.type==='beam'){e.obj.material.opacity=1-t;}else{e.obj.position.addScaledVector(e.v,dt);e.v.y-=dt*6;e.obj.scale.setScalar(1-t);}if(t===1){if(e.obj){scene.remove(e.obj);e.obj.geometry.dispose();e.obj.material.dispose();}e.resolve?.();effects.splice(i,1);}}renderer.render(scene,camera);}picked=new Set([0,1]);renderUI();frame();if(remoteMode)load().then(joinServerBattle).catch(reportActionError);else load().catch(reportActionError);
+const clock=new THREE.Clock();function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.05);for(const rec of records.values()){rec.mixer.update(dt);if(!rec.dead){let p=rec.root.position.clone();p.y+=2.5;p.project(camera);rec.label.style.left=(p.x*.5+.5)*$('#viewport').clientWidth+'px';rec.label.style.top=(-p.y*.5+.5)*$('#viewport').clientHeight+'px';}}for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.time+=dt;const t=Math.min(1,e.time/e.duration);if(e.type==='move'){e.rec.root.position.lerpVectors(e.start,e.end,t);if(e.jump)e.rec.root.position.y+=Math.sin(t*Math.PI)*2;}else if(e.type==='beam'){e.obj.material.opacity=1-t;}else{e.obj.position.addScaledVector(e.v,dt);e.v.y-=dt*6;e.obj.scale.setScalar(1-t);}if(t===1){if(e.obj){scene.remove(e.obj);e.obj.geometry.dispose();e.obj.material.dispose();}e.resolve?.();effects.splice(i,1);}}renderer.render(scene,camera);}picked=new Set([0,1]);renderUI();frame();if(remoteMode)load().then(joinServerBattle).catch(reportActionError);else load().then(()=>{if(new URLSearchParams(location.search).has('custom')&&readCustomDesign())showBattleSetup({preferCustom:true});}).catch(reportActionError);
