@@ -55,7 +55,7 @@ export function validateTacticalOrder(b){
 export function autoOpponent(game){
   const actions=[];
   let turns=0;
-  while(game.winner===null&&game.activeTeam===1&&
+  while(!game.pendingChoice&&game.winner===null&&game.activeTeam===1&&
     ['move','fire','physical'].includes(game.phase)){
     if(++turns>20)throw Error('opponent_action_limit');
     const unit=game.aiSelection();
@@ -65,8 +65,9 @@ export function autoOpponent(game){
     }
     game.phaseRolls=[];
     const phase=game.phase;
-    const r=phase==='move'?game.aiMove(unit.id):
+    const r=phase==='move'?game.aiMoveWithChoices(unit.id,{humanTeams:[0]}):
       phase==='fire'?game.aiAttack(unit.id):game.aiPhysical(unit.id);
+    if(r?.pending)break;
     if(r?.code==='deployment_blocked')throw new AuthError(409,'deployment_blocked');
     if(!r?.ok&&!game.hold(unit.id)?.ok)throw Error('opponent_stalled');
     actions.push({id:unit.id,phase,
@@ -85,7 +86,7 @@ export function runTacticalOrder(game,body){
     const movement=game.pendingChoice?.scope==='movement'?game._resolutionReplay?.movement:null;
     if(game.queue.length&&!movement)throw new AuthError(409,'phase_pending_orders');
     r=game.nextPhaseWithChoices({humanTeams:[0],choice:b.choice});
-    if(movement){type='move';id=movement.id;}
+    if(movement){type=movement.kind==='ai'?'ai-move':movement.kind==='charge'?'charge':'move';id=movement.id;}
   }else if(type==='weather'){
     if(game.phase!=='initiative'||game.round!==1)throw new AuthError(409,'weather_locked');
     game.weather={night:b.night,gale:b.gale};
@@ -106,7 +107,7 @@ export function runTacticalOrder(game,body){
       case 'fire':r=game.declareFire(id,b.shots);break;
       case 'physical':r=game.declarePhysical(id,b.target,b.attack,b.limb);break;
       case 'club':r=game.takeClub(id);break;
-      case 'charge':r=game.declareCharge(id,b.target,b.attack);break;
+      case 'charge':r=game.chargeWithChoices(id,b.target,b.attack,{humanTeams:[0]});break;
       case 'minimum':r=game.minimumMove(id);break;
       case 'shutdown':r=game.orderShutdown(id);break;
       case 'dump':r=game.orderDump(id,b.bin);break;
@@ -124,7 +125,7 @@ export function runTacticalOrder(game,body){
     if(unit?.dead&&game.actingId===id)game.hold(id);
   }
   const ai=autoOpponent(game);
-  return {type,...(type==='move'?{id}:{}),result:structuredClone(r),rolls,resolution,afterRolls,ai};
+  return {type,...(['move','charge','ai-move'].includes(type)?{id}:{}),result:structuredClone(r),rolls,resolution,afterRolls,ai};
 }
 export function publicSnapshot(saved){
   if(!saved?.game)return null;

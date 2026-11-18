@@ -1626,3 +1626,52 @@ test('AGoAC p.7: permanent stalemate distinguishes usable ammunition and maximum
  u.prone=false;assert.equal(g.canEverMove(u),true);
  u.prone=true;u.walk=1;assert.equal(g.canEverMove(u),true);
  });
+
+test('AGoAC p.42: AI movement pauses for a human domino victim and resumes the same AI selection',()=>{
+ // Pin the AI's chosen route; the actual movement, domino and replay
+ // use the shared engine, including the AI's automatic hold.
+ class RouteAI extends Game{
+  aiMove(id){const r=this.move(id,2,-1,'walk');if(r.ok)this.hold(id);return r;}
+ }
+ const g=new RouteAI({rng:()=>.5}),[human,other,ai,ally]=g.units;
+ g.phase='move';g.queue=[1,0,1,0];g.activeTeam=1;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(ai,{q:0,r:0,facing:0,walk:6,moveStart:{q:0,r:0}});
+ Object.assign(ally,{q:1,r:0,facing:0,walk:4,spent:0});
+ Object.assign(human,{q:2,r:0,facing:1,walk:4,spent:0});
+ Object.assign(other,{q:-4,r:0});g.tile(1,0).type='rubble';
+ // Force the AI's route to transit the allied rubble hex first.
+ g.tile(1,-1).height=g.tile(1,-1).surface=4;
+ let draws=0;g.rng=()=>{draws++;return draws<=2?0:.5;};
+ const before=JSON.stringify(g.units);
+ const r=g.aiMoveWithChoices(ai.id,{humanTeams:[0]});
+ assert(r.pending);assert.equal(g.pendingChoice.unitId,human.id);
+ assert.equal(g.pendingChoice.kind,'domino');assert.equal(JSON.stringify(g.units),before);
+ const p=g.pendingChoice;assert(p.options.some(o=>o.id==='forward'));
+ const saved=draws,restored=new RouteAI({rng:()=>{draws++;return .5;}});
+ Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
+ restored.rebuildMap();
+ const result=restored.nextPhaseWithChoices({choice:{key:p.key,option:'forward'}});
+ assert(result.ok&&!result.pending);assert.equal(draws,saved);
+ assert.deepEqual(restored.queue,[0,1,0]);assert.equal(restored.unit(ai.id).moved,true);
+ assert.deepEqual([restored.unit(human.id).q,restored.unit(human.id).r],[3,-1]);
+ assert.deepEqual([restored.unit(ally.id).q,restored.unit(ally.id).r],[2,0]);
+});
+test('AGoAC pp.26,42: interrupted charge approach cannot declare a phantom attack',()=>{
+ const g=fresh(),[u,ally,t,other]=g.units;
+ g.phase='move';g.activeTeam=0;g.queue=[0,1,0,1];
+ for(const hex of g.tiles)Object.assign(hex,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,walk:4,moveStart:{q:0,r:0}});
+ Object.assign(ally,{q:1,r:0,facing:1,walk:4,spent:0});
+ Object.assign(t,{q:3,r:0,moved:true});Object.assign(other,{q:-4,r:0});
+ g.tile(1,0).type='rubble';let draws=0;g.rng=()=>{draws++;return draws<=2?0:.5;};
+ const before=JSON.stringify(g.units);
+ const r=g.chargeWithChoices(u.id,t.id,'charge',{humanTeams:[0]});
+ assert(r.pending);assert.equal(g.pendingChoice.kind,'domino');
+ assert.equal(JSON.stringify(g.units),before);
+ const p=g.pendingChoice,choice=p.options.find(o=>o.id==='forward');
+ assert(choice);const result=g.nextPhaseWithChoices({choice:{key:p.key,option:choice.id}});
+ assert(result.ok&&result.chargeInterrupted);assert.equal(g.unit(u.id).charge,null);
+ assert.equal(g.unit(u.id).prone,true);assert.equal(g.unit(u.id).moved,true);
+ assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);assert.equal(g.queue.length,3);
+});
