@@ -301,3 +301,14 @@ test('API End Phase recovery choice is resumable and does not expose replay jour
  assert(done.result.ok&&!done.result.pending);assert.equal(draws,2);
  assert.equal(g.unit(u.id).shutdown,true);assert.equal(g.unit(u.id).unconscious,false);
 });
+
+test('API validates jump-only landing facing and executes it without extra movement cost',()=>{
+ const g=new Game(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,moveStart:{q:0,r:0},jump:2,jumpLost:0,proneAtStart:false});
+ const order={type:'move',id:u.id,q:1,r:0,mode:'jump',version:1,facing:5};
+ for(const invalid of [{...order,facing:6},{...order,facing:1.5},{...order,mode:'walk'}])
+  assert.throws(()=>validateTacticalOrder(invalid),AuthError);
+ const effect=runTacticalOrder(g,order);
+ assert(effect.result.ok);assert.equal(g.unit(u.id).facing,5);assert.equal(g.unit(u.id).spent,1);
+});

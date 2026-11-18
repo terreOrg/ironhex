@@ -345,7 +345,9 @@ export class Game extends Legacy{
   }
   return [...routes.values()];
  }
- enterDeployment(u,q,r,mode){
+ enterDeployment(u,q,r,mode,options={}){
+  if(options.facing!==undefined&&(mode!=='jump'||!Number.isInteger(options.facing)||options.facing<0||options.facing>5))
+   return fail('Направление посадки допустимо только для прыжка');
   const route=this.deploymentEntryRoutes(u,mode).find(t=>t.q===q&&t.r===r);
   if(!route)return fail('Недопустимый вход с назначенной стороны');
   this.phaseRolls=[];this.actingId=u.id;
@@ -372,7 +374,7 @@ export class Game extends Legacy{
    return {ok:true,entry:true,from,to:{q:u.q,r:u.r},path:entryPath,mode,rolls:[...this.phaseRolls]};
   }
   if(minimum)mode='run';
-  Object.assign(u,{q,r,deployed:true,facing:route.facing,moveStart:{...from},
+  Object.assign(u,{q,r,deployed:true,facing:options.facing??route.facing,moveStart:{...from},
    moveMode:mode,spent:route.cost,distanceMoved:mode==='jump'?route.cost:1,lastMovementDirection:route.facing});
   const tile=this.tile(q,r);
   if(mode==='jump'){
@@ -629,7 +631,7 @@ export class Game extends Legacy{
   u.skidCollisionPending=null;
   return {hit:true,continueSkid:t.dead,damage:targetDamage,selfDamage};
  }
- rotate(id,delta){const u=this.unit(id);if(u?.deployed===false)return fail('Сначала войдите на поле');if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u))return fail('Разворот недоступен');const cost=Math.abs(delta);if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');if(u.moveMode!=='jump'){const mode=u.moveMode==='stand'?'walk':u.moveMode;if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');u.spent+=cost;u.moveMode=mode;}if(u.moveMode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)u.skidDirection=u.lastMovementDirection??u.facing;u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};}
+ rotate(id,delta){const u=this.unit(id);if(u?.deployed===false)return fail('Сначала войдите на поле');if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.moveMode==='jump')return fail('Разворот недоступен');const cost=Math.abs(delta);if(!Number.isInteger(delta)||cost<1||cost>3)return fail('Поворот: 1–3 гексстороны за действие');if(u.moveMode!=='jump'){const mode=u.moveMode==='stand'?'walk':u.moveMode;if(u.spent+cost>this.mp(u,mode))return fail('Нет MP');if(u.gyroHits>=2&&(u.spent>0||cost>1))return fail('Разрешён один разворот с разрушенным гироскопом');u.spent+=cost;u.moveMode=mode;}if(u.moveMode==='run'&&this.isPaved(this.tile(u.q,u.r))&&u.skidDirection===null)u.skidDirection=u.lastMovementDirection??u.facing;u.facing=wrap(u.facing+delta);this.actingId=id;return {ok:true};}
  // AGoAC pp.9,11,42: transit through a friendly hex is legal;
  // if an immediate fall or other involuntary stop leaves two live
  // ground Mechs there, resolve the resulting stacking via domino.
@@ -638,7 +640,10 @@ export class Game extends Legacy{
   const other=this.units.find(v=>v.id!==u.id&&this.onMap(v)&&!v.dead&&!v.airborne&&v.q===u.q&&v.r===u.r);
   if(other)this.resolveDomino(other,u.lastMovementDirection,0);
  }
- move(id,q,r,mode='walk',options={}){const u=this.unit(id);if(u?.deployed===false)return options.lateral===undefined?this.enterDeployment(u,q,r,mode):fail('Сначала войдите на поле');if(mode==='minimum')return fail('Используйте отдельный приказ минимального движения');const routes=this.reachable(u,mode);
+ move(id,q,r,mode='walk',options={}){const u=this.unit(id);
+ if(options.facing!==undefined&&(mode!=='jump'||!Number.isInteger(options.facing)||options.facing<0||options.facing>5))
+  return fail('Направление посадки допустимо только для прыжка');
+ if(u?.deployed===false)return options.lateral===undefined?this.enterDeployment(u,q,r,mode,options):fail('Сначала войдите на поле');if(mode==='minimum')return fail('Используйте отдельный приказ минимального движения');const routes=this.reachable(u,mode);
  let dst=routes.find(t=>t.q===q&&t.r===r);
  if(options?.lateral!==undefined){
   // Explicit BMM p.15 lateral choice must remain legal even when an
@@ -657,7 +662,7 @@ export class Game extends Legacy{
   dst={q,r,facing:u.facing,cost,
     path:[{q,r,facing:u.facing,cost,lateral:shift.backward?'backward':'forward'}]};
  }
- if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});// BMM p.45: losing the first Quad leg adds +5 to the landing
+ if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.facing=options.facing??u.facing;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});// BMM p.45: losing the first Quad leg adds +5 to the landing
  // PSR even though this damage does not itself add +5 to normal
  // Quad PSR modifiers. Two lost legs already contribute +5 via
  // psrMod (the one-legged biped equivalent), so do not double count.
@@ -1394,9 +1399,9 @@ export class Game extends Legacy{
   this.tiles=tiles;this.rebuildMap();
   this.pendingChoice=null;this._resolutionReplay=null;
  }
- moveWithChoices(id,q,r,mode='walk',{lateral,humanTeams=[0]}={}){
+ moveWithChoices(id,q,r,mode='walk',{lateral,facing,humanTeams=[0]}={}){
   if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');
-  return this.resolveWithChoices({humanTeams,movement:{id,q,r,mode,...(lateral===undefined?{}:{lateral})}});
+  return this.resolveWithChoices({humanTeams,movement:{id,q,r,mode,...(lateral===undefined?{}:{lateral}),...(facing===undefined?{}:{facing})}});
  }
  aiMoveWithChoices(id,{humanTeams=[0]}={}){
   if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');
@@ -1445,7 +1450,7 @@ export class Game extends Legacy{
    const m=journal.movement;
    const result=!m?trial.nextPhase():m.kind==='ai'?trial.aiMove(m.id):
     m.kind==='charge'?trial.declareCharge(m.id,m.target,m.attack,m.mode):
-    trial.move(m.id,m.q,m.r,m.mode,{lateral:m.lateral});
+    trial.move(m.id,m.q,m.r,m.mode,{lateral:m.lateral,facing:m.facing});
    if(m&&result.ok&&m.kind)result.rolls=[...trial.phaseRolls];
    if(!result.ok)return result;
    if(decision!==journal.decisions.length||sample!==journal.draws.length)
