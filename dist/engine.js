@@ -374,12 +374,16 @@ export class Game extends Legacy{
     // No physical attack can cross between dry and fully submerged hexes.
     if(a.depth===0&&b.depth>=2||a.depth>=2&&b.depth===0)return false;
    }
-   // A fixed biped uses its feet's facing for physical attacks.
-   // Keep future movement, coincident hexes and non-base quirks conservative.
-   const angle=movable||distance(u,t)===0?0:this.relative({...u,twist:0},t);
+   // Victory adjudication must not assume that a fixed foot facing
+   // also fixes the torso in future turns (AGoAC p.7, cross-ref p.15).
+   // This upper bound deliberately does not certify physical previews.
+   const unrestricted=movable||distance(u,t)===0;
+   const angle=unrestricted?0:this.relative(u,t,u.facing);
    if(Math.abs(angle)<=60.00001&&(arms.length===2||kick))return true;
-   return arms.some(l=>!physicalArmActuators(u,l).shoulder&&
-    Math.abs(angle)<=120.00001&&(l==='LA'?angle>=-60.00001:angle<=60.00001));
+   const twists=u.quirks?.extendedTorsoTwist===true?[-2,-1,0,1,2]:[-1,0,1];
+   const possibleAngles=unrestricted?[0]:twists.map(twist=>this.relative(u,t,wrap(u.facing+twist)));
+   return arms.some(l=>!physicalArmActuators(u,l).shoulder&&possibleAngles.some(a=>
+    Math.abs(a)<=120.00001&&(l==='LA'?a>=-60.00001:a<=60.00001)));
   });
  }
  // CAT3500D p.7 permits victory conditions agreed before play.

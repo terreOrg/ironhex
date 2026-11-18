@@ -2733,8 +2733,11 @@ test('AGoAC pp.7,25,28–29: fixed biped physical attack capability respects fac
  Object.assign(u,{q:0,r:0,facing:0});Object.assign(v,{q:1,r:0});
  u.structure.LA=1;u.structure.RA=1;
  assert(g.canEverDamage(u,[v]));
- u.facing=3;assert(!g.canEverDamage(u,[v]));
- u.twist=1;assert(!g.canEverDamage(u,[v]));
+ u.facing=3;assert(g.canEverDamage(u,[v]),'future torso twist may enable a side punch');
+ u.twist=1;assert(g.canEverDamage(u,[v]));
+ g.checkWin({stalemate:true});assert.equal(g.winner,null);
+ u.actuators.LA.shoulder=true;u.actuators.RA.shoulder=true;
+ assert(!g.canEverDamage(u,[v]));
  g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
 });
 
@@ -2856,4 +2859,15 @@ test('AGoAC p.7: arbitrary pregame victory agreement is immutable and jointly ad
  assert(g.adjudicateVictory({winner:1,approvals:[true,true]}).ok);assert.equal(g.winner,1);assert(!g.canAdjudicateVictory());assert(!g.nextPhase().ok);
  const override=fresh();assert(override.configureVictoryTerms({condition:'Alternative outcome',approvals:[true,true]}).ok);override.winner=0;assert(override.adjudicateVictory({winner:'draw',approvals:[true,true]}).ok);assert.equal(override.winner,'draw');
  override.reset();assert.equal(override.victoryTerms,null);assert.equal(override.victoryAdjudicated,false);
+});
+
+
+test('AGoAC p.7: a potential future attack prevents premature stalemate even if feet cannot move',()=>{
+ for(const [angle,arm] of [[0,'LA'],[3,'LA'],[3,'RA']]){
+  const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+  g.units[1].dead=true;g.units[3].dead=true;u.facing=angle;u.structure[arm]=1;
+  assert(!g.canEverMove(u));assert(!g.canEverMove(v));
+  assert(g.canEverDamage(u,[v]));g.checkWin({stalemate:true});assert.equal(g.winner,null);
+  u.actuators[arm].shoulder=true;assert(!g.canEverDamage(u,[v]));g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+ }
 });
