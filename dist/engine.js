@@ -1380,6 +1380,14 @@ export class Game extends Legacy{
   if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');
   return this.resolveWithChoices({humanTeams,movement:{id,q,r,mode,...(lateral===undefined?{}:{lateral})}});
  }
+ aiMoveWithChoices(id,{humanTeams=[0]}={}){
+  if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');
+  return this.resolveWithChoices({humanTeams,movement:{kind:'ai',id}});
+ }
+ chargeWithChoices(id,target,attack='charge',{mode='run',humanTeams=[0]}={}){
+  if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');
+  return this.resolveWithChoices({humanTeams,movement:{kind:'charge',id,target,attack,mode}});
+ }
  nextPhaseWithChoices({humanTeams=[0],choice}={}){
   if(this.pendingChoice?.scope==='movement')return this.resolveWithChoices({humanTeams,choice});
   if(!this.pendingChoice&&!['setup','fire','physical','heat'].includes(this.phase)){
@@ -1417,7 +1425,10 @@ export class Game extends Legacy{
   };
   try{
    const m=journal.movement;
-   const result=m?trial.move(m.id,m.q,m.r,m.mode,{lateral:m.lateral}):trial.nextPhase();
+   const result=!m?trial.nextPhase():m.kind==='ai'?trial.aiMove(m.id):
+    m.kind==='charge'?trial.declareCharge(m.id,m.target,m.attack,m.mode):
+    trial.move(m.id,m.q,m.r,m.mode,{lateral:m.lateral});
+   if(m&&result.ok&&m.kind)result.rolls=[...trial.phaseRolls];
    if(!result.ok)return result;
    if(decision!==journal.decisions.length||sample!==journal.draws.length)
     throw Error('resolution_replay_incomplete');
@@ -1439,7 +1450,15 @@ export class Game extends Legacy{
  orderDump(id,index){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||this.phase!=='move'||u.moveMode==='run'||u.moveMode==='jump')return fail('Сброс боезапаса: только ходьба или неподвижность');if(!u.bins[index]?.shots)return fail('Бункер пуст');if(!u.dumpNext.includes(index))u.dumpNext.push(index);this.note(`${u.name}: сброс бункера ${index+1} начнётся в конце хода; завершится через ход.`);return {ok:true};}
  orderShutdown(id){const u=this.unit(id);if(!this.canAct(u)||u.unconscious||u.abandoned||this.phase!=='move')return fail('Приказ недоступен');if(u.shutdown&&!u.voluntaryShutdown)return fail('После аварийного отключения перезапуск происходит в фазу нагрева');u.shutdownNext=!u.shutdownNext;return {ok:true};}
  declareCharge(id,target,type='charge',moveMode='run'){const u=this.unit(id),t=this.unit(target);if(u?.deployed===false||t?.deployed===false)return fail('Мех ещё не вышел на поле');if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone||!t||t.team===u.team||t.dead||t.charge||t.airborne||(type==='charge'&&t.prone)||!(t.moved||!this.mobile(t)))return fail('Цель должна завершить движение; для тарана цель должна стоять');if(this.displacementTargetReserved(target))return fail('Эта цель уже выбрана для тарана/DFA');if(!['charge','dfa'].includes(type)||type==='charge'&&!['walk','run'].includes(moveMode))return fail('Недопустимый тип тарана или режим движения');const mode=type==='dfa'?'jump':moveMode;if(u.spent||u.moveMode!=='stand')return fail('Заявите таран/DFA до обычного движения');let options=this.reachable(u,mode).filter(p=>distance(p,t)===1);if(type==='dfa'){if(!this.mp(u,'jump')||distance(u,t)>this.mp(u,'jump')||this.tile(t.q,t.r).height+(t.prone?0:2)>this.tile(u.q,u.r).height+this.mp(u,'jump'))return fail('Не хватает высоты или дальности прыжка');}else options=options.filter(p=>p.cost+this.terrainCost(this.tile(t.q,t.r))+Math.abs(this.tile(p.q,p.r).height-this.tile(t.q,t.r).height)<=this.mp(u,mode));
- options.sort((a,b)=>a.cost-b.cost);const p=options[0];if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},r=this.move(id,p.q,p.r,mode);if(!r.ok)return r;const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r},startPos:start};if(type==='dfa'){u.pendingHeat-=Math.max(3,u.spent);u.spent=distance(start,t);u.pendingHeat+=Math.max(3,u.spent);u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
+ options.sort((a,b)=>a.cost-b.cost);const p=options[0];if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},targetStart={q:t.q,r:t.r},r=this.move(id,p.q,p.r,mode);if(!r.ok)return r;
+ // An involuntary stop during the approach cannot create a declared
+ // physical attack from the planned (but never reached) hex.
+ if(u.dead||u.prone||this.isImmobile(u)||u.moveEndedByLegLoss||u.skidded||
+    u.q!==p.q||u.r!==p.r||t.dead||t.q!==targetStart.q||t.r!==targetStart.r){
+  this.note(u.name+': подход прерван; физическая атака не заявлена.');
+  this.hold(id);return {...r,ended:true,chargeInterrupted:true,rolls:[...this.phaseRolls]};
+ }
+ const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r},startPos:start};if(type==='dfa'){u.pendingHeat-=Math.max(3,u.spent);u.spent=distance(start,t);u.pendingHeat+=Math.max(3,u.spent);u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
  // AGoAC p.27: a missed DFA allows any legal neighboring hex,
  // including an occupied one. A successful DFA searches by angular
  // distance from the original displacement direction.

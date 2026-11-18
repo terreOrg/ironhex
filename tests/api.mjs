@@ -243,3 +243,28 @@ test('API movement choice pauses with active queue and resumes original authenti
  assert.deepEqual(completed.result.to,{q:1,r:0});
  assert.equal(g.pendingChoice,null);
 });
+
+test('API resumes an AI-created movement choice without accepting client AI commands',()=>{
+ class RouteAI extends Game{
+  aiMove(id){const r=this.move(id,2,-1,'walk');if(r.ok)this.hold(id);return r;}
+ }
+ const g=new RouteAI({rng:()=>.5}),[player,human,ai,ally]=g.units;
+ g.phase='move';g.activeTeam=0;g.queue=[0,1,0,1];
+ for(const hex of g.tiles)Object.assign(hex,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(ai,{q:0,r:0,facing:0,walk:6,moveStart:{q:0,r:0}});
+ Object.assign(ally,{q:1,r:0,facing:0,walk:4});
+ Object.assign(human,{q:2,r:0,facing:1,walk:4});Object.assign(player,{q:-4,r:0});
+ g.tile(1,0).type='rubble';g.tile(1,-1).height=g.tile(1,-1).surface=4;
+ let draws=0;g.rng=()=>{draws++;return draws<=2?0:.5;};
+ // aiSelection picks the first red unit, not the friendly blockage.
+ const completed=runTacticalOrder(g,{type:'hold',id:player.id,version:1});
+ assert.equal(completed.type,'hold');assert.equal(completed.ai.length,0);
+ assert.equal(g.pendingChoice?.unitId,human.id);
+ assert.equal(g.unit(player.id).moved,true);assert.equal(g.unit(ai.id).moved,false);
+ assert.throws(()=>runTacticalOrder(g,{type:'ai-move',id:ai.id,version:2}),AuthError);
+ const p=g.pendingChoice,saved=draws;
+ const fx=runTacticalOrder(g,{type:'next',version:2,choice:{key:p.key,option:'forward'}});
+ assert.equal(fx.type,'ai-move');assert.equal(fx.id,ai.id);assert.equal(draws,saved);
+ assert.equal(g.pendingChoice,null);assert.equal(g.unit(ai.id).moved,true);
+ assert.equal(g.activeTeam,0);
+});
