@@ -1123,3 +1123,21 @@ test('AGoAC p.6: hotseat setup selects forces and requires both players to appro
   await page.locator('#all-records').click();assert.equal(await page.locator('#record-list [data-record-id]').count(),2);
  });
 });
+
+test('AGoAC p.6: new battle selects and displays the battlefield and resets to a different map',{timeout:120000},async()=>{
+ await withPage('setup-map',{noWebGL:true},async page=>{
+  await page.locator('#new').click();await page.locator('#setup-map').selectOption('river');
+  await page.locator('#setup-map-rotation').selectOption('2');
+  await page.locator('#confirmstandard').click();
+  assert.equal(await page.locator('#viewport').getAttribute('data-map-layout'),'river');
+  assert.equal(await page.locator('#viewport').getAttribute('data-map-rotation'),'2');
+  assert.match(await page.locator('#battle-map-label').textContent(),/Речная долина/);
+  assert.match(await page.locator('#phase').textContent(),/РАЗВЁРТЫВАНИЕ/);
+  await page.locator('#new').click();await page.locator('#setup-map').selectOption('clear');
+  await page.locator('#confirmreset').click();
+  assert.equal(await page.locator('#viewport').getAttribute('data-map-layout'),'clear');
+  assert.equal(await page.locator('#viewport').getAttribute('data-map-rotation'),'0');
+  assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/);
+  assert.equal(await page.locator('#viewport canvas').count(),1);
+ });
+});

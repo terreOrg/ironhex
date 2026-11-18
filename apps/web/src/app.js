@@ -5,7 +5,7 @@ import {animateRoll,clearDice} from './dice.js';
 import * as THREE from 'three';
 import {GLTFLoader} from './GLTFLoader.js';
 import {clone} from './SkeletonUtils.js';
-import {Game,LOCATIONS,distance,PHASES,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds} from './engine.js';
+import {Game,LOCATIONS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,rangeMeters,elapsedBattleSeconds} from './engine.js';
 const $=s=>document.querySelector(s),game=new Game();
 const operationId=new URLSearchParams(location.search).get('operation');
 const remoteMode=operationId!==null;
@@ -15,15 +15,37 @@ const scene=new THREE.Scene();scene.background=new THREE.Color('#28362d');scene.
 const camera=new THREE.OrthographicCamera(-15,15,15,-15,.1,100);let software=false;let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true});}catch(e){software=true;const canvas=document.createElement('canvas');renderer={domElement:canvas,shadowMap:{},setPixelRatio(){},setSize(w,h){canvas.width=w;canvas.height=h;},render(){drawFallback();}};}renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;$('#viewport').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xc6ddbf,0x394332,2.5));const sun=new THREE.DirectionalLight(0xffe1a1,3.6);sun.position.set(-10,22,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:65});sun.shadow.bias=-.001;scene.add(sun);
 const world=(q,r)=>new THREE.Vector3(Math.sqrt(3)*(q+r/2),0,1.5*r);const groundY=(q,r)=>.14+game.tile(q,r).height*.45;
-const hexgeo=new THREE.CylinderGeometry(.977,.977,.32,6);const tileMeshes=[];const baseColors={plain:0x627057,woods:0x465d43,heavy:0x3d533e,hill:0x88876a,water:0x436e78,rough:0x8a7c61,rubble:0x777e77};
+const hexgeo=new THREE.CylinderGeometry(.977,.977,.32,6);const tileMeshes=[];const terrainGroup=new THREE.Group();scene.add(terrainGroup);const baseColors={plain:0x627057,woods:0x465d43,heavy:0x3d533e,hill:0x88876a,water:0x436e78,rough:0x8a7c61,rubble:0x777e77};
 function seeded(n){return Math.abs(Math.sin(n*127.1+311.7)*43758.54)%1;}
-for(const [i,t]of game.tiles.entries()){
- const mat=new THREE.MeshStandardMaterial({color:baseColors[t.type],roughness:1});mat.color.multiplyScalar(.87+seeded(i)*.22);const h=new THREE.Mesh(hexgeo,mat);h.position.copy(world(t.q,t.r));h.position.y=t.height*.45;h.receiveShadow=true;h.userData.tile=t;scene.add(h);tileMeshes.push(h);t.mesh=h;t.original=mat.color.clone();
- if(t.height){const side=new THREE.Mesh(new THREE.CylinderGeometry(.97,1,.5,6),new THREE.MeshStandardMaterial({color:0x555a44,roughness:1}));side.position.copy(h.position);side.position.y=-.15;scene.add(side);side.receiveShadow=true;}
+function buildTerrain(){
+ for(const child of [...terrainGroup.children]){
+  terrainGroup.remove(child);child.traverse(o=>{
+   if(o.geometry&&o.geometry!==hexgeo)o.geometry.dispose();
+   if(o.material)o.material.dispose();
+  });
+ }
+ tileMeshes.length=0;
+ for(const [i,t]of game.tiles.entries()){
+ const mat=new THREE.MeshStandardMaterial({color:baseColors[t.type],roughness:1});mat.color.multiplyScalar(.87+seeded(i)*.22);const h=new THREE.Mesh(hexgeo,mat);h.position.copy(world(t.q,t.r));h.position.y=t.height*.45;h.receiveShadow=true;h.userData.tile=t;terrainGroup.add(h);tileMeshes.push(h);t.mesh=h;t.original=mat.color.clone();
+ if(t.height){const side=new THREE.Mesh(new THREE.CylinderGeometry(.97,1,.5,6),new THREE.MeshStandardMaterial({color:0x555a44,roughness:1}));side.position.copy(h.position);side.position.y=-.15;terrainGroup.add(side);side.receiveShadow=true;}
  if(t.type==='woods'||t.type==='heavy')for(let j=0;j<(t.type==='heavy'?5:3);j++){
- const x=(seeded(i*5+j)-.5)*1.2,z=(seeded(i*7+j)-.5)*1.2;const tree=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,.5,5),new THREE.MeshStandardMaterial({color:0x423b2b}));trunk.position.y=.25;tree.add(trunk);for(let k=0;k<3;k++){const foliage=new THREE.Mesh(new THREE.ConeGeometry(.25-k*.05,.65,5),new THREE.MeshStandardMaterial({color:[0x263e2c,0x344d32,0x445b38][k],roughness:1}));foliage.position.y=.6+k*.2;foliage.castShadow=true;tree.add(foliage);}tree.position.copy(h.position);tree.position.add(new THREE.Vector3(x,.16,z));scene.add(tree);
- }else if(seeded(i+40)>.7){let rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.14+seeded(i)*.15,0),new THREE.MeshStandardMaterial({color:0x878775,roughness:1}));rock.position.copy(h.position).add(new THREE.Vector3(.45,.15,-.3));rock.scale.y=.6;rock.castShadow=true;scene.add(rock);}
+ const x=(seeded(i*5+j)-.5)*1.2,z=(seeded(i*7+j)-.5)*1.2;const tree=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,.5,5),new THREE.MeshStandardMaterial({color:0x423b2b}));trunk.position.y=.25;tree.add(trunk);for(let k=0;k<3;k++){const foliage=new THREE.Mesh(new THREE.ConeGeometry(.25-k*.05,.65,5),new THREE.MeshStandardMaterial({color:[0x263e2c,0x344d32,0x445b38][k],roughness:1}));foliage.position.y=.6+k*.2;foliage.castShadow=true;tree.add(foliage);}tree.position.copy(h.position);tree.position.add(new THREE.Vector3(x,.16,z));terrainGroup.add(tree);
+ }else if(seeded(i+40)>.7){let rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.14+seeded(i)*.15,0),new THREE.MeshStandardMaterial({color:0x878775,roughness:1}));rock.position.copy(h.position).add(new THREE.Vector3(.45,.15,-.3));rock.scale.y=.6;rock.castShadow=true;terrainGroup.add(rock);}
 }
+}
+function refreshMapLabel(){
+ if(!$('#battle-map-label')){
+  const label=document.createElement('p');label.id='battle-map-label';label.className='hint';
+  $('#allies').previousElementSibling.before(label);
+ }
+ const layout=game.setupMap??{id:'frontier',rotation:0};
+ const name=AGOAC_MAP_PRESETS.find(p=>p.id===layout.id)?.name??layout.id;
+ $('#viewport').dataset.mapLayout=layout.id;
+ $('#viewport').dataset.mapRotation=String(layout.rotation);
+ const label=$('#battle-map-label');
+ if(label)label.textContent='КАРТА: '+name+' · '+(layout.rotation*60)+'°';
+}
+buildTerrain();
 const plane=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({color:0x26382b,roughness:1}));plane.rotation.x=-Math.PI/2;plane.position.y=-2.5;plane.receiveShadow=true;scene.add(plane);
 // Military survey markers around the board.
 for(let i=0;i<6;i++){const p=world(Math.cos(i*Math.PI/3)*7,Math.sin(i*Math.PI/3)*7);const m=new THREE.Mesh(new THREE.BoxGeometry(.08,.9,.08),new THREE.MeshStandardMaterial({color:0x9ca886}));m.position.copy(p);m.position.y=.1;scene.add(m);}
@@ -209,7 +231,7 @@ function syncModels(){
 }
 function refreshHighlights(){updateArcs();reach=(!busy&&game.phase==='move'&&owned(game.units[selected]))?game.reachable(selected,mode):[];const keys=new Set(reach.map(t=>t.q+','+t.r));for(const t of game.tiles){if(!t.mesh)continue;t.mesh.material.color.copy(t.original);t.mesh.material.emissive.setHex(keys.has(t.q+','+t.r)?0x254111:0);t.mesh.material.emissiveIntensity=.55;}const u=game.units[selected];selection.visible=game.onMap(u)&&!u.dead;selection.position.copy(world(u.q,u.r));selection.position.y=groundY(u.q,u.r)+.04;targetRing.visible=target!==null&&!game.units[target].dead;if(targetRing.visible){const t=game.units[target];targetRing.position.copy(world(t.q,t.r));targetRing.position.y=groundY(t.q,t.r)+.05;}}
 function card(u){const ap=sum(u.armor)+sum(u.rear),max=sum(u.maxArmor)+sum(u.maxRear);return `<button class="unitcard ${u.team?'enemy':''} ${u.id===selected?'active':''} ${u.dead?'dead':''}" data-unit="${u.id}"><strong>${u.name.toUpperCase()}</strong><span class="badge">${u.tonnage} T</span><small>${u.variant} / ${u.dead?'УНИЧТОЖЕН':u.deployed===false?'ЗА ПРЕДЕЛАМИ ПОЛЯ':u.unconscious?'ПИЛОТ БЕЗ СОЗНАНИЯ':u.shutdown?'ОТКЛЮЧЕН':u.prone?'ЛЕЖИТ':game.canAct(u)?'ВАША ОЧЕРЕДЬ':game.done(u)?'ПРИКАЗ ПРИНЯТ':'ОЖИДАНИЕ'}</small><div class="bar"><span style="width:${ap/max*100}%"></span></div><div class="cardmeta"><span>БРОНЯ ${ap}/${max}</span><span>НАГРЕВ ${u.heat}°</span></div></button>`;}
-function renderUI(){tacticalSettings();const u=game.units[selected],acting=game.canAct(u)&&owned(u)&&!busy;team=hotseat?(game.activeTeam??0):0;
+function renderUI(){refreshMapLabel();tacticalSettings();const u=game.units[selected],acting=game.canAct(u)&&owned(u)&&!busy;team=hotseat?(game.activeTeam??0):0;
 $('#allies').innerHTML=game.units.filter(u=>u.team===0&&!u.notFielded).map(card).join('');$('#enemies').innerHTML=game.units.filter(u=>u.team===1&&!u.notFielded).map(card).join('');for(const [id,t] of [['#allies',0],['#enemies',1]])$(id).previousElementSibling.querySelector('span').textContent=String(game.units.filter(u=>u.team===t&&!u.notFielded).length).padStart(2,'0');document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>selectUnit(+b.dataset.unit));
 $('#round').textContent=`РАУНД ${String(game.round).padStart(2,'0')}`;$('#round').title=`Завершённое игровое время: ${elapsedBattleSeconds(game.round)} с · ${AGOAC_SCALE.turnSeconds} с/ход`;
 $('#phase').textContent=PHASES[game.phase].toUpperCase();
@@ -431,14 +453,16 @@ const rulesURL='https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/
 $('#help').onclick=()=>modal(`<div class="eyebrow">ПОЛЕВОЕ РУКОВОДСТВО</div><h2>Цикл боя AGoAC</h2><ol><li>Бросьте инициативу. Проигравший отряд действует первым. Выберите меха, у которого указано «Ваша очередь».</li><li>Двигайтесь по подсвеченным гексам. Повороты стоят MP. Можно продолжить маршрут или повернуться, затем нажмите «Завершить приказ меха».</li><li>В оружейной фазе выберите торс, оружие и цели. Приказы обоих отрядов фиксируются до разрешения стрельбы. Уже заявленный выстрел происходит даже при уничтожении стрелка в этой фазе.</li><li>Затем заявите физические атаки соседним мехам или пропустите их. После разрешения боя пройдите нагрев и конец хода.</li></ol><h3>Повреждения и пилот</h3><p>Учитываются кормовая броня, критические слоты, двигатель, гироскоп, актуаторы, датчики, боезапас, ранения и сознание пилота. Падение и подъём проверяются кубиками. Вода влияет на движение, стрельбу и охлаждение.</p><h3>Покрытие книги</h3><p>Текущая реализация расширяет базовый бой. <a href="coverage.html" target="_blank">Полный перечень реализованных правил и оставшихся ограничений</a>. В интерфейсе не обозначаются реализованными правила, для которых ещё нет управления или проверки.</p><p>Игра вдвоём — на одном устройстве. Сетевого режима нет. <a href="${rulesURL}" target="_blank">Исходная книга правил</a>.</p>`);
 $('#credits').onclick=()=>modal(`<div class="eyebrow">ИСТОЧНИКИ / ASSET MANIFEST</div><h2>О проекте</h2><p>Неофициальная фан-игра. BattleTech и названия мехов принадлежат их правообладателям. Проект не связан с Catalyst Game Labs.</p><h3>Правила</h3><p><a target="_blank" rel="noopener" href="${rulesURL}">BattleTech: A Game of Armored Combat — Rulebook</a>. Реализовано тактическое подмножество; перечень упрощений — в разделе «Правила».</p><h3>Модели из интернета</h3><p><a href="https://github.com/RamonLinares/atlas-09" target="_blank" rel="noopener">Ramon Linares / FORGE Character Lab</a> — Atlas-09 и Aether-02, лицензия CC0. Настоящие объёмные GLB-модели со скелетной анимацией ходьбы, бега, стрельбы, попаданий и уничтожения.</p><p>Это оригинальные дизайны — визуальные заменители, а не канонические модели Griffin, Wolverine, Shadow Hawk и Thunderbolt.</p><p><a href="ASSET-LICENSE.md" target="_blank">Лицензия моделей</a> · Графика: Three.js (MIT).</p>`);
 $('#rotateL').onclick=()=>{angle-=Math.PI/6;cam();};$('#rotateR').onclick=()=>{angle+=Math.PI/6;cam();};$('#zoomIn').onclick=()=>{zoom=Math.max(5,zoom-1.5);resize();};$('#zoomOut').onclick=()=>{zoom=Math.min(20,zoom+1.5);resize();};$('#resetcam').onclick=()=>{zoom=12;angle=Math.PI/4;cam();};
-function reset(standard=!!game.deployment,setup=null){if(setup){const trial=new Game();const valid=trial.configureSetupForces(setup);if(!valid.ok){toast(valid.error);return false;}}clearDice();game.reset();if(setup)game.configureSetupForces(setup);if(standard)game.startStandardDeployment();game.weather={night:$('#night').checked,gale:$('#gale').checked};game.tacticalOptions={standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked};for(const mesh of tileMeshes){const old=mesh.userData.tile,t=game.tile(old.q,old.r);t.mesh=mesh;t.original=old.original;mesh.userData.tile=t;}selected=0;arcWeapon='all';target=null;team=0;mode='walk';picked=new Set(game.units[0].weapons.map((_,i)=>i));for(const u of game.units){const rec=records.get(u.id);if(!rec)continue;rec.dead=false;rec.removalAnimation=false;rec.root.visible=true;rec.root.position.copy(world(u.q,u.r));rec.root.position.y=groundY(u.q,u.r);rec.root.rotation.y=u.team?-Math.PI/2:Math.PI/2;rec.label.style.display='block';play(u.id,'Sentinel');}syncModels();renderUI();toast(standard?'Новый бой. Бросьте развёртывание.':'Новый бой. Бросьте инициативу.');return true;}
+function reset(standard=!!game.deployment,setup=null){if(setup){const trial=new Game();const map=trial.configureSetupMap(setup.map);if(!map.ok){toast(map.error);return false;}const valid=trial.configureSetupForces(setup);if(!valid.ok){toast(valid.error);return false;}}clearDice();game.reset();if(setup){game.configureSetupMap(setup.map);game.configureSetupForces(setup);}if(standard)game.startStandardDeployment();game.weather={night:$('#night').checked,gale:$('#gale').checked};game.tacticalOptions={standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked};buildTerrain();for(const t of game.tiles){const mesh=arcMeshes.get(t.q+','+t.r);if(mesh){mesh.position.y=groundY(t.q,t.r)+.035;mesh.visible=false;}}selected=0;arcWeapon='all';target=null;team=0;mode='walk';picked=new Set(game.units[0].weapons.map((_,i)=>i));for(const u of game.units){const rec=records.get(u.id);if(!rec)continue;rec.dead=false;rec.removalAnimation=false;rec.root.visible=true;rec.root.position.copy(world(u.q,u.r));rec.root.position.y=groundY(u.q,u.r);rec.root.rotation.y=u.team?-Math.PI/2:Math.PI/2;rec.label.style.display='block';play(u.id,'Sentinel');}syncModels();renderUI();toast(standard?'Новый бой. Бросьте развёртывание.':'Новый бой. Бросьте инициативу.');return true;}
 function showBattleSetup({preferCustom=false}={}){
  const stock=new Game().units,custom=readCustomDesign();
- modal('<h2>Подготовка нового боя</h2><p>Согласуйте состав сторон до броска развёртывания. Текущий бой будет сброшен.</p><div id="setup-forces"></div>'+
+ modal('<h2>Подготовка нового боя</h2><p>Сначала выберите карту, затем состав сторон. Текущий бой будет сброшен.</p><label class="hint">Карта<select id="setup-map"></select></label><label class="hint">Ориентация<select id="setup-map-rotation"></select></label><div id="setup-forces"></div>'+
   '<div id="setup-custom-consent" hidden><p>Нестандартный мех: согласие обеих сторон обязательно.</p>'+
   '<label><input type="checkbox" id="setup-approve-green"> Зелёная сторона согласна</label>'+
   '<label><input type="checkbox" id="setup-approve-red"> Красная сторона согласна</label></div>'+
   '<button class="primary" id="confirmstandard">СТАНДАРТНОЕ РАЗВЁРТЫВАНИЕ AGoAC</button><button id="confirmreset">НАЧАТЬ ЗАНОВО · ГОТОВАЯ РАССТАНОВКА</button>');
+ for(const p of AGOAC_MAP_PRESETS){const option=document.createElement('option');option.value=p.id;option.textContent=p.name;$('#setup-map').append(option);}
+ for(let n=0;n<6;n++){const option=document.createElement('option');option.value=String(n);option.textContent=(n*60)+'°';$('#setup-map-rotation').append(option);}
  const fields=[];
  for(const [i,unit] of stock.entries()){
   const label=document.createElement('label');label.className='hint';
@@ -468,7 +492,7 @@ function showBattleSetup({preferCustom=false}={}){
  function begin(standard){
   const slots=fields.map(x=>x.value==='custom'?'custom':x.value==='none'?null:Number(x.value));
   const approvals=[$('#setup-approve-green').checked,$('#setup-approve-red').checked];
-  if(reset(standard,{slots,custom,approvals}))$('#modal').close();
+  if(reset(standard,{slots,custom,approvals,map:{id:$('#setup-map').value,rotation:Number($('#setup-map-rotation').value)}}))$('#modal').close();
  }
  $('#confirmstandard').onclick=()=>begin(true);
  $('#confirmreset').onclick=()=>begin(false);update();

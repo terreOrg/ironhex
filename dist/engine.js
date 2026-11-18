@@ -2,6 +2,13 @@ import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
 import {construct} from './construction.js';
 export {LOCATIONS,DIRS,distance};
 // AGoAC pp.3–4: logical game scale; visual model dimensions remain illustrative.
+// Digital battlefield presets, not reproductions of the printed mapsheets.
+export const AGOAC_MAP_PRESETS=Object.freeze([
+ Object.freeze({id:'frontier',name:'Приграничье'}),
+ Object.freeze({id:'clear',name:'Открытая равнина'}),
+ Object.freeze({id:'woodland',name:'Лесной рубеж'}),
+ Object.freeze({id:'river',name:'Речная долина'})
+]);
 export const AGOAC_SCALE=Object.freeze({hexMeters:30,levelMeters:6,turnSeconds:10,standingMechLevels:2});
 export const rangeMeters=(a,b)=>distance(a,b)*AGOAC_SCALE.hexMeters;
 export const elapsedBattleSeconds=round=>Math.max(0,round-1)*AGOAC_SCALE.turnSeconds;
@@ -160,7 +167,7 @@ export function defaultMechWarriorSkills(techBase='Inner Sphere'){
  return techBase==='Clan'?{gunnery:3,piloting:4}:{gunnery:4,piloting:5};
 }
 export class Game extends Legacy{
- reset(){super.reset();this.deployment=null;this.setupForces=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
+ reset(){super.reset();this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
  this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
@@ -312,6 +319,36 @@ export class Game extends Legacy{
   this.winner='draw';this.note('Ничья: ни одна сторона больше не может двигаться или наносить урон.');
  }
  // AGoAC p.6: separate setup initiative from turn initiative.
+ // AGoAC p.6: choose the playing area before choosing the forces.
+ // Every preset uses the existing complete radius-six axial board.
+ configureSetupMap({id='frontier',rotation=0}={}){
+  if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
+   this.setupForces!==null||this.setupMap!==null||this.queue.length||
+   this.units.some(u=>u.moved||u.fired||u.physicalDone))return fail('Карту можно выбрать только перед составом и боем');
+  if(!AGOAC_MAP_PRESETS.some(p=>p.id===id)||!Number.isInteger(rotation)||rotation<0||rotation>5)
+   return fail('Неизвестная карта или ориентация');
+  const tiles=this.tiles.map(t=>{
+   let {q,r}=t;let type=t.type,height=t.height,depth=t.depth,surface=t.surface;
+   if(id!=='frontier'){
+    type='plain';height=depth=surface=0;
+    if(id==='woodland'&&Math.abs(q)<4){
+     const n=Math.abs(q*13+r*7+q*r*3)%11;
+     type=n<3?'heavy':n<7?'woods':n===7?'rough':'plain';
+     if(n===9){height=surface=1;type='hill';}
+    }
+    if(id==='river'){
+     const channel=r===0&&q>=-4&&q<=4;
+     if(channel){type='water';depth=Math.abs(q)%2?1:2;height=-depth;}
+     else if(r===1&&Math.abs(q)<4)type='woods';
+     else if(r===-2&&Math.abs(q)<3){type='hill';height=surface=1;}
+    }
+   }
+   for(let n=0;n<rotation;n++)[q,r]=[-r,q+r];
+   return {q,r,type,height,depth,surface};
+  });
+  this.tiles=tiles;this.rebuildMap();this.setupMap={id,rotation};
+  return {ok:true};
+ }
  // AGoAC p.6: choose forces before deployment, with unanimous
  // consent for custom designs. Stable slot IDs keep the existing local
  // renderer's four model instances; empty secondary slots are not fielded.

@@ -2385,3 +2385,40 @@ test('AGoAC p.6: custom force requires unanimous consent and valid construction 
  assert.deepEqual(g.setupForces.customApproved,[true,true]);assert(g.startStandardDeployment().ok);
  const locked=fresh();locked.phase='move';assert(!locked.configureSetupForces({slots:[0,1,2,3]}).ok);
 });
+
+test('AGoAC p.6: map presets preserve full hex geometry and lock before force selection',()=>{
+ for(const id of ['frontier','clear','woodland','river'])for(let rotation=0;rotation<6;rotation++){
+  const g=fresh(),before=g.tiles.length;assert(g.configureSetupMap({id,rotation}).ok);
+  assert.equal(g.tiles.length,before);assert.equal(new Set(g.tiles.map(t=>t.q+','+t.r)).size,before);
+  assert.deepEqual(g.setupMap,{id,rotation});
+  for(let edge=0;edge<6;edge++)assert.equal(g.deploymentEdgeTiles(edge).length,7);
+  const saved=JSON.parse(JSON.stringify(g.tiles));g.tiles=saved;g.rebuildMap();
+  assert.deepEqual(g.tiles,saved);
+  assert(!g.configureSetupMap({id:'clear'}).ok);
+  assert(g.configureSetupForces({slots:[0,null,2,3]}).ok);
+  assert(g.startStandardDeployment().ok);
+ }
+ const g=fresh(),before=JSON.stringify(g.tiles);
+ for(const choice of [{id:'missing'},{id:'clear',rotation:6},{id:'clear',rotation:1.5}]){
+  assert(!g.configureSetupMap(choice).ok);assert.equal(JSON.stringify(g.tiles),before);
+ }
+ assert(g.configureSetupForces({slots:[0,1,2,3]}).ok);
+ assert(!g.configureSetupMap({id:'clear'}).ok);
+});
+test('AGoAC p.6: selected map terrain changes movement and line of sight and rotates exactly',()=>{
+ const clear=fresh(),river=fresh(),rotated=fresh(),wood=fresh();
+ assert(clear.configureSetupMap({id:'clear'}).ok);assert(clear.tiles.every(t=>t.type==='plain'&&t.height===0));
+ assert(river.configureSetupMap({id:'river'}).ok);
+ assert(wood.configureSetupMap({id:'woodland'}).ok);
+ assert(rotated.configureSetupMap({id:'river',rotation:1}).ok);
+ for(const t of river.tiles){
+  const r=rotated.tile(-t.r,t.q+t.r);assert(r);assert.deepEqual([r.type,r.height,r.depth,r.surface],[t.type,t.height,t.depth,t.surface]);
+ }
+ assert.equal(river.tile(0,0).depth,2);assert.equal(river.terrainCost(river.tile(0,0)),4);
+ assert.equal(clear.terrainCost(clear.tile(0,0)),1);
+ assert(wood.tiles.some(t=>t.type==='heavy'));
+ for(const g of [clear,river]){
+  const a=g.units[0],b=g.units[2];Object.assign(a,{q:-4,r:1,prone:false});Object.assign(b,{q:4,r:1,prone:false});
+  assert.equal(g.los(a,b).blocked,g===river);
+ }
+});
