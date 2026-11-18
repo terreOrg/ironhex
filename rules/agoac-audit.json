@@ -585,8 +585,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.6-7: six-phase round and pending-order protection preserve state"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6–7: incomplete deployment cannot advance or erase the completed movement results"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.7: End Phase restores torso and arm orientation and starts a fresh selection cycle"
         }
-      ]
+      ],
+      "reviewNote": "Printed pp.6–7 checked directly. Fixed invalid offboard movement-phase advance to reject before clearing recorded dice, resolution, or follow-up rolls. Added regression for rejected advance and End Phase orientation reset/new round selection. Existing six-phase round test passed #122; new exact CI pending."
     },
     {
       "id": "agoac-005",
@@ -595,7 +604,7 @@
         7
       ],
       "statement": "Use remaining-force ratios at the start of each declaration pair to determine batch sizes for unequal armies.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -618,7 +627,37 @@
           "test": "AGoAC p.7: selection planning terminates for legacy states without an initiative result"
         }
       ],
-      "reviewNote": " Printed p.7: regression expands the two printed examples to 800 initial force/initiative combinations with casualty-excluded counts. Rebatching after mid-phase losses remains a distinct edge case; exact CI pending. Re-reviewed original CAT3500D printed p.7: the ratio is determined before each pair. The tracked unfinished pair is preserved, surplus slots are culled, and future pairs are recalculated from surviving unselected units. Pair metadata persists across JSON; legacy saves without it retain existing order until next phase. Two regressions; corrected pre-existing interrupted-charge fixture which had a completed target still in the queue. Exact CI pending. During the pending CI audit, a nonterminating planning path was discovered for snapshots without an initiative winner. Fix: always use valid team indices and decrement both remaining counts independently; synthetic/legacy missing-initiative states use a documented green-first fallback, normal initiative untouched. Reset drops stale pair metadata. Added regression; exact CI pending."
+      "reviewNote": " Printed p.7: regression expands the two printed examples to 800 initial force/initiative combinations with casualty-excluded counts. Rebatching after mid-phase losses remains a distinct edge case; exact CI pending. Re-reviewed original CAT3500D printed p.7: the ratio is determined before each pair. The tracked unfinished pair is preserved, surplus slots are culled, and future pairs are recalculated from surviving unselected units. Pair metadata persists across JSON; legacy saves without it retain existing order until next phase. Two regressions; corrected pre-existing interrupted-charge fixture which had a completed target still in the queue. Exact CI pending. During the pending CI audit, a nonterminating planning path was discovered for snapshots without an initiative winner. Fix: always use valid team indices and decrement both remaining counts independently; synthetic/legacy missing-initiative states use a documented green-first fallback, normal initiative untouched. Reset drops stale pair metadata. Added regression; exact CI pending. All five exact #122 tests passed; printed examples and phase selection algorithm match. Sonar is separately tracked on main.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Printed p.7 visually checked, including both ratio tables (18:10 and 14:5). All five linked exact tests passed at #122, including 800 force/winner combinations and remaining-pair recalculation across losses/restore; identical merged tree confirmed. Scope limited to declaration selection ratios, not resolution order.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "5543723d537b5b8a778f15a278cb0a09b9e11df2",
+        "testedTree": "249e0badcbb25c26436e11b9b6fea18ef0402dbe",
+        "mergedSha": "50d3cc26a1d46d406e2fbc76f301e42e58aaf34e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44315938960,
+            "jobId": 134841932462,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44315939131,
+            "jobId": 134841941953,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44315939073,
+            "jobId": 134841937570,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-006",
@@ -629,7 +668,7 @@
       ],
       "statement": "Undestroyed immobile and nonattacking units count for selections; declaration order and simultaneity, consciousness before PSRs, Heat and End actions and victory/draw conditions require independent audit.",
       "status": "known_missing",
-      "reviewNote": "Printed pp.6-7 and 30: buildQueue includes surviving immobile and unarmed units and declarations are stored. However resolveFire interleaves to-hit rolls with damage rather than an all-attacks-first stage; resolvePhysical processes charge declarations in unit-array order before other declarations; heat avoidance lacks an explicit conscious-pilot restriction; inherited checkWin handles last-side elimination but has no stalemate draw predicate. Split these into atomic follow-up implementation and regression requirements; do not infer complete timing from green CI. Follow-up separates ordinary weapon to-hit and ammo expenditure from damage and groups damage by target. Physical staging, selectable independent damage ordering, heat and stalemate remain outstanding. Thermal avoidance now distinguishes unconscious/unavailable pilots and automatic below-14 restart; voluntary shutdown/restart and phase PSR interactions remain independently auditable. Ordinary physical attack rolls now staged before ordinary damage, using initiative and immediate displacement exception. Same-side interactive resolution and full charge/DFA effects remain incomplete. Controller can now choose physical attacker order when their side has a remaining displacement-capable attack, grouped by attacker; ordinary weapon damage order is separate. Weapon resolution now offers independent controller choices of target group and weapon for to-hit rolls and successful damage, using the existing replay journal. All declared attacks still roll before any damage. Target groups stay contiguous and each cluster resolves fully. AI uses deterministic declaration order. Controller choice of Mech resolution order and complete victory/heat audit remain open. Browser regression exercises the independent order prompts, authoritative payload and reconnect. At the Mech level, the player can independently select a remaining attacker in each existing initiative-based team slot for the to-hit and damage stage, before selecting that Mech's target/weapon order. Existing declaration ordering supplies the team slots; AI uses declaration order. Added replay regression, with victory/End Phase edge cases and exact CI still pending. Heat ammunition explosion follows p.38 maximum damage per shot; equal-value nonempty bins are now a controller decision, journaled after the failed avoidance roll with no reroll on resume. AI retains deterministic most-rounds fallback. Added deterministic tests; other victory/End Phase cases and exact CI remain pending. Printed p.7: elimination is now checked at the movement boundary too. Permanent mutual lack of movement and damage is checked after End Phase using recovered/cooled capability bounds; surviving in-range weapons and possible adjacent physical attacks prevent a draw. Conservative detection deliberately does not certify map-trapped cases or permanently blocked LOS/attack arcs. The campaign's documented 12-round limit is a separate scenario policy, not the standard AGoAC victory rule. Five new engine regressions; exact CI and remaining cases not yet verified. Original pp.7,38,44: voluntary shutdown/restart is available directly in End Phase, with existing Movement preselection retained as a shortcut. Controller must be available when executing a queued command. Server End Phase authorization is restricted to the owning side. Initiative snapshots actual unconsciousness before the turn, avoiding stale recovery eligibility. Four engine/API regressions. Selection by a pilot who first recovers during End Phase remains a separate UI timing case; exact CI pending. Printed pp.7,38,44: a newly recovered pilot receives the otherwise unavailable End Phase voluntary reactor choice after the successful consciousness roll. Interactive End Phase replay retains the roll, restart is excluded at 30+ heat, and unsuccessful recovery does not prompt. AI fallback retains state. Three engine/API regressions; CI pending. Printed pp.6–7: after a selection, remove queue slots exceeding the count of surviving unselected Mechs, preserving immobile survivors and relative order. Recomputing later pair ratios after mid-phase casualties remains open. Three new regressions; exact CI pending. Pair-aware rebatching implemented in this PR; legacy save limitation documented under agoac-005. Exact CI pending.",
+      "reviewNote": "Printed pp.6-7 and 30: buildQueue includes surviving immobile and unarmed units and declarations are stored. However resolveFire interleaves to-hit rolls with damage rather than an all-attacks-first stage; resolvePhysical processes charge declarations in unit-array order before other declarations; heat avoidance lacks an explicit conscious-pilot restriction; inherited checkWin handles last-side elimination but has no stalemate draw predicate. Split these into atomic follow-up implementation and regression requirements; do not infer complete timing from green CI. Follow-up separates ordinary weapon to-hit and ammo expenditure from damage and groups damage by target. Physical staging, selectable independent damage ordering, heat and stalemate remain outstanding. Thermal avoidance now distinguishes unconscious/unavailable pilots and automatic below-14 restart; voluntary shutdown/restart and phase PSR interactions remain independently auditable. Ordinary physical attack rolls now staged before ordinary damage, using initiative and immediate displacement exception. Same-side interactive resolution and full charge/DFA effects remain incomplete. Controller can now choose physical attacker order when their side has a remaining displacement-capable attack, grouped by attacker; ordinary weapon damage order is separate. Weapon resolution now offers independent controller choices of target group and weapon for to-hit rolls and successful damage, using the existing replay journal. All declared attacks still roll before any damage. Target groups stay contiguous and each cluster resolves fully. AI uses deterministic declaration order. Controller choice of Mech resolution order and complete victory/heat audit remain open. Browser regression exercises the independent order prompts, authoritative payload and reconnect. At the Mech level, the player can independently select a remaining attacker in each existing initiative-based team slot for the to-hit and damage stage, before selecting that Mech's target/weapon order. Existing declaration ordering supplies the team slots; AI uses declaration order. Added replay regression, with victory/End Phase edge cases and exact CI still pending. Heat ammunition explosion follows p.38 maximum damage per shot; equal-value nonempty bins are now a controller decision, journaled after the failed avoidance roll with no reroll on resume. AI retains deterministic most-rounds fallback. Added deterministic tests; other victory/End Phase cases and exact CI remain pending. Printed p.7: elimination is now checked at the movement boundary too. Permanent mutual lack of movement and damage is checked after End Phase using recovered/cooled capability bounds; surviving in-range weapons and possible adjacent physical attacks prevent a draw. Conservative detection deliberately does not certify map-trapped cases or permanently blocked LOS/attack arcs. The campaign's documented 12-round limit is a separate scenario policy, not the standard AGoAC victory rule. Five new engine regressions; exact CI and remaining cases not yet verified. Original pp.7,38,44: voluntary shutdown/restart is available directly in End Phase, with existing Movement preselection retained as a shortcut. Controller must be available when executing a queued command. Server End Phase authorization is restricted to the owning side. Initiative snapshots actual unconsciousness before the turn, avoiding stale recovery eligibility. Four engine/API regressions. Selection by a pilot who first recovers during End Phase remains a separate UI timing case; exact CI pending. Printed pp.7,38,44: a newly recovered pilot receives the otherwise unavailable End Phase voluntary reactor choice after the successful consciousness roll. Interactive End Phase replay retains the roll, restart is excluded at 30+ heat, and unsuccessful recovery does not prompt. AI fallback retains state. Three engine/API regressions; CI pending. Printed pp.6–7: after a selection, remove queue slots exceeding the count of surviving unselected Mechs, preserving immobile survivors and relative order. Recomputing later pair ratios after mid-phase casualties remains open. Three new regressions; exact CI pending. Pair-aware rebatching implemented in this PR; legacy save limitation documented under agoac-005. Exact CI pending. Re-reviewed printed pp.6–7, including attack declaration immutability and all five listed End Phase actions. Added a no-reroll immutable declaration and torso/arm lock test. Remaining detailed phase resolution and victory/stalemate audit stays open. Do not treat passing ratio tests as complete resolution-order evidence.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -758,6 +797,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.7: a large-side batch already in progress survives casualty and JSON restore"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: weapon declarations and facing commitments cannot change after selection"
         }
       ]
     },
