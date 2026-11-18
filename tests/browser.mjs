@@ -1157,3 +1157,21 @@ test('AGoAC p.6: joined mapsheets can be selected independently in local battle 
   assert.equal(await page.locator('#viewport').getAttribute('data-hex-count'),'127');
  });
 });
+
+test('AGoAC p.6: additional local Mech models and records follow roster changes',{timeout:120000},async()=>{
+ await withPage('expanded-local-roster',{noWebGL:true},async page=>{
+  await page.locator('#new').click();
+  await page.locator('#setup-add-green').click();await page.locator('#setup-add-green').click();
+  await page.locator('#setup-add-red').click();
+  assert.equal(await page.locator('[data-extra-team="0"]').count(),2);
+  await page.locator('[data-remove-extra="0"]').first().click();
+  await page.locator('[data-extra-team="0"]').selectOption('3');
+  await page.locator('#confirmreset').click();
+  assert.equal(await page.locator('#allies .unitcard').count(),3);assert.equal(await page.locator('#enemies .unitcard').count(),3);
+  assert.equal(await page.locator('#labels .mechlabel[data-on-map="true"]').count(),6);
+  await page.locator('#all-records').click();assert.equal(await page.locator('#record-list [data-record-id]').count(),6);
+  await page.locator('#close').click();await page.locator('#new').click();await page.locator('#confirmreset').click();
+  assert.equal(await page.locator('#labels .mechlabel').count(),4);
+  assert.equal(await page.locator('#allies .unitcard').count(),2);
+ });
+});

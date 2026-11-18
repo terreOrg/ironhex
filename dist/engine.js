@@ -401,15 +401,20 @@ export class Game extends Legacy{
  // AGoAC p.6: choose forces before deployment, with unanimous
  // consent for custom designs. Stable slot IDs keep the existing local
  // renderer's four model instances; empty secondary slots are not fielded.
- configureSetupForces({slots,custom=null,approvals=[]}={}){
+ configureSetupForces({slots,extra=[],custom=null,approvals=[]}={}){
   if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
    this.setupForces!==null||this.queue.length||this.units.some(u=>u.moved||u.fired||u.physicalDone))
    return fail('Состав можно выбрать только перед боем');
-  if(!Array.isArray(slots)||slots.length!==4||slots.some((v,i)=>
-   !(v==='custom'||Number.isInteger(v)&&v>=0&&v<4||v===null&&i%2===1))||
-   slots.filter(v=>v==='custom').length>1)return fail('Недопустимый состав отрядов');
+  const validChassis=v=>v==='custom'||Number.isInteger(v)&&v>=0&&v<4;
+  if(!Array.isArray(slots)||slots.length!==4||slots.some((v,i)=>!(validChassis(v)||v===null&&i%2===1))||
+   !Array.isArray(extra)||extra.length>12||extra.some(v=>!v||![0,1].includes(v.team)||!validChassis(v.stock)))
+   return fail('Недопустимый состав отрядов');
+  const counts=[0,1].map(t=>slots.slice(t*2,t*2+2).filter(v=>v!==null).length+extra.filter(v=>v.team===t).length);
+  if(counts.some(n=>n>8)||slots.filter(v=>v==='custom').length+extra.filter(v=>v.stock==='custom').length>1)
+   return fail('До восьми мехов на сторону и один сохранённый нестандартный проект');
+  const usesCustom=slots.includes('custom')||extra.some(v=>v.stock==='custom');
   let design=null;
-  if(slots.includes('custom')){
+  if(usesCustom){
    if(!Array.isArray(approvals)||approvals.length!==2||approvals.some(v=>v!==true))
     return fail('Нужно согласие обеих сторон на нестандартный мех');
    if(!custom||!custom.config||typeof custom.config!=='object')return fail('Нет проекта меха');
@@ -419,16 +424,31 @@ export class Game extends Legacy{
    if(p!=null&&(!Number.isInteger(p.gunnery)||!Number.isInteger(p.piloting)||
      p.gunnery<0||p.gunnery>8||p.piloting<0||p.piloting>8))return fail('Некорректные навыки пилота');
   }
-  const stock=structuredClone(this.units);
-  this.units=stock.map((position,i)=>{
-   const v=slots[i];
+  const stock=structuredClone(this.units),configured=[];
+  const make=(position,i,v)=>{
    if(v===null)return {...position,notFielded:true,dead:true,deployed:false};
    const unit=v==='custom'?{...structuredClone(position),...structuredClone(design.unit)}:structuredClone(stock[v]);
    if(v==='custom'&&custom.pilot)Object.assign(unit,{gunnery:custom.pilot.gunnery,piloting:custom.pilot.piloting});
    return {...unit,id:i,team:position.team,q:position.q,r:position.r,facing:position.facing,
     moveStart:{q:position.q,r:position.r},notFielded:false};
-  });
-  this.setupForces={slots:[...slots],customApproved:slots.includes('custom')?[true,true]:null};
+  };
+  for(const [i,position] of stock.entries())configured.push(make(position,i,slots[i]));
+  // Reserve the legacy positions even for empty slots. Extra units get
+  // independent legal, unoccupied dry hexes near their side. These are
+  // only staging coordinates; standard deployment starts offboard.
+  const used=new Set(configured.map(u=>key(u.q,u.r)));
+  for(const v of extra){
+   const candidates=this.tiles.filter(t=>!t.depth&&!t.building?.cf&&!used.has(key(t.q,t.r)));
+   const side=t=>t.q+t.r/2;
+   candidates.sort((a,b)=>(v.team?side(b)-side(a):side(a)-side(b))||Math.abs(a.r)-Math.abs(b.r)||a.r-b.r||a.q-b.q);
+   const tile=candidates[0];
+   if(!tile)return fail('Недостаточно свободных гексов для состава');
+   used.add(key(tile.q,tile.r));
+   const position={...stock[v.team*2],team:v.team,q:tile.q,r:tile.r,facing:v.team?3:0};
+   configured.push(make(position,configured.length,v.stock));
+  }
+  this.units=configured;
+  this.setupForces={slots:[...slots],extra:extra.map(v=>({team:v.team,stock:v.stock})),customApproved:usesCustom?[true,true]:null};
   return {ok:true};
  }
  startStandardDeployment(){
