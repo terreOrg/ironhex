@@ -39,9 +39,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          image_tag="ironhex-web-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}"
-          container="ironhex-web-smoke-${GITHUB_RUN_ID}"
-          trap 'docker logs "$container" 2>/dev/null || true; docker rm -f "$container" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
+          image_tag="ironhex-web-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          container="ironhex-web-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker logs "$container" 2>/dev/null || true; docker rm -fv "$container" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
           docker build --tag "$image_tag" .
           docker run -d --rm --name "$container" \
             --cap-drop ALL --security-opt no-new-privileges \
@@ -64,15 +64,24 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          image_tag="ironhex-api-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}"
-          database="ironhex-postgres-smoke-${GITHUB_RUN_ID}"
-          api="ironhex-api-smoke-${GITHUB_RUN_ID}"
-          trap 'docker logs "$api" 2>/dev/null || true; docker logs "$database" 2>/dev/null || true; docker rm -f "$api" "$database" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
+          image_tag="ironhex-api-ci:${GITHUB_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          database="ironhex-postgres-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          api="ironhex-api-smoke-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          trap 'docker logs "$api" 2>/dev/null || true; docker logs "$database" 2>/dev/null || true; docker rm -fv "$api" "$database" >/dev/null 2>&1 || true; docker image rm -f "$image_tag" >/dev/null 2>&1 || true' EXIT
           docker build -f apps/api/Dockerfile --tag "$image_tag" .
           # Both containers share one isolated network namespace; neither publishes host ports.
           docker run -d --rm --name "$database" \
+            --mount type=tmpfs,destination=/var/lib/postgresql/data,tmpfs-size=536870912 \
             -e POSTGRES_USER=ironhex -e POSTGRES_DB=ironhex \
             -e POSTGRES_PASSWORD=ci-only-not-a-real-secret postgres:17-alpine
+          # Regression guard: PG17 declares this directory as a Docker VOLUME.
+          # The explicit tmpfs must override it; no anonymous volume may be created.
+          docker exec "$database" grep -q " /var/lib/postgresql/data tmpfs " /proc/mounts
+          volumes=$(docker inspect --format '{{range .Mounts}}{{if eq .Type "volume"}}{{println .Name}}{{end}}{{end}}' "$database")
+          if [ -n "$volumes" ]; then
+            echo "Unexpected persistent PostgreSQL smoke volumes: $volumes" >&2
+            exit 1
+          fi
           # PostgreSQL's temporary bootstrap server accepts Unix-socket queries,
           # then shuts down. Test the final TCP listener to avoid that race.
           ready=0
@@ -108,3 +117,23 @@ jobs:
           docker exec "$api" node /app/tests/operations-integration.mjs
           docker exec "$api" node /app/tests/market-integration.mjs
           echo "PostgreSQL migrations, auth registration/login, health and catalogue verified."
+
+      - name: Always clean isolated smoke resources
+        if: always() && steps.plan.outputs.skip_smoke != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          suffix="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          docker info >/dev/null
+          # Only this attempt's resources; never prune host or production volumes.
+          for container in "ironhex-api-smoke-$suffix" "ironhex-postgres-smoke-$suffix" "ironhex-web-smoke-$suffix"; do
+            if docker container inspect "$container" >/dev/null 2>&1; then
+              docker rm -fv "$container"
+            fi
+          done
+          for image in "ironhex-api-ci:${GITHUB_SHA:0:12}-$suffix" "ironhex-web-ci:${GITHUB_SHA:0:12}-$suffix"; do
+            if docker image inspect "$image" >/dev/null 2>&1; then
+              docker image rm -f "$image"
+            fi
+          done
+          echo "Isolated smoke resources cleaned"
