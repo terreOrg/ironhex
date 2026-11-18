@@ -1659,7 +1659,7 @@ test('AGoAC p.42: AI movement pauses for a human domino victim and resumes the s
 });
 test('AGoAC pp.26,42: interrupted charge approach cannot declare a phantom attack',()=>{
  const g=fresh(),[u,ally,t,other]=g.units;
- g.phase='move';g.activeTeam=0;g.queue=[0,1,0,1];
+ g.phase='move';g.activeTeam=0;g.initiativeWinner=0;g.queue=[0,1,0];
  for(const hex of g.tiles)Object.assign(hex,{type:'plain',depth:0,height:0,surface:0});
  Object.assign(u,{q:0,r:0,facing:0,walk:4,moveStart:{q:0,r:0}});
  Object.assign(ally,{q:1,r:0,facing:1,walk:4,spent:0});
@@ -1673,7 +1673,7 @@ test('AGoAC pp.26,42: interrupted charge approach cannot declare a phantom attac
  assert(choice);const result=g.nextPhaseWithChoices({choice:{key:p.key,option:choice.id}});
  assert(result.ok&&result.chargeInterrupted);assert.equal(g.unit(u.id).charge,null);
  assert.equal(g.unit(u.id).prone,true);assert.equal(g.unit(u.id).moved,true);
- assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);assert.equal(g.queue.length,3);
+ assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[1,0]);assert.deepEqual(g.queue,[1,0]);
 });
 
 test('AGoAC pp.9,11: minimum movement cannot bypass phase, declared mode or ammunition restrictions',()=>{
@@ -1874,4 +1874,94 @@ test('AGoAC p.11: one-MP minimum stand consumes movement and permits free facing
  assert(!u.prone);assert.equal(u.facing,4);assert.equal(u.spent,1);
  assert.equal(u.moveMode,'run');assert(!g.reachable(u,'run').length);
  assert(!g.rotate(u.id,1,{mode:'run'}).ok);assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,3);
+});
+
+test('AGoAC pp.6–7: casualties before selection cannot leave impossible orders',()=>{
+ const g=fresh(),[a,b,c,d]=g.units;
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ assert.deepEqual(g.queue,[0,1,0,1]);
+ // The last surviving opponent is destroyed before receiving an order.
+ g.destroyMech(c);g.destroyMech(d);
+ assert(g.onMap(c));assert(g.onMap(d));
+ assert(g.hold(a.id).ok);
+ assert.deepEqual(g.queue,[0]);assert.equal(g.activeTeam,0);
+ assert(g.canAct(b));assert(g.hold(b.id).ok);
+ assert.deepEqual(g.queue,[]);assert.equal(g.activeTeam,null);
+ assert(g.nextPhase().ok);assert.equal(g.winner,0);
+ assert(!g.onMap(c));assert(!g.onMap(d));
+});
+test('AGoAC pp.6–7: an immobile survivor keeps its order when a teammate is destroyed',()=>{
+ const g=fresh(),[a,b,c,d]=g.units;
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ g.destroyMech(c);d.shutdown=true;
+ assert(g.hold(a.id).ok);assert.deepEqual(g.queue,[1,0]);
+ assert(g.canAct(d));assert(g.isImmobile(d));assert(g.hold(d.id).ok);
+ assert(g.canAct(b));assert(g.hold(b.id).ok);
+ assert.deepEqual(g.queue,[]);assert.equal(g.winner,null);
+ assert(g.nextPhase().ok);assert.equal(g.phase,'fire');
+});
+test('AGoAC p.7: declaration batches obey remaining-force ratio for forces of one to twenty',()=>{
+ const g=fresh();
+ for(let left=1;left<=20;left++)for(let right=1;right<=20;right++)for(const winner of [0,1]){
+  g.initiativeWinner=winner;g.phase='move';
+  g.units=[...Array.from({length:left},(_,i)=>({id:i,team:0,dead:false})),
+   ...Array.from({length:right},(_,i)=>({id:left+i,team:1,dead:false})),
+   {id:left+right,team:0,dead:true},{id:left+right+1,team:1,dead:true}];
+  g.buildQueue();
+  let cursor=0,a=left,b=right;
+  while(a&&b){
+   const n0=a>=2*b?Math.floor(a/b):1,n1=b>=2*a?Math.floor(b/a):1;
+   const pair=winner===0?[...Array(n1).fill(1),...Array(n0).fill(0)]:[...Array(n0).fill(0),...Array(n1).fill(1)];
+   assert.deepEqual(g.queue.slice(cursor,cursor+pair.length),pair,`${left}:${right}, winner ${winner}`);
+   cursor+=pair.length;a-=n0;b-=n1;
+  }
+  assert.deepEqual(g.queue.slice(cursor),[...Array(a).fill(0),...Array(b).fill(1)]);
+  assert.equal(g.queue.length,left+right);
+ }
+});
+
+test('AGoAC p.7: casualties change the next declaration pair ratio, not the unfinished pair',()=>{
+ const g=fresh(),template=structuredClone(g.units[0]);
+ g.units=Array.from({length:7},(_,id)=>({...structuredClone(template),id,team:id<4?0:1}));
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ assert.deepEqual(g.queue,[0,1,0,1,0,0,1]);
+ g.destroyMech(g.units[6]);
+ assert(g.hold(0).ok);
+ assert.deepEqual(g.queue,[1,0,0,0,1]);
+ assert.equal(g.selectionBatch.remaining,1);
+ assert(g.hold(4).ok);
+ assert.deepEqual(g.queue,[0,0,0,1]);
+ assert.equal(g.selectionBatch.remaining,4);
+ for(const id of [1,2,3,5])assert(g.hold(id).ok);
+ assert.deepEqual(g.queue,[]);assert.equal(g.activeTeam,null);
+});
+test('AGoAC p.7: a large-side batch already in progress survives casualty and JSON restore',()=>{
+ const g=fresh(),template=structuredClone(g.units[0]);
+ g.units=Array.from({length:9},(_,id)=>({...structuredClone(template),id,team:id<6?0:1}));
+ g.phase='move';g.initiativeWinner=1;g.buildQueue();
+ assert.deepEqual(g.queue,[0,0,1,0,0,1,0,0,1]);
+ g.destroyMech(g.units[7]);g.destroyMech(g.units[8]);
+ assert(g.hold(0).ok);
+ assert.deepEqual(g.queue,[0,1,0,0,0,0]);
+ assert.equal(g.selectionBatch.remaining,2);
+ const restored=new Game({rng:()=>.5});
+ Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
+ restored.rebuildMap();
+ assert(restored.hold(1).ok);assert.equal(restored.activeTeam,1);
+ assert(restored.hold(6).ok);assert.deepEqual(restored.queue,[0,0,0,0]);
+ for(const id of [2,3,4,5])assert(restored.hold(id).ok);
+ assert.deepEqual(restored.queue,[]);assert.equal(restored.activeTeam,null);
+});
+
+test('AGoAC p.7: selection planning terminates for legacy states without an initiative result',()=>{
+ for(const missing of [undefined,null]){
+  const g=fresh();g.phase='move';g.initiativeWinner=missing;
+  g.buildQueue();assert.deepEqual(g.queue,[0,1,0,1]);
+  assert.equal(g.activeTeam,0);
+  for(const id of [0,2,1,3])assert(g.hold(id).ok);
+  assert.deepEqual(g.queue,[]);assert.equal(g.activeTeam,null);
+  assert(g.nextPhase().ok);assert.equal(g.phase,'fire');
+  assert.deepEqual(g.queue,[0,1,0,1]);
+  g.reset();assert.equal(g.selectionBatch,null);
+ }
 });

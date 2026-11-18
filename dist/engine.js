@@ -149,7 +149,7 @@ export function defaultMechWarriorSkills(techBase='Inner Sphere'){
  return techBase==='Clan'?{gunnery:3,piloting:4}:{gunnery:4,piloting:5};
 }
 export class Game extends Legacy{
- reset(){super.reset();this.deployment=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
+ reset(){super.reset();this.deployment=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
  this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
@@ -212,8 +212,59 @@ export class Game extends Legacy{
  isImmobile(u){return !this.mobile(u)||['LA','RA','LL','RL'].every(l=>u.structure?.[l]===0);}
  done(u){return this.phase==='move'?u.moved:this.phase==='fire'?u.fired:u.physicalDone;}
  canAct(u){return !!u&&this.winner===null&&!u.dead&&u.team===this.activeTeam&&!this.done(u)&&(this.actingId===null||this.actingId===u.id);}
- buildQueue(){let counts=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead).length),order=[1-this.initiativeWinner,this.initiativeWinner];this.queue=[];while(counts.some(Boolean)){let batches=counts.map((n,i)=>n?Math.min(n,Math.max(1,Math.floor(n/Math.max(1,counts[1-i])))):0);for(const t of order)for(let k=0;k<batches[t];k++)this.queue.push(t);counts=counts.map((n,i)=>n-batches[i]);}this.activeTeam=this.queue[0]??null;this.actingId=null;}
- finish(u){if(this.phase==='move')u.moved=true;else if(this.phase==='fire')u.fired=true;else u.physicalDone=true;this.queue.shift();this.activeTeam=this.queue[0]??null;this.actingId=null;}
+ // AGoAC p.7: ratios are established before each declaration pair,
+ // not continuously while the two sides are completing that pair.
+ selectionPlan(remaining){
+  // Old snapshots and direct scenario fixtures may have no initiative
+  // result. Only the normal initiative phase establishes a real winner.
+  // Use green-first order for that compatibility case, never an invalid
+  // array index that prevents the planning loop from making progress.
+  const winner=this.initiativeWinner===0?0:1;
+  const counts=[...remaining],order=[1-winner,winner],slots=[];
+  let firstPair=0;
+  while(counts.some(Boolean)){
+   const batches=counts.map((n,i)=>n?Math.min(n,Math.max(1,Math.floor(n/Math.max(1,counts[1-i])))):0);
+   if(!slots.length)firstPair=batches[0]+batches[1];
+   for(const t of order)for(let k=0;k<batches[t];k++)slots.push(t);
+   counts[0]-=batches[0];counts[1]-=batches[1];
+  }
+  return {slots,firstPair};
+ }
+ saveSelectionPlan(pairLength){
+  this.selectionBatch={phase:this.phase,remaining:pairLength,signature:this.queue.join(',')};
+  this.activeTeam=this.queue[0]??null;
+ }
+ buildQueue(){
+  const remaining=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead).length);
+  const {slots,firstPair}=this.selectionPlan(remaining);
+  this.queue=slots;this.actingId=null;this.saveSelectionPlan(firstPair);
+ }
+ // Preserve the unfinished pair and recompute later pairs from surviving
+ // unselected Mechs. Incapacitated but living Mechs still count.
+ // Older saves without pair metadata retain their existing order until
+ // the next phase rather than guessing where their partial pair began.
+ skipExhaustedSelections(pairLength=null){
+  const remaining=[0,1].map(team=>this.units.filter(v=>v.team===team&&!v.dead&&!this.done(v)).length);
+  const keep=team=>{
+   if(remaining[team]<=0)return false;
+   remaining[team]--;return true;
+  };
+  if(pairLength===null){
+   this.queue=this.queue.filter(keep);
+   this.selectionBatch=null;this.activeTeam=this.queue[0]??null;return;
+  }
+  const current=this.queue.slice(0,pairLength).filter(keep);
+  const {slots,firstPair}=this.selectionPlan(remaining);
+  this.queue=[...current,...slots];
+  this.saveSelectionPlan(current.length||firstPair);
+ }
+ finish(u){
+  const batch=this.selectionBatch;
+  const tracked=batch?.phase===this.phase&&batch.signature===this.queue.join(',')&&batch.remaining>0;
+  if(this.phase==='move')u.moved=true;else if(this.phase==='fire')u.fired=true;else u.physicalDone=true;
+  this.queue.shift();this.actingId=null;
+  this.skipExhaustedSelections(tracked?batch.remaining-1:null);
+ }
  // AGoAC p.7: a stalemate requires both sides to lack any future
  // movement AND any means of damaging their opponents. Use a cooled,
  // recovered copy so temporary shutdown, unconsciousness or heat cannot
