@@ -2781,3 +2781,20 @@ test('AGoAC pp.6–7: victory terminates the current phase without announcing or
   assert(!g.nextPhase().ok);assert.equal(calls,1);assert.equal(JSON.stringify({phase:g.phase,round:g.round,log:g.log,queue:g.queue}),old);
  }
 });
+
+
+test('AGoAC p.7: optional agreed pregame victory terms are locked and checked only after a complete round',()=>{
+ const g=fresh();assert.equal(g.victoryTerms,null);
+ for(const [roundLimit,approvals] of [[0,[true,true]],[1001,[true,true]],[1.5,[true,true]],[2,[true,false]],[2,[true]],[2,[1,1]]]){
+  assert(!g.configureVictoryTerms({roundLimit,approvals}).ok);assert.equal(g.victoryTerms,null);
+ }
+ const approvals=[true,true];assert(g.configureVictoryTerms({roundLimit:2,approvals}).ok);approvals[0]=false;
+ assert.deepEqual(g.victoryTerms,{roundLimit:2,approvals:[true,true]});assert(!g.configureVictoryTerms({roundLimit:4,approvals:[true,true]}).ok);
+ g.phase='end';g.queue=[];g.activeTeam=null;assert(g.nextPhase().ok);assert.equal(g.round,2);assert.equal(g.winner,null);
+ g.checkWin();assert.equal(g.winner,null);
+ g.phase='end';assert(g.nextPhase().ok);assert.equal(g.winner,'draw');assert.equal(g.phase,'end');assert(g.log.some(x=>x.includes('лимит раундов')));
+ assert(!g.nextPhase().ok);g.reset();assert.equal(g.victoryTerms,null);
+ const started=fresh();assert(started.startStandardDeployment().ok);assert(!started.configureVictoryTerms({roundLimit:2,approvals:[true,true]}).ok);
+ const win=fresh();assert(win.configureVictoryTerms({roundLimit:1,approvals:[true,true]}).ok);win.phase='end';win.queue=[];for(const u of win.units.filter(u=>u.team===1))win.destroyMech(u);assert(win.nextPhase().ok);assert.equal(win.winner,0);
+ const standard=fresh();standard.round=1001;standard.checkWin({stalemate:true});assert.equal(standard.winner,null);
+});

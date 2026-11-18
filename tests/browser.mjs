@@ -1182,3 +1182,20 @@ test('AGoAC p.6: additional local Mech models and records follow roster changes'
   assert.equal(await page.locator('#allies .unitcard').count(),2);
  });
 });
+
+
+test('AGoAC p.7: hotseat round-limit victory terms require fresh approval by both sides',{timeout:120000},async()=>{
+ await withPage('setup-victory-consent',{noWebGL:true},async page=>{
+  await page.locator('#gamemode').selectOption('hotseat');await page.locator('#new').click();
+  assert(await page.locator('#confirmreset').isEnabled());
+  await page.locator('#setup-victory').selectOption('limit');
+  assert(await page.locator('#confirmreset').isDisabled());
+  await page.locator('#setup-victory-green').check();assert(await page.locator('#confirmreset').isDisabled());
+  await page.locator('#setup-victory-red').check();assert(await page.locator('#confirmreset').isEnabled());
+  await page.locator('#setup-round-limit').fill('2');await page.locator('#setup-round-limit').blur();
+  assert(await page.locator('#confirmreset').isDisabled());assert(!(await page.locator('#setup-victory-green').isChecked()));assert(!(await page.locator('#setup-victory-red').isChecked()));
+  await page.locator('#setup-victory-green').check();await page.locator('#setup-victory-red').check();
+  await page.locator('#confirmreset').click();await page.locator('#modal').waitFor({state:'hidden'});
+  assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/);
+ });
+});
