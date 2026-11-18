@@ -2871,3 +2871,16 @@ test('AGoAC p.7: a potential future attack prevents premature stalemate even if 
   u.actuators[arm].shoulder=true;assert(!g.canEverDamage(u,[v]));g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
  }
 });
+
+
+test('AGoAC p.7: exceptional standard stalemate requires both conditions confirmed by both sides at a round boundary',()=>{
+ const g=fresh(),yes={cannotMove:true,cannotDamage:true},confirmed=[yes,yes];
+ assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);g.phase='end';g.queue=[];assert(g.nextPhase().ok);assert(g.canAdjudicateStalemate());
+ for(const confirmations of [[],[yes],[yes,{cannotMove:true,cannotDamage:false}],[{cannotMove:false,cannotDamage:true},yes]]){
+  assert(!g.adjudicateStalemate({confirmations}).ok);assert.equal(g.winner,null);
+ }
+ g.pendingChoice={kind:'x'};assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);g.pendingChoice=null;
+ g.units[0].deployed=false;assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);g.units[0].deployed=true;
+ assert(g.adjudicateStalemate({confirmations:confirmed}).ok);assert.equal(g.winner,'draw');assert(!g.nextPhase().ok);assert(!g.adjudicateStalemate({confirmations:confirmed}).ok);
+ const custom=fresh();assert(custom.configureVictoryTerms({roundLimit:5,approvals:[true,true]}).ok);custom.phase='end';custom.queue=[];assert(custom.nextPhase().ok);assert(!custom.canAdjudicateStalemate());
+});
