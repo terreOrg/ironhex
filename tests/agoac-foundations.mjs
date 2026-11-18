@@ -2674,3 +2674,22 @@ test('AGoAC pp.7,19–21: permanently prone fixed-facing Mechs cannot use an out
  w.rear=false;u.facing=0;assert(g.canEverDamage(u,[v]));
  u.facing=3;g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
 });
+
+
+test('AGoAC pp.7,13: an adjacent immutable hill blocks fire independently of the distant Mech height',()=>{
+ const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+ g.units[1].dead=true;g.units[3].dead=true;
+ Object.assign(u,{q:-2,r:0});Object.assign(v,{q:2,r:0});
+ Object.assign(g.tile(v.q,v.r),{type:'hill',height:4,surface:4});
+ const near=g.tile(-1,0),middle=g.tile(0,0);
+ Object.assign(near,{type:'hill',height:2,surface:2});
+ const w=u.weapons[0];Object.assign(w,{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,rack:0,indirect:false,ranges:[3,6,9]});
+ assert(g.permanentHillBlocks(u,v));assert(g.permanentHillBlocks(v,u));
+ assert(g.los(u,v).blocked);assert(g.los(v,u).blocked);
+ assert(!g.canEverDamage(u,[v]));
+ near.height=1;near.surface=1;assert(!g.permanentHillBlocks(u,v));assert(g.canEverDamage(u,[v]));
+ near.height=0;near.surface=0;middle.height=2;middle.surface=2;
+ assert(!g.permanentHillBlocks(u,v));assert(g.canEverDamage(u,[v]));
+ middle.height=0;middle.surface=0;near.height=2;near.surface=2;
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+});
