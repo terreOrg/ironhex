@@ -1616,3 +1616,13 @@ test('AGoAC p.7: permanent stalemate distinguishes usable ammunition and maximum
   assert.equal(g.winner,condition==='loaded'?null:'draw',condition);
  }
 });
+
+ test('AGoAC pp.7,12: prone Mechs with no ground MP cannot escape by jumping',()=>{
+ const g=fresh(),u=g.units[0];
+ Object.assign(g.tile(u.q,u.r),{type:'plain',height:0,surface:0,depth:0});
+ Object.assign(u,{walk:0,jump:3,jumpLost:0,heat:0,prone:true});
+ assert.equal(g.mp(u,'walk'),0);assert(g.mp(u,'jump')>0);
+ assert.equal(g.canEverMove(u),false);
+ u.prone=false;assert.equal(g.canEverMove(u),true);
+ u.prone=true;u.walk=1;assert.equal(g.canEverMove(u),true);
+ });
