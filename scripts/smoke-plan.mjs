@@ -6,7 +6,7 @@ export function canSkipSmoke(paths){
  return Array.isArray(paths)&&paths.length>0&&paths.every(p=>
   /^(?:packages\/engine\/[^/]+\.js|apps\/web\/src\/[^/]+\.(?:js|css|html)|dist\/[^/]+\.(?:js|css|html)|tests\/agoac-foundations\.mjs|rules\/[^/]+\.json|docs\/[^/]+\.md|README\.md)$/.test(p));
 }
-const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const git=(...args)=>execFileSync('/usr/bin/git',args,{encoding:'utf8',env:{...process.env,PATH:'/usr/bin:/bin'}}).trim();
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  let skip=false;
  try{

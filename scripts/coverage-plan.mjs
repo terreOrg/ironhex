@@ -13,7 +13,7 @@ export function reusableRun(runs,sha,name){
 export function matchingArtifact(artifacts,name){
  return artifacts.some(a=>a.name===name&&!a.expired&&a.size_in_bytes>0);
 }
-const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
+const git=(...args)=>execFileSync('/usr/bin/git',args,{encoding:'utf8',env:{...process.env,PATH:'/usr/bin:/bin'}}).trim();
 async function api(path){
  const r=await fetch('https://api.github.com/repos/'+process.env.GITHUB_REPOSITORY+path,{headers:{
  Authorization:'Bearer '+process.env.GITHUB_TOKEN,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','User-Agent':'ironhex-coverage-plan'
