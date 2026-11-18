@@ -2208,3 +2208,29 @@ test('AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hit
  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;u.moveMode='stand';u.spent=0;
  assert.equal(g.stand(u.id).ok,false);assert(g.rotate(u.id,1).ok);assert.equal(g.rotate(u.id,1).ok,false);
 });
+
+test('AGoAC pp.4–5: critical table distinguishes empty reroll slots and destroyed equipment',()=>{
+ const u=fresh().units[0];u.slots.LT[0]=null;u.slots.LT[1]='sink';u.slots.LT[2]='jump';
+ for(const emptyMarked of [false,true]){
+  u.crit.LT[0]=emptyMarked;u.crit.LT[1]=true;u.crit.LT[2]=false;
+  const html=recordSheet(u);
+  assert.match(html,/data-critical-slot="LT:1" data-slot-state="empty" style="">1\. Повторить бросок<\/div>/);
+  assert.match(html,/data-critical-slot="LT:2" data-slot-state="destroyed" style="[^"]+">2\. ● Радиатор<\/div>/);
+  assert.match(html,/data-critical-slot="LT:3" data-slot-state="intact" style="">3\. ○ Прыжковый двигатель<\/div>/);
+  assert(html.includes('Правая рука / нога → правый торс → центр торса'));
+  assert(html.includes('Левая рука / нога → левый торс → центр торса'));
+  assert(html.includes('Голова и центр торса: переноса нет'));
+ }
+});
+test('AGoAC p.5: weapons inventory reflects names locations ranges heat damage and ammunition',()=>{
+ const g=fresh();
+ for(const u of g.units){
+  const html=recordSheet(u),tbody=html.match(/<tbody>(<tr><td>[\s\S]*?)<\/tbody>/)[1];
+  const rows=[...tbody.matchAll(/<tr>(.*?)<\/tr>/g)];
+  assert.equal(rows.length,u.weapons.length);
+  for(const [i,w] of u.weapons.entries()){
+   const cells=[...rows[i][1].matchAll(/<td>(.*?)<\/td>/g)].map(m=>m[1]);
+   assert.deepEqual(cells,[w.name+(w.rear?' (R)':''),w.location,String(w.heat),String(w.rack?w.rack+'×'+w.damage:w.damage),String(w.min||'—'),...w.ranges.map(String),String(w.ammo??'∞')]);
+  }
+ }
+});

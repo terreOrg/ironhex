@@ -143,7 +143,7 @@
       ],
       "statement": "Audit scales, sheet definitions, pilot skills and injury rules against state and user-visible sheets.",
       "status": "tested_case",
-      "reviewNote": "The printed introduction was reviewed against the current scale constants, pilot data and record sheet. Existing tests establish concrete cases; this is an umbrella entry, not a claim of complete coverage. The remaining child requirements and scenario cross-references must be individually verified before closing foundations.",
+      "reviewNote": "The printed introduction was reviewed against the current scale constants, pilot data and record sheet. Existing tests establish concrete cases; this is an umbrella entry, not a claim of complete coverage. The remaining child requirements and scenario cross-references must be individually verified before closing foundations. 2026-11-18 strict chapter-first review: pp.3–5 and direct cross-references re-read; exact merged #113 evidence reconciled for individually reviewed children. Remaining: pilot-death edge case review agoac-033 and new record-sheet test agoac-046, then explicit full chapter inventory closure. Packaging fiction/materials and later chapter mechanics not counted as missing digital gameplay features.",
       "review": {
         "sourceEdition": "CAT3500D (2018)",
         "reviewedOn": "2026-11-17",
@@ -575,13 +575,43 @@
         5
       ],
       "statement": "Display armor, internal structure, rear armor, critical slot damage, pilot state and heat including overflow above 30 on the live record sheet.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.4-5: record sheet displays front and rear damage, current pilot skills and heat overflow"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Compared actual record-sheet output against pp.4–5: independent current/initial armor, rear, structure, critical marks, current skills, wounds and 0–75 heat overflow; existing test at six heat levels.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-008",
@@ -590,13 +620,43 @@
         5
       ],
       "statement": "Standard Inner Sphere pilot defaults to Gunnery 4 and Piloting 5; those independent ratings drive the corresponding attack target numbers.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.5: base pilot defaults and skill-dependent attack targets"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "p.5: default Inner Sphere 4/5 and independent target-number bases; test changes both ratings and compares weapon and kick TNs. Scenario-specific skill selection remains a scenario requirement.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-009",
@@ -607,13 +667,43 @@
         44
       ],
       "statement": "Warrior Data shows the assigned pilot identity, skills, current wounds, consciousness and death state.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.4-5,44: Warrior Data displays escaped pilot name, wound state and consciousness threshold"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.5,44: assigned name, wound and conscious/dead state, exact six thresholds and text escaping. Independent rendering with 0–6 wounds; display of pilot defaults covered in 008.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-010",
@@ -669,7 +759,7 @@
         48
       ],
       "statement": "All combatant record sheets are public by default and can be inspected independently of the current tactical selection. Reviewed the three printed scenarios and their listed variations; no record-sheet secrecy exception is specified. Future custom scenario policy remains separate.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/browser.mjs",
@@ -679,7 +769,37 @@
           "file": "tests/browser.mjs",
           "test": "AGoAC pp.4,45-48: every unit record remains open throughout all six battle phases"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "p.4 and all three scenarios and variants pp.45–48: no record secrecy exception. Browser logs confirm inspection of enemy without changing active unit, then every listed combatant at each of the six phases. Custom scenario secrecy excluded.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-012",
@@ -783,13 +903,43 @@
         44
       ],
       "statement": "All phase-end consciousness checks precede all required piloting checks.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.6,44: all pilots roll consciousness before any phase PSR"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.6,40,44: check all deferred consciousness before phase-end PSRs. Four pilot test checks complete order. Immediate movement/displacement/shutdown PSRs are separate timing cases.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-015",
@@ -894,13 +1044,43 @@
         44
       ],
       "statement": "Each damaging head hit causes one wound even without internal damage.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.44: head hits wound the pilot even when armor holds"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "p.44: two actual damaging head hits through armor, non-head control and exact two wound-specific consciousness targets.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-018",
@@ -910,13 +1090,43 @@
         44
       ],
       "statement": "An internal ammunition explosion inflicts two pilot wounds independent of armor.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.39,44: internal ammunition explosion wounds a surviving pilot twice"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.39,44: actual nonlethal internal ammunition explosion, two wounds, exact thresholds 3 and 5, no armor absorption, emptied/destroyed bin. Separate catastrophic torso damage and explosion selection rules remain elsewhere.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-019",
@@ -1017,7 +1227,7 @@
         44
       ],
       "statement": "Seatbelt checks precede fall damage; target uses the original PSR modifiers and fall-height increment. Immobility or target above 12 causes automatic injury.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1027,7 +1237,37 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.11,43–44: seat belt checks before impact, original TN and increment beyond one level, success/failure at exact TN, shutdown/unconscious/abandoned/limbless automatic injury and TN above 12. Zero MP alone does not cause automatic injury.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-022",
@@ -1039,13 +1279,47 @@
         44
       ],
       "statement": "Standing immobile chassis automatically fails required piloting checks; a prone chassis does not repeat them. Losing all limbs, reactor shutdown, abandonment and unconsciousness are classified independently of zero MP.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.11,40: test limbless standing/prone across immediate and deferred PSRs; companion test exhausts all limb-loss masks and operational states, distinguishing gyro or heat zero MP from immobility.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-023",
@@ -1056,13 +1330,43 @@
         21
       ],
       "statement": "All-limb loss provides the immobile target modifier and aimed-attack eligibility; head aiming replaces that modifier with +3. Full attack audit remains in the combat section.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aimed head shots"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.11,17,21: only all-four-limb loss changes target to immobile, two missing legs do not; ordinary weapon −4 and aimed-head +3 replaces −4. Full hit-location/aimed attack details excluded.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-024",
@@ -1158,13 +1462,43 @@
         5
       ],
       "statement": "Show ammunition magazine locations and capacity and remaining rounds separately in the critical hit table. Inventory aggregation and actual ammunition expenditure remain under combat.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.5: individual ammunition slots report capacity and remaining rounds"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "p.5: each physical ammunition slot shows remaining rounds and initial capacity, two same-weapon bins tracked independently and destruction display. Consumption is outside this display requirement.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-027",
@@ -1174,13 +1508,43 @@
         4
       ],
       "statement": "Hexes without a terrain or level marking independently default to clear terrain and level zero. Store negative sublevels and water depth independently; preserve explicit terrain, level, and metadata across save/restore. Full terrain movement and LOS costs remain in their own sections.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.3-4: unmarked terrain and level default independently and survive map reload"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.3–4: independent default terrain and elevation, negative sublevel, explicit depth and surface, paving/road and idempotent map rebuilding across JSON. Terrain LOS and movement costs separate.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-028",
@@ -1279,13 +1643,43 @@
         5
       ],
       "statement": "For each location, track every point of current and starting front armor and internal structure independently, with rear armor limited to the three torso sections.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.4-5: armor and structure dots track every section independently"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.4–5: all eight locations across all four starting chassis; full and damaged states, each circle follows exact internal/front capacity and remaining points; rear only three torsos.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-031",
@@ -1294,13 +1688,43 @@
         5
       ],
       "statement": "Mech Data presents actual chassis identity, tonnage and base movement ratings; displayed identity is text rather than executable markup.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.5: Mech Data uses actual chassis metadata with escaped text"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "p.5: actual type, variant, tonnage and base walk/run/jump MP; malicious-looking names escaped, not executable. Full construction stats validation separate.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-032",
@@ -1311,13 +1735,43 @@
         44
       ],
       "statement": "An unconscious pilot cannot give voluntary movement, weapon or physical orders, but the surviving Mech remains eligible for a pass selection.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.6,11,44: unconscious pilot cannot issue voluntary orders but can pass selections"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.6,11,44: rejected voluntary movement/fire/physical commands preserve state and allow passing. Unconscious standing automatic fall and recovery verified separately.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-033",
@@ -1511,7 +1965,7 @@
         30
       ],
       "statement": "For declared ordinary weapon fire, roll attacks and expend ammunition before resolving hit locations/damage; a destroyed shooter still completes its attacks, with damage grouped by target and packet.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1521,7 +1975,37 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.21,30: resolve each target and each missile packet completely in declared order"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "pp.6,21,30: exact tests show ammunition and both ordinary attacks rolled before damage, return fire after destruction, contiguous target groups and fully resolved missile packets. Controller selection and special attacks remain separate.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-036",
@@ -1531,7 +2015,7 @@
         44
       ],
       "statement": "A conscious pilot can attempt one highest-threshold thermal shutdown avoidance or restart roll at heat 14–29. An unconscious pilot cannot override thermal shutdown; an involuntarily shut-down reactor automatically restarts below 14 even if the pilot is out of action. Heat 30+ cannot be overridden.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -1541,7 +2025,37 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "p.38: unconscious cannot roll override, automatic restart below 14 even if unconscious; test every heat 0–35 in both previous reactor states. Conscious test covers all threshold boundaries and success/failure; voluntary shutdown and immediate PSR timing separate.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "ea6cef438ac83acec9fd2c243a66e8c6183969ca",
+        "testedTree": "0ebef18dfd711c2d2dccc246c4f13dadba0980ae",
+        "mergedSha": "2be0219091757b122716ccaf73412f84e4157a57",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44298505948,
+            "jobId": 134781733214,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44298505927,
+            "jobId": 134781826510,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44298505904,
+            "jobId": 134781732622,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-037",
@@ -1916,6 +2430,28 @@
         }
       ],
       "reviewNote": "Gyro critical and movement restriction regression; running/jumping PSR timing and seatbelt roll integration remain separate. Exact CI pending."
+    },
+    {
+      "id": "agoac-046",
+      "topicId": "agoac-foundations",
+      "pages": [
+        4,
+        5,
+        35
+      ],
+      "statement": "The record sheet distinguishes empty critical slots from intact/destroyed equipment, shows every weapon inventory entry and its combat statistics, and identifies standard inward transfer routes and no transfer from head/center torso.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.4–5: critical table distinguishes empty reroll slots and destroyed equipment"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: weapons inventory reflects names locations ranges heat damage and ammunition"
+        }
+      ],
+      "reviewNote": "Introduction pp.4–5 re-read; empty slots shown as reroll rather than as intact equipment, no-transfer note added, weapon inventory row regression. Exact CI pending. Actual damage and construction data correctness separate."
     }
   ]
 }
