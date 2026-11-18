@@ -1542,6 +1542,32 @@
           "test": "AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more"
         }
       ]
+    },
+    {
+      "id": "agoac-037",
+      "topicId": "agoac-damage",
+      "pages": [
+        32,
+        33,
+        34
+      ],
+      "statement": "A biped hip critical halves Walking MP rounding down; recompute Running MP rounding up. Two hip criticals reduce ground MP to zero without alone causing immobility. Other same-leg actuator criticals from prior turns are ignored for movement, whereas hits in the hip-hit turn or later still apply; PSR hip modifier overrides the same-leg actuator modifiers.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.33: biped hip damage halves Walking MP downward and derives Running MP upward"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32–34: same-leg actuator hits before, during and after hip-hit turn affect MP correctly"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.33: hip-limited movement cannot use the extra hex from rounding up"
+        }
+      ],
+      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI pending."
     }
   ]
 }

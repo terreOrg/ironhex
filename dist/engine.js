@@ -512,9 +512,19 @@ export class Game extends Legacy{
  let w=lost===1?1:u.walk;
  if(!lost){
   const hips=legs.filter(l=>u.actuators[l].hip||this.isBreached(u,l)).length;
-  w=hips===2?0:hips?Math.ceil(w/2):w;
-  for(const l of legs)if(!u.actuators[l].hip&&!this.isBreached(u,l))
-   w-=Number(u.actuators[l].upper)+Number(u.actuators[l].lower)+Number(u.actuators[l].foot);
+  // AGoAC p.33: halve walking MP, rounding down. Damage to the
+  // affected leg from earlier turns is ignored, but other actuator
+  // hits in the hip-hit turn or later still reduce walking MP.
+  w=hips===2?0:hips?Math.floor(w/2):w;
+  for(const l of legs){
+   if(this.isBreached(u,l))continue;
+   const hits=u.actuatorHitRounds?.[l],hipTurn=hits?.hip;
+   for(const part of ['upper','lower','foot']){
+    if(!u.actuators[l][part])continue;
+    if(!u.actuators[l].hip||
+       Number.isInteger(hipTurn)&&Number.isInteger(hits?.[part])&&hits[part]>=hipTurn)w--;
+   }
+  }
  }
  w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));
  return mode==='run'||mode==='evade'?(lost?0:Math.ceil(w*1.5)):w;
@@ -998,7 +1008,17 @@ export class Game extends Legacy{
  // External heat sources are cumulative to 15 heat points each turn (BMM p.50).
  applyExternalHeat(u,amount){const n=Number.isFinite(amount)?Math.max(0,Math.trunc(amount)):0,added=Math.min(n,Math.max(0,15-(u.externalHeat??0)));u.externalHeat=(u.externalHeat??0)+added;u.pendingHeat+=added;return added;}
  explode(u,bin){if(!bin||bin.destroyed||!bin.shots)return;const w=u.weapons[bin.weapon],amount=bin.shots*w.damage*(w.rack||1);bin.shots=0;bin.destroyed=true;this.syncAmmo(u);this.wound(u,2);this.note(`${u.name}: взрыв боезапаса, ${amount} внутреннего урона.`);this.damage(u,bin.location,amount,{internal:true,explosion:true});if(u.structure.CT===0){u.pilotWounds=6;this.destroyMech(u);}}
- criticalHit(u,loc,destroyed=false,caseIIVenting=false){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)return;if(['LA','RA'].includes(loc))this.tile(u.q,u.r).club=true;this.destroyLocation(u,loc);return;}const eligible=l=>u.slots[l].map((s,i)=>s&&s!=='case'&&s!=='case2'&&!u.crit[l][i]?i:-1).filter(i=>i>=0);let valid=eligible(loc);if(!valid.length){if(destroyed||newlyHit.includes(loc))return;while(!valid.length&&transfer[loc]&&!newlyHit.includes(loc)){loc=transfer[loc];valid=eligible(loc);}if(!valid.length)return;}for(let k=0;k<n&&!u.dead;k++){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)continue;valid=eligible(loc);if(!valid.length)break;let ix=-1,tries=0;while(!valid.includes(ix)&&tries++<60){const first=valid.some(i=>i<6),second=valid.some(i=>i>=6),block=first&&second?(this.d6('Критический слот: блок')>=4?1:0):second?1:0;ix=block*6+this.d6('Критический слот: позиция')-1;}if(!valid.includes(ix))ix=valid[0];u.crit[loc][ix]=true;newlyHit.push(loc);const s=u.slots[loc][ix];this.note(`${u.name}: ${loc}, слот ${ix+1} — ${s}.`);if(s.startsWith('ammo:'))this.explode(u,u.bins.find(b=>b.location===loc&&b.slot===ix));else if(destroyed)continue;else if(s==='engine'){u.engineHits++;if(this.effectiveEngineHits(u)>=3)this.destroyMech(u);}else if(s==='gyro'){u.gyroHits++;u.psrs.push({modifier:0,reason:'Гироскоп'});}else if(s==='sensors')u.sensorHits++;else if(s==='life')u.lifeSupport=true;else if(s==='cockpit'){u.pilotWounds=6;this.destroyMech(u);}else if(s==='sink')u.sinksLost++;else if(s==='jump')u.jumpLost++;else if(s.startsWith('w:'))u.weapons[+s.split(':')[1]].destroyed=true;else if(u.actuators[loc]){u.actuators[loc][s]=true;if(mechLegLocation(u,loc))u.psrs.push({modifier:0,reason:'Актуатор '+loc});}}}
+ criticalHit(u,loc,destroyed=false,caseIIVenting=false){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)return;if(['LA','RA'].includes(loc))this.tile(u.q,u.r).club=true;this.destroyLocation(u,loc);return;}const eligible=l=>u.slots[l].map((s,i)=>s&&s!=='case'&&s!=='case2'&&!u.crit[l][i]?i:-1).filter(i=>i>=0);let valid=eligible(loc);if(!valid.length){if(destroyed||newlyHit.includes(loc))return;while(!valid.length&&transfer[loc]&&!newlyHit.includes(loc)){loc=transfer[loc];valid=eligible(loc);}if(!valid.length)return;}for(let k=0;k<n&&!u.dead;k++){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)continue;valid=eligible(loc);if(!valid.length)break;let ix=-1,tries=0;while(!valid.includes(ix)&&tries++<60){const first=valid.some(i=>i<6),second=valid.some(i=>i>=6),block=first&&second?(this.d6('Критический слот: блок')>=4?1:0):second?1:0;ix=block*6+this.d6('Критический слот: позиция')-1;}if(!valid.includes(ix))ix=valid[0];u.crit[loc][ix]=true;newlyHit.push(loc);const s=u.slots[loc][ix];this.note(`${u.name}: ${loc}, слот ${ix+1} — ${s}.`);if(s.startsWith('ammo:'))this.explode(u,u.bins.find(b=>b.location===loc&&b.slot===ix));else if(destroyed)continue;else if(s==='engine'){u.engineHits++;if(this.effectiveEngineHits(u)>=3)this.destroyMech(u);}else if(s==='gyro'){u.gyroHits++;u.psrs.push({modifier:0,reason:'Гироскоп'});}else if(s==='sensors')u.sensorHits++;else if(s==='life')u.lifeSupport=true;else if(s==='cockpit'){u.pilotWounds=6;this.destroyMech(u);}else if(s==='sink')u.sinksLost++;else if(s==='jump')u.jumpLost++;else if(s.startsWith('w:'))u.weapons[+s.split(':')[1]].destroyed=true;else if(u.actuators[loc]){u.actuators[loc][s]=true;
+ if(mechLegLocation(u,loc)){
+  // Keep acquisition turns through saves and phase changes. Older
+  // snapshots without dates use the prior same-leg suppression.
+  if(u.config!=='Quad'&&['hip','upper','lower','foot'].includes(s)){
+   u.actuatorHitRounds??={};
+   u.actuatorHitRounds[loc]??={};
+   u.actuatorHitRounds[loc][s]=this.round;
+  }
+  u.psrs.push({modifier:0,reason:'Актуатор '+loc});
+ }}}}
  // AGoAC pp.6,21,30: all declared to-hit rolls and ammunition expenditure
  // precede the first hit-location roll. Keep the declaration snapshot intact.
  spendDeclaredAmmo(u,s,reserved){
