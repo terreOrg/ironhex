@@ -20,12 +20,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Select smoke scope (manual runs always full)
+        id: plan
+        run: node scripts/smoke-plan.mjs
       - name: Verify Compose with CI-only placeholder secret
+        if: steps.plan.outputs.skip_smoke != 'true'
         env:
           IRONHEX_DB_PASSWORD: ci-validation-only
         run: docker compose -f compose.yaml config --quiet
       - name: Build and smoke-test isolated Nginx image
+        if: steps.plan.outputs.skip_smoke != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -50,6 +60,7 @@ jobs:
           docker exec "$container" wget -qO /dev/null http://127.0.0.1:8080/aether-02.glb
 
       - name: Build backend and smoke-test PostgreSQL integration
+        if: steps.plan.outputs.skip_smoke != 'true'
         shell: bash
         run: |
           set -euo pipefail

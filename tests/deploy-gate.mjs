@@ -5,11 +5,13 @@ import { normalizeLcov,normalizeCoverageFile } from '../scripts/normalize-sonar-
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
+import { identicalMergeParent, reusableRun, matchingArtifact } from '../scripts/coverage-plan.mjs';
+import { canSkipSmoke } from '../scripts/smoke-plan.mjs';
 import { evaluateDeployment, makeWebhookRequest, requiredWorkflows } from '../scripts/deploy-gate.mjs';
 
 const sha='a'.repeat(40);
 const success=name=>({
-  name,head_sha:sha,head_branch:'main',event:'push',status:'completed',conclusion:'success'
+  name,head_sha:sha,head_branch:'main',event:name==='Ironhex Container Smoke'?'workflow_dispatch':'push',status:'completed',conclusion:'success'
 });
 test('all same-commit successful workflows allow deployment',()=>{
   assert.equal(evaluateDeployment({
@@ -119,4 +121,33 @@ test('unfinished required workflow remains retryable but completed failures stop
   }
   const result=evaluateDeployment({sha,mainSha:sha,runs:[...runs,{...runs[0],conclusion:'failure'}]});
   assert.equal(result.ready,false);assert.match(result.reason,/did not pass/);
+});
+
+test('deploy requires explicit full manual smoke, not selective push success',()=>{
+ const runs=requiredWorkflows.map(success);
+ const smoke=runs.find(r=>r.name==='Ironhex Container Smoke');
+ assert.equal(evaluateDeployment({sha,mainSha:sha,runs:runs.map(r=>r===smoke?{...r,event:'push'}:r)}).ready,false);
+ assert.equal(evaluateDeployment({sha,mainSha:sha,runs}).ready,true);
+});
+test('smoke skips only scoped engine, web, generated and audit paths',()=>{
+ assert(canSkipSmoke(['packages/engine/engine.js','dist/engine.js','tests/agoac-foundations.mjs']));
+ for(const path of ['apps/api/src/server.mjs','Dockerfile','compose.yaml','package.json','package-lock.json','.github/workflows/ci.yml','scripts/build-web.mjs','dist/model.glb','packages/engine/package.json','tests/operations-integration.mjs'])
+  assert(!canSkipSmoke(['packages/engine/engine.js',path]),path);
+ assert(!canSkipSmoke([]));
+});
+
+test('coverage reuse requires exact two-parent merge tree',()=>{
+ const parent='b'.repeat(40),tree='c'.repeat(40);
+ assert.equal(identicalMergeParent({parents:[sha,parent],tree,parentTree:tree}),parent);
+ for(const parents of [[sha],[sha,parent,tree]])assert.equal(identicalMergeParent({parents,tree,parentTree:tree}),null);
+ assert.equal(identicalMergeParent({parents:[sha,parent],tree,parentTree:sha}),null);
+});
+test('only exact successful audit push with existing artifact can reuse coverage',()=>{
+ const run={...success('Ironhex CI'),head_branch:'audit/agoac-test',id:42};
+ assert.equal(reusableRun([run],sha,run.name),42);
+ for(const change of [{head_sha:'b'.repeat(40)},{head_branch:'work/agoac-buffer'},{event:'workflow_dispatch'},{conclusion:'failure'},{status:'queued'}])
+  assert.equal(reusableRun([{...run,...change}],sha,run.name),null);
+ assert.equal(reusableRun([run,{...run,conclusion:'failure'}],sha,run.name),null);
+ assert(matchingArtifact([{name:'report',size_in_bytes:42,expired:false}],'report'));
+ assert(!matchingArtifact([{name:'report',size_in_bytes:42,expired:true}],'report'));
 });

@@ -13,7 +13,7 @@ export function evaluateDeployment({ sha, mainSha, runs }) {
   for (const name of requiredWorkflows) {
     const matching = runs.filter(run =>
       run.name === name && run.head_sha === sha &&
-      run.head_branch === 'main' && run.event === 'push'
+      run.head_branch === 'main' && run.event === (name === 'Ironhex Container Smoke' ? 'workflow_dispatch' : 'push')
     );
     if (!matching.length) return { ready: false, reason: name + ' has not started' };
     // A cancelled duplicate is not a successful check, but does not invalidate

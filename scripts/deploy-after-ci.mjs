@@ -29,7 +29,7 @@ let reason = 'unknown';
 for (let attempt = 0; attempt < 60; attempt++) {
   const [branch, page] = await Promise.all([
     github('/repos/' + repository + '/git/ref/heads/main'),
-    github('/repos/' + repository + '/actions/runs?event=push&head_sha=' + encodeURIComponent(sha) + '&per_page=100')
+    github('/repos/' + repository + '/actions/runs?head_sha=' + encodeURIComponent(sha) + '&per_page=100')
   ]);
   ({ready,reason} = evaluateDeployment({
     sha, mainSha: branch.object.sha, runs: page.workflow_runs || []
