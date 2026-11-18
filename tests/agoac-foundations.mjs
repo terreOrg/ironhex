@@ -2131,3 +2131,80 @@ test('AGoAC pp.33,39: second life support critical marks its slot without stacki
   g.rng=()=>.99;g.heatPhase();assert.equal(u.heat,heat);assert.equal(u.pilotWounds,heat===26?2:1);
  }
 });
+
+test('AGoAC pp.28,32–33: missing and damaged arm actuators affect punches but only damage affects weapon fire',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,tonnage:65,moveMode:'stand'});
+ Object.assign(t,{q:1,r:0,moveMode:'stand'});
+ for(const leg of ['LA','RA']){
+  const original=u.slots[leg].slice(),saved=u.weapons[0].location;u.weapons[0].location=leg;
+  const base=g.physicalPreview(u.id,t.id,'punch',leg),fire=g.preview(u.id,t.id,0);
+  assert(base.legal,base.reason);assert(fire.legal,fire.reason);
+  for(const upper of [0,1,2])for(const lower of [0,1,2])for(const hand of [0,1,2]){
+   u.slots[leg]=original.slice();
+   for(const [index,part,state] of [[1,'upper',upper],[2,'lower',lower],[3,'hand',hand]]){
+    u.actuators[leg][part]=state===1;
+    if(state===2)u.slots[leg][index]=null;
+   }
+   const p=g.physicalPreview(u.id,t.id,'punch',leg);
+   assert(p.legal,p.reason);assert.equal(p.targetNumber,base.targetNumber+2*Number(upper>0)+2*Number(lower>0)+Number(hand>0));
+   assert.equal(p.damage,Math.max(1,Math.floor(7/2**(Number(upper>0)+Number(lower>0)))));
+   assert.equal(g.preview(u.id,t.id,0).targetNumber,fire.targetNumber+Number(upper===1)+Number(lower===1));
+   u.actuators[leg].shoulder=true;
+   assert.equal(g.physicalPreview(u.id,t.id,'punch',leg).legal,false);
+   assert.equal(g.preview(u.id,t.id,0).targetNumber,fire.targetNumber+4);
+   u.actuators[leg].shoulder=false;
+  }
+  u.slots[leg]=original;Object.assign(u.actuators[leg],{upper:false,lower:false,hand:false});
+  u.weapons[0].location=saved;
+ }
+});
+test('AGoAC pp.26,32–33: clubbing requires working shoulders and hands but damaged arm joints only add modifiers',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,club:true,moveMode:'stand'});
+ Object.assign(t,{q:1,r:0,moveMode:'stand'});
+ const base=g.physicalPreview(u.id,t.id,'club','RA');assert(base.legal,base.reason);
+ for(let mask=0;mask<16;mask++){
+  let hits=0;for(const [i,l] of ['LA','RA'].entries())for(const [j,p] of ['upper','lower'].entries()){
+   const hit=!!(mask&(1<<(2*i+j)));u.actuators[l][p]=hit;hits+=Number(hit);
+  }
+  const p=g.physicalPreview(u.id,t.id,'club','RA');
+  assert(p.legal,p.reason);assert.equal(p.targetNumber,base.targetNumber+2*hits);assert.equal(p.damage,base.damage);
+ }
+ for(const l of ['LA','RA']){
+  for(const part of ['shoulder','hand']){
+   u.actuators[l][part]=true;assert(!g.physicalPreview(u.id,t.id,'club','RA').legal);u.actuators[l][part]=false;
+  }
+  u.slots[l][3]=null;assert(!g.physicalPreview(u.id,t.id,'club','RA').legal);u.slots[l][3]='hand';
+ }
+ g.phase='physical';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;g.tile(u.q,u.r).type='woods';
+ u.club=false;u.firedLocations=['CT'];assert.equal(g.takeClub(u.id).ok,false);
+ u.firedLocations=[];assert(g.takeClub(u.id).ok);assert(u.club);
+});
+test('AGoAC p.28: intact arm-mounted hatchet prevents a punch until destroyed',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand'});Object.assign(t,{q:1,r:0,moveMode:'stand'});
+ for(const l of ['LA','RA']){
+  u.slots[l][11]='hatchet';u.crit[l][11]=false;
+  assert(!g.physicalPreview(u.id,t.id,'punch',l).legal);
+  u.crit[l][11]=true;assert(g.physicalPreview(u.id,t.id,'punch',l).legal);
+ }
+});
+test('AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hits never raise modifier beyond six',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';u.prone=false;
+ // All four gyro slots can be marked, but only two have gameplay effects.
+ for(const [i,slot] of [3,4,5,6].entries()){
+  const dice=[...diceFor(8),slot<6?.5/6:5.5/6,((slot%6)+.5)/6];
+  g.rng=()=>{assert(dice.length);return dice.shift();};
+  g.criticalHit(u,'CT');assert.equal(dice.length,0);assert(u.crit.CT[slot]);
+  assert.equal(u.gyroHits,Math.min(i+1,2));assert.equal(g.psrMod(u),3*Math.min(i+1,2));
+ }
+ assert.equal(u.psrs.length,2);let fell=0;g.fall=(v,levels,tn)=>{assert.equal(v,u);assert.equal(tn,u.piloting+6);v.prone=true;fell++;};
+ g.rng=()=>{throw Error('Destroyed gyro must fall without a fall-avoidance roll');};g.endPSR();
+ assert.equal(fell,1);assert(u.prone);assert(!g.isImmobile(u));
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;u.moveMode='stand';u.spent=0;
+ assert.equal(g.stand(u.id).ok,false);assert(g.rotate(u.id,1).ok);assert.equal(g.rotate(u.id,1).ok,false);
+});
