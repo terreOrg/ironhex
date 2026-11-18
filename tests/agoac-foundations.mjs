@@ -1746,3 +1746,38 @@ test('AGoAC pp.7,44: Initiative captures actual recovery eligibility for the cur
  assert.equal(u.unconscious,false);assert.equal(v.unconscious,true);
  assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Пробуждение')).length,1);
 });
+
+test('AGoAC pp.7,38,44: recovered pilot can choose reactor state with exactly-once recovery and restart dice',()=>{
+ for(const heat of [0,14,30]){
+  const g=fresh(),u=g.units[0];g.phase='end';g.activeTeam=null;g.queue=[];
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{unconscious:true,wasUnconscious:true,pilotWounds:1,heat,shutdown:heat!==0,voluntaryShutdown:heat!==0});
+  const dice=[...diceFor(3),...diceFor(4)];
+  let draws=0;g.rng=()=>{draws++;return dice.shift()??.5;};
+  const before=JSON.stringify(g.units),r=g.nextPhaseWithChoices({humanTeams:[0]});
+  if(heat===30){
+   assert(r.ok&&!r.pending);assert.equal(g.unit(u.id).unconscious,false);
+   assert.equal(g.unit(u.id).shutdown,true);assert.equal(draws,2);continue;
+  }
+  assert(r.pending);assert.equal(g.pendingChoice.kind,'recovered-reactor');
+  assert.equal(JSON.stringify(g.units),before);assert.equal(draws,2);
+  const p=g.pendingChoice;
+  assert.deepEqual(p.options.map(o=>o.id),['stay',heat?'restart':'shutdown']);
+  assert.equal(g.nextPhaseWithChoices({choice:{key:p.key,option:'invalid'}}).ok,false);
+  assert.equal(draws,2);
+  const restored=new Game({rng:()=>{draws++;return dice.shift()??.5;}});
+  Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
+  restored.rebuildMap();
+  const done=restored.nextPhaseWithChoices({choice:{key:p.key,option:heat?'restart':'shutdown'}});
+  assert(done.ok&&!done.pending);assert.equal(restored.unit(u.id).unconscious,false);
+  assert.equal(restored.unit(u.id).shutdown,heat===0);assert.equal(draws,heat?4:2);
+  assert.equal(restored.phase,'initiative');assert.equal(restored.round,g.round+1);
+  assert.equal(restored.phaseRolls.filter(r=>r.kind.includes('Пробуждение')).length,1);
+ }
+});
+test('AGoAC pp.7,44: unsuccessful recovery does not offer reactor choice',()=>{
+ const g=fresh(),u=g.units[0];g.phase='end';g.queue=[];g.activeTeam=null;
+ Object.assign(u,{unconscious:true,wasUnconscious:true,pilotWounds:2});
+ g.rng=()=>0;const r=g.nextPhaseWithChoices({humanTeams:[0]});
+ assert(r.ok&&!r.pending);assert(g.unit(u.id).unconscious);assert.equal(g.pendingChoice,null);
+});
