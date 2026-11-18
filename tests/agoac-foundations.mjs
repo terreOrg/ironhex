@@ -2645,3 +2645,32 @@ test('AGoAC pp.7,19: immobile units separated by water cannot exchange weapon fi
  Object.assign(a.weapons[0],{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,ranges:[3,6,9]});
  same.checkWin({stalemate:true});assert.equal(same.winner,null);
 });
+
+test('AGoAC pp.7,13,21: immutable high ridge prevents direct fire but preserves possible indirect fire',()=>{
+ const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+ g.units[1].dead=true;g.units[3].dead=true;
+ Object.assign(u,{q:-2,r:0});Object.assign(v,{q:2,r:0});
+ const hill=g.tile(0,0);Object.assign(hill,{type:'hill',height:3,depth:0,surface:3});
+ const w=u.weapons[0];Object.assign(w,{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,rack:0,ranges:[3,6,9]});
+ assert(g.permanentHillBlocks(u,v));assert(g.permanentHillBlocks(v,u));
+ assert(!g.canEverDamage(u,[v]));
+ // An indirect-capable LRM may still be used if a spotter is available;
+ // the conservative stalemate test must not discard this possibility.
+ Object.assign(w,{name:'LRM-5',rack:5});
+ assert(g.canEverDamage(u,[v]));
+ Object.assign(w,{name:'Medium Laser',rack:0});
+ hill.height=1;hill.surface=1;assert(g.canEverDamage(u,[v]));
+ hill.height=3;hill.surface=3;
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+});
+test('AGoAC pp.7,19–21: permanently prone fixed-facing Mechs cannot use an out-of-arc weapon',()=>{
+ const g=strandedBipeds(),u=g.units[0],v=g.units[2];
+ g.units[1].dead=true;g.units[3].dead=true;
+ Object.assign(u,{q:0,r:0,facing:3});Object.assign(v,{q:2,r:0});
+ const w=u.weapons[0];Object.assign(w,{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,rack:0,rear:false,ranges:[3,6,9]});
+ const before=JSON.stringify(u);
+ assert(!g.canEverDamage(u,[v]));assert.equal(JSON.stringify(u),before);
+ w.rear=true;assert(g.canEverDamage(u,[v]));
+ w.rear=false;u.facing=0;assert(g.canEverDamage(u,[v]));
+ u.facing=3;g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+});
