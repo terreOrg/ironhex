@@ -2808,3 +2808,26 @@ test('AGoAC pp.15,25–29: physical upper-body arcs follow torso twist but kicks
  u.facing=0;u.twist=0;v.prone=false;
  assert(g.physicalPreview(u.id,v.id,'club','RA').legal);
 });
+
+
+test('AGoAC p.25: Different Levels table for punch, kick, club and hatchet previews',()=>{
+ const g=fresh(),u=g.units[0],v=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,config:'Biped',club:true});
+ Object.assign(v,{q:1,r:0,prone:false});
+ for(const l of ['LA','RA']){u.slots[l][3]='hand';u.actuators[l].shoulder=false;u.actuators[l].hand=false;u.actuators[l].lower=false;}
+ u.hatchets=[{location:'RA'}];
+ for(const [level,prone,expected] of [
+  [-1,false,[null,'punch','punch','punch']],
+  [0,false,['punch','kick','normal','normal']],
+  [1,false,['kick',null,'kick','kick']],
+  [-1,true,[null,null,null,null]],
+  [0,true,[null,'normal','normal','normal']],
+  [1,true,['normal',null,'normal','normal']]
+ ]){
+  Object.assign(g.tile(v.q,v.r),{height:level,surface:level});v.prone=prone;
+  const actual=[['punch','LA'],['kick','RL'],['club','RA'],['hatchet','RA']].map(([type,limb])=>{
+   const p=g.physicalPreview(u.id,v.id,type,limb);return p.legal?p.table:null;
+  });assert.deepEqual(actual,expected,JSON.stringify({level,prone}));
+ }
+});
