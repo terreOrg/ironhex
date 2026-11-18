@@ -2599,3 +2599,49 @@ test('AGoAC p.7: a prone Mech that can recover must not trigger a premature draw
  assert(g.canEverMove(u));
  g.checkWin({stalemate:true});assert.equal(g.winner,null);
 });
+
+function fixedStandingBipeds(){
+ const g=fresh();
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ for(const u of g.units){
+  Object.assign(u,{config:'Biped',prone:false,jump:0,heat:0,shutdown:false,unconscious:false});
+  u.structure.LA=0;u.structure.RA=0;
+  u.actuators.LL.hip=true;u.actuators.RL.hip=true;
+  for(const w of u.weapons)w.destroyed=true;
+ }
+ Object.assign(g.units[0],{q:0,r:0,facing:0});
+ Object.assign(g.units[2],{q:1,r:0,facing:3});
+ return g;
+}
+test('AGoAC pp.7,28–29: intact but unusable legs and arms do not prevent stalemate',()=>{
+ const g=fixedStandingBipeds();
+ assert(g.units.every(u=>!g.canEverMove(u)));
+ assert(g.units.every(u=>!g.canEverDamage(u,g.units.filter(t=>t.team!==u.team))));
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+ const one=fixedStandingBipeds(),u=one.units[0];
+ u.structure.LA=1;u.actuators.LA.shoulder=true;
+ one.checkWin({stalemate:true});assert.equal(one.winner,'draw');
+});
+test('AGoAC pp.7,28–29: available punch or two-arm push prevents premature stalemate',()=>{
+ for(const twoArms of [false,true]){
+  const g=fixedStandingBipeds(),u=g.units[0];u.structure.LA=1;
+  if(twoArms){u.structure.RA=1;u.actuators.LA.shoulder=true;u.actuators.RA.shoulder=true;}
+  assert(g.canEverDamage(u,[g.units[2]]));
+  g.checkWin({stalemate:true});assert.equal(g.winner,null);
+ }
+});
+test('AGoAC pp.7,19: immobile units separated by water cannot exchange weapon fire',()=>{
+ const g=fixedStandingBipeds(),u=g.units[0],v=g.units[2];
+ Object.assign(v,{q:2,r:0});
+ Object.assign(g.tile(v.q,v.r),{type:'water',depth:2,height:-2,surface:0});
+ for(const x of [g.units[1],g.units[3]])x.dead=true;
+ const w=u.weapons[0];Object.assign(w,{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,ranges:[3,6,9]});
+ const z=v.weapons[0];Object.assign(z,{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,ranges:[3,6,9]});
+ assert(!g.canEverDamage(u,[v]));assert(!g.canEverDamage(v,[u]));
+ g.checkWin({stalemate:true});assert.equal(g.winner,'draw');
+ const same=fixedStandingBipeds(),a=same.units[0],b=same.units[2];
+ Object.assign(b,{q:2,r:0});
+ for(const x of [same.units[1],same.units[3]])x.dead=true;
+ Object.assign(a.weapons[0],{name:'Medium Laser',destroyed:false,location:'CT',locations:['CT'],ammo:null,ranges:[3,6,9]});
+ same.checkWin({stalemate:true});assert.equal(same.winner,null);
+});
