@@ -322,13 +322,41 @@
         6
       ],
       "statement": "Each side rolls independent 2D6; ties repeat; greater total wins and loser makes first selection.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.6: initiative handles every non-tied sum and rerolls all tied sums"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "review": "Printed p.6 Initiative and first selection. Independent two-die draws for each team, equal sums loop, higher sum wins; buildQueue starts with loser when both forces have surviving units. Regression enumerates all 121 ordered sum pairs, including all 11 tied sums followed by a decisive pair. Repeated ties follow the same loop; 10000-attempt pathological RNG guard throws rather than assigning an invalid winner. Narrow initiative requirement only, not unequal force batching or setup.",
+        "verifiedOn": "2026-11-18",
+        "testedSha": "0e365a3ce6409c94859f1313bc31ed94f623314e",
+        "testedTree": "612d756b837ff58d736f85224ee18a77a1a49153",
+        "mergedSha": "0e365a3ce6409c94859f1313bc31ed94f623314e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44278841639,
+            "jobId": 134713865889,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44278841597,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44278841528,
+            "conclusion": "success"
+          }
+        ]
+      }
     },
     {
       "id": "agoac-004",
