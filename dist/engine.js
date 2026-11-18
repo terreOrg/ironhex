@@ -321,10 +321,11 @@ export class Game extends Legacy{
  // AGoAC p.6: separate setup initiative from turn initiative.
  // AGoAC p.6: choose the playing area before choosing the forces.
  // Every preset uses the existing complete radius-six axial board.
- configureSetupMap({id='frontier',rotation=0}={}){
+ configureSetupMap({id='frontier',rotation=0,layout='hex',sheets=null}={}){
   if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
    this.setupForces!==null||this.setupMap!==null||this.queue.length||
    this.units.some(u=>u.moved||u.fired||u.physicalDone))return fail('Карту можно выбрать только перед составом и боем');
+  if(layout!=='hex')return this.configureRectangularSheets(layout,sheets);
   if(!AGOAC_MAP_PRESETS.some(p=>p.id===id)||!Number.isInteger(rotation)||rotation<0||rotation>5)
    return fail('Неизвестная карта или ориентация');
   const tiles=this.tiles.map(t=>{
@@ -349,6 +350,54 @@ export class Game extends Legacy{
   this.tiles=tiles;this.rebuildMap();this.setupMap={id,rotation};
   return {ok:true};
  }
+ // Native digital sheets use a staggered rectangular 16 by 17 hex grid.
+ // A 180-degree turn preserves the sheet's rectangular footprint.
+ // Only outer edges are deployment edges; seams are ordinary full hexes.
+ configureRectangularSheets(layout,sheets){
+  if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
+   this.setupForces!==null||this.setupMap!==null||this.queue.length||
+   this.units.some(u=>u.moved||u.fired||u.physicalDone))return fail('Карту можно выбрать только перед составом и боем');
+  const dimensions={sheet:[1,1],horizontal:[2,1],vertical:[1,2]};
+  if(!Object.hasOwn(dimensions,layout))return fail('Неизвестное расположение карт');
+  const [nx,ny]=dimensions[layout],width=16*nx,height=17*ny;
+  if(!Array.isArray(sheets)||sheets.length!==nx*ny||sheets.some(s=>!s||!AGOAC_MAP_PRESETS.some(p=>p.id===s.id)||![0,3].includes(s.rotation)))
+   return fail('Нужна карта и допустимый поворот для каждой секции');
+  const tiles=[];
+  for(let row=0;row<height;row++)for(let col=0;col<width;col++){
+   const sheet=Math.floor(row/17)*nx+Math.floor(col/16),preset=sheets[sheet];
+   let x=col%16,y=row%17;
+   if(preset.rotation===3){x=15-x;y=16-y;}
+   const a=x-8,b=y-8,n=Math.abs(a*31+b*17+a*b*7);
+   let type='plain',h=0,depth=0;
+   if(preset.id==='frontier'){
+    type=n%13===0?'heavy':n%7===0?'woods':n%11===0?'hill':'plain';
+    if(type==='hill')h=1;
+    if(a===0&&b>0&&b<4){type='water';depth=b===2?2:1;h=-depth;}
+    else if(a===1&&b===-2)type='rubble';
+    else if(a===-1&&b===-2)type='rough';
+   }else if(preset.id==='woodland'){
+    const v=Math.abs(a*13+b*7+a*b*3)%11;
+    type=v<3?'heavy':v<7?'woods':v===7?'rough':v===9?'hill':'plain';
+    if(type==='hill')h=1;
+   }else if(preset.id==='river'){
+    if(b===0){type='water';depth=Math.abs(a)%2?1:2;h=-depth;}
+    else if(b===1&&Math.abs(a)<4)type='woods';
+    else if(b===-2&&Math.abs(a)<3){type='hill';h=1;}
+   }
+   const r=row-Math.floor(height/2),q=col-Math.floor(width/2)-Math.floor(r/2);
+   tiles.push({q,r,type,height:h,depth,surface:h+depth,sheet});
+  }
+  this.tiles=tiles;this.rebuildMap();
+  this.setupMap={id:'sheets',rotation:0,layout,sheets:sheets.map(s=>({id:s.id,rotation:s.rotation})),width,height};
+  for(const u of this.units){
+   const r=u.team?-(u.id%2?3:1):(u.id%2?3:1);
+   const col=u.team?width-4:3;
+   Object.assign(u,{q:col-Math.floor(width/2)-Math.floor(r/2),r,facing:u.team?3:0});
+   u.moveStart={q:u.q,r:u.r};
+  }
+  return {ok:true};
+ }
+ deploymentEdgeIds(){return this.setupMap?.id==='sheets'?[0,2,3,5]:[0,1,2,3,4,5];}
  // AGoAC p.6: choose forces before deployment, with unanimous
  // consent for custom designs. Stable slot IDs keep the existing local
  // renderer's four model instances; empty secondary slots are not fielded.
@@ -390,7 +439,12 @@ export class Game extends Legacy{
   return {ok:true};
  }
  deploymentEdgeTiles(edge){
-  if(!Number.isInteger(edge)||edge<0||edge>5)return [];
+  if(!this.deploymentEdgeIds().includes(edge))return [];
+  if(this.setupMap?.id==='sheets'){
+   const coordinate=edge===0||edge===3?t=>t.q+Math.floor(t.r/2):t=>t.r;
+   const values=this.tiles.map(coordinate),bound=edge===0||edge===5?Math.min(...values):Math.max(...values);
+   return this.tiles.filter(t=>coordinate(t)===bound);
+  }
   const coordinate=t=>edge%3===0?t.q:edge%3===1?t.r:-t.q-t.r;
   const values=this.tiles.map(coordinate);
   const bound=[0,2,4].includes(edge)?Math.min(...values):Math.max(...values);
@@ -403,7 +457,7 @@ export class Game extends Legacy{
   if(a===b)throw Error('Генератор выдаёт только ничьи инициативы');
   const winner=a>b?0:1,representative=this.units.find(u=>u.team===winner&&!u.dead);
   if(!representative)return fail('Нет мехов для развёртывания');
-  const options=Array.from({length:6},(_,edge)=>({id:String(edge),edge,
+  const options=this.deploymentEdgeIds().map(edge=>({id:String(edge),edge,
    hexes:this.deploymentEdgeTiles(edge).map(t=>({q:t.q,r:t.r}))}));
   const edge=Number(this.chooseResolutionOption('deployment-edge',representative,options,
    String(winner===0?0:3),{green:a,red:b}));

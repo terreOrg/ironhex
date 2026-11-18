@@ -1141,3 +1141,19 @@ test('AGoAC p.6: new battle selects and displays the battlefield and resets to a
   assert.equal(await page.locator('#viewport canvas').count(),1);
  });
 });
+
+test('AGoAC p.6: joined mapsheets can be selected independently in local battle setup',{timeout:120000},async()=>{
+ await withPage('setup-sheets',{noWebGL:true},async page=>{
+  await page.locator('#new').click();
+  await page.locator('#setup-layout').selectOption('horizontal');
+  await page.locator('#setup-map').selectOption('clear');
+  await page.locator('#setup-map-2').selectOption('river');
+  await page.locator('#setup-map-rotation-2').selectOption('3');
+  await page.locator('#confirmstandard').click();
+  assert.equal(await page.locator('#viewport').getAttribute('data-sheet-layout'),'horizontal');
+  assert.equal(await page.locator('#viewport').getAttribute('data-hex-count'),'544');
+  assert.match(await page.locator('#battle-map-label').textContent(),/Открытая равнина.*Речная долина/);
+  await page.locator('#new').click();await page.locator('#confirmreset').click();
+  assert.equal(await page.locator('#viewport').getAttribute('data-hex-count'),'127');
+ });
+});

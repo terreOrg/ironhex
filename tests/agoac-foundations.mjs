@@ -2422,3 +2422,47 @@ test('AGoAC p.6: selected map terrain changes movement and line of sight and rot
   assert.equal(g.los(a,b).blocked,g===river);
  }
 });
+
+test('AGoAC p.6: rectangular mapsheet layouts use only outer edges and exact full hex counts',()=>{
+ for(const [layout,width,height] of [['sheet',16,17],['horizontal',32,17],['vertical',16,34]]){
+  const g=fresh(),sheets=Array.from({length:layout==='sheet'?1:2},()=>({id:'clear',rotation:0}));
+  assert(g.configureSetupMap({layout,sheets}).ok);
+  assert.equal(g.tiles.length,width*height);assert.equal(new Set(g.tiles.map(t=>t.q+','+t.r)).size,width*height);
+  assert.deepEqual(g.deploymentEdgeIds(),[0,2,3,5]);assert.deepEqual(g.deploymentEdgeTiles(1),[]);
+  for(const edge of g.deploymentEdgeIds()){
+   const tiles=g.deploymentEdgeTiles(edge),[dq,dr]=DIRS[edge];
+   assert.equal(tiles.length,edge===0||edge===3?height:width);
+   assert(tiles.every(t=>!g.tile(t.q-dq,t.r-dr)));
+   assert(tiles.every(t=>!g.deploymentEdgeTiles((edge+3)%6).includes(t)));
+  }
+  assert(g.units.every(u=>g.tile(u.q,u.r)));
+  assert(g.configureSetupForces({slots:[0,null,2,3]}).ok);assert(g.startStandardDeployment().ok);
+  let dice=[...diceFor(12),...diceFor(2),...diceFor(2),...diceFor(12)];g.rng=()=>dice.shift()??.99;
+  const first=g.nextPhaseWithChoices({humanTeams:[0,1]});
+  assert(first.pending);assert.deepEqual(g.pendingChoice.options.map(o=>Number(o.id)),[0,2,3,5]);
+  const choice=g.pendingChoice;assert(g.nextPhaseWithChoices({humanTeams:[0,1],choice:{key:choice.key,option:'2'}}).ok);
+  assert.deepEqual(g.deployment.edges,[2,5]);
+ }
+ const g=fresh(),before=JSON.stringify(g.tiles);
+ for(const input of [{layout:'bad',sheets:[]},{layout:'horizontal',sheets:[{id:'clear',rotation:0}]},{layout:'sheet',sheets:[{id:'clear',rotation:1}]}]){
+  assert(!g.configureSetupMap(input).ok);assert.equal(JSON.stringify(g.tiles),before);
+ }
+});
+test('AGoAC p.6: movement and LOS cross joined mapsheets without artificial border costs',()=>{
+ for(const layout of ['horizontal','vertical']){
+  const g=fresh();assert(g.configureSetupMap({layout,sheets:[{id:'clear',rotation:0},{id:'clear',rotation:3}]}).ok);
+  const u=g.units[0],v=g.units[2];
+  const a=g.tiles.find(t=>t.sheet===0&&DIRS.some(([dq,dr])=>g.tile(t.q+dq,t.r+dr)?.sheet===1));
+  const direction=DIRS.findIndex(([dq,dr])=>g.tile(a.q+dq,a.r+dr)?.sheet===1);
+  const [dq,dr]=DIRS[direction],b=g.tile(a.q+dq,a.r+dr);
+  Object.assign(u,{q:a.q,r:a.r,facing:direction,walk:6,moveStart:{q:a.q,r:a.r}});
+  Object.assign(v,{q:b.q,r:b.r,prone:false});
+  assert.equal(g.los(u,v).blocked,false);v.dead=true;
+  for(const other of g.units.filter(x=>x!==u))other.dead=true;
+  Object.assign(g,{phase:'move',activeTeam:u.team,queue:[u.team,1-u.team],actingId:null});
+  const route=g.reachable(u,'walk').find(p=>p.q===b.q&&p.r===b.r);assert(route);assert.equal(route.cost,1);
+  assert(g.move(u.id,b.q,b.r,'walk').ok);assert.equal(u.spent,1);assert.equal(u.distanceMoved,1);
+ }
+ const g=fresh();assert(g.configureSetupMap({layout:'horizontal',sheets:[{id:'clear',rotation:0},{id:'river',rotation:3}]}).ok);
+ assert(g.tiles.filter(t=>t.sheet===0).every(t=>t.type==='plain'));assert(g.tiles.some(t=>t.sheet===1&&t.depth>0));
+});
