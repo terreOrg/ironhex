@@ -399,6 +399,23 @@ export class Game extends Legacy{
  // Custom scenario text is interpreted by the two players, never executed.
  // A result is finalized once, at a completed-round boundary or after a
  // standard terminal result. An agreed custom result can differ from it.
+ // Optional human adjudication for exceptional standard stalemate.
+ // This does not change the automatic capability test, and is not
+ // a printed extra requirement or a way for the AI to force a draw.
+ canAdjudicateStalemate(){
+  return this.winner===null&&!this.victoryTerms&&!this.pendingChoice&&
+   this.phase==='initiative'&&this.round>1&&!this.queue.length&&
+   this.units.filter(u=>!u.dead).every(u=>u.deployed!==false)&&
+   [0,1].every(team=>this.units.some(u=>u.team===team&&!u.dead));
+ }
+ adjudicateStalemate({confirmations=[]}={}){
+  if(!this.canAdjudicateStalemate()||!Array.isArray(confirmations)||confirmations.length!==2||
+   confirmations.some(c=>c?.cannotMove!==true||c?.cannotDamage!==true))
+   return fail('Обе стороны должны подтвердить отсутствие возможности двигаться и наносить урон');
+  this.winner='draw';this.activeTeam=null;this.actingId=null;
+  this.note('Ничья: обе стороны подтвердили отсутствие возможности двигаться и наносить урон.');
+  return {ok:true};
+ }
  canAdjudicateVictory(){
   return typeof this.victoryTerms?.condition==='string'&&!this.victoryAdjudicated&&
    !this.pendingChoice&&!this.queue.length&&(this.winner!==null||this.phase==='initiative'&&this.round>1);
