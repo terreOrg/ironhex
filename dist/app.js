@@ -69,7 +69,21 @@ function resize(){const w=$('#viewport').clientWidth,h=$('#viewport').clientHeig
 function fitBoard(){return game.setupMap?.id==='sheets'?Math.max(14,Math.max(game.setupMap.width,game.setupMap.height)*1.15):12;}
 function cam(){const d=Math.max(23,fitBoard()*1.6);camera.position.set(Math.cos(angle)*d,d,Math.sin(angle)*d);camera.lookAt(0,0,0);camera.updateMatrixWorld();resize();}new ResizeObserver(resize).observe($('#viewport'));cam();
 const loader=new GLTFLoader();
-async function load(){try{const templates=await Promise.all(['aether-02.glb','atlas-09.glb'].map(f=>loader.loadAsync(f)));for(const u of game.units){let gltf=templates[u.id%2],model=clone(gltf.scene),box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),scale=(u.tonnage===65?2.25:2)/size.y;model.scale.setScalar(scale);model.position.y=-box.min.y*scale;const root=new THREE.Group();root.add(model);root.position.copy(world(u.q,u.r));root.position.y=groundY(u.q,u.r);root.rotation.y=u.team? -Math.PI/2:Math.PI/2;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});const disc=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.055,32),new THREE.MeshStandardMaterial({color:u.team?0xda7560:0xb8df6c,emissive:u.team?0x44211b:0x283b14,roughness:.4}));disc.position.y=.025;root.add(disc);const arrow=new THREE.Mesh(new THREE.ConeGeometry(.13,.4,3),new THREE.MeshBasicMaterial({color:u.team?0xffaa88:0xe0ff9a}));arrow.rotation.x=Math.PI/2;arrow.position.set(0,.08,.8);root.add(arrow);scene.add(root);const mixer=new THREE.AnimationMixer(model),actions={};for(const clip of gltf.animations)actions[clip.name]=mixer.clipAction(clip);const label=document.createElement('div');label.className='mechlabel'+(u.team?' red':'');label.textContent=`${u.id+1} / ${u.name.toUpperCase()}`;$('#labels').appendChild(label);records.set(u.id,{root,model,mixer,actions,label,state:null,dead:false});play(u.id,'Sentinel');}$('#loading').style.display='none';if(software)toast('WebGL недоступен: резервная тактическая карта. Для 3D включите аппаратное ускорение.');renderUI();}catch(e){$('#loading').innerHTML='Не удалось загрузить 3D-модели.<br>Обновите страницу для повторной загрузки.';console.error(e);}}
+let modelTemplates=null;
+function createModelRecord(u){
+ if(!modelTemplates||records.has(u.id))return;
+ let gltf=modelTemplates[u.id%2],model=clone(gltf.scene),box=new THREE.Box3().setFromObject(model),size=box.getSize(new THREE.Vector3()),scale=(u.tonnage===65?2.25:2)/size.y;model.scale.setScalar(scale);model.position.y=-box.min.y*scale;const root=new THREE.Group();root.add(model);root.position.copy(world(u.q,u.r));root.position.y=groundY(u.q,u.r);root.rotation.y=u.team? -Math.PI/2:Math.PI/2;model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});const disc=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.055,32),new THREE.MeshStandardMaterial({color:u.team?0xda7560:0xb8df6c,emissive:u.team?0x44211b:0x283b14,roughness:.4}));disc.position.y=.025;root.add(disc);const arrow=new THREE.Mesh(new THREE.ConeGeometry(.13,.4,3),new THREE.MeshBasicMaterial({color:u.team?0xffaa88:0xe0ff9a}));arrow.rotation.x=Math.PI/2;arrow.position.set(0,.08,.8);root.add(arrow);scene.add(root);const mixer=new THREE.AnimationMixer(model),actions={};for(const clip of gltf.animations)actions[clip.name]=mixer.clipAction(clip);const label=document.createElement('div');label.className='mechlabel'+(u.team?' red':'');label.textContent=`${u.id+1} / ${u.name.toUpperCase()}`;$('#labels').appendChild(label);records.set(u.id,{root,model,mixer,actions,label,state:null,dead:false});play(u.id,'Sentinel');
+}
+function reconcileModelRecords(){
+ const ids=new Set(game.units.map(u=>u.id));
+ for(const [id,record] of records){
+  if(ids.has(id))continue;
+  record.mixer.stopAllAction();record.mixer.uncacheRoot(record.model);
+  scene.remove(record.root);record.label.remove();records.delete(id);
+ }
+ for(const u of game.units)createModelRecord(u);
+}
+async function load(){try{modelTemplates=await Promise.all(['aether-02.glb','atlas-09.glb'].map(f=>loader.loadAsync(f)));reconcileModelRecords();syncModels();$('#loading').style.display='none';if(software)toast('WebGL недоступен: резервная тактическая карта. Для 3D включите аппаратное ускорение.');renderUI();}catch(e){$('#loading').innerHTML='Не удалось загрузить 3D-модели.<br>Обновите страницу для повторной загрузки.';console.error(e);}}
 function play(id,name,once=false){let rec=records.get(id);if(!rec)return;let action=rec.actions[name]||rec.actions.Sentinel;if(!action||rec.state===name&&!once)return;Object.values(rec.actions).forEach(a=>a.fadeOut(.18));action.reset().setLoop(once?THREE.LoopOnce:THREE.LoopRepeat,once?1:Infinity);action.clampWhenFinished=once;action.fadeIn(.18).play();rec.state=name;}
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 function toast(text){$('#toast').textContent=text;}
@@ -454,10 +468,10 @@ const rulesURL='https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/
 $('#help').onclick=()=>modal(`<div class="eyebrow">ПОЛЕВОЕ РУКОВОДСТВО</div><h2>Цикл боя AGoAC</h2><ol><li>Бросьте инициативу. Проигравший отряд действует первым. Выберите меха, у которого указано «Ваша очередь».</li><li>Двигайтесь по подсвеченным гексам. Повороты стоят MP. Можно продолжить маршрут или повернуться, затем нажмите «Завершить приказ меха».</li><li>В оружейной фазе выберите торс, оружие и цели. Приказы обоих отрядов фиксируются до разрешения стрельбы. Уже заявленный выстрел происходит даже при уничтожении стрелка в этой фазе.</li><li>Затем заявите физические атаки соседним мехам или пропустите их. После разрешения боя пройдите нагрев и конец хода.</li></ol><h3>Повреждения и пилот</h3><p>Учитываются кормовая броня, критические слоты, двигатель, гироскоп, актуаторы, датчики, боезапас, ранения и сознание пилота. Падение и подъём проверяются кубиками. Вода влияет на движение, стрельбу и охлаждение.</p><h3>Покрытие книги</h3><p>Текущая реализация расширяет базовый бой. <a href="coverage.html" target="_blank">Полный перечень реализованных правил и оставшихся ограничений</a>. В интерфейсе не обозначаются реализованными правила, для которых ещё нет управления или проверки.</p><p>Игра вдвоём — на одном устройстве. Сетевого режима нет. <a href="${rulesURL}" target="_blank">Исходная книга правил</a>.</p>`);
 $('#credits').onclick=()=>modal(`<div class="eyebrow">ИСТОЧНИКИ / ASSET MANIFEST</div><h2>О проекте</h2><p>Неофициальная фан-игра. BattleTech и названия мехов принадлежат их правообладателям. Проект не связан с Catalyst Game Labs.</p><h3>Правила</h3><p><a target="_blank" rel="noopener" href="${rulesURL}">BattleTech: A Game of Armored Combat — Rulebook</a>. Реализовано тактическое подмножество; перечень упрощений — в разделе «Правила».</p><h3>Модели из интернета</h3><p><a href="https://github.com/RamonLinares/atlas-09" target="_blank" rel="noopener">Ramon Linares / FORGE Character Lab</a> — Atlas-09 и Aether-02, лицензия CC0. Настоящие объёмные GLB-модели со скелетной анимацией ходьбы, бега, стрельбы, попаданий и уничтожения.</p><p>Это оригинальные дизайны — визуальные заменители, а не канонические модели Griffin, Wolverine, Shadow Hawk и Thunderbolt.</p><p><a href="ASSET-LICENSE.md" target="_blank">Лицензия моделей</a> · Графика: Three.js (MIT).</p>`);
 $('#rotateL').onclick=()=>{angle-=Math.PI/6;cam();};$('#rotateR').onclick=()=>{angle+=Math.PI/6;cam();};$('#zoomIn').onclick=()=>{zoom=Math.max(5,zoom-1.5);resize();};$('#zoomOut').onclick=()=>{zoom=Math.min(Math.max(20,fitBoard()*1.7),zoom+1.5);resize();};$('#resetcam').onclick=()=>{zoom=fitBoard();angle=Math.PI/4;cam();};
-function reset(standard=!!game.deployment,setup=null){if(setup){const trial=new Game();const map=trial.configureSetupMap(setup.map);if(!map.ok){toast(map.error);return false;}const valid=trial.configureSetupForces(setup);if(!valid.ok){toast(valid.error);return false;}}clearDice();game.reset();if(setup){game.configureSetupMap(setup.map);game.configureSetupForces(setup);}if(standard)game.startStandardDeployment();game.weather={night:$('#night').checked,gale:$('#gale').checked};game.tacticalOptions={standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked};buildTerrain();buildArcMeshes();zoom=fitBoard();cam();selected=0;arcWeapon='all';target=null;team=0;mode='walk';picked=new Set(game.units[0].weapons.map((_,i)=>i));for(const u of game.units){const rec=records.get(u.id);if(!rec)continue;rec.dead=false;rec.removalAnimation=false;rec.root.visible=true;rec.root.position.copy(world(u.q,u.r));rec.root.position.y=groundY(u.q,u.r);rec.root.rotation.y=u.team?-Math.PI/2:Math.PI/2;rec.label.style.display='block';play(u.id,'Sentinel');}syncModels();renderUI();toast(standard?'Новый бой. Бросьте развёртывание.':'Новый бой. Бросьте инициативу.');return true;}
+function reset(standard=!!game.deployment,setup=null){if(setup){const trial=new Game();const map=trial.configureSetupMap(setup.map);if(!map.ok){toast(map.error);return false;}const valid=trial.configureSetupForces(setup);if(!valid.ok){toast(valid.error);return false;}}clearDice();game.reset();if(setup){game.configureSetupMap(setup.map);game.configureSetupForces(setup);}if(standard)game.startStandardDeployment();game.weather={night:$('#night').checked,gale:$('#gale').checked};game.tacticalOptions={standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked};buildTerrain();buildArcMeshes();reconcileModelRecords();zoom=fitBoard();cam();selected=0;arcWeapon='all';target=null;team=0;mode='walk';picked=new Set(game.units[0].weapons.map((_,i)=>i));for(const u of game.units){const rec=records.get(u.id);if(!rec)continue;rec.dead=false;rec.removalAnimation=false;rec.root.visible=true;rec.root.position.copy(world(u.q,u.r));rec.root.position.y=groundY(u.q,u.r);rec.root.rotation.y=u.team?-Math.PI/2:Math.PI/2;rec.label.style.display='block';play(u.id,'Sentinel');}syncModels();renderUI();toast(standard?'Новый бой. Бросьте развёртывание.':'Новый бой. Бросьте инициативу.');return true;}
 function showBattleSetup({preferCustom=false}={}){
  const stock=new Game().units,custom=readCustomDesign();
- modal('<h2>Подготовка нового боя</h2><p>Сначала выберите карту, затем состав сторон. Текущий бой будет сброшен.</p><label class="hint">Поле боя<select id="setup-layout"><option value="hex">Шестиугольное (127 гексов)</option><option value="sheet">Одна прямоугольная секция</option><option value="horizontal">Две секции рядом</option><option value="vertical">Две секции в глубину</option></select></label><label class="hint">Карта 1<select id="setup-map"></select></label><label class="hint">Ориентация<select id="setup-map-rotation"></select></label><div id="setup-second-sheet" hidden><label class="hint">Карта 2<select id="setup-map-2"></select></label><label class="hint">Ориентация 2<select id="setup-map-rotation-2"></select></label></div><div id="setup-forces"></div>'+
+ modal('<h2>Подготовка нового боя</h2><p>Сначала выберите карту, затем состав сторон. Текущий бой будет сброшен.</p><label class="hint">Поле боя<select id="setup-layout"><option value="hex">Шестиугольное (127 гексов)</option><option value="sheet">Одна прямоугольная секция</option><option value="horizontal">Две секции рядом</option><option value="vertical">Две секции в глубину</option></select></label><label class="hint">Карта 1<select id="setup-map"></select></label><label class="hint">Ориентация<select id="setup-map-rotation"></select></label><div id="setup-second-sheet" hidden><label class="hint">Карта 2<select id="setup-map-2"></select></label><label class="hint">Ориентация 2<select id="setup-map-rotation-2"></select></label></div><div id="setup-forces"></div><div id="setup-extra"></div><div class="segments"><button type="button" id="setup-add-green">+ Зелёный мех</button><button type="button" id="setup-add-red">+ Красный мех</button></div>'+
   '<div id="setup-custom-consent" hidden><p>Нестандартный мех: согласие обеих сторон обязательно.</p>'+
   '<label><input type="checkbox" id="setup-approve-green"> Зелёная сторона согласна</label>'+
   '<label><input type="checkbox" id="setup-approve-red"> Красная сторона согласна</label></div>'+
@@ -473,7 +487,7 @@ function showBattleSetup({preferCustom=false}={}){
   }
  }
  $('#setup-layout').onchange=updateLayout;updateLayout();
- const fields=[];
+ const fields=[],extraFields=[];
  for(const [i,unit] of stock.entries()){
   const label=document.createElement('label');label.className='hint';
   label.textContent=(unit.team?'Красная':'Зелёная')+' сторона · мех '+(i%2+1);
@@ -485,12 +499,32 @@ function showBattleSetup({preferCustom=false}={}){
   select.value=preferCustom&&custom&&Number(custom.position)===i?'custom':String(i);
   label.append(select);$('#setup-forces').append(label);fields.push(select);
  }
+ function resetConsent(){
+  $('#setup-approve-green').checked=false;
+  $('#setup-approve-red').checked=false;update();
+ }
+ function addExtra(team){
+  if(fields.slice(team*2,team*2+2).filter(x=>x.value!=='none').length+extraFields.filter(x=>Number(x.dataset.extraTeam)===team).length>=8)return;
+  const label=document.createElement('label');label.className='hint';
+  label.textContent=(team?'Красная':'Зелёная')+' сторона · дополнительный мех';
+  const select=document.createElement('select');select.dataset.extraTeam=String(team);
+  for(const s of stock){const option=document.createElement('option');option.value=String(s.id);option.textContent=s.name+' '+s.variant+' · '+s.tonnage+' т';select.append(option);}
+  if(custom){const option=document.createElement('option');option.value='custom';option.textContent=custom.name+' · нестандартный';select.append(option);}
+  select.value=String(team*2);select.onchange=resetConsent;
+  const remove=document.createElement('button');remove.type='button';remove.textContent='Убрать';remove.dataset.removeExtra=String(team);
+  remove.onclick=()=>{extraFields.splice(extraFields.indexOf(select),1);label.remove();resetConsent();};
+  label.append(select,remove);$('#setup-extra').append(label);extraFields.push(select);resetConsent();
+ }
+ $('#setup-add-green').onclick=()=>addExtra(0);$('#setup-add-red').onclick=()=>addExtra(1);
  function update(){
-  const count=fields.filter(x=>x.value==='custom').length;
+  const count=[...fields,...extraFields].filter(x=>x.value==='custom').length;
+  const sizes=[0,1].map(team=>fields.slice(team*2,team*2+2).filter(x=>x.value!=='none').length+extraFields.filter(x=>Number(x.dataset.extraTeam)===team).length);
+  $('#setup-add-green').disabled=sizes[0]>=8;$('#setup-add-red').disabled=sizes[1]>=8;
+
   $('#setup-custom-consent').hidden=count===0;
   $('#setup-approve-red').disabled=!hotseat;
   if(!hotseat)$('#setup-approve-red').checked=true;
-  const valid=count<=1&&(count===0||$('#setup-approve-green').checked&&$('#setup-approve-red').checked);
+  const valid=sizes.every(n=>n<=8)&&count<=1&&(count===0||$('#setup-approve-green').checked&&$('#setup-approve-red').checked);
   for(const id of ['#confirmstandard','#confirmreset'])$(id).disabled=!valid;
  }
  for(const field of fields)field.onchange=()=>{
@@ -504,7 +538,8 @@ function showBattleSetup({preferCustom=false}={}){
   const approvals=[$('#setup-approve-green').checked,$('#setup-approve-red').checked];
   const layout=$('#setup-layout').value,first={id:$('#setup-map').value,rotation:Number($('#setup-map-rotation').value)};
   const map=layout==='hex'?first:{layout,sheets:layout==='sheet'?[first]:[first,{id:$('#setup-map-2').value,rotation:Number($('#setup-map-rotation-2').value)}]};
-  if(reset(standard,{slots,custom,approvals,map}))$('#modal').close();
+  const extra=extraFields.map(x=>({team:Number(x.dataset.extraTeam),stock:x.value==='custom'?'custom':Number(x.value)}));
+  if(reset(standard,{slots,extra,custom,approvals,map}))$('#modal').close();
  }
  $('#confirmstandard').onclick=()=>begin(true);
  $('#confirmreset').onclick=()=>begin(false);update();

@@ -2466,3 +2466,36 @@ test('AGoAC p.6: movement and LOS cross joined mapsheets without artificial bord
  const g=fresh();assert(g.configureSetupMap({layout:'horizontal',sheets:[{id:'clear',rotation:0},{id:'river',rotation:3}]}).ok);
  assert(g.tiles.filter(t=>t.sheet===0).every(t=>t.type==='plain'));assert(g.tiles.some(t=>t.sheet===1&&t.depth>0));
 });
+
+test('AGoAC p.6: expanded local force composition preserves unique IDs, positions and independent damage state',()=>{
+ const g=fresh(),stock=structuredClone(g.units),extra=[...Array.from({length:6},()=>({team:0,stock:1})),...Array.from({length:6},()=>({team:1,stock:0}))];
+ assert(g.configureSetupForces({slots:[0,1,2,3],extra}).ok);
+ assert.equal(g.units.length,16);assert.deepEqual(g.units.map(u=>u.id),Array.from({length:16},(_,i)=>i));
+ assert.deepEqual([0,1].map(t=>g.units.filter(u=>u.team===t&&!u.dead).length),[8,8]);
+ assert.equal(new Set(g.units.map(u=>u.q+','+u.r)).size,16);assert(g.units.every(u=>g.tile(u.q,u.r)));
+ assert.equal(g.units[4].name,stock[1].name);assert.equal(g.units[10].name,stock[0].name);
+ const armor=g.units[5].armor.CT;g.units[4].armor.CT--;assert.equal(g.units[5].armor.CT,armor);
+ for(const invalid of [[{team:2,stock:0}],[{team:0,stock:9}],Array.from({length:7},()=>({team:0,stock:0}))]){
+  const x=fresh(),before=JSON.stringify(x.units);assert(!x.configureSetupForces({slots:[0,1,2,3],extra:invalid}).ok);
+  assert.equal(JSON.stringify(x.units),before);assert.equal(x.setupForces,null);
+ }
+ const custom={config:structuredClone(setupExample)};
+ const x=fresh();assert(!x.configureSetupForces({slots:[0,1,2,3],extra:[{team:1,stock:'custom'}],custom,approvals:[true,false]}).ok);
+ assert(x.configureSetupForces({slots:[0,1,2,3],extra:[{team:1,stock:'custom'}],custom,approvals:[true,true]}).ok);
+ assert.equal(x.units[4].variant,'CUSTOM');
+});
+test('AGoAC pp.6–7: expanded unequal forces enter and make exactly one selection per living Mech',()=>{
+ const g=fresh();assert(g.configureSetupMap({layout:'horizontal',sheets:[{id:'clear',rotation:0},{id:'clear',rotation:0}]}).ok);
+ assert(g.configureSetupForces({slots:[0,1,2,null],extra:[{team:0,stock:0},{team:0,stock:1},{team:0,stock:2},{team:1,stock:3}]}).ok);
+ assert(g.startStandardDeployment().ok);
+ const dice=[...diceFor(12),...diceFor(2),...diceFor(2),...diceFor(12)];g.rng=()=>dice.shift()??.99;
+ assert(g.resolveDeploymentSetup().ok);g.initiative();
+ assert.equal(g.queue.length,7);assert.equal(g.queue.filter(t=>t===0).length,5);assert.equal(g.queue.filter(t=>t===1).length,2);
+ const seen=new Set();while(g.queue.length){
+  const u=g.units.find(u=>g.canAct(u));assert(u&&!u.notFielded);assert(!seen.has(u.id));seen.add(u.id);
+  const route=g.reachable(u,'walk').find(r=>!r.transit);assert(route);assert(g.move(u.id,route.q,route.r,'walk').ok);assert(g.hold(u.id).ok);
+ }
+ assert.equal(seen.size,7);assert.equal(g.units.filter(u=>g.onMap(u)).length,7);
+ assert(g.nextPhase().ok);assert.equal(g.phase,'fire');assert.equal(g.queue.length,7);
+ assert.equal(g.queue.filter(t=>t===0).length,5);assert.equal(g.queue.filter(t=>t===1).length,2);
+});
