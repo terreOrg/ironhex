@@ -283,9 +283,13 @@ export class Game extends Legacy{
   if(this.phase!=='move'||!this.canAct(u)||u.deployed!==false||this.isImmobile(u)||
    u.prone||!['walk','run','jump','minimum'].includes(mode)||!this.deployment?.edges||u.spent)return [];
   const legs=u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL'],lost=legs.filter(l=>!u.structure[l]).length;
-  if(['run','minimum'].includes(mode)&&lost>=(u.config==='Quad'?2:1))return [];
+  if(mode==='run'&&lost>=(u.config==='Quad'?2:1))return [];
   if(mode!=='walk'&&(u.dumping.length||u.dumpNext.length))return [];
-  const max=this.mp(u,mode==='minimum'?'run':mode);if(max<1)return [];
+  // Minimum movement requires one ground MP, even if ordinary running
+  // is prohibited by a lost leg (p.11); the step still counts as running.
+  if(mode==='minimum'&&this.mp(u,'walk')<1)return [];
+  const max=mode==='minimum'?Math.max(1,this.mp(u,'run')):this.mp(u,mode);
+  if(max<1)return [];
   const edge=this.deployment.edges[u.team],d=DIRS[edge],routes=new Map();
   const add=(tile,cost,from,transit=null)=>{
    if(this.occupied(tile.q,tile.r,u.id))return;
@@ -1444,7 +1448,29 @@ export class Game extends Legacy{
  aiMove(id){const u=this.unit(id);if(!this.canAct(u))return fail('Не очередь ИИ');if(u.deployed===false){const choices=this.deploymentOptions(u);const best=choices.sort((a,b)=>Number(a.mode==='minimum')-Number(b.mode==='minimum')||distance(a,{q:0,r:0})-distance(b,{q:0,r:0})||a.cost-b.cost)[0];if(!best)return {...fail('Нет допустимого входа: требуется изменить условия сценария'),code:'deployment_blocked'};const result=this.enterDeployment(u,best.q,best.r,best.mode);if(result.ok&&!result.ended)this.hold(id);return result;}if(this.isImmobile(u))return this.hold(id);if(u.prone){const s=this.stand(id);if(!s.ok||u.prone)return this.hold(id);}const options=['walk','run',...(this.mp(u,'jump')?['jump']:[])].flatMap(m=>this.reachable(u,m).map(p=>({...p,mode:m})));let best=null,score=-Infinity;const enemies=this.units.filter(t=>t.team!==u.team&&!t.dead&&t.deployed!==false);for(const p of options){const old={q:u.q,r:u.r,facing:u.facing};u.q=p.q;u.r=p.r;u.facing=p.facing;let value=-Infinity;for(const t of enemies){let v=u.weapons.reduce((n,w,i)=>n+this.preview(id,t.id,i).chance*(w.rack?w.rack*.6*w.damage:w.damage)/100,0)-Math.abs(distance(u,t)-5)*.5;if(p.mode==='jump')v-=1;value=Math.max(value,v);}Object.assign(u,old);if(value>score){score=value;best=p;}}const r=best?this.move(id,best.q,best.r,best.mode):{ok:true};this.hold(id);return r;}
  aiAttack(id){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||u.moveMode==='evade')return this.hold(id);let best=null;for(const twist of (u.config==='Quad'?(u.quirks?.extendedTorsoTwist===true?[-1,0,1]:[0]):(u.quirks?.extendedTorsoTwist===true?[-2,-1,0,1,2]:[-1,0,1]))){if(u.prone&&twist)continue;u.twist=twist;for(const t of this.units.filter(x=>x.team!==u.team&&!x.dead)){let indices=[],heat=u.heat+u.pendingHeat-u.sinks+u.sinksLost;for(let i=0;i<u.weapons.length;i++){const p=this.preview(id,t.id,i),w=u.weapons[i];if(p.legal&&p.chance>=17&&heat+w.heat<18){indices.push(i);heat+=w.heat;}}const score=indices.reduce((s,i)=>s+this.preview(id,t.id,i).chance*(u.weapons[i].rack||u.weapons[i].damage),0);if(!best||score>best.score)best={target:t.id,indices,twist,score};}}u.twist=best?.twist??0;return best?.indices.length?this.attack(id,best.target,best.indices):this.hold(id);}
  aiPhysical(id){const u=this.unit(id);if(u?.moveMode==='evade')return this.hold(id);if(u.charge)return this.hold(id);let best=null;for(const t of this.units.filter(t=>t.team!==u.team&&!t.dead))for(const [type,limb]of (u.config==='Quad'?[['kick','LA'],['kick','RA'],['kick','LL'],['kick','RL']]:[['kick','RL'],['kick','LL'],['punch','RA'],['punch','LA'],['club','RA'],['push','RA']])){const p=this.physicalPreview(id,t.id,type,limb);if(p.legal&&(!best||p.damage-p.targetNumber>best.score))best={target:t.id,type,limb,score:p.damage-p.targetNumber};}return best?this.declarePhysical(id,best.target,best.type,best.limb):this.hold(id);}
- minimumMove(id){const u=this.unit(id);if(u?.deployed===false)return fail('Сначала войдите на поле');if(!this.canAct(u)||u.spent||u.prone||this.isImmobile(u)||this.mp(u)<1)return fail('Минимальный шаг недоступен');const d=DIRS[u.facing],t=this.tile(u.q+d[0],u.r+d[1]);if(!t||this.occupied(t.q,t.r,id)||Math.abs(t.height-this.tile(u.q,u.r).height)>2)return fail('Впереди препятствие');u.q=t.q;u.r=t.r;u.spent=Math.max(1,this.mp(u,'run'));u.moveMode='run';u.distanceMoved=1;if(t.depth||t.type==='rubble')this.psr(u,t.depth>=3?1:t.depth===1?-1:0,'Минимальное движение',true);return this.hold(id);}
+ // AGoAC pp.9,11–12: the exceptional step is the entire movement
+ // action. It cannot change a previously declared mode or bypass a
+ // prohibition on running while dumping ammunition.
+ minimumMove(id){
+  const u=this.unit(id);
+  if(u?.deployed===false)return fail('Сначала войдите на поле');
+  if(this.phase!=='move'||!this.canAct(u)||u.spent||u.prone||this.isImmobile(u)||
+     u.moveEndedByLegLoss||!['stand','run'].includes(u.moveMode)||
+     u.dumping.length||u.dumpNext.length||this.mp(u,'walk')<1)
+   return fail('Минимальный шаг недоступен');
+  const d=DIRS[u.facing],t=this.tile(u.q+d[0],u.r+d[1]);
+  if(!t||this.occupied(t.q,t.r,id)||Math.abs(t.height-this.tile(u.q,u.r).height)>2)
+   return fail('Впереди препятствие');
+  const from={q:u.q,r:u.r},to={q:t.q,r:t.r},cost=Math.max(1,this.mp(u,'run'));
+  this.phaseRolls=[];this.actingId=id;
+  Object.assign(u,to,{spent:cost,moveMode:'run',distanceMoved:1,lastMovementDirection:u.facing});
+  this.resolveVoluntaryBuildingEntry(u,from,to,1);
+  this.checkExistingHullBreaches(u);
+  if(!u.dead&&!u.moveEndedByLegLoss&&(t.depth||t.type==='rubble'))
+   this.psr(u,t.depth>=3?1:t.depth===1?-1:0,'Минимальное движение',true);
+  this.hold(id);
+  return {ok:true,ended:true,from,to:{q:u.q,r:u.r},path:[to],mode:'run',rolls:[...this.phaseRolls]};
+ }
  flipArms(id,on){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u)||!this.mobile(u)||u.prone)return fail('Переворот рук недоступен');if(on&&(u.config==='Quad'||['LA','RA'].some(l=>u.slots[l][2]==='lower'||u.slots[l][3]==='hand')))return fail('Нужны руки без нижних и кистевых актуаторов');u.flip=on;u.twist=0;return {ok:true};}
  setBrace(id,limb){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u)||!this.mobile(u)||!['LA','RA'].includes(limb))return fail('Нельзя выбрать опорную руку');u.brace=limb;return {ok:true};}
  orderDump(id,index){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||this.phase!=='move'||u.moveMode==='run'||u.moveMode==='jump')return fail('Сброс боезапаса: только ходьба или неподвижность');if(!u.bins[index]?.shots)return fail('Бункер пуст');if(!u.dumpNext.includes(index))u.dumpNext.push(index);this.note(`${u.name}: сброс бункера ${index+1} начнётся в конце хода; завершится через ход.`);return {ok:true};}

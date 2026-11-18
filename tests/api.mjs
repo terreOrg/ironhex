@@ -268,3 +268,11 @@ test('API resumes an AI-created movement choice without accepting client AI comm
  assert.equal(g.pendingChoice,null);assert.equal(g.unit(ai.id).moved,true);
  assert.equal(g.activeTeam,0);
 });
+
+test('API rejects a minimum movement order during weapon declaration',()=>{
+ const g=new Game(),u=g.units[0];g.phase='fire';g.queue=[0,1];g.activeTeam=0;
+ Object.assign(u,{q:0,r:0,facing:0,walk:5});
+ const before=JSON.stringify(u);
+ assert.throws(()=>runTacticalOrder(g,{type:'minimum',id:u.id,version:1}),AuthError);
+ assert.equal(JSON.stringify(u),before);
+});
