@@ -287,3 +287,17 @@ test('API permits optional friendly reactor orders at End Phase without a moveme
  assert(runTacticalOrder(g,{type:'next',version:2}).result.ok);
  assert.equal(g.unit(u.id).shutdown,true);
 });
+
+test('API End Phase recovery choice is resumable and does not expose replay journal',()=>{
+ const g=new Game(),u=g.units[0];g.phase='end';g.queue=[];g.activeTeam=null;
+ Object.assign(u,{unconscious:true,wasUnconscious:true,pilotWounds:1});
+ let draws=0;g.rng=()=>{draws++;return .5;};
+ const r=runTacticalOrder(g,{type:'next',version:1});
+ assert(r.result.pending);assert.equal(g.pendingChoice.kind,'recovered-reactor');assert.equal(draws,2);
+ const snapshot=publicSnapshot({game:JSON.parse(JSON.stringify(g))});
+ assert.equal(snapshot._resolutionReplay,undefined);assert.equal(snapshot.pendingChoice.kind,'recovered-reactor');
+ assert.throws(()=>runTacticalOrder(g,{type:'shutdown',id:u.id,version:2}),AuthError);
+ const p=g.pendingChoice,done=runTacticalOrder(g,{type:'next',version:2,choice:{key:p.key,option:'shutdown'}});
+ assert(done.result.ok&&!done.result.pending);assert.equal(draws,2);
+ assert.equal(g.unit(u.id).shutdown,true);assert.equal(g.unit(u.id).unconscious,false);
+});
