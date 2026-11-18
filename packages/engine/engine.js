@@ -167,7 +167,7 @@ export function defaultMechWarriorSkills(techBase='Inner Sphere'){
  return techBase==='Clan'?{gunnery:3,piloting:4}:{gunnery:4,piloting:5};
 }
 export class Game extends Legacy{
- reset(){super.reset();this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
+ reset(){super.reset();this.victoryTerms=null;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
  this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
@@ -382,10 +382,26 @@ export class Game extends Legacy{
     Math.abs(angle)<=120.00001&&(l==='LA'?angle>=-60.00001:angle<=60.00001));
   });
  }
+ // CAT3500D p.7 permits victory conditions agreed before play.
+ // This digital preset is optional: draw when a negotiated turn limit ends.
+ configureVictoryTerms({roundLimit,approvals=[]}={}){
+  if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
+   this.winner!==null||this.victoryTerms!=null||this.queue.length||
+   this.units.some(u=>u.moved||u.fired||u.physicalDone))
+   return fail('Условия победы можно согласовать только до боя');
+  if(!Number.isInteger(roundLimit)||roundLimit<1||roundLimit>1000||
+   !Array.isArray(approvals)||approvals.length!==2||approvals.some(v=>v!==true))
+   return fail('Нужны допустимый лимит раундов и согласие обеих сторон');
+  this.victoryTerms={roundLimit,approvals:[true,true]};
+  return {ok:true};
+ }
  checkWin({stalemate=false}={}){
   if(this.winner!==null)return;
   const alive=this.units.filter(u=>!u.dead),sides=[0,1].map(t=>alive.filter(u=>u.team===t));
   if(!sides[0].length||!sides[1].length){super.checkWin();return;}
+  if(stalemate&&this.victoryTerms&&this.round>this.victoryTerms.roundLimit){
+   this.winner='draw';this.note('Ничья: достигнут согласованный лимит раундов.');return;
+  }
   if(!stalemate||alive.some(u=>u.deployed===false)||alive.some(u=>this.canEverMove(u)))return;
   if(alive.some(u=>this.canEverDamage(u,sides[1-u.team])))return;
   this.winner='draw';this.note('Ничья: ни одна сторона больше не может двигаться или наносить урон.');
