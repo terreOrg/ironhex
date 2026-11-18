@@ -1598,3 +1598,21 @@ test('AGoAC p.42: movement domino dodge pauses, survives recovery and reuses its
  assert.equal(restored.unit(u.id).prone,true);
  assert.deepEqual(restored.queue,[0,1,0,1]);
 });
+
+
+test('AGoAC p.7: permanent stalemate distinguishes usable ammunition and maximum range',()=>{
+ for(const condition of ['loaded','empty','destroyed-bin','out-of-range']){
+  const g=fresh(),u=g.units[0],target=g.units[2];
+  for(const x of g.units){
+   for(const limb of ['LA','RA','LL','RL'])x.structure[limb]=0;
+   for(const w of x.weapons)w.destroyed=true;
+  }
+  Object.assign(u,{q:0,r:0,sensorHits:0});
+  for(const x of g.units.filter(x=>x.team!==u.team))Object.assign(x,{q:condition==='out-of-range'?4:3,r:0});
+  Object.assign(u.weapons[0],{destroyed:false,location:'CT',locations:['CT'],ammo:1,shared:0,ranges:[1,2,3]});
+  u.bins=[{weapon:0,location:'CT',shots:condition==='empty'?0:1,destroyed:condition==='destroyed-bin'}];
+  assert.equal(g.canEverDamage(u,[target]),condition==='loaded',condition);
+  g.checkWin({stalemate:true});
+  assert.equal(g.winner,condition==='loaded'?null:'draw',condition);
+ }
+});
