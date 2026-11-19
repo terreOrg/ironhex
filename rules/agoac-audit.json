@@ -3581,7 +3581,7 @@
         9
       ],
       "statement": "Unused MP expires; committed mode cannot change; six discrete facings and one MP per hexside; torso orientation is independent.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3590,9 +3590,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.7: End Phase restores torso and arm orientation and starts a fresh selection cycle"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.9: facing wraps through six hexsides and spends one MP per hexside"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-061",
@@ -3601,9 +3605,18 @@
         9
       ],
       "statement": "Ground movement follows forward/rear adjacent hexes; reverse only walking and no level transition; reject partial/offboard voluntary destinations.",
-      "status": "not_audited",
-      "evidence": [],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.9: forward elevation costs and reverse level restrictions"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes"
+        }
+      ],
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-062",
@@ -3612,9 +3625,14 @@
         9
       ],
       "statement": "Forward elevation changes of one or two levels cost additional MP; reject larger voluntary differences and upward forced transitions beyond two. Define movement restriction only; detailed displacement deferred.",
-      "status": "not_audited",
-      "evidence": [],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.9: forward elevation costs and reverse level restrictions"
+        }
+      ],
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-063",
@@ -3623,14 +3641,18 @@
         9
       ],
       "statement": "Friendly transit, enemy blocking except declared charge, no occupied voluntary destination.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.9: normal ground movement may pass through a prone friendly Mech but not stop on it"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-064",
@@ -3639,7 +3661,7 @@
         10
       ],
       "statement": "All printed movement cost table entries: base, clear/paved/bridge/road, rough/woods, rubble, depth and elevation; road only along road; terrain PSR triggers/modifiers.",
-      "status": "known_missing",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3652,9 +3674,33 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.10: ground terrain PSR dispatch uses the entered hex and depth"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: road discount requires matching entry and exit edges"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: Woodland preset supplies connected road edges on rectangular sheets"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: rotated woodland road edges remain reciprocal on native hex maps"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: river preset bridge deck permits ground running without water checks"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: bridge and adjacent water retain distinct running eligibility"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: rubble entry invokes a terrain PSR for walking and running, not clear ground"
         }
       ],
-      "reviewNote": "Confirmed code gap on main 47c8312b286a4ab4a10f0b6a84b1aa350e97ab89: terrainCost(t) has no predecessor or direction argument; reachable() uses destination terrain only. isPaved(t) is a tile predicate, not connected road edges. Road-only-along-road cost and bridge crossing cannot be certified. Basic terrain budget and PSR dispatch regressions passed in #155 and #156; their success is not proof of road/bridge support. Need directional road/bridge representation and shared transition cost, including movement entry and execution, before closing."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending. Directional road edges and bridge deck implementation merged in #158–160; full table and boundary review still required."
     },
     {
       "id": "agoac-065",
@@ -3663,7 +3709,7 @@
         11
       ],
       "statement": "Minimum movement: at least one MP, legal forward hex, exclusive expenditure, counted running; water exception and one-MP prone stand.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3676,9 +3722,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.11: one-MP minimum stand consumes movement and permits free facing on success"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.11: minimum movement preserves facing and respects elevation and occupied hex limits"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-066",
@@ -3687,14 +3737,18 @@
         11
       ],
       "statement": "Immobile classifications versus zero MP, prone or damaged gyro; may select only stand still; automatic required PSR failure unless prone. Combat consumption deferred.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.11: zero ground MP alone is not immobility and cannot suppress intact jump MP"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-067",
@@ -3703,14 +3757,22 @@
         11
       ],
       "statement": "Movement stacking boundary permits one remaining Mech per hex; involuntary stacking calls existing displacement procedure without auditing its internals.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.9,11,40,42: hazardous friendly entry checks terrain before continuing or displacing"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.11: jumping over occupied hexes is allowed but ordinary occupied landings are rejected"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-068",
@@ -3720,14 +3782,22 @@
         12
       ],
       "statement": "Jump shortest path and terrain level ceiling; intermediate occupants/woods ignored, same-hex jump costs one, landing obeys occupancy and normal terrain checks.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11–12: jumping can use any legal shortest path but not a longer detour"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: jump ceiling is relative to starting elevation and includes landing hex"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.11: jumping over occupied hexes is allowed but ordinary occupied landings are rejected"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-069",
@@ -3736,14 +3806,22 @@
         12
       ],
       "statement": "Jump landing chooses free facing; no jumping into occupied hex except DFA declaration; downward height unrestricted within legal path.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11–12: jump chooses any landing facing at no MP cost and cannot rotate after landing"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.11: jumping over occupied hexes is allowed but ordinary occupied landings are rejected"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: jump ceiling is relative to starting elevation and includes landing hex"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-070",
@@ -3752,14 +3830,18 @@
         12
       ],
       "statement": "Jump into water requires landing PSR; submerged jets unavailable for takeoff, including leg jets at depth one; fall integration only.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.12: failed water landing determines fall facing relative to selected landing orientation"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: submerged leg jump jets reduce launch MP at depth one and depth two prevents launch"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-071",
@@ -3768,7 +3850,7 @@
         12
       ],
       "statement": "Voluntary prone posture preserves facing, costs one MP without added heat/damage, unavailable after jump; prone height one level.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3779,7 +3861,7 @@
           "test": "AGoAC p.12: voluntary drop is rejected after a jump, without MP, or outside movement"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-072",
@@ -3788,7 +3870,7 @@
         12
       ],
       "statement": "Prone movement declares walk/run before standing, only turn/stand while prone; no jumping when prone at start.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3799,7 +3881,7 @@
           "test": "AGoAC pp.7,12: prone Mechs with no ground MP cannot escape by jumping"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-073",
@@ -3808,7 +3890,7 @@
         12
       ],
       "statement": "Standing eligibility by limb counts; two MP and one heat per attempt, required PSR, repeats while sufficient MP, successful free facing; one-leg single attempt and cumulative PSR.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3817,9 +3899,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.12: declared ground mode and free facing are retained on successful standing"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: repeated standing attempts each consume two MP and one heat until budget exhausted"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     },
     {
       "id": "agoac-074",
@@ -3828,14 +3914,26 @@
         12
       ],
       "statement": "Water entry costs combine base, depth and elevation; PSR on each entry including water-to-water, not facing or standing; running restriction and exception; immersion state.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11–12: minimum water step resolves required terrain PSR and consumes selection"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: ground terrain PSR dispatch uses the entered hex and depth"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: basic terrain entry costs constrain the actual remaining movement budget"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: bridge and adjacent water retain distinct running eligibility"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
     }
   ]
 }
