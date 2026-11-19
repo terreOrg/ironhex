@@ -3307,3 +3307,25 @@ test('AGoAC p.10: river preset bridge deck permits ground running without water 
  assert(g.move(u.id,deck.q,deck.r,'run').ok);
  assert.equal(u.spent,1);assert.equal(calls.length,0);
 });
+
+test('AGoAC p.10: bridge and adjacent water retain distinct running eligibility',()=>{
+ for(const rotation of [0,3]){
+  const g=fresh();
+  assert(g.configureRectangularSheets('sheet',[{id:'river',rotation}]).ok);
+  const deck=g.tiles.find(t=>t.type==='bridge');
+  assert(deck);assert.equal(deck.depth,0);
+  for(const [dq,dr] of DIRS){
+   const water=g.tile(deck.q+dq,deck.r+dr);
+   if(!water?.depth)continue;
+   const u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+   Object.assign(u,{q:deck.q,r:deck.r,facing:DIRS.findIndex(([x,y])=>x===dq&&y===dr),walk:6,heat:0,spent:0,moveMode:'stand'});
+   for(const v of g.units)if(v!==u)v.deployed=false;
+   assert(g.reachable(u,'walk').some(t=>t.q===water.q&&t.r===water.r));
+   assert(!g.reachable(u,'run').some(t=>t.q===water.q&&t.r===water.r));
+   const before=JSON.stringify(u);
+   assert.equal(g.move(u.id,water.q,water.r,'run').ok,false);
+   assert.equal(JSON.stringify(u),before);
+  }
+  assert(DIRS.some(([dq,dr])=>g.tile(deck.q+dq,deck.r+dr)?.depth>0));
+ }
+});
