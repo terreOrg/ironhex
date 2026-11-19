@@ -4601,3 +4601,42 @@ test('AGoAC p.27 errata: destroyed DFA attacker cannot displace its target',()=>
  const before=[t.q,t.r];g.resolveDFALanding(u,t,0,true,{q:t.q,r:t.r});
  assert.deepEqual([t.q,t.r],before);assert.deepEqual(t.psrs,[]);
 });
+
+
+test('AGoAC pp.20,28: hatchet actuator hits add modifiers without reducing damage and destroyed hand forbids attack',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const base=g.physicalPreview(u.id,t.id,'hatchet','LA');assert(base.legal,base.reason);
+ for(let mask=0;mask<4;mask++){
+  u.actuators.LA.upper=!!(mask&1);u.actuators.LA.lower=!!(mask&2);
+  const p=g.physicalPreview(u.id,t.id,'hatchet','LA');assert(p.legal,p.reason);
+  assert.equal(p.targetNumber,base.targetNumber+2*(Number(!!(mask&1))+Number(!!(mask&2))));
+  assert.equal(p.damage,base.damage);
+ }
+ u.actuators.LA.hand=true;assert(!g.physicalPreview(u.id,t.id,'hatchet','LA').legal);
+ u.actuators.LA.hand=false;u.actuators.LA.shoulder=true;assert(!g.physicalPreview(u.id,t.id,'hatchet','LA').legal);
+});
+test('AGoAC p.26 errata: destroyed charge target allows standing attacker to enter without attack or PSR',()=>{
+ for(const prone of [false,true]){
+  const {g,u,t}=physicalBlockFixture();Object.assign(u,{prone,moveMode:'run',charge:{type:'charge',target:t.id,dir:0,hexes:2,targetPos:{q:1,r:0}}});
+  g.destroyMech(t);g.removeDestroyedMechs();g.rng=()=>{throw Error('Destroyed target must not need dice');};
+  g.resolveSpecial(u);assert(u.charge.resolved);assert.equal(u.q,prone?0:1);assert.deepEqual(u.psrs,[]);assert.equal(g.resolution.length,0);
+ }
+});
+test('AGoAC p.27 errata: destroyed DFA target becomes a normal landing in the target hex without DFA damage',()=>{
+ const {g,u,t}=physicalBlockFixture();Object.assign(u,{airborne:true,moveMode:'jump',spent:3,pendingHeat:3,distanceMoved:2,charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:1,r:0},startPos:{q:-2,r:0}}});
+ g.phase='fire';g.destroyMech(t);g.removeDestroyedMechs();g.rng=()=>{throw Error('Plain landing needs no dice');};
+ g.endPSR();
+ assert(!u.airborne);assert(u.charge.resolved);assert.equal(u.q,1);assert.equal(u.distanceMoved,3);assert.equal(u.pendingHeat,3);
+ assert.deepEqual(u.psrs,[]);assert.equal(g.resolution.length,0);
+});
+test('AGoAC p.27 errata: unconscious airborne pilot automatically misses even without a queued PSR',()=>{
+ for(const [queued,damage] of [[0,0],[2,0],[2,20]]){
+ const {g,u,t}=physicalBlockFixture();Object.assign(u,{airborne:true,unconscious:true,moveMode:'jump',charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:1,r:0},startPos:{q:-2,r:0}}});g.phase='fire';
+ assert.deepEqual(u.psrs,[]);if(queued)u.psrs.push({modifier:queued,reason:'test queued PSR'});u.phaseDamage=damage;
+ const expectedTN=u.piloting+g.psrMod(u,true)+queued+(damage>=20?1:0);const falls=[];g.fall=(v,levels,tn,side)=>{falls.push([v.id,levels,tn,side]);v.prone=true;};
+ g.packets=()=>{throw Error('Automatic miss must not deal DFA damage');};g.rng=()=>{throw Error('Automatic miss needs no attack dice');};
+ g.endPSR();assert(u.charge.resolved);assert(!u.airborne);assert(u.prone);assert.deepEqual(falls,[[u.id,2,expectedTN,'rear']]);assert.equal(u.q,1);
+ assert.notDeepEqual([t.q,t.r],[1,0]);
+ g.phase='physical';g.resolveSpecial(u);assert.equal(falls.length,1);
+ }
+});
