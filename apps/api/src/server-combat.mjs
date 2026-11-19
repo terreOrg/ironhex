@@ -68,7 +68,7 @@ export function autoOpponent(game){
     game.phaseRolls=[];
     const phase=game.phase;
     const r=phase==='move'?game.aiMoveWithChoices(unit.id,{humanTeams:[0]}):
-      phase==='fire'?game.aiAttack(unit.id):game.aiPhysical(unit.id);
+      phase==='fire'?game.aiAttackWithLosChoices(unit.id,{humanTeams:[0]}):game.aiPhysical(unit.id);
     if(r?.pending)break;
     if(r?.code==='deployment_blocked')throw new AuthError(409,'deployment_blocked');
     if(!r?.ok&&!game.hold(unit.id)?.ok)throw Error('opponent_stalled');
@@ -86,7 +86,7 @@ export function runTacticalOrder(game,body){
   if(game.pendingChoice&&type!=='next')throw new AuthError(409,'resolution_choice_pending');
   if(type==='next'){
     const movement=game.pendingChoice?.scope==='movement'?game._resolutionReplay?.movement:null;
-    if(game.queue.length&&!movement)throw new AuthError(409,'phase_pending_orders');
+    if(game.queue.length&&!movement&&game.pendingChoice?.scope!=='los')throw new AuthError(409,'phase_pending_orders');
     r=game.nextPhaseWithChoices({humanTeams:[0],choice:b.choice});
     if(movement){type=movement.kind==='ai'?'ai-move':movement.kind==='charge'?'charge':'move';id=movement.id;}
   }else if(type==='weather'){
@@ -107,7 +107,7 @@ export function runTacticalOrder(game,body){
       case 'hold':r=game.hold(id);break;
       case 'twist':r=game.twist(id,b.twist);break;
       case 'turret':r=game.setDirectionalTorsoMount(id,b.mount,b.facing);break;
-      case 'fire':r=game.declareFire(id,b.shots,b.primaryTarget??null);break;
+      case 'fire':r=game.declareFireWithLosChoices(id,b.shots,b.primaryTarget??null,{humanTeams:[0]});break;
       case 'physical':r=game.declarePhysical(id,b.target,b.attack,b.limb);break;
       case 'club':r=game.takeClub(id);break;
       case 'charge':r=game.chargeWithChoices(id,b.target,b.attack,{humanTeams:[0]});break;

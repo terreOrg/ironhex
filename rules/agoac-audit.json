@@ -4633,9 +4633,21 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.13: exact LOS includes corner-only and non-sampled hexes in both directions"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: defender chooses ambiguous fire path before commitment and cannot change it"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: automated defender selects obstruction before an interactive attack"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "API resumes a persisted defender LOS choice while the opponent is acting"
         }
       ],
-      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing. Engine defender authorization, round-stamped reciprocal selection and use by LOS/preview added. API/UI choice enforcement, serialization verification and exact corner-touch remain open. Added adjacent endpoint and mutual surface visibility regression; API/UI and exact corner-touch remain open. Visual re-review printed p.13 confirms corner-only contact. Replaced center sampling with closed hex-footprint intersection, shared-edge side filtering and reciprocal default preview. Mandatory controller choice/API/UI and resolution direction integration still open. Exact CI not yet run; no Verified promotion."
+      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing. Engine defender authorization, round-stamped reciprocal selection and use by LOS/preview added. API/UI choice enforcement, serialization verification and exact corner-touch remain open. Added adjacent endpoint and mutual surface visibility regression; API/UI and exact corner-touch remain open. Visual re-review printed p.13 confirms corner-only contact. Replaced center sampling with closed hex-footprint intersection, shared-edge side filtering and reciprocal default preview. Mandatory controller choice/API/UI and resolution direction integration still open. Exact CI not yet run; no Verified promotion. Interactive declarations and AI requests now use defender-controlled choices, with reciprocal round persistence and resumable API/UI. AI considers eligible range candidates before choosing shots; explicit direct noninteractive APIs still use deterministic default geometry. Exact CI and full source/edge audit pending."
     },
     {
       "id": "agoac-076",
@@ -4773,9 +4785,17 @@
         {
           "file": "tests/api.mjs",
           "test": "API validates optional primary fire target against declared shots"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: defender chooses ambiguous fire path before commitment and cannot change it"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "API resumes a persisted defender LOS choice while the opponent is acting"
         }
       ],
-      "reviewNote": "declareFire, canAct and selection commitments exist; legal targets review pending; candidate regression references, not final verification. Explicit primary target now travels through engine, UI and server order validation; empty-hex declarations remain open."
+      "reviewNote": "declareFire, canAct and selection commitments exist; legal targets review pending; candidate regression references, not final verification. Explicit primary target now travels through engine, UI and server order validation; empty-hex declarations remain open. Interactive fire must prepare ambiguous LOS before committing a declaration; blocked path cannot commit a shot."
     },
     {
       "id": "agoac-080",

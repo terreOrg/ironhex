@@ -3613,3 +3613,36 @@ test('AGoAC pp.13,17: both physically adjacent terrain cells affect elevation an
  g.tile(2,1).height=1;assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(a,b).cover,false);
  g.tile(0,0).height=0;assert.equal(g.los(a,b).cover,true);
 });
+
+test('AGoAC p.13: defender chooses ambiguous fire path before commitment and cannot change it',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false,facing:0,fired:false});
+ Object.assign(b,{q:1,r:1,prone:false,fired:false});
+ g.phase='fire';g.queue=[a.team,b.team];g.activeTeam=a.team;g.actingId=a.id;
+ g.tile(1,0).height=2;
+ const command=[{index:0,target:b.id}];
+ const result=g.declareFireWithLosChoices(a.id,command,null,{humanTeams:[0,1]});
+ assert(result.pending);assert(!a.fired);assert.equal(g.declarations.length,0);
+ const p=g.pendingChoice;assert.equal(p.team,b.team);
+ const blocked=p.options.find(o=>o.blocked);
+ assert.equal(g.resolveFireLosChoice({key:p.key,option:blocked.id},[a.team]).ok,false);
+ assert.equal(g.resolveFireLosChoice({key:p.key,option:'0'},[b.team]).ok,false);
+ assert(g.nextPhaseWithChoices({humanTeams:[0,1],choice:{key:p.key,option:blocked.id}}).ok);
+ assert.equal(g.pendingChoice,null);assert(g.los(a,b).blocked);assert(g.los(b,a).blocked);
+ assert.equal(g.declareFireWithLosChoices(a.id,command,null,{humanTeams:[0,1]}).ok,false);
+ assert.equal(g.declarations.length,0);assert(!a.fired);
+ assert.equal(g.chooseLosPath(a.id,b.id,-blocked.choice,b.team).ok,false);
+});
+test('AGoAC p.13: automated defender selects obstruction before an interactive attack',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false,facing:0,fired:false});
+ Object.assign(b,{q:1,r:1,prone:false,fired:false});
+ g.phase='fire';g.queue=[a.team,b.team];g.activeTeam=a.team;g.actingId=a.id;
+ g.tile(1,0).height=2;
+ const r=g.prepareFireLos(a.id,[b.id,b.id],[a.team]);
+ assert(r.ok&&r.losPrepared&&!r.pending);assert(g.los(a,b).blocked);
+ assert.equal(g.prepareFireLos(a.id,[b.id],[a.team]).losPrepared,false);
+ g.round++;assert.equal(g.selectedLosPath(a,b),0);
+});

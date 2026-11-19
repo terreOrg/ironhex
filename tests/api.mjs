@@ -331,3 +331,26 @@ test('API validates optional primary fire target against declared shots',()=>{
  for(const primaryTarget of [0,1,4,'3',null])assert.throws(()=>validateTacticalOrder({...b,primaryTarget}),AuthError);
  assert.deepEqual(validateTacticalOrder(b),b);
 });
+
+test('API resumes a persisted defender LOS choice while the opponent is acting',()=>{
+ const g=new Game(),[human,other,ai,ally]=g.units;
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(ai,{q:0,r:0,facing:0,prone:false,fired:false});
+ Object.assign(human,{q:1,r:1,prone:false,fired:false});
+ Object.assign(other,{q:-4,r:2,dead:true});Object.assign(ally,{q:4,r:0,dead:true});
+ g.phase='fire';g.activeTeam=ai.team;g.queue=[ai.team,human.team];g.actingId=ai.id;
+ g.tile(1,0).height=2;
+ assert(g.prepareFireLos(ai.id,[human.id],[0]).pending);
+ const stored=JSON.parse(JSON.stringify(g));const restored=new Game();
+ Object.assign(restored,stored);restored.rebuildMap();
+ const p=publicSnapshot({game:stored}).pendingChoice;
+ assert.equal(p.kind,'los-path');assert.equal(p.team,0);
+ assert.throws(()=>runTacticalOrder(restored,{type:'hold',id:human.id,version:1}),AuthError);
+ const selected=p.options.find(o=>o.blocked);
+ // Isolate the AI resume from unrelated weapon attacks.
+ restored.aiAttack=id=>restored.hold(id);
+ const done=runTacticalOrder(restored,{type:'next',version:2,choice:{key:p.key,option:selected.id}});
+ assert(done.result.ok);assert.equal(restored.pendingChoice,null);
+ assert(restored.los(restored.unit(ai.id),restored.unit(human.id)).blocked);
+ assert(restored.unit(ai.id).fired);
+});
