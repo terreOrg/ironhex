@@ -3369,3 +3369,22 @@ test('AGoAC p.11: zero ground MP alone is not immobility and cannot suppress int
   }
  }
 });
+
+test('AGoAC p.11: jumping over occupied hexes is allowed but ordinary occupied landings are rejected',()=>{
+ for(const friendly of [false,true])for(const prone of [false,true]){
+  const g=fresh(),u=g.units[0],v=g.units[2];
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,jump:3,jumpLost:0,heat:0,spent:0,moveMode:'stand',moveStart:{q:0,r:0}});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+  for(const other of g.units)if(other!==u)other.deployed=false;
+  Object.assign(v,{q:1,r:0,team:friendly?u.team:1-u.team,prone,deployed:true});
+  const before=JSON.stringify(u),occupant=JSON.stringify(v);
+  assert(!g.reachable(u,'jump').some(t=>t.q===1&&t.r===0));
+  assert.equal(g.move(u.id,1,0,'jump').ok,false);
+  assert.equal(JSON.stringify(u),before);
+  assert(g.reachable(u,'jump').some(t=>t.q===2&&t.r===0));
+  assert(g.move(u.id,2,0,'jump').ok);
+  assert.equal(u.spent,2);assert.equal(u.distanceMoved,2);
+  assert.equal(JSON.stringify(v),occupant);
+ }
+});
