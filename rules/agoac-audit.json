@@ -4625,9 +4625,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.13: defender LOS choice persists reciprocally for the round"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14: adjacent endpoints and intervening Mechs never obstruct surface LOS"
         }
       ],
-      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing. Engine defender authorization, round-stamped reciprocal selection and use by LOS/preview added. API/UI choice enforcement, serialization verification and exact corner-touch remain open."
+      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing. Engine defender authorization, round-stamped reciprocal selection and use by LOS/preview added. API/UI choice enforcement, serialization verification and exact corner-touch remain open. Added adjacent endpoint and mutual surface visibility regression; API/UI and exact corner-touch remain open."
     },
     {
       "id": "agoac-076",
@@ -4646,9 +4650,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.13: discrete LOS elevation thresholds and target woods"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: prone height changes mutual LOS at middle and adjacent elevation thresholds"
         }
       ],
-      "reviewNote": "Direct visual review CAT3500D pp.13–14 confirms discrete elevation conditions, standing/prone heights and intervening woods threshold, separate target terrain. Existing tests cover elevation and woods; prone-height edge evidence and exact gates still needed."
+      "reviewNote": "Direct visual review CAT3500D pp.13–14 confirms discrete elevation conditions, standing/prone heights and intervening woods threshold, separate target terrain. Existing tests cover elevation and woods; prone-height edge evidence and exact gates still needed. Added direct prone/standing elevation matrix with bidirectional assertions; exact CI gates pending."
     },
     {
       "id": "agoac-077",
@@ -4680,9 +4688,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.14: own partial cover obstructs leg weapons but not torso weapons"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14: adjacent endpoints and intervening Mechs never obstruct surface LOS"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.17: partial cover is standing only, negated downhill except depth-one water"
         }
       ],
-      "reviewNote": "Direct visual pp.13–14: intervening units do not obstruct; baseline submerged LOS is forbidden even though engine supports expanded underwater weapon fire. Leg-mounted weapons cannot fire through own partial cover. Implemented own partial cover restriction for leg weapons on surface. Base/expanded underwater behavior and remaining geometry still open."
+      "reviewNote": "Direct visual pp.13–14: intervening units do not obstruct; baseline submerged LOS is forbidden even though engine supports expanded underwater weapon fire. Leg-mounted weapons cannot fire through own partial cover. Implemented own partial cover restriction for leg weapons on surface. Base/expanded underwater behavior and remaining geometry still open. Added intervening standing/prone units and partial-cover elevation, posture, woods and water regressions; base/expanded submerged policy remains open."
     },
     {
       "id": "agoac-078",
@@ -4764,9 +4780,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.17: partial cover is standing only, negated downhill except depth-one water"
         }
       ],
-      "reviewNote": "preview sums gunnery, movement, range, minimum, terrain, heat, sensor, arm and posture; verify complete tables; candidate regression references, not final verification."
+      "reviewNote": "preview sums gunnery, movement, range, minimum, terrain, heat, sensor, arm and posture; verify complete tables; candidate regression references, not final verification. Added terrain/cover primitive evidence; full GATOR modifier integration still pending."
     },
     {
       "id": "agoac-081",
