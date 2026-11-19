@@ -18,7 +18,7 @@ export async function normalizeLcov(text,root=defaultRoot){
     const path=isAbsolute(value)?relative(root,value):value.replace(/^\.\//,'');
     if(!path.startsWith('dist/')){lines.push(line);continue;}
     const file=basename(path);
-    const source=engine.has(file)?'packages/engine/'+file:web.has(file)?'apps/web/src/'+file:null;
+    const source=file==='mech-toggle.js'?'packages/ui/mech-toggle/mech-toggle.js':engine.has(file)?'packages/engine/'+file:web.has(file)?'apps/web/src/'+file:null;
     if(!source||path!=='dist/'+file)throw new Error('Unmapped generated coverage source: '+path);
     if(!validated.has(path)){
       const [original,generated]=await Promise.all([readFile(resolve(root,source)),readFile(resolve(root,path))]);

@@ -151,6 +151,12 @@ async function withPage(name, options, verify) {
   } finally { await context.close(); }
 }
 
+async function setMechToggle(locator,checked){
+  assert.equal(await locator.evaluate(el=>el.localName),'mech-toggle');
+  if(await locator.evaluate(el=>el.checked)!==checked)await locator.getByRole('switch').click();
+  assert.equal(await locator.evaluate(el=>el.checked),checked);
+}
+
 async function loaded(page) {
   await page.waitForFunction(() => {
     const el = document.querySelector('#loading');
@@ -185,9 +191,9 @@ test('Chromium renders WebGL mechs and firing-sector controls', { timeout:120000
     assert(c.webgl,'WebGL context unavailable; do not silently pass fallback');
     assert.match(await page.locator('#arcinfo').textContent(),/гексов/);
     await page.locator('#arctoggle').click();
-    assert.equal(await page.locator('#arctoggle').getAttribute('aria-pressed'),'false');
+    assert.equal(await page.locator('#arctoggle').evaluate(el=>el.checked),false);
     await page.locator('#arctoggle').click();
-    assert.equal(await page.locator('#arctoggle').getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('#arctoggle').evaluate(el=>el.checked),true);
     await page.locator('#rotateR').click();
     await page.locator('#zoomIn').click();
     await page.locator('#resetcam').click();
@@ -343,7 +349,7 @@ test('Mechlab validates and launches a custom chassis', { timeout:120000 }, asyn
     await loaded(page);
     await page.locator('#setup-approve-green').waitFor({state:'visible'});
     assert(await page.locator('#confirmreset').isDisabled());
-    await page.locator('#setup-approve-green').check();
+    await setMechToggle(page.locator('#setup-approve-green'),true);
     await page.locator('#confirmreset').click();
     assert.match(await page.locator('#selected h2').textContent(),/IRONHEX CI/);
   });
@@ -838,8 +844,8 @@ test('Operation briefing creates a roster and displays a trusted after-action re
       });
       await page.locator('#hub-campaigns-button').click();
       await page.locator('#op-create-form').waitFor({state:'visible'});
-      await page.locator('#op-mech-list input[name=mechId]').check();
-      await page.locator('#op-create-form input[name=interactive]').uncheck();
+      await setMechToggle(page.locator('#op-mech-list mech-toggle[name=mechId]'),true);
+      await setMechToggle(page.locator('#op-create-form mech-toggle[name=interactive]'),false);
       await page.locator('#op-create').click();
       await page.locator('#op-current .op-overline').waitFor({state:'visible'});
       assert.match(await page.locator('#op-current').textContent(),/ПОДГОТОВКА/);
@@ -955,8 +961,8 @@ test('Commander launches an interactive 3D operation from the mission briefing',
         return result(route,404,{error:'not_found'});
       });
       await page.locator('#hub-campaigns-button').click();
-      await page.locator('#op-mech-list input[name=mechId]').check();
-      assert.equal(await page.locator('#op-create-form input[name=interactive]').isChecked(),true);
+      await setMechToggle(page.locator('#op-mech-list mech-toggle[name=mechId]'),true);
+      assert.equal(await page.locator('#op-create-form mech-toggle[name=interactive]').isChecked(),true);
       await page.locator('#op-create-form select[name=deploymentMode]').selectOption('standard');
       await page.locator('#op-create').click();
       await page.getByRole('button',{name:'НАЧАТЬ ОПЕРАЦИЮ'}).click();
@@ -1112,11 +1118,11 @@ test('AGoAC p.6: hotseat setup selects forces and requires both players to appro
   await page.locator('[data-setup-slot="1"]').selectOption('none');
   await page.locator('[data-setup-slot="2"]').selectOption('0');
   assert(await page.locator('#confirmstandard').isDisabled());
-  await page.locator('#setup-approve-green').check();assert(await page.locator('#confirmstandard').isDisabled());
-  await page.locator('#setup-approve-red').check();assert(await page.locator('#confirmstandard').isEnabled());
+  await setMechToggle(page.locator('#setup-approve-green'),true);assert(await page.locator('#confirmstandard').isDisabled());
+  await setMechToggle(page.locator('#setup-approve-red'),true);assert(await page.locator('#confirmstandard').isEnabled());
   await page.locator('[data-setup-slot="3"]').selectOption('none');
   assert(await page.locator('#confirmstandard').isDisabled());
-  await page.locator('#setup-approve-green').check();await page.locator('#setup-approve-red').check();
+  await setMechToggle(page.locator('#setup-approve-green'),true);await setMechToggle(page.locator('#setup-approve-red'),true);
   await page.locator('#confirmstandard').click();
   assert.equal(await page.locator('#allies .unitcard').count(),1);assert.equal(await page.locator('#enemies .unitcard').count(),1);
   assert.match(await page.locator('#allies .unitcard strong').textContent(),/CONSENT CI/);
@@ -1191,11 +1197,11 @@ test('AGoAC p.7: hotseat round-limit victory terms require fresh approval by bot
   assert(await page.locator('#confirmreset').isEnabled());
   await page.locator('#setup-victory').selectOption('limit');
   assert(await page.locator('#confirmreset').isDisabled());
-  await page.locator('#setup-victory-green').check();assert(await page.locator('#confirmreset').isDisabled());
-  await page.locator('#setup-victory-red').check();assert(await page.locator('#confirmreset').isEnabled());
+  await setMechToggle(page.locator('#setup-victory-green'),true);assert(await page.locator('#confirmreset').isDisabled());
+  await setMechToggle(page.locator('#setup-victory-red'),true);assert(await page.locator('#confirmreset').isEnabled());
   await page.locator('#setup-round-limit').fill('2');await page.locator('#setup-round-limit').blur();
   assert(await page.locator('#confirmreset').isDisabled());assert(!(await page.locator('#setup-victory-green').isChecked()));assert(!(await page.locator('#setup-victory-red').isChecked()));
-  await page.locator('#setup-victory-green').check();await page.locator('#setup-victory-red').check();
+  await setMechToggle(page.locator('#setup-victory-green'),true);await setMechToggle(page.locator('#setup-victory-red'),true);
   await page.locator('#confirmreset').click();await page.locator('#modal').waitFor({state:'hidden'});
   assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/);
  });
@@ -1208,20 +1214,20 @@ test('AGoAC p.7: custom local victory terms require agreement and are rendered a
   assert.equal(await page.locator('#setup-victory option[value="custom"]').evaluate(option=>option.disabled),true);
   await page.locator('#close').click();
   await page.locator('#gamemode').selectOption('hotseat');await page.locator('#new').click();await page.locator('#setup-victory').selectOption('custom');
-  await page.locator('#setup-condition').fill('Hold <b>A</b>');await page.locator('#setup-victory-green').check();assert(await page.locator('#confirmreset').isDisabled());
-  await page.locator('#setup-victory-red').check();assert(await page.locator('#confirmreset').isEnabled());
+  await page.locator('#setup-condition').fill('Hold <b>A</b>');await setMechToggle(page.locator('#setup-victory-green'),true);assert(await page.locator('#confirmreset').isDisabled());
+  await setMechToggle(page.locator('#setup-victory-red'),true);assert(await page.locator('#confirmreset').isEnabled());
   await page.locator('#setup-condition').fill('Hold <b>B</b>');assert(await page.locator('#confirmreset').isDisabled());
-  await page.locator('#setup-victory-green').check();await page.locator('#setup-victory-red').check();await page.locator('#confirmreset').click();
+  await setMechToggle(page.locator('#setup-victory-green'),true);await setMechToggle(page.locator('#setup-victory-red'),true);await page.locator('#confirmreset').click();
   assert.match(await page.locator('#agreed-victory-condition').textContent(),/Hold <b>B<\/b>/);assert.equal(await page.locator('#agreed-victory-condition b').count(),0);assert.equal(await page.locator('#adjudicate-victory').count(),0);
   await page.locator('#next').click();await page.locator('#hold').waitFor({timeout:50000});
   for(const phase of ['movement','fire','physical']){await completeOrders(page,phase);await page.locator('#next').click();}
   await page.locator('#next').click();await page.locator('#next').click();
   await page.locator('#adjudicate-victory').click();
   assert.equal(await page.locator('#verdict-condition').textContent(),'Hold <b>B</b>');
-  await page.locator('#verdict-green').check();assert(await page.locator('#verdict-confirm').isDisabled());
-  await page.locator('#verdict-red').check();assert(await page.locator('#verdict-confirm').isEnabled());
+  await setMechToggle(page.locator('#verdict-green'),true);assert(await page.locator('#verdict-confirm').isDisabled());
+  await setMechToggle(page.locator('#verdict-red'),true);assert(await page.locator('#verdict-confirm').isEnabled());
   await page.locator('#verdict-outcome').selectOption('1');assert(await page.locator('#verdict-confirm').isDisabled());
-  await page.locator('#verdict-green').check();await page.locator('#verdict-red').check();
+  await setMechToggle(page.locator('#verdict-green'),true);await setMechToggle(page.locator('#verdict-red'),true);
   await page.locator('#verdict-confirm').click();assert(await page.locator('#next').isDisabled());assert.equal(await page.locator('#adjudicate-victory').count(),0);
  });
 });
@@ -1235,8 +1241,8 @@ test('AGoAC p.7: standard two-player stalemate confirmation is available only at
   for(const phase of ['movement','fire','physical']){await completeOrders(page,phase);await page.locator('#next').click();}
   await page.locator('#next').click();await page.locator('#next').click();
   await page.locator('#adjudicate-stalemate').click();assert(await page.locator('#stalemate-confirm').isDisabled());
-  await page.locator('#stalemate-green').check();assert(await page.locator('#stalemate-confirm').isDisabled());
-  await page.locator('#stalemate-red').check();assert(await page.locator('#stalemate-confirm').isEnabled());
+  await setMechToggle(page.locator('#stalemate-green'),true);assert(await page.locator('#stalemate-confirm').isDisabled());
+  await setMechToggle(page.locator('#stalemate-red'),true);assert(await page.locator('#stalemate-confirm').isEnabled());
   await page.locator('#stalemate-confirm').click();assert(await page.locator('#next').isDisabled());assert.equal(await page.locator('#adjudicate-stalemate').count(),0);
  });
 });
@@ -1377,3 +1383,22 @@ test('AGoAC p.21: browser declares aimed and ordinary weapons independently',{ti
   assert.equal(commands,1);assert.deepEqual(g.declarations[0].shots.map(s=>s.aim),['CT',null]);
  });
 });
+
+ test('Mechanical cockpit toggles retain independent state, keyboard and disabled semantics',{timeout:120000},async()=>{
+  await withPage('mech-toggle-controls',{noWebGL:true},async page=>{
+   const arcs=page.locator('#arctoggle');
+   const night=page.locator('#night'),gale=page.locator('#gale');
+   assert.equal(await page.locator('input[type=checkbox]').count(),0);
+   await setMechToggle(arcs,false);
+   await arcs.getByRole('switch').focus();await page.keyboard.press('Space');
+   assert.equal(await arcs.evaluate(el=>el.checked),true);
+   assert.equal(await arcs.getByRole('switch').getAttribute('aria-checked'),'true');
+   await setMechToggle(night,true);assert.equal(await gale.evaluate(el=>el.checked),false);
+   await setMechToggle(gale,true);
+   await night.evaluate(el=>{el.disabled=true;});
+   assert(await night.getByRole('switch').isDisabled());
+   assert.equal(await night.evaluate(el=>el.checked),true);
+   await night.evaluate(el=>{el.disabled=false;});await setMechToggle(night,false);
+   assert.equal(await gale.evaluate(el=>el.checked),true);
+  });
+ });

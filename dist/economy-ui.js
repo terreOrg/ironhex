@@ -82,7 +82,7 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
     requestCatalogRefresh(true);
   });
   const onlyAvailable=el('label','economy-toggle');
-  const availableBox=el('input','');availableBox.type='checkbox';availableBox.id='economy-available-only';
+  const availableBox=el('mech-toggle','');availableBox.id='economy-available-only';availableBox.setAttribute('label','Только доступные для покупки');
   availableBox.onchange=()=>requestCatalogRefresh();
   onlyAvailable.append(availableBox,el('span','','Только доступные для покупки'));
   const filters=el('div','economy-filter-grid');filters.id='economy-filter-grid';

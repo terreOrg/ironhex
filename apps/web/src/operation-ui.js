@@ -46,6 +46,7 @@ function setBusy(value){
   busy=value;
   for(const node of root.querySelectorAll('#hub-campaigns-panel button'))
     node.disabled=value;
+  for(const toggle of root.querySelectorAll('mech-toggle[name="interactive"]'))toggle.disabled=value;
 }
 function renderRoster(items,pilots){
   const box=$(root,'#op-mech-list');
@@ -56,13 +57,13 @@ function renderRoster(items,pilots){
   }
   for(const mech of items){
     const label=E('label','op-select-mech');
-    const checkbox=E('input');
-    checkbox.type='checkbox';
-    checkbox.name='mechId';
-    checkbox.value=mech.id;
+    const checkbox=E('mech-toggle');
+    checkbox.setAttribute('name','mechId');
+    checkbox.dataset.value=mech.id;
+    checkbox.setAttribute('label','Выбрать '+mech.chassis);
     checkbox.disabled=mech.marketOwned===false||!!(mech.armorDamage||mech.structureDamage||mech.wrecked);
     checkbox.addEventListener('change',()=>{
-      const selected=[...box.querySelectorAll('input:checked')];
+      const selected=[...box.querySelectorAll('mech-toggle[checked]')];
       if(selected.length>2) checkbox.checked=false;
     });
     const body=E('span');
@@ -279,7 +280,7 @@ export function installOperationUI(hubRoot){
     '<option value="scenario">Сценарий · готовые позиции</option>',
     '<option value="standard">AGoAC · вход с края карты</option></select></label>',
     '<p class="op-label">ВЫБЕРИТЕ ДО ДВУХ МЕХОВ ИЗ АНГАРА</p>',
-    '<label class="op-control-choice"><input type="checkbox" name="interactive" checked>',
+    '<label class="op-control-choice"><mech-toggle name="interactive" checked label="Интерактивный 3D-бой"></mech-toggle>',
     ' ИНТЕРАКТИВНЫЙ 3D-БОЙ (СЕРВЕРНЫЙ РЕЖИМ)</label>',
     '<div id="op-mech-list" class="op-mech-list"></div>',
     '<button id="op-create" type="submit" class="op-primary">СОЗДАТЬ ОПЕРАЦИЮ</button>',
@@ -300,7 +301,7 @@ export function installOperationUI(hubRoot){
   form.addEventListener('submit',async event=>{
     event.preventDefault();
     if(busy)return;
-    const mechIds=[...form.querySelectorAll('input[name="mechId"]:checked')].map(el=>el.value);
+    const mechIds=[...form.querySelectorAll('mech-toggle[name="mechId"][checked]')].map(el=>el.dataset.value);
     if(!mechIds.length||mechIds.length>2){
       message('Необходимо выбрать один или два меха.');return;
     }
@@ -308,7 +309,7 @@ export function installOperationUI(hubRoot){
     try{
       const {item}=await request('/api/v1/operations','POST',{
         title:form.elements.title.value,mechIds,contractId:form.elements.contractId.value,
-        mode:form.elements.interactive.checked?'interactive':'auto',
+        mode:form.querySelector('mech-toggle[name="interactive"]').checked?'interactive':'auto',
         deploymentMode:form.elements.deploymentMode.value
       });
       opened=item.id;

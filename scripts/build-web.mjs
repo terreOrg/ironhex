@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const mappings = [
+  ['packages/ui/mech-toggle/mech-toggle.js','dist/mech-toggle.js'],
   ...['app.js','hub.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','auth.css','cockpit.css','dice.js','index.html','mechlab.html',
       'mechlab.js','record-sheet.js','style.css']
     .map(name => ['apps/web/src/' + name, 'dist/' + name]),
