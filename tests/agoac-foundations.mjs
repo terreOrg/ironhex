@@ -3492,3 +3492,18 @@ test('AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated wate
   assert(g.hold(u.id).ok);assert.equal(calls.length,2);
  }
 });
+
+test('AGoAC p.13: discrete LOS elevation thresholds and target woods',()=>{
+ for(const [q,height,blocked] of [[2,4,false],[2,6,true],[1,2,true],[3,4,false],[3,6,true]]){
+  const g=fresh(),a=g.units[0],b=g.units[2];
+  for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:4,r:0,prone:false});
+  g.tile(4,0).height=4;g.tile(q,0).height=height;
+  assert.equal(g.los(a,b).blocked,blocked);assert.equal(g.los(b,a).blocked,blocked);
+ }
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:4,r:0,prone:false});
+ g.tile(1,0).type='heavy';g.tile(4,0).type='woods';
+ assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(a,b).woods,3);
+});

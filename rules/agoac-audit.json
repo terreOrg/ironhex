@@ -4603,6 +4603,134 @@
         ],
         "review": "Prior visual source inventory p.12; terrain/depth cost and elevation combination, successive water entry PSRs, no duplicate on rotation/hold, minimum movement exception and immersion integration covered."
       }
+    },
+    {
+      "id": "agoac-075",
+      "topicId": "agoac-combat",
+      "pages": [
+        13
+      ],
+      "statement": "LOS endpoints, adjacency, mutual visibility, exact hex geometry and controller-selected ambiguous paths.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-076",
+      "topicId": "agoac-combat",
+      "pages": [
+        13,
+        14
+      ],
+      "statement": "Discrete intervening elevation thresholds, standing/prone height, intervening woods and target terrain distinction.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: discrete LOS elevation thresholds and target woods"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.4: three intervening light woods or either light-heavy order block LOS"
+        }
+      ],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-077",
+      "topicId": "agoac-combat",
+      "pages": [
+        14,
+        17,
+        19
+      ],
+      "statement": "Water visibility, intervening Mechs and partial cover.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-078",
+      "topicId": "agoac-combat",
+      "pages": [
+        14,
+        15
+      ],
+      "statement": "Firing arcs, torso twist, rear weapons and arm reversal.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-079",
+      "topicId": "agoac-combat",
+      "pages": [
+        15
+      ],
+      "statement": "Attack declarations, legal targets and orientation commitments.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-080",
+      "topicId": "agoac-combat",
+      "pages": [
+        15,
+        16,
+        17,
+        18
+      ],
+      "statement": "Gunnery, range and movement, terrain, heat and damage modifiers.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-081",
+      "topicId": "agoac-combat",
+      "pages": [
+        17,
+        18
+      ],
+      "statement": "Primary and secondary target rules and immobility.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-082",
+      "topicId": "agoac-combat",
+      "pages": [
+        19,
+        20
+      ],
+      "statement": "Water and prone weapon attacks.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-083",
+      "topicId": "agoac-combat",
+      "pages": [
+        21
+      ],
+      "statement": "Specialized attacks including aimed and indirect fire.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
+    },
+    {
+      "id": "agoac-084",
+      "topicId": "agoac-combat",
+      "pages": [
+        21
+      ],
+      "statement": "Attack rolls and ammunition expenditure.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial work inventory; full source and edge review pending."
     }
   ]
 }
