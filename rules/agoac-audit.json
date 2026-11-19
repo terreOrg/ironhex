@@ -4885,9 +4885,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.16–21: immobility and movement modifiers accumulate and aimed head only replaces minus four"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.19: immobilized movement remains cumulative without optional mobile-only TO bonuses"
         }
       ],
-      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. Remaining direct terrain/water, specialized modifiers and final full table audit."
+      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. Remaining direct terrain/water, specialized modifiers and final full table audit. Regression from CI 44584333685: prevent optional TO mobile-only standing-still/evading bonuses on immobile targets, while preserving cumulative base movement and immobility. Original AGoAC p.19 table and p.17 multiple-target paragraph rechecked visually. Exact amended gates pending."
     },
     {
       "id": "agoac-081",
@@ -4922,9 +4926,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.16–21: immobility and movement modifiers accumulate and aimed head only replaces minus four"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.19: immobilized movement remains cumulative without optional mobile-only TO bonuses"
         }
       ],
-      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. One primary target across both sectors now enforced by the existing primary designation; final audit of all target eligibility and edge cases after green gates."
+      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. One primary target across both sectors now enforced by the existing primary designation; final audit of all target eligibility and edge cases after green gates. Regression from CI 44584333685: prevent optional TO mobile-only standing-still/evading bonuses on immobile targets, while preserving cumulative base movement and immobility. Original AGoAC p.19 table and p.17 multiple-target paragraph rechecked visually. Exact amended gates pending."
     },
     {
       "id": "agoac-082",

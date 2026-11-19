@@ -3720,3 +3720,17 @@ test('AGoAC pp.16–21: immobility and movement modifiers accumulate and aimed h
  t.q=1;assert.equal(g.preview(u.id,t.id,0).mods.targetProne,-2);
  t.shutdown=false;assert.equal(g.targetMovementModifier(t),3);
 });
+
+test('AGoAC p.19: immobilized movement remains cumulative without optional mobile-only TO bonuses',()=>{
+ const g=fresh(),t=g.units[2];
+ g.tacticalOptions.standingStill=true;g.tacticalOptions.evading=true;
+ Object.assign(t,{shutdown:true,moveMode:'stand',distanceMoved:0,spent:0,prone:false,skidded:false});
+ assert.equal(g.targetMovementModifier(t),-4);
+ assert.equal(g.targetMovementModifier(t,{includeImmobile:false}),0);
+ Object.assign(t,{moveMode:'evade',distanceMoved:5,spent:5});
+ assert.equal(g.targetMovementModifier(t),-2);
+ assert.equal(g.targetMovementModifier(t,{includeImmobile:false}),2);
+ t.shutdown=false;assert.equal(g.targetMovementModifier(t),3);
+ Object.assign(t,{moveMode:'stand',distanceMoved:0,spent:0});
+ assert.equal(g.targetMovementModifier(t),-1);
+});
