@@ -1195,7 +1195,7 @@ export class Game extends Legacy{
    // In single-player the defending AI prefers obstruction, then cover,
    // then more woods. A human defender always makes their own decision.
    const priority=p=>Number(p.blocked)*100+Number(p.cover)*10+p.woods;
-   const chosen=paths.reduce((best,p)=>priority(p)>priority(best)?p:best);
+   const chosen=priority(paths[1])>priority(paths[0])?paths[1]:paths[0];
    const result=this.chooseLosPath(a.id,b.id,chosen.choice,b.team);
    if(!result.ok)return result;
    changed=true;
