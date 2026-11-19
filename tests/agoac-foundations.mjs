@@ -3671,3 +3671,52 @@ test('AGoAC pp.14–15: biped firing sectors rotate with torso except legs and r
  assert(!g.twist(u.id,1).ok);
  g.endPhase();assert.equal(u.flip,false);assert.equal(u.twist,0);
 });
+
+test('AGoAC p.15: arm reversal eligibility comes from the original critical layout even after arm loss',()=>{
+ for(const missing of ['none','LA','RA','both']){
+  const g=fresh(),u=g.units[0];g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,1-u.team];g.actingId=u.id;
+  u.prone=false;
+  for(const l of ['LA','RA']){
+   u.slots[l][2]='lower';u.slots[l][3]='hand';
+   if(missing==='both'||missing===l){u.slots[l][2]=null;u.slots[l][3]=null;}
+   u.actuators[l].lower=true;u.actuators[l].hand=true;
+  }
+  assert.equal(g.flipArms(u.id,true).ok,missing==='both');
+ }
+ for(const configured of [true,false]){
+  const g=fresh(),u=g.units[0];g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,1-u.team];g.actingId=u.id;
+  u.prone=false;
+  for(const l of ['LA','RA']){u.slots[l][2]=configured?null:'lower';u.slots[l][3]=configured?null:'hand';}
+  g.destroyLocation(u,'LA');
+  assert.equal(g.flipArms(u.id,true).ok,configured);
+ }
+});
+test('AGoAC p.17: twisted torso and forward leg arcs allow one primary across both sectors',()=>{
+ const g=fresh(),u=g.units[0],a=g.units[2],b=g.units[3];
+ Object.assign(u,{q:0,r:0,facing:0,twist:1,prone:false});
+ Object.assign(a,{q:0,r:-2});Object.assign(b,{q:0,r:2});
+ const w={name:'Medium Laser',damage:5,heat:3,ranges:[3,6,9],min:0,ammo:null,rack:0,rear:false};
+ u.weapons=[{...w,location:'CT'},{...w,location:'LL'}];
+ const orders=[{index:0,target:a.id},{index:1,target:b.id}];
+ assert(g.inForwardFireArc(u,a));assert(g.inForwardFireArc(u,b));
+ assert.deepEqual(g.primaryTargetChoices(u.id,orders),[a.id,b.id]);
+ assert.equal(g.preview(u.id,b.id,1,{secondary:true}).mods.secondary,1);
+ u.weapons[1].rear=true;
+ assert(!g.inForwardFireArc(u,b));assert.deepEqual(g.primaryTargetChoices(u.id,orders),[a.id]);
+ assert.equal(g.preview(u.id,b.id,1,{secondary:true}).mods.secondary,2);
+});
+test('AGoAC pp.16–21: immobility and movement modifiers accumulate and aimed head only replaces minus four',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,moveMode:'stand'});
+ Object.assign(t,{q:3,r:0,prone:false,moveMode:'jump',distanceMoved:5,shutdown:true});
+ const w={name:'Medium Laser',damage:5,heat:3,ranges:[3,6,9],min:0,ammo:null,rack:0,location:'CT'};
+ u.weapons=[w];
+ assert.equal(g.targetMovementModifier(t),-1);
+ const normal=g.preview(u.id,t.id,0),head=g.preview(u.id,t.id,0,{aim:'HD'});
+ assert(normal.legal&&head.legal);assert.equal(normal.mods.target,-1);assert.equal(head.mods.target,3);
+ assert.equal(head.targetNumber-normal.targetNumber,7);
+ t.prone=true;assert.equal(g.preview(u.id,t.id,0).mods.targetProne,1);
+ t.q=1;assert.equal(g.preview(u.id,t.id,0).mods.targetProne,-2);
+ t.shutdown=false;assert.equal(g.targetMovementModifier(t),3);
+});

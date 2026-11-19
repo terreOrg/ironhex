@@ -4791,9 +4791,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.14–15: biped firing sectors rotate with torso except legs and reversed arms reset"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.15: arm reversal eligibility comes from the original critical layout even after arm loss"
         }
       ],
-      "reviewNote": "Re-reviewed pp.14–15 diagram and engine arc/twist/flipArms/endPhase, including feet-based leg arcs and rear weapons. Added combined regression of rotated sectors and reversal reset, exact gates pending. Review all original actuator configurations and no newly acquired reversal eligibility after damage before Verified."
+      "reviewNote": "Direct visual recheck printed pp.14–15: original critical layout is retained after destruction (destroyLocation marks crit and structure, not slots); eligible surviving arm can reverse, fitted actuators do not become absent through damage; the #181 sector and reversal matrix passed exact gates. Additional original-layout/arm-loss regression in this PR is pending. Promote only after this regression and exact gates pass."
     },
     {
       "id": "agoac-079",
@@ -4873,9 +4877,17 @@
         {
           "file": "tests/combat.mjs",
           "test": "AGoAC pp.16–20: weapon GATOR movement, heat, range and secondary boundaries"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.17: twisted torso and forward leg arcs allow one primary across both sectors"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.16–21: immobility and movement modifiers accumulate and aimed head only replaces minus four"
         }
       ],
-      "reviewNote": "Re-reviewed pp.16–20 table against preview and existing regression; standard gunnery/movement/heat/range and damage modifiers covered in part. Need cumulative target modifiers (including immobility after movement), multiple forward arcs, precise terrain and water rules, and indirect modifiers. Do not certify until these cases are reviewed."
+      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. Remaining direct terrain/water, specialized modifiers and final full table audit."
     },
     {
       "id": "agoac-081",
@@ -4902,9 +4914,17 @@
         {
           "file": "tests/api.mjs",
           "test": "API validates optional primary fire target against declared shots"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.17: twisted torso and forward leg arcs allow one primary across both sectors"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.16–21: immobility and movement modifiers accumulate and aimed head only replaces minus four"
         }
       ],
-      "reviewNote": "Re-reviewed pp.17,20: designated primary, front priority and two secondary modifiers have passing tests; mixed forward arcs when twisted legs and torso weapons, and exact cumulative immobilized-target modifiers remain to audit."
+      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. One primary target across both sectors now enforced by the existing primary designation; final audit of all target eligibility and edge cases after green gates."
     },
     {
       "id": "agoac-082",
