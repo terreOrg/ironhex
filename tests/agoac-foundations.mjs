@@ -4367,3 +4367,87 @@ test('AGoAC p.22: AI defender resolves a legal boundary without requesting a hum
  assert(result.ok&&!result.pending);assert.equal(g.pendingChoice,null);assert.equal(draws,4);
  assert.equal(g.unit(t.id).armor.LT,before-1);assert.equal(g.phase,'physical');
 });
+
+
+function physicalBlockFixture(){
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',height:0,surface:0,depth:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,club:true,moveMode:'stand',twist:0});
+ Object.assign(t,{q:1,r:0,facing:3,prone:false,moveMode:'stand',distanceMoved:0});
+ // Separate the hatchet arm from the arm tested for punches.
+ u.hatchets=[{location:'LA',slots:1}];u.slots.LA[7]='hatchet';
+ return {g,u,t};
+}
+test('AGoAC p.25: standing and prone elevation matrix selects legal physical attacks and hit tables',()=>{
+ const attacks=[['punch','RA'],['kick','RL'],['club','RA'],['hatchet','LA'],['push','RA']];
+ const cases=[
+  [false,0,['punch','kick','normal','normal','normal']],
+  [false,1,['kick',null,'kick','kick',null]],
+  [false,-1,[null,'punch','punch','punch',null]],
+  [true,0,[null,'normal','normal','normal',null]],
+  [true,1,['normal',null,'normal','normal',null]],
+  [true,-1,[null,null,null,null,null]]
+ ];
+ for(const [prone,height,tables] of cases){
+  const {g,u,t}=physicalBlockFixture();t.prone=prone;g.tile(t.q,t.r).height=height;
+  for(let i=0;i<attacks.length;i++){
+   const p=g.physicalPreview(u.id,t.id,...attacks[i]);
+   assert.equal(p.legal,tables[i]!==null,JSON.stringify([prone,height,attacks[i],p.reason]));
+   if(p.legal)assert.equal(p.table,tables[i]);
+  }
+ }
+});
+test('AGoAC pp.24–25: physical TN uses piloting and movement not heat sensors or PSR-only gyro damage',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ u.piloting=5;u.heat=25;u.sensorHits=2;u.gyroHits=1;
+ u.moveMode='walk';t.moveMode='stand';
+ g.tile(t.q,t.r).type='woods';
+ const p=g.physicalPreview(u.id,t.id,'punch','RA');
+ assert(p.legal,p.reason);assert.equal(p.targetNumber,7);
+ t.prone=true;g.tile(t.q,t.r).height=1;
+ const prone=g.physicalPreview(u.id,t.id,'punch','RA');
+ assert(prone.legal,prone.reason);assert.equal(prone.targetNumber,p.targetNumber-2);
+});
+test('AGoAC p.25: standing depth-one biped cover excludes kicks and absorbs covered club hits',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ Object.assign(g.tile(t.q,t.r),{type:'water',depth:1,height:-1,surface:0});
+ const club=g.physicalPreview(u.id,t.id,'club','RA'),kick=g.physicalPreview(u.id,t.id,'kick','RL');
+ assert(club.legal&&kick.legal);assert.equal(club.table,'punch');assert.equal(kick.table,'punch');
+ assert.equal(club.physicalCover,true);assert.equal(kick.physicalCover,false);
+ assert.equal(club.targetNumber,kick.targetNumber+2);
+ // Equal underlying height: normal club may roll a submerged leg; kick does not test cover.
+ Object.assign(g.tile(u.q,u.r),{type:'water',depth:1,height:-1,surface:0});
+ const same=g.physicalPreview(u.id,t.id,'club','RA');
+ assert(same.legal);assert.equal(same.table,'normal');assert(same.physicalCover);
+ const dice=diceFor(5);g.rng=()=>{assert(dice.length);return dice.shift();};
+ const before=t.armor.RL;
+ g.resolveRolledPhysical({u,t,d:{...same,type:'club'},roll:12,hit:true,cancelled:false,attackRoll:null});
+ assert.equal(t.armor.RL,before);assert.equal(g.resolution.at(-1).shots[0].damage,0);
+ assert.equal(dice.length,0);
+});
+test('AGoAC p.25: cancelling impossible kick avoids missed-kick PSR and reuses no dice',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ g.phase='physical';g.queue=[];g.initiativeWinner=1;g.activeTeam=null;
+ g.physicalDeclarations=[{id:u.id,target:t.id,type:'kick',limb:'RL',damage:10,table:'kick',side:'front',targetNumber:13}];
+ let draws=0;g.rng=()=>{draws++;return .99;};
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
+ const p=g.pendingChoice;assert.equal(p.kind,'physical-impossible');assert.equal(draws,0);
+ assert.equal(p.team,u.team);assert.equal(p.context.targetNumber,13);
+ assert(!g.nextPhaseWithChoices({choice:{key:p.key,option:'hit'}}).ok);
+ assert(g.nextPhaseWithChoices({choice:{key:p.key,option:'cancel'}}).ok);
+ assert.equal(draws,0);assert.equal(g.phase,'heat');
+ assert.equal(g.resolution[0].shots[0].cancelled,true);
+ assert.equal(g.resolution[0].shots[0].roll,null);assert.deepEqual(g.afterRolls,[]);
+});
+test('AGoAC p.25: fully submerged ordinary attacks use half damage and depth-one exceptions',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const normal=g.physicalPreview(u.id,t.id,'punch','RA').damage;
+ for(const x of [u,t])Object.assign(g.tile(x.q,x.r),{type:'water',height:-2,surface:0,depth:2});
+ assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').damage,Math.floor(normal/2));
+ Object.assign(g.tile(u.q,u.r),{type:'water',height:-1,surface:0,depth:1});t.prone=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').legal,false); // target below AND prone
+ Object.assign(g.tile(t.q,t.r),{type:'water',height:-1,surface:0,depth:1});
+ const kick=g.physicalPreview(u.id,t.id,'kick','RL');
+ assert(kick.legal,kick.reason);assert(kick.underwaterPhysical);assert.equal(kick.damage,Math.floor(u.tonnage/5/2));
+ assert(!g.physicalPreview(u.id,t.id,'club','RA').legal);
+});

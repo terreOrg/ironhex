@@ -1807,7 +1807,7 @@ export class Game extends Legacy{
  // hand-held physical weapon attacks require actual biped arms.
  if(u.config==='Quad'&&['punch','push','club','hatchet'].includes(type))
   return {legal:false,reason:'У четырёхногого меха нет рук для этой атаки',targetNumber:99};
- if(type==='punch'&&limb==='both'){const a=this.physicalPreview(id,target,type,'LA'),b=this.physicalPreview(id,target,type,'RA');return {...a,legal:a.legal&&b.legal,reason:a.reason||b.reason,damage:a.damage+b.damage,targetNumber:Math.max(a.targetNumber,b.targetNumber)};}const attackerTile=this.tile(u.q,u.r),targetTile=this.tile(t.q,t.r),attackerSub=attackerTile.depth>=(u.prone?1:2),targetSub=targetTile.depth>=(t.prone?1:2),attackerWaterline=attackerTile.depth===1&&!u.prone,targetWaterline=targetTile.depth===1&&!t.prone,range=distance(u,t),dh=targetTile.height-attackerTile.height,side=this.hitSide(t,u),a=this.relative(u,t),act=u.actuators[limb]||{};let reason='',mod=0,damage=0,table='normal';if(!this.mobile(u)||u.prone||u.team===t.team||t.dead||u.charge||t.airborne||u.moveMode==='evade')reason='Атака недоступна';else if(range!==1&&!(range===0&&t.prone))reason='Нужна соседняя цель';else if(Math.abs(dh)>1)reason='Разница высот слишком велика';else if(attackerSub&&!targetSub&&!targetWaterline||targetSub&&!attackerSub&&!attackerWaterline)reason='Атака через поверхность воды запрещена';else if(attackerWaterline&&targetSub&&type!=='kick')reason='По погружённой цели с глубины 1 допустим только удар ногой';let arm=limb==='LA'||limb==='RA';if(type==='punch'){const pa=physicalArmActuators(u,limb);mod=Number(pa.upper)*2+Number(pa.lower)*2+Number(pa.hand);damage=Math.max(1,Math.floor(Math.ceil(u.tonnage/10)/2**(Number(pa.upper)+Number(pa.lower))));table='punch';if(!arm||!u.structure[limb]||pa.shoulder||u.slots[limb].some((s,i)=>s==='hatchet'&&!u.crit[limb][i])||u.firedLocations.includes(limb)||t.prone&&dh<=0||Math.abs(a)>120||limb==='LA'&&a< -60||limb==='RA'&&a>60)reason='Рука/цель недоступна для удара';if(dh===1)table='kick';}else if(type==='kick'){
+ if(type==='punch'&&limb==='both'){const a=this.physicalPreview(id,target,type,'LA'),b=this.physicalPreview(id,target,type,'RA');return {...a,legal:a.legal&&b.legal,reason:a.reason||b.reason,damage:a.damage+b.damage,targetNumber:Math.max(a.targetNumber,b.targetNumber)};}const attackerTile=this.tile(u.q,u.r),targetTile=this.tile(t.q,t.r),attackerSub=attackerTile.depth>=(u.prone?1:2),targetSub=targetTile.depth>=(t.prone?1:2),attackerWaterline=attackerTile.depth===1&&!u.prone,targetWaterline=targetTile.depth===1&&!t.prone,range=distance(u,t),dh=targetTile.height-attackerTile.height,side=this.hitSide(t,u),a=this.relative(u,t),act=u.actuators[limb]||{};let reason='',mod=0,damage=0,table='normal';if(!this.mobile(u)||u.prone||u.team===t.team||t.dead||u.charge||t.airborne||u.moveMode==='evade')reason='Атака недоступна';else if(range!==1&&!(range===0&&t.prone))reason='Нужна соседняя цель';else if(Math.abs(dh)>1)reason='Разница высот слишком велика';else if(attackerSub&&!targetSub&&!targetWaterline||targetSub&&!attackerSub&&!attackerWaterline)reason='Атака через поверхность воды запрещена';else if(attackerWaterline&&targetSub&&type!=='kick')reason='По погружённой цели с глубины 1 допустим только удар ногой';let arm=limb==='LA'||limb==='RA';if(type==='punch'){const pa=physicalArmActuators(u,limb);mod=Number(pa.upper)*2+Number(pa.lower)*2+Number(pa.hand);damage=Math.max(1,Math.floor(Math.ceil(u.tonnage/10)/2**(Number(pa.upper)+Number(pa.lower))));table='punch';if(!arm||!u.structure[limb]||pa.shoulder||u.slots[limb].some((s,i)=>s==='hatchet'&&!u.crit[limb][i])||u.firedLocations.includes(limb)||dh<0||t.prone&&dh<=0||Math.abs(a)>120||limb==='LA'&&a< -60||limb==='RA'&&a>60)reason='Рука/цель недоступна для удара';if(dh===1)table=t.prone?'normal':'kick';}else if(type==='kick'){
  // AGoAC pp.28,32–34: biped kick penalties apply across both legs.
  // Quad behavior is intentionally unchanged here.
  const kickActuators=u.config==='Quad'?[act]:['LL','RL'].map(l=>u.actuators[l]);
@@ -1830,12 +1830,18 @@ export class Game extends Legacy{
   u.actuators.RL.hip||u.firedLocations.includes(limb)||Math.abs(a)>60||dh===1)
   reason='Нога/цель недоступна для удара';
  if(dh===-1&&!t.prone)table='punch';
-}else if(type==='hatchet'){damage=Math.ceil(u.tonnage/5);mod=-1+2*Number(act.upper)+2*Number(act.lower)+Number(act.hand);if(!arm||!u.hatchets?.some(h=>h.location===limb)||u.slots[limb].some((s,i)=>s==='hatchet'&&u.crit[limb][i])||!u.structure[limb]||act.shoulder||act.lower||u.firedLocations.includes(limb)||Math.abs(a)>60)reason='Топор или рука недоступны';damage=Math.max(1,Math.floor(damage/2**Number(act.upper)));}else if(type==='push'){mod=-1+2*Number(u.actuators.LA.shoulder)+2*Number(u.actuators.RA.shoulder);if(!u.structure.LA||!u.structure.RA||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>30||dh||t.prone)reason='Толчок требует двух рук и цель прямо перед мехом';}else if(type==='club'){mod=-1+2*['LA','RA'].reduce((n,l)=>n+Number(u.actuators[l].upper)+Number(u.actuators[l].lower),0);damage=Math.ceil(u.tonnage/5);if(!u.club||!clubArmsAvailable(u)||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>60)reason='Нужна дубина и две свободные исправные руки';}else return {legal:false,reason:'Неизвестная атака',targetNumber:99};const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';const underwaterPhysical=attackerSub&&targetSub||(attackerWaterline&&type==='kick'&&(targetSub||targetWaterline));if(underwaterPhysical)damage=Math.floor(damage/2);// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
+}else if(type==='hatchet'){damage=Math.ceil(u.tonnage/5);mod=-1+2*Number(act.upper)+2*Number(act.lower)+Number(act.hand);if(!arm||!u.hatchets?.some(h=>h.location===limb)||u.slots[limb].some((s,i)=>s==='hatchet'&&u.crit[limb][i])||!u.structure[limb]||act.shoulder||act.lower||u.firedLocations.includes(limb)||Math.abs(a)>60)reason='Топор или рука недоступны';damage=Math.max(1,Math.floor(damage/2**Number(act.upper)));}else if(type==='push'){mod=-1+2*Number(u.actuators.LA.shoulder)+2*Number(u.actuators.RA.shoulder);if(!u.structure.LA||!u.structure.RA||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>30||dh||t.prone)reason='Толчок требует двух рук и цель прямо перед мехом';}else if(type==='club'){mod=-1+2*['LA','RA'].reduce((n,l)=>n+Number(u.actuators[l].upper)+Number(u.actuators[l].lower),0);damage=Math.ceil(u.tonnage/5);if(!u.club||!clubArmsAvailable(u)||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>60)reason='Нужна дубина и две свободные исправные руки';}else return {legal:false,reason:'Неизвестная атака',targetNumber:99};// AGoAC p.25: the different-level table takes precedence over the default attack table.
+ if(t.prone&&dh===-1)reason='Лежащая цель ниже атакующего недоступна';
+ if(['club','hatchet'].includes(type))table=t.prone?'normal':dh===1?'kick':dh===-1?'punch':'normal';
+ const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';const underwaterPhysical=attackerSub&&(targetSub||targetWaterline&&table==='kick')||(attackerWaterline&&type==='kick'&&(targetSub||targetWaterline));if(underwaterPhysical)damage=Math.floor(damage/2);// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
  // At equal LOS height only non-Kick-table leg hits are absorbed.
  // Charges resolve separately and are explicitly exempt from leg protection.
  const quadWaterCover=t.config==='Quad'&&targetWaterline;
- const physicalCover=quadWaterCover&&attackerTile.height+(u.prone?1:2)===targetTile.height+(t.prone?1:2)&&table!=='kick';
- const targetNumber=u.piloting+mod+({stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode])+(u.skidded?1:0)+this.targetMovementModifier(t)+this.los(u,t).woods+(t.prone?-2:0)+(quadWaterCover?1:0);
+ // AGoAC p.25: surface ordinary non-kick attacks at a standing depth-one biped
+ // incur water cover; each actual covered leg hit is ignored. Preserve the separate Quad rule.
+ const bipedWaterCover=t.config!=='Quad'&&targetWaterline&&!attackerSub&&type!=='kick';
+ const physicalCover=bipedWaterCover||quadWaterCover&&attackerTile.height+(u.prone?1:2)===targetTile.height+(t.prone?1:2)&&table!=='kick';
+ const targetNumber=u.piloting+mod+({stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode])+(u.skidded?1:0)+this.targetMovementModifier(t)+this.los(u,t).woods+(t.prone?-2:0)+(quadWaterCover||bipedWaterCover?1:0);
  return {legal:!reason,reason,targetNumber,damage,underwaterPhysical,table,side,physicalCover};}
  declarePhysical(id,target,type,limb){const u=this.unit(id);if(this.phase!=='physical'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const limbs=type==='punch'&&limb==='both'?['LA','RA']:[limb],pending=[];for(const l of limbs){const p=this.physicalPreview(id,target,type,l);if(!p.legal)return fail(p.reason);pending.push({id,target,type,limb:l,...p});}this.physicalDeclarations.push(...pending);this.finish(u);return {ok:true,declared:true};}
  takeClub(id){const u=this.unit(id),t=this.tile(u.q,u.r);if(u.config==='Quad'||this.phase!=='physical'||!this.canAct(u)||!this.mobile(u)||(!['woods','heavy'].includes(t.type)&&!t.club)||!clubArmsAvailable(u)||u.firedLocations.length)return fail('Нужны две исправные кисти и плеча, отсутствие стрельбы и дубина в гексе');u.club=true;this.finish(u);return {ok:true};}
@@ -1978,7 +1984,7 @@ export class Game extends Legacy{
   const valid=this.pushTargetValid(first,second);
   const attacks=orders.map(order=>{
    const u=this.unit(order.id),t=this.unit(order.target);
-   const legal=valid&&this.pushTargetValid(u,t);
+   const legal=valid&&this.pushTargetValid(u,t)&&!this.cancelImpossiblePhysical(u,order);
    const roll=legal?this.roll(u.name+' · push',order.targetNumber):null;
    return {u,t,order,roll,hit:legal&&roll>=order.targetNumber,rolls:legal?[this.phaseRolls.at(-1)]:[]};
   });
@@ -2071,9 +2077,17 @@ export class Game extends Legacy{
   const p=this.physicalPreview(atCurrentPosition(originalU,u),atCurrentPosition(originalT,t),d.type,d.limb);
   return p.legal?{...d,...p}:null;
  }
+ // AGoAC p.25: the controller may decline a known impossible attack;
+ // a declined kick is never a missed kick and therefore creates no PSR.
+ cancelImpossiblePhysical(u,d){
+  if(d.targetNumber<=12)return false;
+  return this.chooseResolutionOption('physical-impossible',u,[{id:'attack'},{id:'cancel'}],
+   'attack',{targetId:d.target,attack:d.type,limb:d.limb,targetNumber:d.targetNumber})==='cancel';
+ }
  rollPhysical(d,snapshots){
   const u=this.unit(d.id),t=this.unit(d.target),effective=this.physicalAfterDisplacement(d,snapshots);
   if(!effective)return {u,t,d,roll:null,hit:false,cancelled:true,attackRoll:null};
+  if(this.cancelImpossiblePhysical(u,effective))return {u,t,d:effective,roll:null,hit:false,cancelled:true,attackRoll:null};
   const roll=this.roll(u.name+' · '+d.type,effective.targetNumber);
   return {u,t,d:effective,roll,hit:roll>=effective.targetNumber,cancelled:false,attackRoll:this.phaseRolls.at(-1)};
  }
