@@ -4133,3 +4133,66 @@ test('AGoAC p.21: one spotter per target, multiple launchers, direct LOS and non
  Object.assign(g.tile(4,0),{type:'water',depth:1,height:-1,surface:0});g.tile(4,-1).height=0;
  const wet=g.preview(u.id,a.id,0,{spotter:s.id});assert.equal(wet.cover,true);
 });
+
+test('AGoAC pp.13,15: direct declaration cannot bypass a defender LOS and records selected path',()=>{
+ for(const blocked of [true,false]){
+  const g=fresh(),a=g.units[0],b=g.units[2];
+  for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(a,{q:0,r:0,facing:0,twist:0,prone:false});
+  Object.assign(b,{q:1,r:1,prone:false});
+  if(blocked)g.tile(1,0).height=2;
+  a.weapons=[{name:'Medium Laser',heat:3,damage:5,min:0,ammo:null,location:'CT',ranges:[3,6,9],rack:0}];
+  g.phase='fire';g.queue=[a.team,b.team];g.activeTeam=a.team;g.actingId=a.id;
+  const result=g.declareFire(a.id,[{index:0,target:b.id}]);
+  assert.equal(result.ok,!blocked,result.error);
+  const chosen=g.selectedLosPath(a,b);assert([-1,1].includes(chosen));
+  assert.equal(g.selectedLosPath(b,a),-chosen);
+  if(blocked){assert.equal(a.fired,false);assert.equal(g.declarations.length,0);}
+  else assert.equal(g.declarations[0].shots[0].losChoice,chosen);
+ }
+});
+test('AGoAC p.21: cancelled spotter fire removes the extra modifier before all rolls',()=>{
+ for(const cancel of [false,true]){
+  const g=fresh(),u=g.units[0],s=g.units[1],t=g.units[2];
+  const weapon={name:'Medium Laser',rack:0,heat:3,ammo:null,damage:5,location:'CT'};
+  const shot=(index,spotter,targetNumber,mods)=>({index,target:t.id,bin:null,aim:null,heatMode:false,
+   weapon:{...weapon},preview:{targetNumber,mods,side:'front',cover:false,underwaterCover:false},...(spotter==null?{}:{spotter})});
+  const indirect=shot(0,s.id,13,{spotterFires:1}),direct=shot(0,null,14,{spotting:1});
+  g.declarations=[{id:u.id,ammoSpent:true,shots:[indirect]},{id:s.id,ammoSpent:true,shots:[direct]}];
+  const decisions=[];
+  g._resolutionChooser=(request,fallback)=>{
+   if(request.kind!=='fire-impossible')return fallback;
+   decisions.push(request.unitId);return request.unitId===s.id&&cancel?'cancel':'fire';
+  };
+  let draws=0;g.rng=()=>{draws++;return .99;};
+  const omitted=g.prepareSpottingCancellations();
+  assert.equal(draws,0);assert.equal(omitted.has(direct),cancel);
+  assert.equal(indirect.preview.targetNumber,cancel?12:13);
+  assert.deepEqual(decisions,cancel?[s.id]:[s.id,u.id]);
+  assert.equal(g.rollDeclaredFire(g.declarations[0],{cancelled:omitted})[0].hit,cancel);
+  assert.equal(g.rollDeclaredFire(g.declarations[1],{cancelled:omitted}).length,cancel?0:1);
+  assert.equal(s.pendingHeat,cancel?0:3);
+ }
+});
+test('AGoAC pp.13,21: already-fired spotter defender choice resumes without another selection or ammo debit',()=>{
+ const g=fresh(),u=g.units[0],s=g.units[1],t=g.units[2],b=g.units[3];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false});
+ Object.assign(s,{q:3,r:-1,prone:false,fired:true});
+ Object.assign(t,{q:4,r:0,prone:false});
+ Object.assign(b,{q:-3,r:0});
+ g.tile(2,0).height=2;
+ u.weapons=[{name:'LRM 10',heat:4,damage:1,min:6,ammo:24,location:'RT',ranges:[7,14,21],rack:10}];
+ u.bins=[{weapon:0,location:'RT',slot:1,shots:24,destroyed:false}];
+ g.phase='fire';g.queue=[u.team,t.team];g.activeTeam=u.team;g.actingId=u.id;
+ const orders=[{index:0,target:t.id,spotter:s.id}];
+ const a=g.declareFireWithLosChoices(u.id,orders,null,{humanTeams:[0,1]});
+ assert(a.pending);assert.equal(g.pendingChoice.context.attackerId,s.id);
+ assert.equal(g.pendingChoice.context.spotting,true);assert.equal(u.bins[0].shots,24);
+ const p=JSON.parse(JSON.stringify(g.pendingChoice));g.pendingChoice=p;
+ assert(g.resolveFireLosChoice({key:p.key,option:p.options[0].id},[0,1]).ok);
+ const result=g.declareFireWithLosChoices(u.id,orders,null,{humanTeams:[0,1]});
+ assert(result.ok,result.error);assert(result.declared);
+ assert.equal(g.pendingChoice,null);assert.equal(u.bins[0].shots,23);
+ assert.equal(g.declarations.at(-1).shots[0].spotterLosChoice,Number(p.options[0].id));
+});
