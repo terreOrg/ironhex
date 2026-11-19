@@ -4660,9 +4660,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.7,19: permanently submerged prone targets and depth-one leg weapons cannot fire across the water surface"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "A fully submerged mech can fire at a depth-1 target, but only leg hits count (BMM p.65)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Surface shots at depth-1 target continue to be blocked only by leg water cover"
         }
       ],
-      "reviewNote": "los and hit implement water and cover; verify height and cover rules; candidate regression references, not final verification."
+      "reviewNote": "los and hit implement water and cover; verify height and cover rules; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
     },
     {
       "id": "agoac-078",
@@ -4685,9 +4693,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.15: split arm-torso weapon prevents arm reversal and reversed arms cannot twist"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Firing arcs include the exact ±60° and ±120° hex-direction boundaries"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Split torso-arm weapon uses restrictive torso firing arc (TechManual p.57)"
         }
       ],
-      "reviewNote": "arc, twist, flipArms and rear/split weapons exist; enumerate exact sector boundaries; candidate regression references, not final verification."
+      "reviewNote": "arc, twist, flipArms and rear/split weapons exist; enumerate exact sector boundaries; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
     },
     {
       "id": "agoac-079",
@@ -4748,14 +4764,18 @@
         18
       ],
       "statement": "Primary and secondary target rules and immobility.",
-      "status": "known_missing",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aimed head shots"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "AGoAC: front arc target is primary regardless of weapon assignment order"
         }
       ],
-      "reviewNote": "declareFire chooses first assignment as primary; front-arc primary selection constraint not enforced; immobile modifier present; candidate regression references, not final verification."
+      "reviewNote": "Front-arc primary selection now independent of assignment order; existing immobility regression plus targeted declaration regression. Source and final gate verification pending."
     },
     {
       "id": "agoac-082",
@@ -4774,9 +4794,45 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.7,19: permanently submerged prone targets and depth-one leg weapons cannot fire across the water surface"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "A fully submerged mech can fire at a depth-1 target, but only leg hits count (BMM p.65)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Depth-1 leg-mounted lasers fire underwater while upper mounts cannot (BMM p.65)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Surface shots at depth-1 target continue to be blocked only by leg water cover"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Medium Laser range modifiers underwater follow 2/4/6 rather than half ranges"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "PPC underwater uses BMM 4/7/10 ranges with minimum distance 3"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Flamers, autocannons and missiles cannot fire underwater under BMM rules"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Prone fire with both arms intact allows unbraced torso mounts (BMM p.30)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Missing either arm prevents prone firing under standard rules (BMM p.30)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Prone bracing forbids split weapons occupying the braced arm (BMM p.30)"
         }
       ],
-      "reviewNote": "preview checks submerged ranges, waterline and prone limb restrictions; setBrace exists; candidate regression references, not final verification."
+      "reviewNote": "preview checks submerged ranges, waterline and prone limb restrictions; setBrace exists; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
     },
     {
       "id": "agoac-083",
@@ -4794,9 +4850,29 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.7,21: blocked LRM needs another possible spotter and SRM cannot fire indirectly"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Head aimed shot replaces immobile bonus with +3 (BMM p.30)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Cluster launchers cannot aim even at immobile targets (BMM p.30)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Aimed fire against a mobile mech is disallowed (BMM p.30)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Aimed fire ignores partial-cover penalty but cannot target hidden legs (BMM p.30)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Flamer heat mode adds heat without armor damage"
         }
       ],
-      "reviewNote": "preview handles aimed shot; direct declareFire passes only secondary and aim to preview, no actual indirect fire declaration path; candidate regression references, not final verification."
+      "reviewNote": "preview handles aimed shot; direct declareFire passes only secondary and aim to preview, no actual indirect fire declaration path; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
     },
     {
       "id": "agoac-084",
@@ -4822,9 +4898,33 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.6–7: fire resolution restarts with initiative loser even after no-fire declarations"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Every supported launcher rack follows BattleMech Manual cluster table (BMM p.33)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Automatic shared-ammo shot preserves a later explicitly reserved magazine (BMM ammo expenditure)"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "An early explicit shared-ammo shot still allows later automatic ammunition selection"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Shared MG pool cannot declare two shots with one round"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Declared shot survives destruction of shooter"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Selected ammunition bin is decremented"
         }
       ],
-      "reviewNote": "rollDeclaredFire, spendDeclaredAmmo, fireAmounts, resolveRolledFire and ordering implemented; candidate regression references, not final verification."
+      "reviewNote": "rollDeclaredFire, spendDeclaredAmmo, fireAmounts, resolveRolledFire and ordering implemented; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
     }
   ]
 }
