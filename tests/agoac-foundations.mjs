@@ -3539,3 +3539,44 @@ test('AGoAC p.13: defender LOS choice persists reciprocally for the round',()=>{
  g.round++;assert(g.chooseLosPath(a.id,b.id,-blocked,b.team).ok);
  assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(b,a).blocked,false);
 });
+
+test('AGoAC pp.13–14: adjacent endpoints and intervening Mechs never obstruct surface LOS',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2],c=g.units[1];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:1,r:0,prone:false});
+ g.tile(0,0).type='heavy';g.tile(1,0).type='heavy';
+ assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(b,a).blocked,false);
+ assert.equal(g.los(a,b).woods,2);assert.equal(g.los(b,a).woods,2);
+ Object.assign(b,{q:4,r:0});Object.assign(c,{q:2,r:0,deployed:true,dead:false,prone:false});
+ g.tile(1,0).type='plain';
+ assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(b,a).blocked,false);
+ c.prone=true;assert.equal(g.los(a,b).blocked,false);
+});
+
+test('AGoAC p.13: prone height changes mutual LOS at middle and adjacent elevation thresholds',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:4,r:0,prone:false});
+ const mutual=blocked=>{assert.equal(g.los(a,b).blocked,blocked);assert.equal(g.los(b,a).blocked,blocked);};
+ g.tile(2,0).height=1;mutual(false);
+ a.prone=true;mutual(false);
+ b.prone=true;mutual(true);
+ b.prone=false;g.tile(2,0).height=0;g.tile(1,0).height=1;mutual(true);
+ a.prone=false;mutual(false);
+});
+
+test('AGoAC p.17: partial cover is standing only, negated downhill except depth-one water',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:3,r:0,prone:false});
+ g.tile(2,0).height=1;
+ assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(a,b).cover,true);
+ g.tile(0,0).height=2;assert.equal(g.los(a,b).cover,false);
+ g.tile(0,0).height=0;b.prone=true;
+ assert.equal(g.los(a,b).cover,false);assert.equal(g.los(a,b).blocked,true);
+ b.prone=false;g.tile(2,0).height=0;g.tile(2,0).type='woods';
+ assert.equal(g.los(a,b).cover,false);assert.equal(g.los(a,b).woods,1);
+ g.tile(2,0).type='plain';g.tile(0,0).height=2;
+ Object.assign(g.tile(3,0),{type:'water',depth:1,height:-1,surface:0});
+ assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(a,b).cover,true);
+});
