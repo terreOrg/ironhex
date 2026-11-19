@@ -3405,3 +3405,23 @@ test('AGoAC p.12: jump ceiling is relative to starting elevation and includes la
   else assert.equal(JSON.stringify(u),before);
  }
 });
+
+test('AGoAC p.12: submerged leg jump jets reduce launch MP at depth one and depth two prevents launch',()=>{
+ for(const depth of [0,1,2,3])for(const legJets of [0,1,2]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,jump:3,jumpLost:0,heat:0,spent:0,moveMode:'stand',moveStart:{q:0,r:0}});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  for(const l of ['LL','RL']){
+   u.slots[l]=u.slots[l].map(s=>s==='jump'?'empty':s);
+   u.crit[l]=u.crit[l].map(()=>false);
+  }
+  if(legJets>=1)u.slots.LL[0]='jump';
+  if(legJets>=2)u.slots.RL[0]='jump';
+  Object.assign(g.tile(0,0),{type:depth?'water':'plain',depth,height:-depth,surface:0});
+  const expected=depth>=2?0:depth===1?3-legJets:3;
+  assert.equal(g.mp(u,'jump'),expected);
+  assert.equal(g.reachable(u,'jump').some(t=>t.q===1&&t.r===0),expected>0);
+  assert.equal(g.reachable(u,'jump').some(t=>t.q===3&&t.r===0),expected===3);
+ }
+});
