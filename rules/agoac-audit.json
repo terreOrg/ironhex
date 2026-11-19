@@ -4932,8 +4932,8 @@
         19,
         20
       ],
-      "statement": "Gunnery, range and movement, terrain, heat and damage modifiers.",
-      "status": "tested_case",
+      "statement": "Standard direct weapon GATOR modifiers: gunnery, range, movement, terrain, heat and damage (empty hex and indirect/spotter modifiers remain in 079 and 083).",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5012,7 +5012,37 @@
           "test": "AGoAC pp.19–21: prone bracing and modifiers agree across weapon preview and firing arcs"
         }
       ],
-      "reviewNote": "Visual re-review printed pp.16–20: explicit last forward/backward reversal for TMM missing in production movement; implemented separate offset without changing total distanceMoved or jump extension. New end-to-end movement regression and water/prone modifier checks; exact gates pending. Standard direct GATOR certification after gates; retain specialized indirect modifier gap in 083 and unoccupied target gap in 079 explicitly."
+      "reviewNote": "Direct visual review CAT3500D printed pp.16–20: full standard direct weapon GATOR table (Gunnery, attacker mode, range bands/minimum, target travel since final forward/backward reversal, jump, immobility, posture, light/heavy woods, water and partial cover, heat, sensors and arm actuators). Named regressions passed through #186 exact CI 407/407, E2E and selective Smoke; tested/merged tree identical. Explicitly retain indirect and spotter modifiers as Known Missing under 083 and unoccupied-hex targeting/modifiers under 079. No certification of these missing attacks or later physical table.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "dc32e0fdeb75c27b9c55173d92d9f774887fbb0c",
+        "testedTree": "ba93169b1ef973d6869eb2632a893b8d0cbadee4",
+        "mergedSha": "bbaf2a1134a83bd84df225377548f33b997b11b0",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44591091870,
+            "jobId": 135796985290,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44591091929,
+            "jobId": 135796985134,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44591091862,
+            "jobId": 135796985236,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct visual review CAT3500D printed pp.16–20: full standard direct weapon GATOR table (Gunnery, attacker mode, range bands/minimum, target travel since final forward/backward reversal, jump, immobility, posture, light/heavy woods, water and partial cover, heat, sensors and arm actuators). Named regressions passed through #186 exact CI 407/407, E2E and selective Smoke; tested/merged tree identical. Explicitly retain indirect and spotter modifiers as Known Missing under 083 and unoccupied-hex targeting/modifiers under 079. No certification of these missing attacks or later physical table."
+      }
     },
     {
       "id": "agoac-081",
@@ -5202,7 +5232,7 @@
       "pages": [
         21
       ],
-      "statement": "Specialized attacks including aimed and indirect fire.",
+      "statement": "Specialized attacks: aimed shots and indirect LRM fire, including all spotter/indirect GATOR modifiers and indirect cover exceptions.",
       "status": "known_missing",
       "evidence": [
         {
@@ -5234,7 +5264,7 @@
           "test": "Flamer heat mode adds heat without armor damage"
         }
       ],
-      "reviewNote": "Re-reviewed p.21: aimed shot eligibility and cover exist; indirect LRM with spotter, target and declaration constraints, movement/terrain/firing modifiers and water cover remains missing."
+      "reviewNote": "CAT3500D pp.20–21 rechecked: indirect attacker must lack LOS, friendly spotter must have LOS and may not charge/DFA; one target per spotter, any number of firing units, movement modifiers of all participants, terrain from spotter, +1 indirect, extra +1 if spotter attacks and +1 to spotter's own attacks, range from firing unit, no aiming, water-only cover intercepts indirect leg hits. Indirect branch remains Known Missing."
     },
     {
       "id": "agoac-084",
@@ -5286,9 +5316,17 @@
         {
           "file": "tests/combat.mjs",
           "test": "Selected ammunition bin is decremented"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.15,21–22: exact ammunition slots are debited atomically at declaration and never again"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.15,19: impossible attack misses even on twelve but a target number of two succeeds"
         }
       ],
-      "reviewNote": "Re-reviewed pp.15,21 and ammunition continuation p.22 (before Hit Location). Code rolls 2D6 and spends ammunition during rollDeclaredFire, but source requires deduction at attack declaration. Explicit optional cancellation of an impossible attack without retargeting also missing. Grouped weapon/target resolution and separate magazine tests exist; do not certify until timing and cancellation are correct."
+      "reviewNote": "Direct visual CAT3500D pp.15,21 and 22: ammunition exact bin usage at declaration now implemented atomically, including shared pool and explicit-vs-automatic allocation; marked saved declarations avoid double debit, legacy unmarked declarations retain roll-time compatibility. Automatic hit/miss boundaries tested. Explicit optional cancellation when a declared attack is impossible is still open; do not promote until cancellation and ordered resolution verified. Exact gates pending."
     }
   ]
 }

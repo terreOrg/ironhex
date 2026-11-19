@@ -3893,3 +3893,37 @@ test('AGoAC pp.19–21: prone bracing and modifiers agree across weapon preview 
  u.structure.LA=0;
  assert.equal(g.preview(u.id,v.id,0).legal,false);assert.equal(firingArcTiles(g,u,[0]).size,0);
 });
+
+test('AGoAC pp.15,21–22: exact ammunition slots are debited atomically at declaration and never again',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,moveMode:'stand'});
+ Object.assign(t,{q:4,r:0,prone:false,moveMode:'stand'});
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,t.team];g.actingId=u.id;
+ const index=u.weapons.length;u.weapons.push({...u.weapons[1],shared:1});
+ u.bins[0].shots=1;u.bins[1].shots=2;g.syncAmmo(u);
+ const before=u.bins.map(b=>b.shots);
+ assert(!g.declareFire(u.id,[{index:1,target:t.id,bin:0},{index,target:t.id,bin:0}]).ok);
+ assert.deepEqual(u.bins.map(b=>b.shots),before);assert.equal(u.fired,false);
+ assert(!g.declareFire(u.id,[{index:1,target:t.id},{index,target:u.id}]).ok);
+ assert.deepEqual(u.bins.map(b=>b.shots),before);assert.equal(g.declarations.length,0);
+ assert(g.declareFire(u.id,[{index:1,target:t.id},{index,target:t.id,bin:0}]).ok);
+ const d=g.declarations.at(-1);assert.equal(d.ammoSpent,true);
+ assert.deepEqual(d.shots.map(s=>s.bin),[1,0]);
+ assert.deepEqual(u.bins.slice(0,2).map(b=>b.shots),[0,1]);
+ assert.equal(u.weapons[1].ammo,1);assert.equal(u.weapons[index].ammo,1);
+ // Round-trip the declaration marker as an authoritative saved snapshot.
+ g.declarations=JSON.parse(JSON.stringify(g.declarations));
+ g.rng=()=>.99;g.resolveFire();
+ assert.deepEqual(u.bins.slice(0,2).map(b=>b.shots),[0,1]);
+});
+test('AGoAC pp.15,19: impossible attack misses even on twelve but a target number of two succeeds',()=>{
+ for(const [tn,roll,hit] of [[13,12,false],[12,12,true],[2,2,true],[1,2,true]]){
+  const g=fresh(),u=g.units[0],t=g.units[2];
+  const d={id:u.id,ammoSpent:true,shots:[{index:0,target:t.id,bin:null,aim:null,heatMode:false,
+   weapon:{...u.weapons[0],ammo:null},preview:{targetNumber:tn,side:'front'}}]};
+  const dice=diceFor(roll);g.rng=()=>{assert(dice.length);return dice.shift();};
+  const [a]=g.rollDeclaredFire(d);
+  assert.equal(a.roll,roll);assert.equal(a.hit,hit);
+ }
+});
