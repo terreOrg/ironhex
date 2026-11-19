@@ -809,8 +809,16 @@ export class Game extends Legacy{
  w=Math.max(0,w-Math.min(5,Math.floor(u.heat/5)));
  return mode==='run'||mode==='evade'?(lost?0:Math.ceil(w*1.5)):w;
  }
- terrainCost(t){
- const ground=t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:
+ // A road discount applies only across a connected pair of hex edges.
+ roadConnection(from,to){
+  if(!from||!to)return false;
+  const d=DIRS.findIndex(([q,r])=>from.q+q===to.q&&from.r+r===to.r);
+  if(d<0)return false;
+  return Array.isArray(from.roadEdges)&&Array.isArray(to.roadEdges)&&
+   from.roadEdges.includes(d)&&to.roadEdges.includes(wrap(d+3));
+ }
+ terrainCost(t,from=null){
+ const ground=this.roadConnection(from,t)&&!t.depth?1:t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:
   t.depth?(t.depth===1?2:4):1;
  const building=t.building?.cf>0?BUILDING_ENTRY[t.building.type]:null;
  return ground+(building?.mp||0)+(this.weather.night?1:0);
@@ -837,7 +845,7 @@ export class Game extends Legacy{
  reachable(u,mode='walk'){u=this.unit(u);if(u?.deployed===false)return this.deploymentEntryRoutes(u,mode);if(!['walk','run','jump','evade'].includes(mode))return [];if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];if(max<1)return [];const legal=this.jumpShortestReach(u,max);return this.tiles.filter(t=>!(t.building?.cf>0)&&!this.occupied(t.q,t.r,u.id)&&legal.has(key(t.q,t.r))).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
  const lateralShifts=quadLateralDirections(u,mode);
  const actions=['left','right','forward','back',...lateralShifts.map(s=>s.action)];
- const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>this.onMap(x)&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.dead))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
+ const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>this.onMap(x)&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.dead))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t,old)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
   const old=ends.get(key(q,r));
   if(!old||old.cost>cost||
     (u.config==='Quad'&&old.cost===cost&&v.facing===u.facing&&old.facing!==u.facing))
@@ -1017,7 +1025,7 @@ export class Game extends Legacy{
     toTile&&!occupied&&Math.abs(delta)<=2&&(!shift.backward||delta===0)&&
     (!['run','evade'].includes(mode)||!toTile.depth);
   if(!valid)return fail('Нелегальное боковое смещение');
-  const cost=this.terrainCost(toTile)+Math.abs(delta)+1;
+  const cost=this.terrainCost(toTile,fromTile)+Math.abs(delta)+1;
   if(cost+u.spent>this.mp(u,mode))return fail('Недостаточно MP для бокового смещения');
   dst={q,r,facing:u.facing,cost,
     path:[{q,r,facing:u.facing,cost,lateral:shift.backward?'backward':'forward'}]};

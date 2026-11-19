@@ -3219,3 +3219,40 @@ test('AGoAC p.10: ground terrain PSR dispatch uses the entered hex and depth',()
   assert.equal(calls.length,modifier===null?0:1);
  }
 });
+
+
+
+test('AGoAC p.10: rubble entry invokes a terrain PSR for walking and running, not clear ground',()=>{
+ for(const mode of ['walk','run'])for(const type of ['plain','rough','woods','heavy','rubble']){
+  const g=fresh(),u=g.units[0];
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:6});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  g.tile(1,0).type=type;g.rng=()=>.99;
+  const rolls=[],roll=g.roll.bind(g);
+  g.roll=(...args)=>{rolls.push(args);return roll(...args);};
+  assert(g.move(u.id,1,0,mode).ok);
+  assert.equal(rolls.length,type==='rubble'?1:0);
+  assert.equal(u.distanceMoved,1);
+  assert.equal(u.prone,false);
+ }
+});
+
+test('AGoAC p.10: road discount requires matching entry and exit edges',()=>{
+ for(const connected of [false,true]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,heat:0,spent:0,moveMode:'stand'});
+  for(const t of g.tiles)Object.assign(t,{type:'plain',height:8,depth:0,surface:8});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  const a=g.tile(0,0),b=g.tile(1,0);
+  Object.assign(a,{height:0,roadEdges:[0]});
+  Object.assign(b,{height:0,type:'heavy',roadEdges:[connected?3:2]});
+  const expected=connected?1:3;
+  assert.equal(g.terrainCost(b,a),expected);
+  assert.equal(g.terrainCost(b),3);
+  assert.equal(g.reachable(u,'walk').find(t=>t.q===1&&t.r===0)?.cost,expected);
+  assert(g.move(u.id,1,0,'walk').ok);
+  assert.equal(u.spent,expected);
+ }
+});
