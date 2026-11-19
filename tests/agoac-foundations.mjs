@@ -3774,3 +3774,47 @@ test('AGoAC pp.14–17: facing-based attack direction persists when torso is twi
  u.twist=1;
  assert.equal(g.arc(u,a,weapon),true);assert.equal(g.hitSide(u,a),side);
 });
+
+test('AGoAC p.17: actual multi-weapon declarations apply one primary and one secondary modifier per shot',()=>{
+ for(const primaryIndex of [0,1]){
+  const g=fresh(),u=g.units[0],a=g.units[2],b=g.units[3];
+  for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,moveMode:'stand',heat:0});
+  Object.assign(a,{q:2,r:0,prone:false,moveMode:'stand',distanceMoved:0});
+  Object.assign(b,{q:2,r:-1,prone:false,moveMode:'stand',distanceMoved:0});
+  const w={name:'Medium Laser',damage:5,heat:3,ranges:[3,6,9],min:0,ammo:null,location:'CT',rack:0};
+  u.weapons=Array.from({length:4},()=>({...w}));
+  g.phase='fire';g.queue=[u.team,a.team];g.activeTeam=u.team;g.actingId=u.id;
+  const orders=[{index:0,target:a.id},{index:1,target:b.id},{index:2,target:b.id},{index:3,target:a.id}];
+  const primary=[a,b][primaryIndex].id;
+  assert.deepEqual(g.primaryTargetChoices(u.id,orders),[a.id,b.id]);
+  assert(g.declareFire(u.id,orders,primary).ok);
+  const shots=g.declarations.at(-1).shots;
+  assert.equal(shots.length,4);
+  for(const s of shots)assert.equal(s.preview.mods.secondary,s.target===primary?0:1);
+ }
+});
+test('AGoAC pp.16–20: direct GATOR composes damage heat movement terrain and minimum range',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,gunnery:3,heat:13,moveMode:'walk',sensorHits:1,skidded:false});
+ Object.assign(t,{q:3,r:0,prone:false,moveMode:'run',distanceMoved:5,skidded:false});
+ const w={name:'PPC',damage:10,heat:10,ranges:[6,12,18],min:3,ammo:null,location:'RA',rack:0};
+ u.weapons=[w];
+ u.slots.RA[1]='upper';u.slots.RA[2]='lower';
+ Object.assign(u.actuators.RA,{upper:true,lower:true,shoulder:false});
+ g.tile(1,0).type='woods';g.tile(2,0).height=1;
+ const p=g.preview(u.id,t.id,0);
+ assert(p.legal,p.reason);
+ const expected={gunnery:3,attacker:1,target:2,terrain:1,cover:1,heat:2,range:0,minimum:1,sensor:2,arm:2};
+ for(const [k,n] of Object.entries(expected))assert.equal(p.mods[k],n,k);
+ assert.equal(p.targetNumber,15);assert.equal(p.chance,0);
+ u.actuators.RA.shoulder=true;assert.equal(g.preview(u.id,t.id,0).mods.arm,4);
+ u.actuators.RA.shoulder=false;u.slots.RA[2]=null;
+ assert.equal(g.preview(u.id,t.id,0).mods.arm,1);
+ g.tile(1,0).type='plain';g.tile(2,0).height=0;
+ Object.assign(u,{heat:0,sensorHits:0,moveMode:'stand'});u.actuators.RA.upper=false;
+ Object.assign(t,{distanceMoved:0,moveMode:'stand'});
+ const clear=g.preview(u.id,t.id,0);
+ assert.equal(clear.targetNumber,4);assert.equal(clear.chance,92);
+});

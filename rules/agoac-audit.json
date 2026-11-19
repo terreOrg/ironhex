@@ -4760,7 +4760,7 @@
           "test": "AGoAC p.17: bridge decks never grant partial cover to either endpoint"
         }
       ],
-      "reviewNote": "Source pp.14,17,19 rechecked: intervening Mechs ignored; standing terrain/depth-one cover and leg restriction implemented. Bridge exception corrected in this PR; new regression pending. Basic versus expanded submerged LOS and water firing still open."
+      "reviewNote": "Source pp.14,17,19 rechecked: bridge exception tested successfully in #183 (399/399); remaining base versus expanded submerged LOS and water firing."
     },
     {
       "id": "agoac-078",
@@ -4842,9 +4842,10 @@
       "topicId": "agoac-combat",
       "pages": [
         13,
-        15
+        15,
+        17
       ],
-      "statement": "Attack declarations, legal targets and orientation commitments.",
+      "statement": "Attack declarations, legal targets and orientation commitments, including unoccupied-hex targeting and its immobile -4 and primary/secondary modifiers.",
       "status": "known_missing",
       "evidence": [
         {
@@ -4872,7 +4873,7 @@
           "test": "API resumes a persisted defender LOS choice while the opponent is acting"
         }
       ],
-      "reviewNote": "Re-reviewed pp.13,15: per-weapon declaration, orientation commitment and no friendly fire are implemented. Source permits attacks against empty hexes with normal heat and ammo costs; engine/API only accept unit targets. Also specialized indirect declaration remains open. Known missing."
+      "reviewNote": "CAT3500D pp.15,17: engine/API only accept occupied unit targets; empty-hex declarations remain missing including immobility -4, normal heat/ammo costs, multiple-target designation and secondary modifiers for empty hexes. Existing unit declaration rules and specialized indirect declaration dependency remain under this requirement. No certification of empty-hex behavior."
     },
     {
       "id": "agoac-080",
@@ -4935,9 +4936,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11,17,19: zero MP does not imply immobility and true immobilizing states stack with movement"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.16–20: direct GATOR composes damage heat movement terrain and minimum range"
         }
       ],
-      "reviewNote": "Printed pp.16–20: #182 green exact CI/E2E/selective Smoke, cumulative target movement, head aim replacement and dual arcs fixed. Bridge cover exception corrected in current patch. Terrain/water profile, indirect modifiers and full table still open."
+      "reviewNote": "Direct visual source pp.16–20 confirmed all standard range, heat, movement and damage table entries. #183 CI 399/399 including bridge correction; combined direct GATOR sum, hit chance and actuator precedence regression added here. Await exact results. Direct-weapon dry-terrain certification separable from unimplemented water and indirect-fire cases, but their dependencies must remain explicit; do not mark whole requirement verified prematurely."
     },
     {
       "id": "agoac-081",
@@ -4946,8 +4951,8 @@
         17,
         19
       ],
-      "statement": "Primary and secondary target rules and immobility.",
-      "status": "tested_case",
+      "statement": "Primary and secondary target designation and immobility of BattleMech targets (unoccupied hexes explicitly covered by 079).",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4980,9 +4985,43 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.11,17,19: zero MP does not imply immobility and true immobilizing states stack with movement"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.17: actual multi-weapon declarations apply one primary and one secondary modifier per shot"
         }
       ],
-      "reviewNote": "Printed pp.17,19 rechecked: #182 verified multiple forward sectors, primary designation, secondary penalties, cumulative movement/immobility (396/396 tests). Added explicit zero-MP vs truly immobilized states regression. Unoccupied hex immobility depends on empty-hex declaration (079); do not certify that missing branch. Final certification after exact gates and remaining target eligibility review."
+      "reviewNote": "Visual re-review CAT3500D pp.17 and 19: primary selection and secondary modifiers for occupied BattleMech targets, including two forward arcs, and explicit immobilizing states vs zero MP, cumulative movement and prone modifiers, all supported by named passing #183/#182 tests. Scope explicitly limited to occupied BattleMech targets; unoccupied hex legality and its immobile -4 modifier are separately and explicitly retained as Known Missing under 079, not silently certified. Additional real multi-weapon declaration regression in this PR; no claim of empty-hex implementation.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "6b1c2dbc6b6171d1a93a0cdcf41eb047e0a083f1",
+        "testedTree": "23fbdbf3efee8ec83ab9d9117bc5ebf94639f607",
+        "mergedSha": "75467f1566480320199d71dbb2a97412bb7e96d3",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44586516375,
+            "jobId": 135780812045,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44586516380,
+            "jobId": 135780813266,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44586516600,
+            "jobId": 135780812986,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Visual re-review CAT3500D pp.17 and 19: primary selection and secondary modifiers for occupied BattleMech targets, including two forward arcs, and explicit immobilizing states vs zero MP, cumulative movement and prone modifiers, all supported by named passing #183/#182 tests. Scope explicitly limited to occupied BattleMech targets; unoccupied hex legality and its immobile -4 modifier are separately and explicitly retained as Known Missing under 079, not silently certified. Additional real multi-weapon declaration regression in this PR; no claim of empty-hex implementation."
+      }
     },
     {
       "id": "agoac-082",
