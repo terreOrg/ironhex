@@ -4630,10 +4630,13 @@ test('AGoAC p.27 errata: destroyed DFA target becomes a normal landing in the ta
  assert.deepEqual(u.psrs,[]);assert.equal(g.resolution.length,0);
 });
 test('AGoAC p.27 errata: unconscious airborne pilot automatically misses even without a queued PSR',()=>{
+ for(const [queued,damage] of [[0,0],[2,0],[2,20]]){
  const {g,u,t}=physicalBlockFixture();Object.assign(u,{airborne:true,unconscious:true,moveMode:'jump',charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:1,r:0},startPos:{q:-2,r:0}}});g.phase='fire';
- assert.deepEqual(u.psrs,[]);const falls=[];g.fall=(v,levels,tn,side)=>{falls.push([v.id,levels,side]);v.prone=true;};
+ assert.deepEqual(u.psrs,[]);if(queued)u.psrs.push({modifier:queued,reason:'test queued PSR'});u.phaseDamage=damage;
+ const expectedTN=u.piloting+g.psrMod(u,true)+queued+(damage>=20?1:0);const falls=[];g.fall=(v,levels,tn,side)=>{falls.push([v.id,levels,tn,side]);v.prone=true;};
  g.packets=()=>{throw Error('Automatic miss must not deal DFA damage');};g.rng=()=>{throw Error('Automatic miss needs no attack dice');};
- g.endPSR();assert(u.charge.resolved);assert(!u.airborne);assert(u.prone);assert.deepEqual(falls,[[u.id,2,'rear']]);assert.equal(u.q,1);
+ g.endPSR();assert(u.charge.resolved);assert(!u.airborne);assert(u.prone);assert.deepEqual(falls,[[u.id,2,expectedTN,'rear']]);assert.equal(u.q,1);
  assert.notDeepEqual([t.q,t.r],[1,0]);
  g.phase='physical';g.resolveSpecial(u);assert.equal(falls.length,1);
+ }
 });

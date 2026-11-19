@@ -1473,7 +1473,10 @@ export class Game extends Legacy{
   if(u.dead||!u.airborne||u.charge?.type!=='dfa'||u.charge.resolved)continue;
   const target=this.unit(u.charge.target);
   if(target?.dead&&!target.escaped)this.completeDFAJump(u,u.charge.targetPos);
-  else if(u.unconscious)this.interruptAirborneDFA(u,u.piloting+this.psrMod(u,true));
+  else if(u.unconscious){
+   const tn=u.piloting+this.psrMod(u,true)+u.psrs.reduce((sum,p)=>sum+p.modifier,0)+(u.phaseDamage>=20?1:0);
+   this.interruptAirborneDFA(u,tn);
+  }
  }
  for(const u of this.units){if(u.phaseDamage>=20)u.psrs.push({modifier:1,reason:'20+ урона'});if(!u.dead&&!u.prone){const tn=u.piloting+this.psrMod(u,true)+u.psrs.reduce((s,p)=>s+p.modifier,0);for(const p of u.psrs){if(this.isImmobile(u)||u.gyroHits>=2||p.reason==='Потеря ноги'||this.roll(u.name+' · '+p.reason,tn)<tn){this.fall(u,0,tn);break;}}}u.psrs=[];u.phaseDamage=0;}}
  // AGoAC p.43: water surface and water bottom are separate impacts.
