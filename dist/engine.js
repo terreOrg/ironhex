@@ -58,6 +58,14 @@ function physicalArmActuators(u,loc){
 function clubArmsAvailable(u){
  return ['LA','RA'].every(l=>u.structure[l]>0&&!physicalArmActuators(u,l).shoulder&&!physicalArmActuators(u,l).hand);
 }
+// CAT3500D p.25, official errata v8.01 p.3: halve physical damage
+// per struck underwater location, after rolling the location and after
+// splitting a charge or DFA into five-point damage groups.
+function physicalLocationDamage(u,tile,location,amount){
+ if(!tile?.depth)return amount;
+ const submerged=tile.depth>=2||u.prone||mechLegLocation(u,location);
+ return submerged?Math.floor(amount/2):amount;
+}
 export function partialCoverObscures(u,location,underwaterCover=false){
  const leg=mechLegLocation(u,location);
  return underwaterCover?!leg:leg;
@@ -1507,8 +1515,16 @@ export class Game extends Legacy{
   return true;
  }
  fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0,origin=null){if(u.dead||u.falling)return;if(this.interruptAirborneDFA(u,tn))return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(this.isImmobile(u)||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);const impacts=this.fallDamageGroups(u,levels,extraDamage,origin);this.note(`${u.name} упал: ${impacts.reduce((sum,n)=>sum+n,0)} урона.`);for(const damage of impacts)if(damage&&!u.dead)this.packets(u,damage,side);u.falling=false;}
- packets(u,amount,side='front',table='normal'){let total=amount;while(total>0&&!u.dead){const n=Math.min(5,total);this.hit(u,n,side,table);total-=n;}}
- hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false){
+ packets(u,amount,side='front',table='normal',physical=false){
+ let total=amount,applied=0;
+ while(total>0&&!u.dead){
+  const n=Math.min(5,total);
+  const result=this.hit(u,n,side,table,null,false,false,physical);
+  applied+=result?.damage??n;total-=n;
+ }
+ return applied;
+}
+ hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false,physical=false){
  let loc,r,floatingTac=false;const obscured=l=>cover&&partialCoverObscures(u,l,underwaterCover);
  if(table==='punch'){
   r=this.d6('Локация · удар рукой');
@@ -1547,9 +1563,10 @@ export class Game extends Legacy{
    if(!aim||!obscured(loc))break;
   }
  }
- this.phaseRolls.at(-1).result=locationNameForMech(u,loc)+(obscured(loc)?' · укрытие':` · ${amount} урона`);
+ const applied=physical?physicalLocationDamage(u,this.tile(u.q,u.r),loc,amount):amount;
+ this.phaseRolls.at(-1).result=locationNameForMech(u,loc)+(obscured(loc)?' · укрытие':` · ${applied} урона`);
  if(obscured(loc))return {location:loc,hits:[],damage:0};
- return {location:loc,hits:amount>0?this.damage(u,loc,amount,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}):[],damage:amount};
+ return {location:loc,hits:applied>0?this.damage(u,loc,applied,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}):[],damage:applied};
 }
  damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
  if(explosion&&this.hasCASEII(u,loc)){
@@ -1859,14 +1876,20 @@ export class Game extends Legacy{
   else if(table==='normal'&&opts.locationTable!=='normal'){table=opts.locationTable;mod+=4;}
  }
 
- const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';const underwaterPhysical=attackerSub&&(targetSub||targetWaterline&&table==='kick')||(attackerWaterline&&type==='kick'&&(targetSub||targetWaterline));if(underwaterPhysical)damage=Math.floor(damage/2);// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
+ const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';// Preview reports nominal damage. Underwater reduction is per hit location
+ // and must happen only during damage resolution, not at declaration.
+ const underwaterPhysical=targetSub||targetWaterline;// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
  // At equal LOS height only non-Kick-table leg hits are absorbed.
  // Charges resolve separately and are explicitly exempt from leg protection.
  const quadWaterCover=t.config==='Quad'&&targetWaterline;
  // AGoAC p.25: surface ordinary non-kick attacks at a standing depth-one biped
  // incur water cover; each actual covered leg hit is ignored. Preserve the separate Quad rule.
- const bipedWaterCover=t.config!=='Quad'&&targetWaterline&&!attackerSub&&type!=='kick';
- const physicalCover=bipedWaterCover||quadWaterCover&&attackerTile.height+(u.prone?1:2)===targetTile.height+(t.prone?1:2)&&table!=='kick';
+ const bipedWaterCover=t.config!=='Quad'&&targetWaterline&&table!=='punch';
+ const sameLosLevel=this.losLevel(u,attackerTile)===this.losLevel(t,targetTile);
+ // Errata v8.01: cover TN depends on actual hit-location table, not attack
+ // name. A covered leg is ignored only at equal LOS levels, and never
+ // for Kick-table hits. Charge damage is adjudicated separately.
+ const physicalCover=(bipedWaterCover||quadWaterCover)&&sameLosLevel&&table!=='kick';
  const targetNumber=u.piloting+mod+({stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode])+(u.skidded?1:0)+this.targetMovementModifier(t)+this.los(u,t).woods+(t.prone?-2:0)+(quadWaterCover||bipedWaterCover?1:0);
  return {legal:!reason,reason,targetNumber,damage,underwaterPhysical,table,side,physicalCover};}
  declarePhysical(id,target,type,limb,opts={}){
@@ -2142,7 +2165,7 @@ export class Game extends Legacy{
   const start=this.phaseRolls.length;let damage=0;
   if(hit){
    if(!t.dead){
-    const out=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover);
+    const out=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover,false,true);
     damage=out.damage;
     if(d.type==='kick')this.psr(t,0,'Удар ногой');
    }
@@ -2512,7 +2535,7 @@ export class Game extends Legacy{
   const move=({stand:0,walk:1,run:2,jump:3,evade:2})[u.moveMode]??0;
   const from=this.tile(u.q,u.r),to=this.tile(t.q,t.r);
   const woods=to.type==='heavy'?2:to.type==='woods'?1:0;
-  const cover=to.depth===1&&!t.prone&&from.depth<2?1:0;
+  const cover=to.depth===1&&!t.prone?1:0;
   return Math.max(2,u.piloting+(u.piloting-t.piloting)+(dfa?3:move)
    +(u.skidded?1:0)+this.targetMovementModifier(t)+(t.prone?-2:0)+(dfa?0:woods+cover));
  }
@@ -2555,12 +2578,13 @@ export class Game extends Legacy{
    const sides=dfa&&t.prone?['rear']:this.hitSideOptions(t,source);
    const side=this.chooseResolutionOption('hit-direction',t,sides.map(id=>({id})),sides[0],
     {attackerId:u.id,weaponName:dfa?'DFA':'Таран'});
-   const underwater=!dfa&&this.tile(u.q,u.r).depth>=2;
    damage=dfa?Math.ceil(u.tonnage/10*3):Math.ceil(u.tonnage/10*s.hexes);
-   let selfDamage=dfa?u.tonnage/5:Math.ceil(t.tonnage/10);
-   if(underwater){damage=Math.floor(damage/2);selfDamage=Math.floor(selfDamage/2);}
-   this.packets(t,damage,side,dfa&&!t.prone?'punch':'normal');
-   this.packets(u,selfDamage,'front',dfa?'kick':'normal');
+   const selfDamage=dfa?u.tonnage/5:Math.ceil(t.tonnage/10);
+   // Charge and DFA use separate location rolls for each five-point
+   // grouping; any submerged hit location halves only that grouping.
+   const applied=this.packets(t,damage,side,dfa&&!t.prone?'punch':'normal',true);
+   if(Number.isFinite(applied))damage=applied;
+   this.packets(u,selfDamage,'front',dfa?'kick':'normal',true);
    if(dfa)this.resolveDFALanding(u,t,s.dir,true,old);
    else{
     // A prohibited displacement still causes damage and the required PSRs.
