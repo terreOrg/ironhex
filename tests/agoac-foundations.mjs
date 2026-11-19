@@ -3063,3 +3063,22 @@ test('AGoAC p.8: jump allowance and minimum heat at each reachable distance',()=
   assert.equal(u.pendingHeat,Math.max(3,travelled));
  }
 });
+
+
+test('AGoAC p.8: gyro and hip damage trigger movement PSR only for run and jump',()=>{
+ for(const damage of ['none','gyro','hip','both'])for(const mode of ['walk','run','jump']){
+  const g=fresh(),u=g.units[0];
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:6,jump:3,jumpLost:0,heat:0,spent:0,moveMode:'stand',distanceMoved:0,pendingHeat:0,prone:false,proneAtStart:false,moveStart:{q:0,r:0}});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  if(damage==='gyro'||damage==='both')u.gyroHits=1;
+  if(damage==='hip'||damage==='both')u.actuators.LL.hip=true;
+  const calls=[];g.psr=(...args)=>{calls.push(args);return true;};
+  const t=g.reachable(u,mode).find(t=>distance(u,t)===1&&t.cost===1);
+  assert(t);assert(g.move(u.id,t.q,t.r,mode).ok);
+  assert.equal(calls.length,mode==='jump'&&damage!=='none'?1:0);
+  assert(g.hold(u.id).ok);
+  assert.equal(calls.length,mode!=='walk'&&damage!=='none'?1:0);
+  if(calls.length){assert.equal(calls[0][0],u);assert.equal(calls[0][3],true);}
+ }
+});
