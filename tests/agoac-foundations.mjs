@@ -4413,8 +4413,8 @@ test('AGoAC p.25: standing depth-one biped cover excludes kicks and absorbs cove
  Object.assign(g.tile(t.q,t.r),{type:'water',depth:1,height:-1,surface:0});
  const club=g.physicalPreview(u.id,t.id,'club','RA'),kick=g.physicalPreview(u.id,t.id,'kick','RL');
  assert(club.legal&&kick.legal);assert.equal(club.table,'punch');assert.equal(kick.table,'punch');
- assert.equal(club.physicalCover,true);assert.equal(kick.physicalCover,false);
- assert.equal(club.targetNumber,kick.targetNumber+2);
+ assert.equal(club.physicalCover,false);assert.equal(kick.physicalCover,false);
+ assert.equal(club.targetNumber,kick.targetNumber+1);
  // Equal underlying height: normal club may roll a submerged leg; kick does not test cover.
  Object.assign(g.tile(u.q,u.r),{type:'water',depth:1,height:-1,surface:0});
  const same=g.physicalPreview(u.id,t.id,'club','RA');
@@ -4443,12 +4443,12 @@ test('AGoAC p.25: fully submerged ordinary attacks use half damage and depth-one
  const {g,u,t}=physicalBlockFixture();
  const normal=g.physicalPreview(u.id,t.id,'punch','RA').damage;
  for(const x of [u,t])Object.assign(g.tile(x.q,x.r),{type:'water',height:-2,surface:0,depth:2});
- assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').damage,Math.floor(normal/2));
+ assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').damage,normal); // nominal, not prematurely halved
  Object.assign(g.tile(u.q,u.r),{type:'water',height:-1,surface:0,depth:1});t.prone=true;
  assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').legal,false); // target below AND prone
  Object.assign(g.tile(t.q,t.r),{type:'water',height:-1,surface:0,depth:1});
  const kick=g.physicalPreview(u.id,t.id,'kick','RL');
- assert(kick.legal,kick.reason);assert(kick.underwaterPhysical);assert.equal(kick.damage,Math.floor(u.tonnage/5/2));
+ assert(kick.legal,kick.reason);assert(kick.underwaterPhysical);assert.equal(kick.damage,Math.floor(u.tonnage/5)); // actual underwater leg hit is halved on resolution
  assert(!g.physicalPreview(u.id,t.id,'club','RA').legal);
 });
 
@@ -4566,7 +4566,7 @@ test('AGoAC p.26: underwater charge halves both rounded damage amounts and cance
   const packets=[];g.packets=(v,amount)=>packets.push([v.id,amount]);
   g.rng=()=>{assert.equal(variant,'underwater');return .99;};
   g.resolveSpecial(u);assert(u.charge.resolved);
-  assert.deepEqual(packets,variant==='underwater'?[[t.id,16],[u.id,2]]:[]);
+  assert.deepEqual(packets,variant==='underwater'?[[t.id,33],[u.id,5]]:[]); // full packets; hit locations halve individually
   if(variant!=='underwater'){assert.deepEqual([u.q,u.r],[0,0]);assert.equal(g.resolution[0].shots[0].roll,null);}
  }
 });
@@ -4639,4 +4639,67 @@ test('AGoAC p.27 errata: unconscious airborne pilot automatically misses even wi
  assert.notDeepEqual([t.q,t.r],[1,0]);
  g.phase='physical';g.resolveSpecial(u);assert.equal(falls.length,1);
  }
+});
+
+ 
+test('CAT3500D p.25 + errata v8.01 p.3: depth-one water cover uses hit table and equal LOS level',()=>{
+ const {g,u,t}=physicalBlockFixture(),from=g.tile(u.q,u.r),to=g.tile(t.q,t.r);
+ Object.assign(from,{type:'water',depth:1,height:-1,surface:0});
+ Object.assign(to,{type:'plain',depth:0,height:-1,surface:-1});
+ const dryClub=g.physicalPreview(u.id,t.id,'club','RA');
+ const dryPunch=g.physicalPreview(u.id,t.id,'punch','RA');
+ Object.assign(to,{type:'water',depth:1,height:-1,surface:0});
+ const wetClub=g.physicalPreview(u.id,t.id,'club','RA');
+ const wetPunch=g.physicalPreview(u.id,t.id,'punch','RA');
+ const wetKick=g.physicalPreview(u.id,t.id,'kick','RL');
+ assert(wetClub.legal&&wetPunch.legal&&wetKick.legal);
+ assert.equal(wetClub.table,'normal');assert.equal(wetClub.physicalCover,true);
+ assert.equal(wetClub.targetNumber,dryClub.targetNumber+1);
+ assert.equal(wetPunch.table,'punch');assert.equal(wetPunch.physicalCover,false);
+ assert.equal(wetPunch.targetNumber,dryPunch.targetNumber);
+ assert.equal(wetKick.table,'kick');assert.equal(wetKick.physicalCover,false);
+ Object.assign(from,{type:'plain',depth:0,height:0,surface:0});
+ const downClub=g.physicalPreview(u.id,t.id,'club','RA');
+ const downKick=g.physicalPreview(u.id,t.id,'kick','RL');
+ assert.equal(downClub.table,'punch');assert(!downClub.physicalCover);
+ assert.equal(downKick.table,'punch');assert(!downKick.physicalCover);
+});
+
+test('CAT3500D p.25 + errata v8.01 p.3: physical damage is halved per submerged location',()=>{
+ const {g,t}=physicalBlockFixture(),tile=g.tile(t.q,t.r);
+ const applied=[];
+ g.damage=(v,location,amount)=>{applied.push([location,amount]);return [];};
+ const strike=(roll,n=9)=>{
+  const dice=diceFor(roll);g.rng=()=>{assert(dice.length);return dice.shift();};
+  return g.hit(t,n,'front','normal',null,false,false,true);
+ };
+ Object.assign(tile,{type:'water',depth:1,height:-1,surface:0});
+ assert.equal(strike(5).damage,4); // standing: right leg under water
+ assert.equal(strike(7).damage,9); // torso above water
+ Object.assign(tile,{type:'water',depth:2,height:-2,surface:0});
+ assert.equal(strike(7).damage,4); // torso now under water
+ Object.assign(tile,{type:'water',depth:1,height:-1,surface:0});t.prone=true;
+ assert.equal(strike(7).damage,4); // prone: torso also under water
+ assert.deepEqual(applied,[['RL',4],['CT',9],['CT',4],['CT',4]]);
+});
+
+test('CAT3500D p.26 + errata v8.01 p.3: charge packets halve independently by struck water location',()=>{
+ const {g,t}=physicalBlockFixture(),tile=g.tile(t.q,t.r);
+ Object.assign(tile,{type:'water',depth:1,height:-1,surface:0});
+ const applied=[];g.damage=(v,location,n)=>{applied.push([location,n]);return [];};
+ const dice=[...diceFor(5),...diceFor(7)];
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ const total=g.packets(t,6,'front','normal',true);
+ assert.equal(total,3);
+ assert.deepEqual(applied,[['RL',2],['CT',1]]);
+ assert.equal(dice.length,0);
+});
+
+test('CAT3500D p.25 + errata v8.01 p.3: charging receives depth-one cover modifier even from depth-two water',()=>{
+ const {g,u,t}=physicalBlockFixture(),from=g.tile(u.q,u.r),to=g.tile(t.q,t.r);
+ Object.assign(from,{type:'water',height:-2,depth:2,surface:0});
+ Object.assign(to,{type:'plain',height:-1,depth:0,surface:-1});
+ const normal=g.specialPhysicalTN(u,t,false);
+ Object.assign(to,{type:'water',height:-1,depth:1,surface:0});
+ assert.equal(g.specialPhysicalTN(u,t,false),normal+1);
 });

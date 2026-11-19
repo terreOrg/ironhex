@@ -6216,9 +6216,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.25: fully submerged ordinary attacks use half damage and depth-one exceptions"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.25 + errata v8.01 p.3: physical damage is halved per submerged location"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Remaining discrepancy explicitly identified on re-reading official errata v8.01 p.3: physical damage is location-specific in water; partial cover exceptions depend on table and equal LOS height, not on attack type alone. A separate correction is still required."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Remaining discrepancy explicitly identified on re-reading official errata v8.01 p.3: physical damage is location-specific in water; partial cover exceptions depend on table and equal LOS height, not on attack type alone. A separate correction is still required. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted."
     },
     {
       "id": "agoac-095",
@@ -6249,9 +6253,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.26 errata: destroyed charge target allows standing attacker to enter without attack or PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.26 + errata v8.01 p.3: charge packets halve independently by struck water location"
         }
       ],
-      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending."
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted."
     },
     {
       "id": "agoac-096",
