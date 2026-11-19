@@ -80,7 +80,16 @@ class MechToggle extends HTMLElement {
     this._button.disabled = this.disabled;
   }
 }
-if (!customElements.get('mech-toggle')) customElements.define('mech-toggle', MechToggle);
+if (!customElements.get('mech-toggle')) {
+  customElements.define('mech-toggle', MechToggle);
+  // A visual caption is not a native form label for the shadow button.
+  // The button retains its accessible name, and pointer clicks on the
+  // caption delegate to the same disabled-aware activation path.
+  document.addEventListener('click', event => {
+    const row = event.target.closest('[data-toggle-row]');
+    if (row && !event.target.closest('mech-toggle')) row.querySelector('mech-toggle')?.click();
+  });
+}
 </script>
 <script>
 const power = document.getElementById('power');

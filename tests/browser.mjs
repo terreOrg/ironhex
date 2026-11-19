@@ -1394,7 +1394,10 @@ test('AGoAC p.21: browser declares aimed and ordinary weapons independently',{ti
    assert.equal(await arcs.evaluate(el=>el.checked),true);
    assert.equal(await arcs.getByRole('switch').getAttribute('aria-checked'),'true');
    await setMechToggle(night,true);assert.equal(await gale.evaluate(el=>el.checked),false);
-   await setMechToggle(gale,true);
+   const galeCaption=page.locator('[data-toggle-row]').filter({has:page.locator('#gale')});
+   await galeCaption.click({position:{x:Math.max(40,Math.round((await galeCaption.boundingBox()).width)-4),y:10}});
+   assert.equal(await gale.evaluate(el=>el.checked),true);
+   assert.equal(await gale.getByRole('switch',{name:'Сильный ветер'}).getAttribute('aria-checked'),'true');
    await night.evaluate(el=>{el.disabled=true;});
    assert(await night.getByRole('switch').isDisabled());
    assert.equal(await night.evaluate(el=>el.checked),true);
