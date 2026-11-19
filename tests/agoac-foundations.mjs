@@ -3256,3 +3256,17 @@ test('AGoAC p.10: road discount requires matching entry and exit edges',()=>{
   assert.equal(u.spent,expected);
  }
 });
+
+test('AGoAC p.10: Woodland preset supplies connected road edges on rectangular sheets',()=>{
+ const g=fresh();
+ assert(g.configureRectangularSheets('sheet',[{id:'woodland',rotation:0}]).ok);
+ const road=g.tiles.filter(t=>t.roadEdges?.length);
+ assert.equal(road.length,16);
+ for(const a of road){
+  const b=g.tile(a.q+1,a.r);
+  if(b?.roadEdges?.length){
+   assert(g.roadConnection(a,b));assert(g.roadConnection(b,a));
+   assert.equal(g.terrainCost(b,a),1);
+  }
+ }
+});

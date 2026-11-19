@@ -465,8 +465,9 @@ export class Game extends Legacy{
      else if(r===-2&&Math.abs(q)<3){type='hill';height=surface=1;}
     }
    }
+   const roadEdges=id==='woodland'&&r===0?[0,3].map(d=>wrap(d+rotation)):[];
    for(let n=0;n<rotation;n++)[q,r]=[-r,q+r];
-   return {q,r,type,height,depth,surface};
+   return {q,r,type,height,depth,surface,roadEdges};
   });
   this.tiles=tiles;this.rebuildMap();this.setupMap={id,rotation};
   return {ok:true};
@@ -506,7 +507,8 @@ export class Game extends Legacy{
     else if(b===-2&&Math.abs(a)<3){type='hill';h=1;}
    }
    const r=row-Math.floor(height/2),q=col-Math.floor(width/2)-Math.floor(r/2);
-   tiles.push({q,r,type,height:h,depth,surface:h+depth,sheet});
+   const roadEdges=preset.id==='woodland'&&b===0?[0,3]:[];
+   tiles.push({q,r,type,height:h,depth,surface:h+depth,sheet,roadEdges});
   }
   this.tiles=tiles;this.rebuildMap();
   this.setupMap={id:'sheets',rotation:0,layout,sheets:sheets.map(s=>({id:s.id,rotation:s.rotation})),width,height};
