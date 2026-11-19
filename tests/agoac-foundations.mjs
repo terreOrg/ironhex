@@ -4211,3 +4211,92 @@ test('AGoAC pp.19,21: prone spotter adds cumulative movement modifier to indirec
  assert(prone.legal,prone.reason);assert.equal(prone.mods.spotter,4);
  assert.equal(prone.targetNumber,standing.targetNumber+2);
 });
+
+// Chapter 6: printed Attack Direction Diagram and both p.23 tables.
+test('AGoAC p.22: six neighboring directions, four boundary rays and target body facing',()=>{
+ const g=fresh(),t=g.units[0],a=g.units[2];
+ Object.assign(t,{q:0,r:0,facing:0,twist:0,prone:false});
+ const cases=[[[1,0],['front']],[[1,-1],['front']],[[0,-1],['left']],
+  [[-1,0],['rear']],[[-1,1],['right']],[[0,1],['front']],
+  [[1,-2],['front','left']],[[-1,2],['front','right']],
+  [[-2,1],['right','rear']],[[-1,-1],['left','rear']]];
+ const rotate=([q,r])=>[-r,q+r]; // one clockwise axial step
+ for(let facing=0;facing<6;facing++){
+  t.facing=facing;t.twist=1;t.prone=!!(facing%2);
+  for(const [coords,expected] of cases){
+   // relative() uses mathematical counterclockwise facing; invert rotation.
+   let p=coords;for(let i=0;i<(6-facing)%6;i++)p=rotate(p);
+   Object.assign(a,{q:p[0],r:p[1]});
+   assert.deepEqual(g.hitSideOptions(t,a),expected,'facing '+facing+' from '+p);
+  }
+ }
+});
+test('AGoAC p.23: every normal hit location and through-armor opportunity by direction',()=>{
+ const columns={front:['CT','RA','RA','RL','RT','CT','LT','LL','LA','LA','HD'],
+ rear:['CT','RA','RA','RL','RT','CT','LT','LL','LA','LA','HD'],
+ left:['LT','LL','LA','LA','LL','LT','CT','RT','RA','RL','HD'],
+ right:['RT','RL','RA','RA','RL','RT','CT','LT','LA','LL','HD']};
+ for(const [side,locations] of Object.entries(columns))for(let roll=2;roll<=12;roll++){
+  const g=fresh(),t=g.units[2],dice=diceFor(roll);g.rng=()=>{assert(dice.length);return dice.shift();};
+  let applied;g.damage=(u,loc,amount,options)=>{applied={loc,amount,...options};return [];};
+  const result=g.hit(t,5,side);
+  assert.equal(result.location,locations[roll-2]);
+  assert.deepEqual(applied,{loc:locations[roll-2],amount:5,rear:side==='rear',tac:roll===2});
+  assert.equal(dice.length,0);
+ }
+});
+test('AGoAC pp.23–24: all base launcher cluster rolls allocate separate SRM or five-point LRM packets',()=>{
+ const columns={2:[1,1,1,1,1,1,2,2,2,2,2],4:[1,2,2,2,2,3,3,3,3,4,4],
+  5:[1,2,2,3,3,3,3,4,4,5,5],6:[2,2,3,3,4,4,4,5,5,6,6],
+  10:[3,3,4,6,6,6,6,8,8,10,10],15:[5,5,6,9,9,9,9,12,12,15,15],
+  20:[6,6,9,12,12,12,12,16,16,20,20]};
+ for(const [rack,values] of Object.entries(columns))for(let roll=2;roll<=12;roll++){
+  const g=fresh(),n=values[roll-2],srm=[2,4,6].includes(+rack),dice=diceFor(roll);
+  const s={weapon:{name:(srm?'SRM ':'LRM ')+rack,rack:+rack,damage:srm?2:1}};
+  g.rng=()=>{assert(dice.length);return dice.shift();};
+  assert.deepEqual(g.fireAmounts(s,false),[]);
+  const out=g.fireAmounts(s,true);
+  assert.deepEqual(out,srm?Array(n).fill(2):[...Array(Math.floor(n/5)).fill(5),...(n%5?[n%5]:[])]);
+  assert.equal(dice.length,0);
+ }
+});
+test('AGoAC p.22: defender selects a boundary side before location rolls and saved replay preserves dice',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ Object.assign(u,{q:-1,r:-1,facing:5,prone:false});
+ Object.assign(t,{q:0,r:0,facing:0,twist:1,prone:false});
+ g.phase='fire';g.activeTeam=null;g.queue=[];g.initiativeWinner=1;
+ const options=g.hitSideOptions(t,u);assert.deepEqual(options,['left','rear']);
+ g.declarations=[{id:u.id,ammoSpent:true,shots:[{index:0,target:t.id,aim:null,bin:null,heatMode:false,
+  weapon:{name:'Medium Laser',rack:0,ammo:null,heat:3,damage:5,location:'CT'},
+  preview:{targetNumber:2,side:options[0],sideOptions:options,cover:false,underwaterCover:false}}]}];
+ const dice=[...diceFor(8),...diceFor(7)];let draws=0;g.rng=()=>{draws++;return dice.shift()??.99;};
+ const rear=t.rear.CT,front=t.armor.CT;
+ assert(g.nextPhaseWithChoices({humanTeams:[0,1]}).pending);
+ const choice=g.pendingChoice;assert.equal(choice.kind,'hit-direction');assert.equal(choice.team,t.team);
+ assert.deepEqual(choice.options.map(o=>o.id),['left','rear']);assert.equal(draws,2);
+ assert.equal(g.nextPhaseWithChoices({choice:{key:choice.key,option:'front'}}).ok,false);
+ assert.equal(draws,2);assert.equal(g.units[2].rear.CT,rear);
+ assert(g.nextPhaseWithChoices({choice:{key:choice.key,option:'rear'}}).ok);
+ assert.equal(g.pendingChoice,null);assert.equal(draws,4);
+ assert.equal(g.units[2].rear.CT,rear-5);assert.equal(g.units[2].armor.CT,front);
+});
+
+test('AGoAC p.24: LRM20 example resolves twelve missiles as three independent hit locations',()=>{
+ const g=fresh(),a=g.units[0],t=g.units[2];
+ Object.assign(t,{q:0,r:0,facing:0,prone:false});
+ Object.assign(a,{q:0,r:-2});
+ assert.deepEqual(g.hitSideOptions(t,a),['left']);
+ g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+ const s={index:0,target:t.id,bin:null,aim:null,heatMode:false,
+  weapon:{name:'LRM 20',rack:20,ammo:null,heat:6,damage:1,location:'CT'},
+  preview:{targetNumber:2,side:'left',sideOptions:['left'],cover:false,underwaterCover:false}};
+ g.declarations=[{id:a.id,ammoSpent:true,shots:[s]}];
+ const dice=[...diceFor(10),...diceFor(8),...diceFor(8),...diceFor(4),...diceFor(11)];
+ g.rng=()=>{assert(dice.length,'Unexpected die');return dice.shift();};
+ const hits=[];
+ g.damage=(u,loc,amount,opts)=>{assert.equal(u.id,t.id);hits.push([loc,amount,opts.rear]);return [];};
+ const result=g.resolveFire();
+ assert.deepEqual(hits,[['CT',5,false],['LA',5,false],['RL',2,false]]);
+ assert.equal(result[0].shots[0].damage,12);
+ assert.equal(result[0].shots[0].rolls.length,5);assert.equal(dice.length,0);
+});

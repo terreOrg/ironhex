@@ -398,3 +398,33 @@ test('AGoAC p.21 API: authoritative indirect declaration rejects hostile spotter
  assert.equal(shot.preview.mods.minimum,3);assert.equal(shot.preview.range,4);
  assert.equal(restored.spottingTargets().get(s.id),t.id);assert.equal(restored.unit(u.id).bins[0].shots,23);
 });
+
+test('AGoAC p.22 API: human defender owns boundary direction and restored replay rejects forged choices',()=>{
+ const g=new Game(),t=g.units[0],a=g.units[2];
+ Object.assign(t,{q:0,r:0,facing:0,prone:true,twist:1});
+ Object.assign(a,{q:-1,r:-1,facing:5});
+ g.phase='fire';g.activeTeam=null;g.queue=[];g.initiativeWinner=1;
+ const options=g.hitSideOptions(t,a);
+ assert.deepEqual(options,['left','rear']);
+ g.declarations=[{id:a.id,ammoSpent:true,shots:[{index:0,target:t.id,bin:null,aim:null,heatMode:false,
+  weapon:{name:'Medium Laser',rack:0,ammo:null,heat:3,damage:1,location:'CT'},
+  preview:{targetNumber:2,side:options[0],sideOptions:options,cover:false,underwaterCover:false}}]}];
+ const dice=[.5,.5,.4,.6];let draws=0;g.rng=()=>{draws++;return dice.shift()??.99;};
+ const original=t.rear.CT,front=t.armor.CT;
+ const effect=runTacticalOrder(g,{type:'next',version:1});
+ assert(effect.result.pending);assert.equal(draws,2);assert.deepEqual(effect.rolls,[]);
+ const saved=JSON.parse(JSON.stringify(g)),restored=new Game();
+ Object.assign(restored,saved);restored.rebuildMap();restored.rng=g.rng;
+ const state=publicSnapshot({game:saved}),p=state.pendingChoice;
+ assert.equal(state._resolutionReplay,undefined);assert.equal(p.kind,'hit-direction');
+ assert.equal(p.team,0);assert.equal(p.unitId,t.id);assert.equal(p.context.attackerId,a.id);
+ assert.deepEqual(p.options.map(o=>o.id),['left','rear']);
+ for(const choice of [{key:p.key,option:'front'},{key:p.key+'x',option:'rear'}])
+  assert.throws(()=>runTacticalOrder(restored,{type:'next',version:2,choice}),AuthError);
+ assert.throws(()=>runTacticalOrder(restored,{type:'hold',id:t.id,version:2}),AuthError);
+ assert.equal(draws,2);assert.equal(restored.unit(t.id).rear.CT,original);
+ const done=runTacticalOrder(restored,{type:'next',version:2,choice:{key:p.key,option:'rear'}});
+ assert(done.result.ok&&!done.result.pending);assert.equal(draws,4);
+ assert.equal(restored.phase,'physical');assert.equal(restored.pendingChoice,null);
+ assert.equal(restored.unit(t.id).rear.CT,original-1);assert.equal(restored.unit(t.id).armor.CT,front);
+});

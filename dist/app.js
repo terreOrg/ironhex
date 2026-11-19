@@ -367,8 +367,23 @@ function renderDeploymentEntry(u,panel){
  enter.onclick=()=>{const [q,r]=select.value.split(',').map(Number);void doMove({q,r});};
  panel.append(enter);
 }
+function renderHitDirectionChoice(panel,choice){
+ const title=document.createElement('div');title.className='controltitle';
+ title.textContent='ЗАЩИТНИК · СТОРОНА ПОПАДАНИЯ';
+ const info=document.createElement('p');info.className='hint';
+ info.textContent=(game.unit(choice.unitId)?.name||'Цель')+' · '+(game.unit(choice.context.attackerId)?.name||'Противник')+' · '+choice.context.weaponName+'. Выберите сторону до броска локации.';
+ panel.append(title,info);
+ const captions={front:'Передняя',left:'Левый борт',right:'Правый борт',rear:'Кормовая'};
+ for(const option of choice.options){
+  const button=document.createElement('button');button.type='button';button.dataset.resolutionOption=option.id;
+  button.textContent=captions[option.id];button.disabled=busy||remoteMode&&!remoteReady;
+  button.onclick=()=>advanceInteractivePhase({key:choice.key,option:option.id});
+  panel.append(button);
+ }
+}
 function renderResolutionChoice(panel,choice){
  panel.replaceChildren();
+ if(choice.kind==='hit-direction'){renderHitDirectionChoice(panel,choice);return;}
  const title=document.createElement('div');title.className='controltitle';
  const los=choice.kind==='los-path',impossible=choice.kind==='fire-impossible';
  const firing=choice.kind.startsWith('fire-'),damage=firing&&choice.kind.startsWith('fire-damage-'),heatAmmo=choice.kind==='heat-ammo-bin',recovered=choice.kind==='recovered-reactor';
