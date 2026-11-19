@@ -4653,9 +4653,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.13: an empty hex edge LOS is randomized once per attacker and round"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: surface hex LOS permits level ground but a higher adjacent ridge blocks reciprocally"
         }
       ],
-      "reviewNote": "Re-reviewed p.13; #180 integrates controller choice, round-stamped reciprocity and persistence for interactive attacks. Remaining: actual-attacks-only AI selection, direct noninteractive enforcement, random side for non-player-controlled targets, and consistent handoff to attack-direction rules (chapter 6 handles direction itself). Do not mark Verified yet. P.13 rechecked: AI now chooses an intended attack before requesting defender LOS and retains the nominated target across interactive resolution/save, rather than querying all possible targets; shared ammunition pool checked during planning. Direct human noninteractive bypass, random LOS for uncontrolled hexes and later direction handoff remain open; exact gates pending. Printed p.13 screenshot rechecked: canonical empty-hex targets now choose one random LOS side per attacker and round, persisted and reciprocal; user-facing defender choice for occupied targets unchanged. Direct occupied-target noninteractive enforcement and attack-direction handoff remain open. Exact checks pending."
+      "reviewNote": "Re-reviewed p.13; #180 integrates controller choice, round-stamped reciprocity and persistence for interactive attacks. Remaining: actual-attacks-only AI selection, direct noninteractive enforcement, random side for non-player-controlled targets, and consistent handoff to attack-direction rules (chapter 6 handles direction itself). Do not mark Verified yet. P.13 rechecked: AI now chooses an intended attack before requesting defender LOS and retains the nominated target across interactive resolution/save, rather than querying all possible targets; shared ammunition pool checked during planning. Direct human noninteractive bypass, random LOS for uncontrolled hexes and later direction handoff remain open; exact gates pending. Printed p.13 screenshot rechecked: canonical empty-hex targets now choose one random LOS side per attacker and round, persisted and reciprocal; user-facing defender choice for occupied targets unchanged. Direct occupied-target noninteractive enforcement and attack-direction handoff remain open. Exact checks pending. CI run 44597026278 caught a rejected mixed shot: equal-height ground adjacent to a bare hex was incorrectly treated as a barrier. AGoAC printed p.13 gives inclusive height tests for Mechs; bare-hex ground/surface uses strict endpoint comparison as a modeling convention to allow ordinary level-ground attacks, reciprocally. Mech endpoint logic unchanged; added flat/ridge/woods/water regression and assertion error details. Amended gates pending."
     },
     {
       "id": "agoac-076",
@@ -4933,9 +4937,13 @@
         {
           "file": "tests/api.mjs",
           "test": "API accepts canonical empty hex fire targets but rejects malformed coordinates and invalid primary"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: surface hex LOS permits level ground but a higher adjacent ridge blocks reciprocally"
         }
       ],
-      "reviewNote": "Printed pp.13,15,17: implement canonical empty-hex target IDs, validated occupied/friendly/off-map rejection, -4 immobility, normal multiple-target modifiers and ordering, ammunition/heat, zero unit damage, API and map-click UI. Ground/surface LOS endpoint is an implementation convention; terrain destruction beyond base rules is not added. Exact gates and UI regression pending; indirect declaration and remaining defender selection rules still open."
+      "reviewNote": "Printed pp.13,15,17: implement canonical empty-hex target IDs, validated occupied/friendly/off-map rejection, -4 immobility, normal multiple-target modifiers and ordering, ammunition/heat, zero unit damage, API and map-click UI. Ground/surface LOS endpoint is an implementation convention; terrain destruction beyond base rules is not added. Exact gates and UI regression pending; indirect declaration and remaining defender selection rules still open. CI run 44597026278 caught a rejected mixed shot: equal-height ground adjacent to a bare hex was incorrectly treated as a barrier. AGoAC printed p.13 gives inclusive height tests for Mechs; bare-hex ground/surface uses strict endpoint comparison as a modeling convention to allow ordinary level-ground attacks, reciprocally. Mech endpoint logic unchanged; added flat/ridge/woods/water regression and assertion error details. Amended gates pending."
     },
     {
       "id": "agoac-080",

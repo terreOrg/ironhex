@@ -1326,7 +1326,13 @@ export class Game extends Legacy{
   for(const p of path){
    const t=this.tile(p.q,p.r);if(!t)continue;
    const nearA=distance(a,p)===1,nearB=distance(b,p)===1;
-   const intervenes=level=>level>=Math.max(ah,bh)||nearA&&level>=ah||nearB&&level>=bh;
+   // AGoAC p.13 defines the inclusive height tests for BattleMechs.
+   // A bare hex is a ground/surface endpoint: terrain flush with that
+   // endpoint is not a wall, but higher adjacent terrain still blocks.
+   // Keep the original inclusive comparisons for both Mech endpoints.
+   const reachesA=level=>a.hexTarget?level>ah:level>=ah;
+   const reachesB=level=>b.hexTarget?level>bh:level>=bh;
+   const intervenes=level=>reachesA(level)&&reachesB(level)||nearA&&reachesA(level)||nearB&&reachesB(level);
    const terrainLevel=t.depth&&!subA?t.surface:t.height;
    if(intervenes(terrainLevel))blocked=true;
    if(!b.hexTarget&&nearB&&t.type!=='bridge'&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;

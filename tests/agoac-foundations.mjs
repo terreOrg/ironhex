@@ -4026,7 +4026,8 @@ test('AGoAC pp.13,15,17: empty hex attacks use immobility and mixed target modif
  assert.deepEqual(g.primaryTargetChoices(u.id,[{target:t.id},{target:hex}]),[t.id,hex]);
  g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,t.team];g.actingId=u.id;
  const ammo=u.bins[0].shots,heat=u.pendingHeat;
- assert(g.declareFire(u.id,[{index:0,target:t.id},{index:1,target:hex,bin:0}],t.id).ok);
+ const result=g.declareFire(u.id,[{index:0,target:t.id},{index:1,target:hex,bin:0}],t.id);
+ assert(result.ok,result.error);
  assert.equal(u.bins[0].shots,ammo-1);
  assert.equal(g.declarations[0].shots[1].preview.mods.secondary,1);
  assert.equal(g.declarations[0].shots[1].preview.mods.target,-4);
@@ -4053,4 +4054,26 @@ test('AGoAC p.13: an empty hex edge LOS is randomized once per attacker and roun
   g.round++;assert.equal(g.selectedLosPath(u,v),0);
   assert(g.prepareFireLos(u.id,[hex],[0,1]).losPrepared);assert.equal(draws,2);
  }
+});
+
+test('AGoAC p.13: surface hex LOS permits level ground but a higher adjacent ridge blocks reciprocally',()=>{
+ const g=fresh(),u=g.units[0],v=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,twist:0});
+ Object.assign(v,{q:4,r:-1,prone:false});
+ for(const [i,x] of g.units.entries())if(x!==u&&x!==v)Object.assign(x,{q:-3,r:i-2});
+ const hex=g.fireTarget('hex:4,0');assert(hex);
+ const check=blocked=>{
+  assert.equal(g.los(u,hex).blocked,blocked);
+  assert.equal(g.los(hex,u).blocked,blocked);
+ };
+ check(false);
+ const ridge=g.tile(3,0);ridge.height=1;ridge.surface=1;check(true);
+ ridge.height=0;ridge.surface=0;check(false);
+ ridge.type='woods';check(false);assert.equal(g.los(u,hex).woods,1);
+ ridge.type='plain';
+ Object.assign(g.tile(4,0),{type:'water',depth:1,height:-1,surface:0});check(false);
+ // A Mech-to-Mech endpoint retains the inclusive elevation threshold.
+ Object.assign(v,{q:4,r:0});ridge.height=2;ridge.surface=2;
+ assert.equal(g.los(u,v).blocked,true);assert.equal(g.los(v,u).blocked,true);
 });
