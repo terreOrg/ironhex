@@ -2,7 +2,7 @@ import {AuthError} from './auth.mjs';
 const fields={
   move:['id','q','r','mode','lateral','facing'],rotate:['id','delta','mode'],
   stand:['id','facing','minimum','mode'],drop:['id','mode'],hold:['id'],twist:['id','twist'],turret:['id','mount','facing'],
-  fire:['id','shots'],physical:['id','target','attack','limb'],
+  fire:['id','shots','primaryTarget'],physical:['id','target','attack','limb'],
   club:['id'],charge:['id','target','attack'],minimum:['id'],
   shutdown:['id'],dump:['id','bin'],flip:['id','enabled'],brace:['id','limb'],
   next:['choice'],weather:['night','gale','standingStill','evading','floatingCriticals']
@@ -39,7 +39,8 @@ export function validateTacticalOrder(b){
     twist:()=>int(b.twist,-2,2),
     turret:()=>int(b.mount,0,2)&&int(b.facing,0,5),
     fire:()=>Array.isArray(b.shots)&&b.shots.length<=32&&
-      b.shots.every(shot)&&new Set(b.shots.map(x=>x.index)).size===b.shots.length,
+      b.shots.every(shot)&&new Set(b.shots.map(x=>x.index)).size===b.shots.length&&
+      (b.primaryTarget===undefined||int(b.primaryTarget,0,3)&&b.shots.some(s=>s.target===b.primaryTarget)),
     physical:()=>int(b.target,0,3)&&
       ['kick','punch','push','club','hatchet'].includes(b.attack)&&
       ['LA','RA','LL','RL','both'].includes(b.limb),
@@ -106,7 +107,7 @@ export function runTacticalOrder(game,body){
       case 'hold':r=game.hold(id);break;
       case 'twist':r=game.twist(id,b.twist);break;
       case 'turret':r=game.setDirectionalTorsoMount(id,b.mount,b.facing);break;
-      case 'fire':r=game.declareFire(id,b.shots);break;
+      case 'fire':r=game.declareFire(id,b.shots,b.primaryTarget??null);break;
       case 'physical':r=game.declarePhysical(id,b.target,b.attack,b.limb);break;
       case 'club':r=game.takeClub(id);break;
       case 'charge':r=game.chargeWithChoices(id,b.target,b.attack,{humanTeams:[0]});break;

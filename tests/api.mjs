@@ -324,3 +324,10 @@ test('API preserves declared running mode on rotation and rejects a subsequent m
  assert(runTacticalOrder(g,{type:'stand',id:u.id,version:2,mode:'run',facing:4}).result.ok);
  assert.equal(u.facing,4);assert.equal(u.spent,3);assert.equal(u.moveMode,'run');
 });
+
+test('API validates optional primary fire target against declared shots',()=>{
+ const b={type:'fire',version:1,id:0,shots:[{index:0,target:2},{index:1,target:3}]};
+ assert.deepEqual(validateTacticalOrder({...b,primaryTarget:3}),{...b,primaryTarget:3});
+ for(const primaryTarget of [0,1,4,'3',null])assert.throws(()=>validateTacticalOrder({...b,primaryTarget}),AuthError);
+ assert.deepEqual(validateTacticalOrder(b),b);
+});
