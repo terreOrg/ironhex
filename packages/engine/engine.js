@@ -1363,15 +1363,25 @@ export class Game extends Legacy{
   const choice=(edgeChoice??this.selectedLosPath(a,b))||(b.hexTarget?1:a.hexTarget?-1:a.id<b.id?1:-1);
   return this.evaluateLos(a,b,underwaterWeapon,this.losHexPath(a,b,choice));
  }
+ // AGoAC pp.13,27 and official errata v8.01 p.4: the DFA's
+ // temporary base elevation is max(approach,target)+2, with standing height +2.
+ losLevel(u,tile=this.tile(u.q,u.r)){
+  if(u.hexTarget)return tile.depth?tile.surface:tile.height;
+  if(u.airborne&&u.charge?.type==='dfa'){
+   const pos=u.charge.targetPos,target=pos&&this.tile(pos.q,pos.r);
+   return Math.max(tile.height,target?.height??tile.height)+4;
+  }
+  return tile.height+(u.prone?1:2);
+ }
  evaluateLos(a,b,underwaterWeapon,path){
   const ta=this.tile(a.q,a.r),tb=this.tile(b.q,b.r);
-  const subA=a.hexTarget?false:underwaterWeapon===null?ta.depth>=(a.prone?1:2):underwaterWeapon;
-  const subB=!b.hexTarget&&(tb.depth>=(b.prone?1:2)||(subA&&tb.depth===1&&!b.prone));
+  const subA=a.hexTarget||a.airborne?false:underwaterWeapon===null?ta.depth>=(a.prone?1:2):underwaterWeapon;
+  const subB=!b.hexTarget&&!b.airborne&&(tb.depth>=(b.prone?1:2)||(subA&&tb.depth===1&&!b.prone));
   // AGoAC p.14: submerged endpoints have no weapon LOS; the BMM
   // underwater-combat extension must be explicitly selected.
   if(subA!==subB||(!this.tacticalOptions?.underwaterFire&&(subA||subB)))return {woods:0,blocked:true,cover:false};
-  const ah=a.hexTarget?(ta.depth?ta.surface:ta.height):ta.height+(a.prone?1:2),bh=b.hexTarget?(tb.depth?tb.surface:tb.height):tb.height+(b.prone?1:2);
-  let interveningWoods=0,blocked=false,cover=!b.hexTarget&&tb.depth===1&&!b.prone;
+  const ah=this.losLevel(a,ta),bh=this.losLevel(b,tb);
+  let interveningWoods=0,blocked=false,cover=!b.hexTarget&&!b.airborne&&tb.depth===1&&!b.prone;
   for(const p of path){
    const t=this.tile(p.q,p.r);if(!t)continue;
    const nearA=distance(a,p)===1,nearB=distance(b,p)===1;
@@ -1384,10 +1394,10 @@ export class Game extends Legacy{
    const intervenes=level=>reachesA(level)&&reachesB(level)||nearA&&reachesA(level)||nearB&&reachesB(level);
    const terrainLevel=t.depth&&!subA?t.surface:t.height;
    if(intervenes(terrainLevel))blocked=true;
-   if(!b.hexTarget&&nearB&&t.type!=='bridge'&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;
+   if(!b.hexTarget&&!b.airborne&&nearB&&t.type!=='bridge'&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;
    if((t.type==='woods'||t.type==='heavy')&&intervenes(t.height+2))interveningWoods+=t.type==='heavy'?2:1;
   }
-  const targetWoods=tb.type==='heavy'?2:tb.type==='woods'?1:0;
+  const targetWoods=b.airborne?0:tb.type==='heavy'?2:tb.type==='woods'?1:0;
   return {woods:interveningWoods+targetWoods,blocked:blocked||interveningWoods>=3,cover};
  }
  tmm(u){const d=Math.max(0,u.distanceMoved-(u.moveMode==='jump'?0:u.tmmReversalOffset??0));return (d>=25?6:d>=18?5:d>=10?4:d>=7?3:d>=5?2:d>=3?1:0)+(u.moveMode==='jump'?1:0);}
@@ -1399,7 +1409,7 @@ export class Game extends Legacy{
   if(this.isImmobile(t))return movement+(includeImmobile?-4:0);
   return movement+(t.skidded?2:0)+(this.tacticalOptions?.standingStill&&t.spent===0?-1:0)+(this.tacticalOptions?.evading&&t.moveMode==='evade'&&!t.prone?1:0);
  }
- preview(id,target,index,opts={}){const u=this.unit(id),t=this.fireTarget(target),w=u?.weapons[index];if(!u||!t||!w)return {legal:false,chance:0,targetNumber:99,reason:'Выберите цель'};if(u.deployed===false||t.deployed===false)return {legal:false,chance:0,targetNumber:99,reason:'Мех ещё не вышел на поле'};const quadProneBonus=quadProneFireBonus(u),range=distance(u,t),act=u.actuators[w.location],sub=this.tile(u.q,u.r).depth>=(u.prone||mechLegLocation(u,w.location)?1:2),waterline=!t.hexTarget&&this.tile(t.q,t.r).depth===1&&!t.prone,targetSub=!t.hexTarget&&this.tile(t.q,t.r).depth>=(t.prone?1:2),underwaterCover=sub&&waterline,directLos=this.los(u,t,sub),indirect=opts.spotter!=null,spotter=indirect&&Number.isInteger(opts.spotter)?this.unit(opts.spotter):null,spotterError=indirect?this.checkIndirectSpotter(u,t,w,opts.spotter):'',los=indirect&&!spotterError?this.los(spotter,t):directLos,ranges=sub?(UNDERWATER_RANGES[w.name]||[0,0,0]):w.ranges;let reason='';if(!this.mobile(u)||t.dead||u.team===t.team)reason='Мех не может стрелять';else if(u.charge)reason='Заявлен таран/DFA';else if(u.moveMode==='evade')reason='Уклонение запрещает атаки';else if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||w.locations?.some(l=>this.isBreached(u,l)))reason='Оружие уничтожено или затоплено';else if(u.sensorHits>=2)reason='Датчики уничтожены';else if(w.ammo===0)reason='Нет боезапаса';else if(!this.arc(u,t,w))reason='Вне сектора огня';else if(sub&&(!this.tacticalOptions?.underwaterFire||!UNDERWATER_RANGES[w.name]))reason='Оружие не допускает подводную стрельбу';else if(!range||range>ranges[2])reason='Вне дальности';else if(!sub&&mechLegLocation(u,w.location)&&this.los(t,u).cover)reason='Ноги скрыты собственным частичным укрытием';else if(indirect&&(spotterError||opts.aim||opts.heatMode||sub||targetSub||!directLos.blocked))reason=spotterError||'Непрямой огонь требует отсутствия прямой LOS и запрещает прицеливание/подводную стрельбу';else if(los.blocked)reason=indirect?'Корректировщик не видит цель':'Линия огня перекрыта';else if((sub!==targetSub&&!underwaterCover)||sub&&!UNDERWATER_RANGES[w.name])reason='Стрельба через поверхность воды запрещена';else if(u.prone&&u.config!=='Quad'&&(!u.structure.LA||!u.structure.RA))reason='Для стрельбы лёжа требуются обе сохранившиеся руки';else if(u.prone&&(
+ preview(id,target,index,opts={}){const u=this.unit(id),t=this.fireTarget(target),w=u?.weapons[index];if(!u||!t||!w)return {legal:false,chance:0,targetNumber:99,reason:'Выберите цель'};if(u.deployed===false||t.deployed===false)return {legal:false,chance:0,targetNumber:99,reason:'Мех ещё не вышел на поле'};const quadProneBonus=quadProneFireBonus(u),range=distance(u,t),act=u.actuators[w.location],sub=this.tile(u.q,u.r).depth>=(u.prone||mechLegLocation(u,w.location)?1:2),waterline=!t.hexTarget&&!t.airborne&&this.tile(t.q,t.r).depth===1&&!t.prone,targetSub=!t.hexTarget&&!t.airborne&&this.tile(t.q,t.r).depth>=(t.prone?1:2),underwaterCover=sub&&waterline,directLos=this.los(u,t,sub),indirect=opts.spotter!=null,spotter=indirect&&Number.isInteger(opts.spotter)?this.unit(opts.spotter):null,spotterError=indirect?this.checkIndirectSpotter(u,t,w,opts.spotter):'',los=indirect&&!spotterError?this.los(spotter,t):directLos,ranges=sub?(UNDERWATER_RANGES[w.name]||[0,0,0]):w.ranges;let reason='';if(!this.mobile(u)||t.dead||u.team===t.team)reason='Мех не может стрелять';else if(u.charge)reason='Заявлен таран/DFA';else if(u.moveMode==='evade')reason='Уклонение запрещает атаки';else if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||w.locations?.some(l=>this.isBreached(u,l)))reason='Оружие уничтожено или затоплено';else if(u.sensorHits>=2)reason='Датчики уничтожены';else if(w.ammo===0)reason='Нет боезапаса';else if(!this.arc(u,t,w))reason='Вне сектора огня';else if(sub&&(!this.tacticalOptions?.underwaterFire||!UNDERWATER_RANGES[w.name]))reason='Оружие не допускает подводную стрельбу';else if(!range||range>ranges[2])reason='Вне дальности';else if(!sub&&mechLegLocation(u,w.location)&&this.los(t,u).cover)reason='Ноги скрыты собственным частичным укрытием';else if(indirect&&(spotterError||opts.aim||opts.heatMode||sub||targetSub||!directLos.blocked))reason=spotterError||'Непрямой огонь требует отсутствия прямой LOS и запрещает прицеливание/подводную стрельбу';else if(los.blocked)reason=indirect?'Корректировщик не видит цель':'Линия огня перекрыта';else if((sub!==targetSub&&!underwaterCover)||sub&&!UNDERWATER_RANGES[w.name])reason='Стрельба через поверхность воды запрещена';else if(u.prone&&u.config!=='Quad'&&(!u.structure.LA||!u.structure.RA))reason='Для стрельбы лёжа требуются обе сохранившиеся руки';else if(u.prone&&(
   u.config==='Quad'
    ?(!quadProneBonus&&(mechLegLocation(u,w.location)||
       w.locations?.some(loc=>mechLegLocation(u,loc))))
@@ -2401,7 +2411,13 @@ export class Game extends Legacy{
  }
  declareCharge(id,target,type='charge',moveMode='run'){const u=this.unit(id),t=this.unit(target);if(u?.deployed===false||t?.deployed===false)return fail('Мех ещё не вышел на поле');if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone||!t||t.team===u.team||t.dead||t.charge||t.airborne||(type==='charge'&&t.prone)||!(t.moved||(t.chargeTargetAtInitiative??(t.shutdown||t.unconscious))))return fail('Цель должна завершить движение; для тарана цель должна стоять');if(this.displacementTargetReserved(target))return fail('Эта цель уже выбрана для тарана/DFA');if(!['charge','dfa'].includes(type)||type==='charge'&&!['walk','run'].includes(moveMode))return fail('Недопустимый тип тарана или режим движения');const mode=type==='dfa'?'jump':moveMode;if(u.spent||u.moveMode!=='stand')return fail('Заявите таран/DFA до обычного движения');const originTile=this.tile(u.q,u.r),targetTile=this.tile(t.q,t.r);
  if(type==='dfa'&&(originTile.depth>=2||targetTile.depth>=(t.prone?1:2)))return fail('DFA не может начинаться или заканчиваться полностью под водой');
- let options=this.reachable(u,mode).filter(p=>distance(p,t)===1);if(type==='dfa'){if(!this.mp(u,'jump')||distance(u,t)>this.mp(u,'jump')||this.tile(t.q,t.r).height+(t.prone?0:2)>this.tile(u.q,u.r).height+this.mp(u,'jump'))return fail('Не хватает высоты или дальности прыжка');}else options=options.filter(p=>{
+ let options=this.reachable(u,mode).filter(p=>distance(p,t)===1);if(type==='dfa'){
+  const max=this.mp(u,'jump'),range=distance(u,t);
+  if(!max||range>max||targetTile.height+(t.prone?0:2)>originTile.height+max||u.proneAtStart||u.dumping.length||u.dumpNext.length||!this.jumpShortestReach(u,max).has(key(t.q,t.r)))return fail('Не хватает высоты или дальности прыжка');
+  // Temporary flight is not a normal landing: occupied approach hexes are legal.
+  const reachable=this.jumpShortestReach(u,max);
+  options=this.tiles.filter(p=>distance(p,t)===1&&distance(u,p)===range-1&&reachable.has(key(p.q,p.r))).map(p=>({q:p.q,r:p.r,cost:range-1,path:[]}));
+ }else options=options.filter(p=>{
   const approach=this.tile(p.q,p.r),dh=Math.abs(approach.height-targetTile.height);
   const submergedApproach=approach.depth>=2,submergedTarget=targetTile.depth>=2;
   if(dh>1||mode==='run'&&targetTile.depth||submergedTarget&&!submergedApproach||submergedApproach&&!submergedTarget&&targetTile.depth!==1)return false;
@@ -2413,7 +2429,14 @@ export class Game extends Legacy{
  }
  options.sort((a,b)=>a.cost-b.cost);const candidates=type==='dfa'?options.filter(o=>o.cost===options[0]?.cost):[];
  const chosen=candidates.length>1?this.chooseResolutionOption('dfa-approach',u,candidates.map(o=>({id:key(o.q,o.r),q:o.q,r:o.r})),key(candidates[0].q,candidates[0].r),{targetId:t.id}):null;
- const p=chosen===null?options[0]:candidates.find(o=>key(o.q,o.r)===chosen);if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},targetStart={q:t.q,r:t.r},r=this.move(id,p.q,p.r,mode);if(!r.ok)return r;
+ const p=chosen===null?options[0]:candidates.find(o=>key(o.q,o.r)===chosen);if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},targetStart={q:t.q,r:t.r};
+ // Defer all actual landing effects until the Physical Phase.
+ let r;
+ if(type==='dfa'){
+  this.phaseRolls=[];this.actingId=id;u.q=p.q;u.r=p.r;u.moveMode='jump';u.distanceMoved=distance(start,p);u.spent=distance(start,t);u.pendingHeat+=Math.max(3,u.spent);
+  r={ok:true,from:start,to:{q:p.q,r:p.r},path:[{q:p.q,r:p.r}],mode:'jump',rolls:[]};
+ }else r=this.move(id,p.q,p.r,mode);
+ if(!r.ok)return r;
  // An involuntary stop during the approach cannot create a declared
  // physical attack from the planned (but never reached) hex.
  if(u.dead||u.prone||this.isImmobile(u)||u.moveEndedByLegLoss||u.skidded||
@@ -2421,7 +2444,7 @@ export class Game extends Legacy{
   this.note(u.name+': подход прерван; физическая атака не заявлена.');
   this.hold(id);return {...r,ended:true,chargeInterrupted:true,rolls:[...this.phaseRolls]};
  }
- const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r},startPos:start};if(type==='dfa'){u.pendingHeat-=Math.max(3,u.spent);u.spent=distance(start,t);u.pendingHeat+=Math.max(3,u.spent);u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
+ const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r},startPos:start};if(type==='dfa'){u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
  // AGoAC p.27: a missed DFA allows any legal neighboring hex,
  // including an occupied one. A successful DFA searches by angular
  // distance from the original displacement direction.
@@ -2440,6 +2463,7 @@ export class Game extends Legacy{
   return [];
  }
  resolveDFALanding(u,t,dir,hit,old,fallTN=null){
+  if(u.dead)return;
   const options=t.dead?[]:this.dfaDisplacementOptions(t,dir,hit);
   if(!t.dead&&!options.length){
    if(!hit){this.destroyMech(u);return;}
@@ -2451,7 +2475,7 @@ export class Game extends Legacy{
   });
   const chosen=directions.length?Number(this.chooseResolutionOption('dfa',t,directions,
    directions[0].id,{hit,attackerId:u.id})):null;
-  u.q=old.q;u.r=old.r;
+  u.q=old.q;u.r=old.r;u.distanceMoved=u.charge?.startPos?distance(u.charge.startPos,u):u.distanceMoved;
   if(!t.dead&&chosen!==null&&!this.displace(t,chosen))this.destroyMech(t);
   if(hit){
    if(!u.dead)this.psr(u,4,'Посадка DFA');

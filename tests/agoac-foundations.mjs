@@ -4570,3 +4570,34 @@ test('AGoAC p.26: underwater charge halves both rounded damage amounts and cance
   if(variant!=='underwater'){assert.deepEqual([u.q,u.r],[0,0]);assert.equal(g.resolution[0].shots[0].roll,null);}
  }
 });
+
+
+test('AGoAC p.27 errata: airborne DFA LOS is height five above the level-one target and excludes approach terrain',()=>{
+ const {g,u,t}=physicalBlockFixture(),observer=g.units[3];
+ Object.assign(u,{q:0,r:0,airborne:true,charge:{type:'dfa',target:t.id,targetPos:{q:1,r:0}}});
+ Object.assign(t,{q:1,r:0});Object.assign(g.tile(1,0),{height:1,surface:1});
+ assert.equal(g.losLevel(u),5);
+ Object.assign(g.tile(0,0),{type:'water',height:-2,depth:2,surface:0});
+ Object.assign(observer,{q:-2,r:0,facing:0});
+ assert.equal(g.losLevel(u),5);assert.equal(g.los(observer,u).blocked,false);assert.equal(g.los(observer,u).cover,false);
+ Object.assign(g.tile(0,0),{type:'heavy',height:3,depth:0,surface:3});
+ assert.equal(g.losLevel(u),7);assert.equal(g.los(observer,u).woods,0);
+});
+test('AGoAC pp.26–27: DFA approach allows an occupied hex and defers landing while counting only traveled hexes',()=>{
+ const g=fresh(),[u,ally,t,other]=g.units;
+ for(const x of g.tiles)Object.assign(x,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:-2,r:0,facing:0,jump:5,jumpLost:0,prone:false,moveStart:{q:-2,r:0},pendingHeat:0,spent:0,moveMode:'stand',distanceMoved:0});
+ Object.assign(t,{q:1,r:0,moved:true,prone:false});
+ Object.assign(ally,{q:0,r:0});other.dead=true;
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ let draws=0;g.rng=()=>{draws++;return .5;};
+ const r=g.declareCharge(u.id,t.id,'dfa');assert(r.ok,r.error||r.reason);
+ assert.deepEqual([u.q,u.r,u.facing],[0,0,0]);
+ assert(u.airborne);assert.equal(u.distanceMoved,2);assert.equal(u.spent,3);assert.equal(u.pendingHeat,3);
+ assert.equal(g.tmm(u),1);assert.equal(draws,0);assert(!g.occupied(0,0,ally.id));
+});
+test('AGoAC p.27 errata: destroyed DFA attacker cannot displace its target',()=>{
+ const {g,u,t}=physicalBlockFixture();u.dead=true;u.airborne=false;
+ const before=[t.q,t.r];g.resolveDFALanding(u,t,0,true,{q:t.q,r:t.r});
+ assert.deepEqual([t.q,t.r],before);assert.deepEqual(t.psrs,[]);
+});

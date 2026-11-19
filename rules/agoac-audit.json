@@ -375,7 +375,7 @@
         29
       ],
       "status": "tested_subset",
-      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit."
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit. #204 merged; 450/450 CI, 39/39 E2E, smoke planner succeeded. Next DFA sub-block corrects airborne LOS/stacking and movement timing; #205 still pending; final special and mixed physical resolution audit remains."
     },
     {
       "id": "agoac-damage",
@@ -6287,9 +6287,21 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.25: fully submerged DFA is illegal before movement and charge requires an adjacent legal ground entry"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.27 errata: airborne DFA LOS is height five above the level-one target and excludes approach terrain"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.26–27: DFA approach allows an occupied hex and defers landing while counting only traveled hexes"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.27 errata: destroyed DFA attacker cannot displace its target"
         }
       ],
-      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review."
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed p.27 plus official CAT3500D errata v8.01 p.4 (https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf) corrects diagram LOS 4 to 5. Temporary flight uses raised base + standing height, permits occupied approach, defers landing terrain checks and counts only traveled hexes for fire-phase TMM. Successful DFA cannot displace if attacker destroyed. Target destruction, pilot unconsciousness and landing terrain checks remain to be completed; no verified promotion."
     },
     {
       "id": "agoac-098",
