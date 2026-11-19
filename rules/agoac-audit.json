@@ -258,7 +258,8 @@
         13,
         21
       ],
-      "status": "not_audited"
+      "status": "tested_subset",
+      "reviewNote": "Initial production inventory across all ten provisional groups. Existing tests reused; missing indirect declaration and primary target constraints identified. Full original-source reconciliation and test adequacy review remain."
     },
     {
       "id": "agoac-hit-location",
@@ -4603,6 +4604,227 @@
         ],
         "review": "Prior visual source inventory p.12; terrain/depth cost and elevation combination, successive water entry PSRs, no duplicate on rotation/hold, minimum movement exception and immersion integration covered."
       }
+    },
+    {
+      "id": "agoac-075",
+      "topicId": "agoac-combat",
+      "pages": [
+        13
+      ],
+      "statement": "LOS endpoints, adjacency, mutual visibility, exact hex geometry and controller-selected ambiguous paths.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: movement and LOS cross joined mapsheets without artificial border costs"
+        }
+      ],
+      "reviewNote": "los uses single rounded path; review ambiguous edge selection; joined-map LOS exists; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-076",
+      "topicId": "agoac-combat",
+      "pages": [
+        13,
+        14
+      ],
+      "statement": "Discrete intervening elevation thresholds, standing/prone height, intervening woods and target terrain distinction.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.4: three intervening light woods or either light-heavy order block LOS"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: discrete LOS elevation thresholds and target woods"
+        }
+      ],
+      "reviewNote": "los discrete thresholds and target woods correction in #174; full source review pending; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-077",
+      "topicId": "agoac-combat",
+      "pages": [
+        14,
+        17,
+        19
+      ],
+      "statement": "Water visibility, intervening Mechs and partial cover.",
+      "status": "not_audited",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,19: immobile units separated by water cannot exchange weapon fire"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,19: permanently submerged prone targets and depth-one leg weapons cannot fire across the water surface"
+        }
+      ],
+      "reviewNote": "los and hit implement water and cover; verify height and cover rules; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-078",
+      "topicId": "agoac-combat",
+      "pages": [
+        14,
+        15
+      ],
+      "statement": "Firing arcs, torso twist, rear weapons and arm reversal.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.5,15: rear-mounted weapon is identified in inventory and critical slots"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,19–21: permanently prone fixed-facing Mechs cannot use an out-of-arc weapon"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.15: split arm-torso weapon prevents arm reversal and reversed arms cannot twist"
+        }
+      ],
+      "reviewNote": "arc, twist, flipArms and rear/split weapons exist; enumerate exact sector boundaries; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-079",
+      "topicId": "agoac-combat",
+      "pages": [
+        15
+      ],
+      "statement": "Attack declarations, legal targets and orientation commitments.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: undeployed mechs cannot be targets or phantom displacement occupants"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.6: weapon declarations and facing commitments cannot change after selection"
+        }
+      ],
+      "reviewNote": "declareFire, canAct and selection commitments exist; legal targets review pending; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-080",
+      "topicId": "agoac-combat",
+      "pages": [
+        15,
+        16,
+        17,
+        18
+      ],
+      "statement": "Gunnery, range and movement, terrain, heat and damage modifiers.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: base pilot defaults and skill-dependent attack targets"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.33: both sensor criticals affect weapons only and the second prevents fire"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.28,32–33: missing and damaged arm actuators affect punches but only damage affects weapon fire"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
+        }
+      ],
+      "reviewNote": "preview sums gunnery, movement, range, minimum, terrain, heat, sensor, arm and posture; verify complete tables; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-081",
+      "topicId": "agoac-combat",
+      "pages": [
+        17,
+        18
+      ],
+      "statement": "Primary and secondary target rules and immobility.",
+      "status": "known_missing",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aimed head shots"
+        }
+      ],
+      "reviewNote": "declareFire chooses first assignment as primary; front-arc primary selection constraint not enforced; immobile modifier present; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-082",
+      "topicId": "agoac-combat",
+      "pages": [
+        19,
+        20
+      ],
+      "statement": "Water and prone weapon attacks.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,19: permanently prone bipeds may prevent a draw with legal torso weapons but not leg weapons or a destroyed arm"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,19: permanently submerged prone targets and depth-one leg weapons cannot fire across the water surface"
+        }
+      ],
+      "reviewNote": "preview checks submerged ranges, waterline and prone limb restrictions; setBrace exists; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-083",
+      "topicId": "agoac-combat",
+      "pages": [
+        21
+      ],
+      "statement": "Specialized attacks including aimed and indirect fire.",
+      "status": "known_missing",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,17,21: limb-loss immobility applies minus four and allows aimed head shots"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,21: blocked LRM needs another possible spotter and SRM cannot fire indirectly"
+        }
+      ],
+      "reviewNote": "preview handles aimed shot; direct declareFire passes only secondary and aim to preview, no actual indirect fire declaration path; candidate regression references, not final verification."
+    },
+    {
+      "id": "agoac-084",
+      "topicId": "agoac-combat",
+      "pages": [
+        21
+      ],
+      "statement": "Attack rolls and ammunition expenditure.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,21,30: every weapon attack rolls and spends ammo before damage, even a destroyed shooter"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.21,30: resolve each target and each missile packet completely in declared order"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.21: attack and damage order remain grouped by target"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6–7: fire resolution restarts with initiative loser even after no-fire declarations"
+        }
+      ],
+      "reviewNote": "rollDeclaredFire, spendDeclaredAmmo, fireAmounts, resolveRolledFire and ordering implemented; candidate regression references, not final verification."
     }
   ]
 }
