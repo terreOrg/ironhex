@@ -4754,9 +4754,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.13,17: both physically adjacent terrain cells affect elevation and partial cover"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.17: bridge decks never grant partial cover to either endpoint"
         }
       ],
-      "reviewNote": "Re-reviewed pp.13–14,17,19: intervening Mechs do not obstruct, standing terrain/depth-one cover and leg mount restriction implemented. Base fully submerged LOS and water terrain versus expanded BMM behavior are not separated. Bridge cannot provide cover; verify this exception. Known missing."
+      "reviewNote": "Source pp.14,17,19 rechecked: intervening Mechs ignored; standing terrain/depth-one cover and leg restriction implemented. Bridge exception corrected in this PR; new regression pending. Basic versus expanded submerged LOS and water firing still open."
     },
     {
       "id": "agoac-078",
@@ -4766,7 +4770,7 @@
         15
       ],
       "statement": "Firing arcs, torso twist, rear weapons and arm reversal.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4795,9 +4799,43 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.15: arm reversal eligibility comes from the original critical layout even after arm loss"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.14–17: facing-based attack direction persists when torso is twisted"
         }
       ],
-      "reviewNote": "Direct visual recheck printed pp.14–15: original critical layout is retained after destruction (destroyLocation marks crit and structure, not slots); eligible surviving arm can reverse, fitted actuators do not become absent through damage; the #181 sector and reversal matrix passed exact gates. Additional original-layout/arm-loss regression in this PR is pending. Promote only after this regression and exact gates pass."
+      "reviewNote": "Visual review CAT3500D (2018) pp.14–15: forward/side/rear arcs, torso twist by one hexside, leg weapons aligned with feet, unchanged prone arcs, original actuator layout and split-weapon reversals, surviving arm, mutual exclusivity and end-turn reset. Seven named tests passed, including original-layout and rotated sector regression in #182 exact CI 396/396; tested/merged tree matches. Attack-direction distinction additionally tested in this PR. No certification of adjacent rules (cover, actual weapon declarations, or later hit-location table).",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "a946575720232796afe1de0464644c6e3c727626",
+        "testedTree": "75da8e8d3b0627d7fdc84fcca6ecf03b1afb5e91",
+        "mergedSha": "e98ce261b63f5a7860988bf71cd0db5a8f7e58c2",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44585036449,
+            "jobId": 135775566992,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44585036532,
+            "jobId": 135775760357,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44585036403,
+            "jobId": 135775567321,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Visual review CAT3500D (2018) pp.14–15: forward/side/rear arcs, torso twist by one hexside, leg weapons aligned with feet, unchanged prone arcs, original actuator layout and split-weapon reversals, surviving arm, mutual exclusivity and end-turn reset. Seven named tests passed, including original-layout and rotated sector regression in #182 exact CI 396/396; tested/merged tree matches. Attack-direction distinction additionally tested in this PR. No certification of adjacent rules (cover, actual weapon declarations, or later hit-location table)."
+      }
     },
     {
       "id": "agoac-079",
@@ -4889,16 +4927,24 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.19: immobilized movement remains cumulative without optional mobile-only TO bonuses"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.17: bridge decks never grant partial cover to either endpoint"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,17,19: zero MP does not imply immobility and true immobilizing states stack with movement"
         }
       ],
-      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. Remaining direct terrain/water, specialized modifiers and final full table audit. Regression from CI 44584333685: prevent optional TO mobile-only standing-still/evading bonuses on immobile targets, while preserving cumulative base movement and immobility. Original AGoAC p.19 table and p.17 multiple-target paragraph rechecked visually. Exact amended gates pending."
+      "reviewNote": "Printed pp.16–20: #182 green exact CI/E2E/selective Smoke, cumulative target movement, head aim replacement and dual arcs fixed. Bridge cover exception corrected in current patch. Terrain/water profile, indirect modifiers and full table still open."
     },
     {
       "id": "agoac-081",
       "topicId": "agoac-combat",
       "pages": [
         17,
-        18
+        19
       ],
       "statement": "Primary and secondary target rules and immobility.",
       "status": "tested_case",
@@ -4930,9 +4976,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.19: immobilized movement remains cumulative without optional mobile-only TO bonuses"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,17,19: zero MP does not imply immobility and true immobilizing states stack with movement"
         }
       ],
-      "reviewNote": "Visual recheck CAT3500D printed pp.16–20: cumulative movement/immobility from p.19 and dual forward sectors from p.17 were incorrect. Implemented both, preserving only the immobility replacement for head aim. Exact CI pending. One primary target across both sectors now enforced by the existing primary designation; final audit of all target eligibility and edge cases after green gates. Regression from CI 44584333685: prevent optional TO mobile-only standing-still/evading bonuses on immobile targets, while preserving cumulative base movement and immobility. Original AGoAC p.19 table and p.17 multiple-target paragraph rechecked visually. Exact amended gates pending."
+      "reviewNote": "Printed pp.17,19 rechecked: #182 verified multiple forward sectors, primary designation, secondary penalties, cumulative movement/immobility (396/396 tests). Added explicit zero-MP vs truly immobilized states regression. Unoccupied hex immobility depends on empty-hex declaration (079); do not certify that missing branch. Final certification after exact gates and remaining target eligibility review."
     },
     {
       "id": "agoac-082",

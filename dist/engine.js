@@ -1288,7 +1288,7 @@ export class Game extends Legacy{
    const intervenes=level=>level>=Math.max(ah,bh)||nearA&&level>=ah||nearB&&level>=bh;
    const terrainLevel=t.depth&&!subA?t.surface:t.height;
    if(intervenes(terrainLevel))blocked=true;
-   if(nearB&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;
+   if(nearB&&t.type!=='bridge'&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;
    if((t.type==='woods'||t.type==='heavy')&&intervenes(t.height+2))interveningWoods+=t.type==='heavy'?2:1;
   }
   const targetWoods=tb.type==='heavy'?2:tb.type==='woods'?1:0;
