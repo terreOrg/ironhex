@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment.",
   "currentTopicId": "agoac-physical",
   "topics": [
     {
@@ -374,7 +374,8 @@
         24,
         29
       ],
-      "status": "not_audited"
+      "status": "tested_subset",
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment."
     },
     {
       "id": "agoac-damage",
@@ -6033,6 +6034,187 @@
         },
         "review": "Printed p.24 Damage Resolution, cross-referenced pp.6,30,40: all weapon to-hit rolls precede damage; declared attacks survive same-phase shooter destruction, accumulated damage is applied before phase-end PSRs and entry into Physical phase. Actual damage 18 versus 20 verifies the trigger and phase reset. Detailed PSR and critical allocation algorithms remain in their own chapters. Exact #200 head CI 434/434, Browser E2E 39/39, scope-planner smoke passed; full smoke already passed on #199, with no later application changes. Identical tested/merged tree and main Sonar success."
       }
+    },
+    {
+      "id": "agoac-091",
+      "topicId": "agoac-physical",
+      "pages": [
+        24,
+        25
+      ],
+      "statement": "General physical eligibility, adjacency, one attack type per unit and weapon-phase effects; two punches exception.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6–7: two ordinary punches have independent roll and damage order"
+        }
+      ],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-092",
+      "topicId": "agoac-physical",
+      "pages": [
+        24,
+        25
+      ],
+      "statement": "Piloting-based TN, physical type and standard modifiers; exclude heat, sensors and PSR-only modifiers; impossible ordinary attack cancellation.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.24–25: physical TN uses piloting and movement not heat sensors or PSR-only gyro damage"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.25: cancelling impossible kick avoids missed-kick PSR and reuses no dice"
+        }
+      ],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-093",
+      "topicId": "agoac-physical",
+      "pages": [
+        25
+      ],
+      "statement": "Different-level table; prone target restrictions and hit-location table override.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.25: standing and prone elevation matrix selects legal physical attacks and hit tables"
+        }
+      ],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-094",
+      "topicId": "agoac-physical",
+      "pages": [
+        25
+      ],
+      "statement": "Ordinary physical attacks in water: submerged eligibility and damage; depth-one partial cover excludes kicks.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.25: standing depth-one biped cover excludes kicks and absorbs covered club hits"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.25: fully submerged ordinary attacks use half damage and depth-one exceptions"
+        }
+      ],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-095",
+      "topicId": "agoac-physical",
+      "pages": [
+        25,
+        26
+      ],
+      "statement": "Charge: movement declaration, legal approach, comparative modifier, normal hit packets, water, miss side and PSRs.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-096",
+      "topicId": "agoac-physical",
+      "pages": [
+        26
+      ],
+      "statement": "Club sources, pickup, disappearance, eligibility, modifiers and attack resolution.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-097",
+      "topicId": "agoac-physical",
+      "pages": [
+        26,
+        27,
+        28
+      ],
+      "statement": "DFA declaration, airborne limits, comparative TN, resolution, damage, displacement and landing.",
+      "status": "not_audited",
+      "evidence": [],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-098",
+      "topicId": "agoac-physical",
+      "pages": [
+        28
+      ],
+      "statement": "Kick arc, leg eligibility, attack table, damage and hit/miss PSRs.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.28,32–34: all biped kick actuator penalties accumulate across both legs"
+        }
+      ],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-099",
+      "topicId": "agoac-physical",
+      "pages": [
+        28
+      ],
+      "statement": "Arm-mounted physical weapon/hatchet arc, eligibility, optional location tables and damage.",
+      "status": "known_missing",
+      "evidence": [],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-100",
+      "topicId": "agoac-physical",
+      "pages": [
+        28
+      ],
+      "statement": "Punch arc, independent arms and different targets, damage and actuator restrictions.",
+      "status": "known_missing",
+      "evidence": [],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-101",
+      "topicId": "agoac-physical",
+      "pages": [
+        29
+      ],
+      "statement": "Push arc, eligibility, opposite pushes, displacement and PSR.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.29,42: opposite pushes resolve both rolls before either displacement"
+        }
+      ],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+    },
+    {
+      "id": "agoac-102",
+      "topicId": "agoac-physical",
+      "pages": [
+        24,
+        29
+      ],
+      "statement": "Initiative/displacement conflicts, physical hit direction, roll and damage resolution order, phase-end PSRs.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,29–30: ordinary physical attacks all roll before damage, including a destroyed attacker"
+        }
+      ],
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
     }
   ]
 }

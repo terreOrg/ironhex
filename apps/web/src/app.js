@@ -384,6 +384,11 @@ function renderHitDirectionChoice(panel,choice){
 function renderResolutionChoice(panel,choice){
  panel.replaceChildren();
  if(choice.kind==='hit-direction'){renderHitDirectionChoice(panel,choice);return;}
+ if(choice.kind==='physical-impossible'){
+  const title=document.createElement('div');title.className='controltitle';title.textContent='НЕВОЗМОЖНАЯ ФИЗИЧЕСКАЯ АТАКА';
+  const info=document.createElement('p');info.className='hint';info.textContent=(game.unit(choice.unitId)?.name||'Мех')+' · TN '+choice.context.targetNumber+' · '+(game.unit(choice.context.targetId)?.name||'Цель')+'. Отмена исключает последствия промаха.';panel.append(title,info);
+  for(const option of choice.options){const b=document.createElement('button');b.type='button';b.dataset.resolutionOption=option.id;b.textContent=option.id==='cancel'?'Отменить атаку':'Атаковать (автоматический промах)';b.disabled=busy||remoteMode&&!remoteReady;b.onclick=()=>advanceInteractivePhase({key:choice.key,option:option.id});panel.append(b);}return;
+ }
  const title=document.createElement('div');title.className='controltitle';
  const los=choice.kind==='los-path',impossible=choice.kind==='fire-impossible';
  const firing=choice.kind.startsWith('fire-'),damage=firing&&choice.kind.startsWith('fire-damage-'),heatAmmo=choice.kind==='heat-ammo-bin',recovered=choice.kind==='recovered-reactor';
