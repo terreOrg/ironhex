@@ -962,7 +962,7 @@ test('Commander launches an interactive 3D operation from the mission briefing',
       });
       await page.locator('#hub-campaigns-button').click();
       await setMechToggle(page.locator('#op-mech-list mech-toggle[name=mechId]'),true);
-      assert.equal(await page.locator('#op-create-form mech-toggle[name=interactive]').isChecked(),true);
+      assert.equal(await page.locator('#op-create-form mech-toggle[name=interactive]').evaluate(el=>el.checked),true);
       await page.locator('#op-create-form select[name=deploymentMode]').selectOption('standard');
       await page.locator('#op-create').click();
       await page.getByRole('button',{name:'НАЧАТЬ ОПЕРАЦИЮ'}).click();
@@ -1200,7 +1200,7 @@ test('AGoAC p.7: hotseat round-limit victory terms require fresh approval by bot
   await setMechToggle(page.locator('#setup-victory-green'),true);assert(await page.locator('#confirmreset').isDisabled());
   await setMechToggle(page.locator('#setup-victory-red'),true);assert(await page.locator('#confirmreset').isEnabled());
   await page.locator('#setup-round-limit').fill('2');await page.locator('#setup-round-limit').blur();
-  assert(await page.locator('#confirmreset').isDisabled());assert(!(await page.locator('#setup-victory-green').isChecked()));assert(!(await page.locator('#setup-victory-red').isChecked()));
+  assert(await page.locator('#confirmreset').isDisabled());assert(!(await page.locator('#setup-victory-green').evaluate(el=>el.checked)));assert(!(await page.locator('#setup-victory-red').evaluate(el=>el.checked)));
   await setMechToggle(page.locator('#setup-victory-green'),true);await setMechToggle(page.locator('#setup-victory-red'),true);
   await page.locator('#confirmreset').click();await page.locator('#modal').waitFor({state:'hidden'});
   assert.match(await page.locator('#phase').textContent(),/ИНИЦИАТИВА/);
