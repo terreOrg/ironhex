@@ -1076,8 +1076,9 @@ test('BMM pp.26,28,35: standing Quad water cover protects legs from non-kick phy
   const dice=[.99,.99,(scenario.face-.5)/6];g.rng=()=>dice.shift()??.99;
   const shot=g.resolvePhysical()[0].shots[0];
   assert.equal(shot.hit,true);
-  assert.equal(shot.damage,scenario.blocked?0:p.damage);
-  assert.equal(t.armor[location],armor-(scenario.blocked?0:p.damage));
+  const actualDamage=scenario.blocked?0:g.isSubmergedLocation(t,location)?Math.floor(p.damage/2):p.damage;
+  assert.equal(shot.damage,actualDamage);
+  assert.equal(t.armor[location],armor-actualDamage);
  }
 });
 

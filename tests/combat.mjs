@@ -738,7 +738,7 @@ test('Fire from split torso-arm weapon occupies both mounts for later physical a
  assert.equal(g.physicalPreview(0,2,'punch','RA').legal,false);
 });
 
-test('Underwater punches, kicks and hatchet hits deal half damage rounded down (BMM pp.35,65)',()=>{
+test('Underwater punches, kicks and hatchets keep nominal preview damage until location-specific resolution (BMM pp.35,65)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
   Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
@@ -754,12 +754,12 @@ test('Underwater punches, kicks and hatchet hits deal half damage rounded down (
  const normalKick=normal.physicalPreview(0,2,'kick','RL');
  assert.equal(underwaterPunch.legal,true,underwaterPunch.reason);
  assert.equal(underwaterKick.legal,true,underwaterKick.reason);
- assert.equal(underwaterPunch.damage,Math.floor(normalPunch.damage/2));
- assert.equal(underwaterKick.damage,Math.floor(normalKick.damage/2));
+ assert.equal(underwaterPunch.damage,normalPunch.damage);
+ assert.equal(underwaterKick.damage,normalKick.damage);
  u.hatchets=[{location:'RA',slots:1}];
  u.slots.RA[7]='hatchet';const axe=g.physicalPreview(0,2,'hatchet','RA');
  assert.equal(axe.legal,true,axe.reason);
- assert.equal(axe.damage,Math.floor(Math.ceil(u.tonnage/5)/2));
+ assert.equal(axe.damage,Math.ceil(u.tonnage/5));
 });
 test('A depth-1 standing mech can only kick a fully submerged adjacent target (BMM p.35)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
