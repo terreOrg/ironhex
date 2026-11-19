@@ -256,7 +256,7 @@ test('Heat reduces walk and derived run',()=>{const g=game(),u=g.units[0];u.heat
 
 
 test('A fully submerged mech can fire at a depth-1 target, but only leg hits count (BMM p.65)',()=>{
- const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+ const g=game(),u=g.units[0],t=g.units[2];g.tacticalOptions.underwaterFire=true;for(const tile of g.tiles)
   Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
  Object.assign(g.tile(0,0),{type:'water',depth:2,height:-2});
@@ -273,7 +273,7 @@ test('A fully submerged mech can fire at a depth-1 target, but only leg hits cou
  assert.equal(hit.location,'RL');assert.equal(hit.damage,3);
 });
 test('Depth-1 leg-mounted lasers fire underwater while upper mounts cannot (BMM p.65)',()=>{
- const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+ const g=game(),u=g.units[0],t=g.units[2];g.tacticalOptions.underwaterFire=true;for(const tile of g.tiles)
   Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
  Object.assign(g.tile(0,0),{type:'water',depth:1,height:-1});
@@ -283,7 +283,7 @@ test('Depth-1 leg-mounted lasers fire underwater while upper mounts cannot (BMM 
  u.weapons[0].location='RA';assert.equal(g.preview(0,2,0).legal,false);
 });
 test('At depth 1, underwater-to-waterline aimed shots may target legs but not upper torso',()=>{
- const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+ const g=game(),u=g.units[0],t=g.units[2];g.tacticalOptions.underwaterFire=true;for(const tile of g.tiles)
   Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;t.shutdown=true;
  Object.assign(g.tile(0,0),{type:'water',depth:2,height:-2});
@@ -378,7 +378,7 @@ test('Underwater ranges match every supported BMM energy-weapon table row (p.65)
   assert.equal(JSON.stringify(UNDERWATER_RANGES[name]),JSON.stringify(expected),name);
 });
 test('Medium Laser range modifiers underwater follow 2/4/6 rather than half ranges',()=>{
- const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+ const g=game(),u=g.units[0],t=g.units[2];g.tacticalOptions.underwaterFire=true;for(const tile of g.tiles)
   Object.assign(tile,{type:'water',depth:2,height:-2,surface:0});
  u.q=0;u.r=0;u.facing=0;u.weapons[0]={name:'Medium Laser',heat:3,damage:5,
    min:0,ammo:null,location:'RA',ranges:[3,6,9]};
@@ -390,7 +390,7 @@ test('Medium Laser range modifiers underwater follow 2/4/6 rather than half rang
  }
 });
 test('PPC underwater uses BMM 4/7/10 ranges with minimum distance 3',()=>{
- const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+ const g=game(),u=g.units[0],t=g.units[2];g.tacticalOptions.underwaterFire=true;for(const tile of g.tiles)
   Object.assign(tile,{type:'water',depth:2,height:-2,surface:0});
  u.q=0;u.r=0;u.facing=0;u.weapons[0]={name:'PPC',heat:10,damage:10,
    min:3,ammo:null,location:'RA',ranges:[6,12,18]};
@@ -401,7 +401,7 @@ test('PPC underwater uses BMM 4/7/10 ranges with minimum distance 3',()=>{
  }
 });
 test('Flamers, autocannons and missiles cannot fire underwater under BMM rules',()=>{
- const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
+ const g=game(),u=g.units[0],t=g.units[2];g.tacticalOptions.underwaterFire=true;for(const tile of g.tiles)
   Object.assign(tile,{type:'water',depth:2,height:-2,surface:0});
  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
  for(const name of ['Flamer','AC/2','LRM 10','SRM 2']){

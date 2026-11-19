@@ -167,7 +167,7 @@ export function defaultMechWarriorSkills(techBase='Inner Sphere'){
  return techBase==='Clan'?{gunnery:3,piloting:4}:{gunnery:4,piloting:5};
 }
 export class Game extends Legacy{
- reset(){super.reset();this.victoryTerms=null;this.victoryAdjudicated=false;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false};
+ reset(){super.reset();this.victoryTerms=null;this.victoryAdjudicated=false;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false,underwaterFire:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
  this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
@@ -330,11 +330,13 @@ export class Game extends Legacy{
    // and a fully submerged target cannot exchange weapons fire.
    // Keep depth-one and changing posture conservative until LOS audit.
    const submerged=depth>=2||stuckProne&&depth>=1||depth===1&&mechLegLocation(u,w.location);
+   if(submerged&&!this.tacticalOptions?.underwaterFire)return false;
    const ranges=submerged?UNDERWATER_RANGES[w.name]:w.ranges;
    if(!ranges)return false;
    return enemies.some(t=>{
     const targetDepth=this.tile(t.q,t.r).depth,range=distance(u,t);
     const targetPermanentlySubmerged=targetDepth>=2||targetDepth===1&&t.prone&&!this.canEverMove(t);
+    if(!this.tacticalOptions?.underwaterFire&&targetPermanentlySubmerged)return false;
     if(submerged&&targetDepth===0||depth===0&&targetPermanentlySubmerged)return false;
     if(!range||range>ranges[2])return false;
     // AGoAC pp.13,21: only LRMs can bypass an immutable ridge,
@@ -1279,7 +1281,9 @@ export class Game extends Legacy{
   const ta=this.tile(a.q,a.r),tb=this.tile(b.q,b.r);
   const subA=underwaterWeapon===null?ta.depth>=(a.prone?1:2):underwaterWeapon;
   const subB=tb.depth>=(b.prone?1:2)||(subA&&tb.depth===1&&!b.prone);
-  if(subA!==subB)return {woods:0,blocked:true,cover:false};
+  // AGoAC p.14: submerged endpoints have no weapon LOS; the BMM
+  // underwater-combat extension must be explicitly selected.
+  if(subA!==subB||(!this.tacticalOptions?.underwaterFire&&(subA||subB)))return {woods:0,blocked:true,cover:false};
   const ah=ta.height+(a.prone?1:2),bh=tb.height+(b.prone?1:2);
   let interveningWoods=0,blocked=false,cover=tb.depth===1&&!b.prone;
   for(const p of path){
@@ -1303,7 +1307,7 @@ export class Game extends Legacy{
   if(this.isImmobile(t))return movement+(includeImmobile?-4:0);
   return movement+(t.skidded?2:0)+(this.tacticalOptions?.standingStill&&t.spent===0?-1:0)+(this.tacticalOptions?.evading&&t.moveMode==='evade'&&!t.prone?1:0);
  }
- preview(id,target,index,opts={}){const u=this.unit(id),t=this.unit(target),w=u?.weapons[index];if(!u||!t||!w)return {legal:false,chance:0,targetNumber:99,reason:'Выберите цель'};if(u.deployed===false||t.deployed===false)return {legal:false,chance:0,targetNumber:99,reason:'Мех ещё не вышел на поле'};const quadProneBonus=quadProneFireBonus(u),range=distance(u,t),act=u.actuators[w.location],sub=this.tile(u.q,u.r).depth>=(u.prone||mechLegLocation(u,w.location)?1:2),waterline=this.tile(t.q,t.r).depth===1&&!t.prone,targetSub=this.tile(t.q,t.r).depth>=(t.prone?1:2),underwaterCover=sub&&waterline,los=this.los(u,t,sub),ranges=sub?(UNDERWATER_RANGES[w.name]||[0,0,0]):w.ranges;let reason='';if(!this.mobile(u)||t.dead||u.team===t.team)reason='Мех не может стрелять';else if(u.charge)reason='Заявлен таран/DFA';else if(u.moveMode==='evade')reason='Уклонение запрещает атаки';else if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||w.locations?.some(l=>this.isBreached(u,l)))reason='Оружие уничтожено или затоплено';else if(u.sensorHits>=2)reason='Датчики уничтожены';else if(w.ammo===0)reason='Нет боезапаса';else if(!this.arc(u,t,w))reason='Вне сектора огня';else if(sub&&!UNDERWATER_RANGES[w.name])reason='Оружие не допускает подводную стрельбу';else if(!range||range>ranges[2])reason='Вне дальности';else if(!sub&&mechLegLocation(u,w.location)&&this.los(t,u).cover)reason='Ноги скрыты собственным частичным укрытием';else if(los.blocked)reason='Линия огня перекрыта';else if((sub!==targetSub&&!underwaterCover)||sub&&!UNDERWATER_RANGES[w.name])reason='Стрельба через поверхность воды запрещена';else if(u.prone&&u.config!=='Quad'&&(!u.structure.LA||!u.structure.RA))reason='Для стрельбы лёжа требуются обе сохранившиеся руки';else if(u.prone&&(
+ preview(id,target,index,opts={}){const u=this.unit(id),t=this.unit(target),w=u?.weapons[index];if(!u||!t||!w)return {legal:false,chance:0,targetNumber:99,reason:'Выберите цель'};if(u.deployed===false||t.deployed===false)return {legal:false,chance:0,targetNumber:99,reason:'Мех ещё не вышел на поле'};const quadProneBonus=quadProneFireBonus(u),range=distance(u,t),act=u.actuators[w.location],sub=this.tile(u.q,u.r).depth>=(u.prone||mechLegLocation(u,w.location)?1:2),waterline=this.tile(t.q,t.r).depth===1&&!t.prone,targetSub=this.tile(t.q,t.r).depth>=(t.prone?1:2),underwaterCover=sub&&waterline,los=this.los(u,t,sub),ranges=sub?(UNDERWATER_RANGES[w.name]||[0,0,0]):w.ranges;let reason='';if(!this.mobile(u)||t.dead||u.team===t.team)reason='Мех не может стрелять';else if(u.charge)reason='Заявлен таран/DFA';else if(u.moveMode==='evade')reason='Уклонение запрещает атаки';else if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||w.locations?.some(l=>this.isBreached(u,l)))reason='Оружие уничтожено или затоплено';else if(u.sensorHits>=2)reason='Датчики уничтожены';else if(w.ammo===0)reason='Нет боезапаса';else if(!this.arc(u,t,w))reason='Вне сектора огня';else if(sub&&(!this.tacticalOptions?.underwaterFire||!UNDERWATER_RANGES[w.name]))reason='Оружие не допускает подводную стрельбу';else if(!range||range>ranges[2])reason='Вне дальности';else if(!sub&&mechLegLocation(u,w.location)&&this.los(t,u).cover)reason='Ноги скрыты собственным частичным укрытием';else if(los.blocked)reason='Линия огня перекрыта';else if((sub!==targetSub&&!underwaterCover)||sub&&!UNDERWATER_RANGES[w.name])reason='Стрельба через поверхность воды запрещена';else if(u.prone&&u.config!=='Quad'&&(!u.structure.LA||!u.structure.RA))reason='Для стрельбы лёжа требуются обе сохранившиеся руки';else if(u.prone&&(
   u.config==='Quad'
    ?(!quadProneBonus&&(mechLegLocation(u,w.location)||
       w.locations?.some(loc=>mechLegLocation(u,loc))))

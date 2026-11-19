@@ -4758,9 +4758,21 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.17: bridge decks never grant partial cover to either endpoint"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14,19: submerged endpoints and submerged leg weapons cannot fire by default"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14,17: water intervenes at surface elevation only when it reaches LOS"
+        },
+        {
+          "file": "tests/tactical-operations.mjs",
+          "test": "AGoAC p.19: BMM underwater weapon combat is an explicit pre-battle option"
         }
       ],
-      "reviewNote": "Source pp.14,17,19 rechecked: bridge exception tested successfully in #183 (399/399); remaining base versus expanded submerged LOS and water firing."
+      "reviewNote": "Source pp.14,17,19 rechecked: bridge exception tested successfully in #183 (399/399); remaining base versus expanded submerged LOS and water firing. Source pp.13–14,17,19–20 visually checked: default AGoAC forbids weapon LOS to/from fully submerged BattleMechs and submerged leg weapons. Expanded BMM underwater weapons now opt-in via locked pre-battle setting (engine, server, UI and overlay). Regressions pending exact checks; no promotion before gates. Physical combat outside current scope."
     },
     {
       "id": "agoac-078",
@@ -4940,9 +4952,21 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.16–20: direct GATOR composes damage heat movement terrain and minimum range"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14,19: submerged endpoints and submerged leg weapons cannot fire by default"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14,17: water intervenes at surface elevation only when it reaches LOS"
+        },
+        {
+          "file": "tests/tactical-operations.mjs",
+          "test": "AGoAC p.19: BMM underwater weapon combat is an explicit pre-battle option"
         }
       ],
-      "reviewNote": "Direct visual source pp.16–20 confirmed all standard range, heat, movement and damage table entries. #183 CI 399/399 including bridge correction; combined direct GATOR sum, hit chance and actuator precedence regression added here. Await exact results. Direct-weapon dry-terrain certification separable from unimplemented water and indirect-fire cases, but their dependencies must remain explicit; do not mark whole requirement verified prematurely."
+      "reviewNote": "Direct visual source pp.16–20 confirmed all standard range, heat, movement and damage table entries. #183 CI 399/399 including bridge correction; combined direct GATOR sum, hit chance and actuator precedence regression added here. Await exact results. Direct-weapon dry-terrain certification separable from unimplemented water and indirect-fire cases, but their dependencies must remain explicit; do not mark whole requirement verified prematurely. Source pp.13–14,17,19–20 visually checked: default AGoAC forbids weapon LOS to/from fully submerged BattleMechs and submerged leg weapons. Expanded BMM underwater weapons now opt-in via locked pre-battle setting (engine, server, UI and overlay). Regressions pending exact checks; no promotion before gates. Physical combat outside current scope."
     },
     {
       "id": "agoac-081",
@@ -5076,9 +5100,21 @@
         {
           "file": "tests/combat.mjs",
           "test": "Prone bracing forbids split weapons occupying the braced arm (BMM p.30)"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14,19: submerged endpoints and submerged leg weapons cannot fire by default"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.13–14,17: water intervenes at surface elevation only when it reaches LOS"
+        },
+        {
+          "file": "tests/tactical-operations.mjs",
+          "test": "AGoAC p.19: BMM underwater weapon combat is an explicit pre-battle option"
         }
       ],
-      "reviewNote": "Re-reviewed pp.19–21: prone arm bracing, leg restriction and posture modifiers implemented. AGoAC water restrictions are not independently selected from BMM expanded underwater fire; share the outstanding 077 dependency. Known missing."
+      "reviewNote": "Re-reviewed pp.19–21: prone arm bracing, leg restriction and posture modifiers implemented. AGoAC water restrictions are not independently selected from BMM expanded underwater fire; share the outstanding 077 dependency. Known missing. Source pp.13–14,17,19–20 visually checked: default AGoAC forbids weapon LOS to/from fully submerged BattleMechs and submerged leg weapons. Expanded BMM underwater weapons now opt-in via locked pre-battle setting (engine, server, UI and overlay). Regressions pending exact checks; no promotion before gates. Physical combat outside current scope."
     },
     {
       "id": "agoac-083",
