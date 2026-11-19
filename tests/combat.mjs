@@ -989,3 +989,17 @@ test('Flamer heat mode adds heat without armor damage',()=>{const g=game(),u=g.u
 test('Selected ammunition bin is decremented',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=-4;u.r=0;u.facing=0;t.q=4;t.r=0;acting(g,0,'fire');assert(g.declareFire(0,[{index:1,target:2,bin:1}]).ok);g.resolveFire();assert.equal(u.bins[0].shots,12);assert.equal(u.bins[1].shots,11);});
 for(let seed=1;seed<=8;seed++)test('Full AI battle seed '+seed,()=>{let state=seed;const g=new Game({rng:()=>((state=(Math.imul(state,1664525)+1013904223)>>>0)/2**32)});let steps=0;while(g.winner===null&&steps++<600){if(['move','fire','physical'].includes(g.phase)&&g.queue.length){const u=g.units.find(u=>g.canAct(u));assert(u,'queue must have an actionable unit');const r=g.phase==='move'?g.aiMove(u.id):g.phase==='fire'?g.aiAttack(u.id):g.aiPhysical(u.id);assert(r.ok,r.error);}else assert(g.nextPhase().ok);for(const u of g.units){assert(Number.isFinite(u.heat));assert(u.heat>=0);assert(Object.values(u.structure).every(n=>n>=0));assert(u.bins.every(b=>b.shots>=0));}}assert(g.winner!==null||g.round>20,'battle must finish or continue advancing rounds');});
 console.log(`${count} combat checks passed`);
+
+test('AGoAC: front arc target is primary regardless of weapon assignment order',()=>{
+ for(const reverse of [false,true]){
+  const g=game(),u=g.units[0],front=g.units[2],side=g.units[3];
+  Object.assign(u,{q:0,r:0,facing:0,twist:0});Object.assign(front,{q:2,r:0});Object.assign(side,{q:-1,r:2});
+  const w={name:'Medium Laser',damage:5,heat:3,ranges:[3,6,9],min:0,ammo:null,location:'RA',rack:0};u.weapons=[{...w},{...w,location:'LA'}];
+  acting(g,0,'fire');const orders=[{index:0,target:front.id},{index:1,target:side.id}];if(reverse)orders.reverse();
+  // Isolate primary selection from weapon arc legality.
+  g.preview=(id,target,index,opts)=>({legal:true,mods:{secondary:Number(opts.secondary)}});
+  assert(g.declareFire(0,orders).ok);const shots=g.declarations.at(-1).shots;
+  assert.equal(shots.find(s=>s.target===front.id).preview.mods.secondary,0);
+  assert.equal(shots.find(s=>s.target===side.id).preview.mods.secondary,1);
+ }
+});
