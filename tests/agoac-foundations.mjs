@@ -2414,7 +2414,7 @@ test('AGoAC p.6: selected map terrain changes movement and line of sight and rot
  for(const t of river.tiles){
   const r=rotated.tile(-t.r,t.q+t.r);assert(r);assert.deepEqual([r.type,r.height,r.depth,r.surface],[t.type,t.height,t.depth,t.surface]);
  }
- assert.equal(river.tile(0,0).depth,2);assert.equal(river.terrainCost(river.tile(0,0)),4);
+ assert.equal(river.tile(3,0).type,'bridge');assert.equal(river.tile(0,0).depth,2);assert.equal(river.terrainCost(river.tile(0,0)),4);
  assert.equal(clear.terrainCost(clear.tile(0,0)),1);
  assert(wood.tiles.some(t=>t.type==='heavy'));
  for(const g of [clear,river]){

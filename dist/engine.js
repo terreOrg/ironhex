@@ -465,9 +465,13 @@ export class Game extends Legacy{
      else if(r===-2&&Math.abs(q)<3){type='hill';height=surface=1;}
     }
    }
-   const bridge=id==='river'&&q===0&&r===0;
+   const bridge=id==='river'&&q===3&&r===0;
    if(bridge){type='bridge';height=surface;depth=0;}
-   const roadEdges=id==='woodland'&&r===0?[0,3].map(d=>wrap(d+rotation)):[];
+   const roadEdges=id==='woodland'&&r===0?[0,3].map(d=>{
+    let [dq,dr]=DIRS[d];
+    for(let n=0;n<rotation;n++)[dq,dr]=[-dr,dq+dr];
+    return DIRS.findIndex(([x,y])=>x===dq&&y===dr);
+   }):[];
    for(let n=0;n<rotation;n++)[q,r]=[-r,q+r];
    return {q,r,type,height,depth,surface,roadEdges};
   });
