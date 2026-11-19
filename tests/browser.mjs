@@ -190,9 +190,9 @@ test('Chromium renders WebGL mechs and firing-sector controls', { timeout:120000
     assert(c.width > 100 && c.height > 100,'Canvas is sized');
     assert(c.webgl,'WebGL context unavailable; do not silently pass fallback');
     assert.match(await page.locator('#arcinfo').textContent(),/гексов/);
-    await page.locator('#arctoggle').click();
+    await page.locator('#arctoggle').getByRole('switch').click();
     assert.equal(await page.locator('#arctoggle').evaluate(el=>el.checked),false);
-    await page.locator('#arctoggle').click();
+    await page.locator('#arctoggle').getByRole('switch').click();
     assert.equal(await page.locator('#arctoggle').evaluate(el=>el.checked),true);
     await page.locator('#rotateR').click();
     await page.locator('#zoomIn').click();

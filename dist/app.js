@@ -102,6 +102,7 @@ function applyServerState(state){
     {mesh:t.mesh,original:t.original}]));
   Object.assign(game,state);
   game.rebuildMap();
+  syncWeatherSwitches();
   for(const tile of game.tiles){
     const old=original.get(tile.q+','+tile.r);
     if(old){tile.mesh=old.mesh;tile.original=old.original;
@@ -198,6 +199,7 @@ async function serverCommand(order){
     if(remoteFinished)toast('СРАЖЕНИЕ ЗАВЕРШЕНО. Результат подтверждён сервером.');
   }catch(e){
     busy=remoteFinished;
+    syncWeatherSwitches();
     renderUI();reportAccess();
     const reasons={deployment_blocked:'Нет допустимого входа. Измените условия сценария или отмените операцию.',not_your_turn:'Сейчас не ваша очередь',
       stale_operation_version:'Состояние боя изменилось. Данные обновлены.',
@@ -621,11 +623,16 @@ function showBattleSetup({preferCustom=false}={}){
 $('#new').onclick=()=>{
  if(remoteMode){toast('Перезапуск серверной операции недоступен. Откройте новый боевой контракт в штабе.');return;}
  if(busy)return;showBattleSetup();
-};$('#night').onchange=()=>{if(remoteMode)return void serverCommand({type:'weather',night:$('#night').checked,gale:$('#gale').checked,standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked,underwaterFire:$('#bmm-underwater').checked});game.weather.night=$('#night').checked;renderUI();};$('#gale').onchange=()=>{if(remoteMode)return void serverCommand({type:'weather',night:$('#night').checked,gale:$('#gale').checked,standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked,underwaterFire:$('#bmm-underwater').checked});game.weather.gale=$('#gale').checked;renderUI();};function tacticalSettings(){
+};$('#night').onchange=()=>{if(remoteMode)return void serverCommand({type:'weather',night:$('#night').checked,gale:$('#gale').checked,standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked,underwaterFire:$('#bmm-underwater').checked});game.weather.night=$('#night').checked;renderUI();};$('#gale').onchange=()=>{if(remoteMode)return void serverCommand({type:'weather',night:$('#night').checked,gale:$('#gale').checked,standingStill:$('#to-still').checked,evading:$('#to-evade').checked,floatingCriticals:$('#bmm-floating').checked,underwaterFire:$('#bmm-underwater').checked});game.weather.gale=$('#gale').checked;renderUI();};function syncWeatherSwitches(){
+  const values={'#night':game.weather?.night,'#gale':game.weather?.gale,'#to-still':game.tacticalOptions?.standingStill,'#to-evade':game.tacticalOptions?.evading,'#bmm-floating':game.tacticalOptions?.floatingCriticals,'#bmm-underwater':game.tacticalOptions?.underwaterFire};
+  for(const [id,value] of Object.entries(values))$(id).checked=!!value;
+}
+function tacticalSettings(){
   const locked=game.phase!=='initiative'||game.round!==1;
+  if(remoteMode){for(const id of ['#night','#gale'])$(id).disabled=busy||!remoteReady||locked;}
   for(const id of ['#to-still','#to-evade','#bmm-floating','#bmm-underwater']){
     const input=$(id);
-    input.disabled=locked;
+    input.disabled=locked||(remoteMode&&(busy||!remoteReady));
     if(locked){input.checked=id==='#to-still'?!!game.tacticalOptions?.standingStill:
       id==='#to-evade'?!!game.tacticalOptions?.evading:
       id==='#bmm-floating'?!!game.tacticalOptions?.floatingCriticals:!!game.tacticalOptions?.underwaterFire;}

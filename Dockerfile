@@ -5,6 +5,7 @@ WORKDIR /src
 COPY dist/ dist/
 COPY apps/web/src/ apps/web/src/
 COPY packages/engine/ packages/engine/
+COPY packages/ui/mech-toggle/mech-toggle.js packages/ui/mech-toggle/mech-toggle.js
 COPY scripts/build-web.mjs scripts/build-web.mjs
 RUN node scripts/build-web.mjs
 

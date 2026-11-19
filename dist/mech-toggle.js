@@ -1,5 +1,6 @@
 (() => {
 class MechToggle extends HTMLElement {
+  static formAssociated = true;
   static get observedAttributes() { return ['checked', 'disabled', 'label']; }
   constructor() {
     super();
@@ -26,6 +27,10 @@ class MechToggle extends HTMLElement {
         <span aria-hidden="true"><i class="screw s1"></i><i class="screw s2"></i><i class="screw s3"></i><i class="screw s4"></i><i class="led"></i><span class="mark on">I</span><span class="mark off">O</span><span class="collar"><span class="socket"></span></span><span class="pivot"></span><span class="lever"><span class="shaft"></span><span class="grip"></span></span></span>
       </button>`;
     this._button = this.shadowRoot.querySelector('button');
+    // Clicking the adjacent native label activates the same internal switch.
+    this.addEventListener('click', event => {
+      if (!event.composedPath().includes(this._button) && !this.disabled) this._button.click();
+    });
     this._button.addEventListener('click', () => {
       if (this.disabled) return;
       this.checked = !this.checked;
