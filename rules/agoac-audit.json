@@ -5266,9 +5266,13 @@
         {
           "file": "tests/combat.mjs",
           "test": "Flamer heat mode adds heat without armor damage"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.21: aimed location check is independent of normal hit location and cover rerolls"
         }
       ],
-      "reviewNote": "CAT3500D pp.20–21 rechecked: indirect attacker must lack LOS, friendly spotter must have LOS and may not charge/DFA; one target per spotter, any number of firing units, movement modifiers of all participants, terrain from spotter, +1 indirect, extra +1 if spotter attacks and +1 to spotter's own attacks, range from firing unit, no aiming, water-only cover intercepts indirect leg hits. Indirect branch remains Known Missing."
+      "reviewNote": "CAT3500D pp.20–21 rechecked: indirect attacker must lack LOS, friendly spotter must have LOS and may not charge/DFA; one target per spotter, any number of firing units, movement modifiers of all participants, terrain from spotter, +1 indirect, extra +1 if spotter attacks and +1 to spotter's own attacks, range from firing unit, no aiming, water-only cover intercepts indirect leg hits. Indirect branch remains Known Missing. P.21 visually rechecked: aimed-shot success requires separate 6–8 location check; failed aim must make independent normal location roll with cover rerolls, not reuse the failed aim roll. Corrected in this PR, regression pending. Indirect fire remains unimplemented."
     },
     {
       "id": "agoac-084",
@@ -5279,7 +5283,7 @@
         22
       ],
       "statement": "Attack rolls and ammunition expenditure.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5332,9 +5336,43 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.15,22: cancel impossible declared attack without heat or ammunition expenditure or retargeting"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.15,21–22: interactive cancellation replay refunds exactly one reserved round while the other attack misses"
         }
       ],
-      "reviewNote": "CAT3500D pp.15,21–22: exact declaration-time ammunition debit passed #187 CI 409/409, E2E and selective Smoke. Added explicit resolution choice to cancel impossible attack (no alternate target; exact allocated round returned, no heat or fired location) or retain automatic miss. Legacy fallback preserves existing noninteractive behavior. UI handles new choice. Exact gates and source corner-case audit pending."
+      "reviewNote": "Printed CAT3500D pp.15,21–22 visually rechecked: each individual weapon attack uses its own target number and roll; automatic miss above 12 and hit at/below 2; separate user-selected roll/damage order by target; exact magazine accounting, one round per launcher and shared-ammo reservation, mark off on declaration; impossible shot can be canceled without retargeting. #187 and #188 exact passing checks, identical merged tree, 411/411 unit tests. Additional replay/atomicity regression in this PR to confirm no duplicate refund and no heat for canceled shot. Empty-hex and indirect declaration/target eligibility remain explicitly open in 079/083; attack direction and hit-location resolution audited separately in chapter 6.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "73ba370a1b182bdaae490ebb80c3681ac549fdfe",
+        "testedTree": "d731f2055e8432baabbd3f972187884d265cb905",
+        "mergedSha": "87890ec9783093380d918f4cd71ae845fc3b0ff5",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44593910924,
+            "jobId": 135806961200,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44593910889,
+            "jobId": 135806960225,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44593910908,
+            "jobId": 135806960456,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed CAT3500D pp.15,21–22 visually rechecked: each individual weapon attack uses its own target number and roll; automatic miss above 12 and hit at/below 2; separate user-selected roll/damage order by target; exact magazine accounting, one round per launcher and shared-ammo reservation, mark off on declaration; impossible shot can be canceled without retargeting. #187 and #188 exact passing checks, identical merged tree, 411/411 unit tests. Additional replay/atomicity regression in this PR to confirm no duplicate refund and no heat for canceled shot. Empty-hex and indirect declaration/target eligibility remain explicitly open in 079/083; attack direction and hit-location resolution audited separately in chapter 6."
+      }
     }
   ]
 }

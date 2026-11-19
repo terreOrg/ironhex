@@ -832,8 +832,8 @@ test('Aimed location rerolls are bounded at 100 attempts under persistent cover'
  g.rng=()=>dice++%2===0?.2:.35;
  const before={...u.armor};
  const out=g.hit(u,3,'front','normal','CT',true);
- assert.equal(out.damage,0);assert.equal(g.phaseRolls.length,100);
- assert.deepEqual(u.armor,before);assert.equal(dice,200);
+ assert.equal(out.damage,0);assert.equal(g.phaseRolls.length,101);
+ assert.deepEqual(u.armor,before);assert.equal(dice,202);
 });
 test('Declared shot survives destruction of shooter',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=4;t.r=0;acting(g,0,'fire');assert(g.declareFire(0,[{index:0,target:2}]).ok);u.dead=true;g.resolveFire();assert.equal(g.resolution.length,1);assert.equal(u.pendingHeat,10);});
 test('Two punches declare two independent attack rolls',()=>{const g=game(),u=g.units[0],t=g.units[2];u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;acting(g,0,'physical');assert(g.declarePhysical(0,2,'punch','both').ok);assert.equal(g.physicalDeclarations.length,2);g.resolvePhysical();assert.equal(g.resolution.length,2);});

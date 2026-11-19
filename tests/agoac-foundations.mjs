@@ -3971,3 +3971,43 @@ test('AGoAC pp.15,22: cancel impossible declared attack without heat or ammuniti
   else{assert.equal(results.length,1);assert.equal(results[0].shots[0].hit,false);}
  }
 });
+
+test('AGoAC p.21: aimed location check is independent of normal hit location and cover rerolls',()=>{
+ for(const [sums,expected,cover,aim] of [[[6],'HD',false,'HD'],[[8],'LT',false,'LT'],[[2,3],'RA',false,'HD'],[[5,5,6],'RT',true,'HD'],[[9,7],'CT',false,'HD']]){
+  const g=fresh(),u=g.units[2],draws=sums.flatMap(diceFor),applied=[];
+  g.rng=()=>{assert(draws.length,'unexpected roll');return draws.shift();};
+  g.damage=(target,loc,amount,opts)=>{applied.push({loc,amount,tac:!!opts.tac});return [];};
+  const result=g.hit(u,5,'front','normal',aim,cover);
+  assert.equal(result.location,expected);assert.equal(result.damage,5);
+  assert.deepEqual(applied,[{loc:expected,amount:5,tac:false}]);
+  assert.equal(draws.length,0);assert.equal(g.phaseRolls.length,sums.length);
+ }
+});
+test('AGoAC pp.15,21–22: interactive cancellation replay refunds exactly one reserved round while the other attack misses',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,moveMode:'stand',gunnery:13});
+ Object.assign(t,{q:4,r:0,prone:false,moveMode:'stand'});
+ const index=u.weapons.length;u.weapons.push({...u.weapons[1],shared:1});
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,t.team];g.actingId=u.id;
+ const initial=u.bins.slice(0,2).map(b=>b.shots),heat=u.pendingHeat;
+ assert(g.declareFire(u.id,[{index:1,target:t.id,bin:0},{index,target:t.id,bin:1}]).ok);
+ g.queue=[];g.activeTeam=null;g.actingId=null;g.initiativeWinner=1;
+ let draws=0;g.rng=()=>{draws++;return .99;};
+ const respond=option=>g.nextPhaseWithChoices({humanTeams:[0],choice:{key:g.pendingChoice.key,option}});
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
+ assert.equal(g.pendingChoice.kind,'fire-roll-weapon');
+ assert(respond('1').pending);assert.equal(g.pendingChoice.kind,'fire-impossible');
+ assert.equal(draws,0);
+ assert(respond('cancel').pending);assert.equal(g.pendingChoice.kind,'fire-impossible');
+ assert.deepEqual(g.units[0].bins.slice(0,2).map(b=>b.shots),initial.map(n=>n-1));
+ const saved=JSON.parse(JSON.stringify({choice:g.pendingChoice,journal:g._resolutionReplay}));
+ g.pendingChoice=saved.choice;g._resolutionReplay=saved.journal;
+ assert.equal(respond('forged').ok,false);assert.equal(draws,0);
+ assert(respond('fire').ok);
+ assert.equal(g.pendingChoice,null);assert.equal(g.phase,'physical');assert.equal(draws,2);
+ assert.deepEqual(g.units[0].bins.slice(0,2).map(b=>b.shots),[initial[0],initial[1]-1]);
+ assert.equal(g.units[0].pendingHeat,heat+u.weapons[index].heat);
+ assert.equal(g.resolution.length,1);assert.equal(g.resolution[0].shots[0].index,index);
+ assert.equal(g.resolution[0].shots[0].hit,false);
+});
