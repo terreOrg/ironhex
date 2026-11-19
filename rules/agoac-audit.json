@@ -312,7 +312,7 @@
         24
       ],
       "status": "tested_subset",
-      "reviewNote": "Exact #199 head 86cb8dbf: CI 431/431, browser 39/39, full Docker smoke passed; identical merged tree f0340b3d. Main Sonar pending. Re-reviewed CAT3500D printed pp.22–24 including diagram, every entry of both tables, separate SRM hits and 5-point/remainder LRM groups, printed example and phase boundary. Added final packet cover, actual 20-point weapon phase PSR and AI defender tests before certification. AI uses a deterministic legal default; base book assigns choice to controlling player but does not specify computer strategy. Full critical allocation belongs to Chapter 8, physical attack interactions Chapter 7. No promotion before exact CI and Sonar."
+      "reviewNote": "Three groups (086,087,089) verified with exact #199 evidence and green main Sonar. Remaining 085,088,090 require green final package #200 and reconciliation. #200 first CI 433/434; only the missile-cover fixture failed (wrong underwater firing flag), now corrected. No deployment."
     },
     {
       "id": "agoac-physical",
@@ -5640,14 +5640,50 @@
         23
       ],
       "statement": "Normal 2D6 hit location, all four sides, rear armor addressing and torso critical opportunity on natural two.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.23: every normal hit location and through-armor opportunity by direction"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+      "reviewNote": "Printed pp.22–23 normal hit location table: all 44 combinations of four sides and 11 dice totals, rear armor selection and natural-two through-armor critical dispatch verified. Detailed internals of critical damage deferred to Chapter 8. Exact #199 CI 431/431, Browser E2E 39/39 and full Docker Smoke passed. Identical merged tree and main Sonar success.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "86cb8dbf269bc4395386a64bf4b29582fe9ceba4",
+        "testedTree": "f0340b3d922ca0deb07c2c04810e54f5c4f3a68a",
+        "mergedSha": "c7096478e8c553ba03f50ba5f4742368832c2f7b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44616748481,
+            "jobId": 135887367794,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44616748436,
+            "jobId": 135887367314,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44616748444,
+            "jobId": 135887367040,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex SonarQube",
+            "runId": 44617894143,
+            "jobId": 135891379279,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed pp.22–23 normal hit location table: all 44 combinations of four sides and 11 dice totals, rear armor selection and natural-two through-armor critical dispatch verified. Detailed internals of critical damage deferred to Chapter 8. Exact #199 CI 431/431, Browser E2E 39/39 and full Docker Smoke passed. Identical merged tree and main Sonar success."
+      }
     },
     {
       "id": "agoac-087",
@@ -5656,7 +5692,7 @@
         22
       ],
       "statement": "One location roll at a time, independent damage order and full resolution of each attack.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5667,7 +5703,43 @@
           "test": "AGoAC pp.6,21,30: independent controller choices for to-hit and damage order replay without rerolling"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+      "reviewNote": "Printed pp.22–24 location handling: independent attacker roll and damage order, target grouping and sequential damage packet resolution; existing replay regression and printed LRM example passed. Detailed damage transfer deferred to Chapter 8. Exact #199 CI 431/431, Browser E2E 39/39 and full Docker Smoke passed. Identical merged tree and main Sonar success.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "86cb8dbf269bc4395386a64bf4b29582fe9ceba4",
+        "testedTree": "f0340b3d922ca0deb07c2c04810e54f5c4f3a68a",
+        "mergedSha": "c7096478e8c553ba03f50ba5f4742368832c2f7b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44616748481,
+            "jobId": 135887367794,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44616748436,
+            "jobId": 135887367314,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44616748444,
+            "jobId": 135887367040,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex SonarQube",
+            "runId": 44617894143,
+            "jobId": 135891379279,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed pp.22–24 location handling: independent attacker roll and damage order, target grouping and sequential damage packet resolution; existing replay regression and printed LRM example passed. Detailed damage transfer deferred to Chapter 8. Exact #199 CI 431/431, Browser E2E 39/39 and full Docker Smoke passed. Identical merged tree and main Sonar success."
+      }
     },
     {
       "id": "agoac-088",
@@ -5691,7 +5763,7 @@
           "test": "AGoAC pp.22–24: partial cover absorbs only its own missile hit packets"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion. #200 failed only the underwater flag in an above-water fixture. Corrected underwaterCover=false for both terrain and depth-one targets; exact CI pending."
     },
     {
       "id": "agoac-089",
@@ -5701,7 +5773,7 @@
         24
       ],
       "statement": "All standard missile launchers resolve 2D6 cluster table, one SRM packet per missile and LRM lots up to five.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5712,7 +5784,43 @@
           "test": "AGoAC p.24: LRM20 example resolves twelve missiles as three independent hit locations"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion. Printed p.24 Catapult example independently extracted (12 missiles, 5/5/2, locations CT/LA/RL). Added actual damage resolution regression; pending exact CI."
+      "reviewNote": "Printed pp.23–24 cluster table: all 77 base rack/roll combinations checked, SRM packets of 2 and LRM groups of five plus remainder, independent location throws, actual 12-missile LRM20 example. Partial-cover interaction tracked separately in 088. Exact #199 CI 431/431, Browser E2E 39/39 and full Docker Smoke passed. Identical merged tree and main Sonar success.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "86cb8dbf269bc4395386a64bf4b29582fe9ceba4",
+        "testedTree": "f0340b3d922ca0deb07c2c04810e54f5c4f3a68a",
+        "mergedSha": "c7096478e8c553ba03f50ba5f4742368832c2f7b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44616748481,
+            "jobId": 135887367794,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44616748436,
+            "jobId": 135887367314,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44616748444,
+            "jobId": 135887367040,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex SonarQube",
+            "runId": 44617894143,
+            "jobId": 135891379279,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed pp.23–24 cluster table: all 77 base rack/roll combinations checked, SRM packets of 2 and LRM groups of five plus remainder, independent location throws, actual 12-missile LRM20 example. Partial-cover interaction tracked separately in 088. Exact #199 CI 431/431, Browser E2E 39/39 and full Docker Smoke passed. Identical merged tree and main Sonar success."
+      }
     },
     {
       "id": "agoac-090",

@@ -4314,7 +4314,8 @@ test('AGoAC pp.22–24: partial cover absorbs only its own missile hit packets',
   g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
   g.declarations=[{id:u.id,ammoSpent:true,shots:[{index:0,target:t.id,bin:null,aim:null,heatMode:false,
    weapon:{name:'SRM 4',rack:4,ammo:null,heat:3,damage:2,location:'CT'},
-   preview:{targetNumber:2,side:'front',sideOptions:['front'],cover:true,underwaterCover:water}}]}];
+   // Above-water fire against a depth-one target obscures legs, not its torso.
+   preview:{targetNumber:2,side:'front',sideOptions:['front'],cover:true,underwaterCover:false}}]}];
   const r=g.resolveFire()[0].shots[0];
   assert.equal(r.damage,4);assert.equal(r.rolls.length,6);
   assert.equal(t.armor.RL,before.RL);assert.equal(t.armor.LL,before.LL);
