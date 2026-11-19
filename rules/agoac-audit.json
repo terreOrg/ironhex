@@ -3692,7 +3692,7 @@
           "test": "AGoAC p.8: gyro and hip damage trigger movement PSR only for run and jump"
         }
       ],
-      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
+      "reviewNote": "Printed p.8 rechecked 2026-11-19: jumping PSR includes any leg actuator, not just hip and gyro. Existing matrix covers hip/gyro only; expand to upper/lower/foot and verify actual dispatch before certifying."
     },
     {
       "id": "agoac-060",
@@ -3701,7 +3701,7 @@
         9
       ],
       "statement": "Unused MP expires; committed mode cannot change; six discrete facings and one MP per hexside; torso orientation is independent.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3716,7 +3716,37 @@
           "test": "AGoAC p.9: facing wraps through six hexsides and spends one MP per hexside"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Printed p.9 directly reviewed: six discrete facings, paid turns, independent torso and committed mode. Facing matrix 72 cases and phase reset evidence cover boundaries; digital facing cannot be ambiguous.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "36761125ce75c8c220853f0a89a08f33fad6fa90",
+        "testedTree": "f424acc22ebb6669d45c379e944d6d0c694d7d5c",
+        "mergedSha": "3ab827d8fe120e2da654fcf339322dd278a6e107",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44550846990,
+            "jobId": 135653824349,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44550846976,
+            "jobId": 135653823496,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44550846986,
+            "jobId": 135653823568,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.9 directly reviewed: six discrete facings, paid turns, independent torso and committed mode. Facing matrix 72 cases and phase reset evidence cover boundaries; digital facing cannot be ambiguous."
+      }
     },
     {
       "id": "agoac-061",
@@ -3725,7 +3755,7 @@
         9
       ],
       "statement": "Ground movement follows forward/rear adjacent hexes; reverse only walking and no level transition; reject partial/offboard voluntary destinations.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3736,7 +3766,37 @@
           "test": "AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Printed p.9 directly reviewed: forward/reverse adjacency, walking-only reverse with no elevation change, rejected off-board coordinates. Digital maps contain complete playable hexes only; forced partial-hex treatment belongs to displacement.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "36761125ce75c8c220853f0a89a08f33fad6fa90",
+        "testedTree": "f424acc22ebb6669d45c379e944d6d0c694d7d5c",
+        "mergedSha": "3ab827d8fe120e2da654fcf339322dd278a6e107",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44550846990,
+            "jobId": 135653824349,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44550846976,
+            "jobId": 135653823496,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44550846986,
+            "jobId": 135653823568,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.9 directly reviewed: forward/reverse adjacency, walking-only reverse with no elevation change, rejected off-board coordinates. Digital maps contain complete playable hexes only; forced partial-hex treatment belongs to displacement."
+      }
     },
     {
       "id": "agoac-062",
@@ -3761,7 +3821,7 @@
         9
       ],
       "statement": "Friendly transit, enemy blocking except declared charge, no occupied voluntary destination.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3772,7 +3832,37 @@
           "test": "AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Printed p.9 directly reviewed: friendly transit and blocked enemy transit/ordinary occupied destination; standing/prone combinations covered. Charge resolution is a separate combat requirement.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "36761125ce75c8c220853f0a89a08f33fad6fa90",
+        "testedTree": "f424acc22ebb6669d45c379e944d6d0c694d7d5c",
+        "mergedSha": "3ab827d8fe120e2da654fcf339322dd278a6e107",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44550846990,
+            "jobId": 135653824349,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44550846976,
+            "jobId": 135653823496,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44550846986,
+            "jobId": 135653823568,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.9 directly reviewed: friendly transit and blocked enemy transit/ordinary occupied destination; standing/prone combinations covered. Charge resolution is a separate combat requirement."
+      }
     },
     {
       "id": "agoac-064",
@@ -3781,7 +3871,7 @@
         10
       ],
       "statement": "All printed movement cost table entries: base, clear/paved/bridge/road, rough/woods, rubble, depth and elevation; road only along road; terrain PSR triggers/modifiers.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3820,7 +3910,37 @@
           "test": "AGoAC p.10: rubble entry invokes a terrain PSR for walking and running, not clear ground"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending. Directional road edges and bridge deck implementation merged in #158–160; full table and boundary review still required."
+      "reviewNote": "Printed p.10 table directly reviewed: costs and terrain checks match named tests, including directional road edge matching and bridge deck. Native maps model a bridge as a traversable deck; no advanced underpass rules asserted.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "36761125ce75c8c220853f0a89a08f33fad6fa90",
+        "testedTree": "f424acc22ebb6669d45c379e944d6d0c694d7d5c",
+        "mergedSha": "3ab827d8fe120e2da654fcf339322dd278a6e107",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44550846990,
+            "jobId": 135653824349,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44550846976,
+            "jobId": 135653823496,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44550846986,
+            "jobId": 135653823568,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.10 table directly reviewed: costs and terrain checks match named tests, including directional road edge matching and bridge deck. Native maps model a bridge as a traversable deck; no advanced underpass rules asserted."
+      }
     },
     {
       "id": "agoac-065",
