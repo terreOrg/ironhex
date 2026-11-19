@@ -1339,3 +1339,41 @@ test('AGoAC p.21: browser selects LRM spotter, submits server declaration and re
   assert.equal(commands,1);assert.equal(u.bins[0].shots,23);
  });
 });
+test('AGoAC p.21: browser declares aimed and ordinary weapons independently',{timeout:120000},async()=>{
+ const operationId='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+ await withPage('server-per-weapon-aim',{path:'/index.html?battle=1&operation='+operationId,noWebGL:true},async page=>{
+  let version=1,commands=0;
+  const g=new TestBattleGame({rng:()=>.5}),[u,s,t,other]=g.units;
+  for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,prone:false,twist:0,moveMode:'stand',fired:false});
+  Object.assign(s,{q:-3,r:-1});Object.assign(t,{q:3,r:0,prone:false,shutdown:true});Object.assign(other,{q:-3,r:1});
+  const laser={name:'Medium Laser',heat:3,damage:5,min:0,ammo:null,location:'CT',ranges:[3,6,9],rack:0};
+  u.weapons=[laser,{...laser,location:'RT'}];
+  g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,s.team,t.team];g.actingId=u.id;
+  const snapshot=()=>JSON.parse(JSON.stringify(g,(key,value)=>['map','rng','_resolutionReplay'].includes(key)?undefined:value));
+  const send=(route,status,body)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
+   const item=()=>({id:operationId,controlMode:'interactive',status:'active',version,game:snapshot()});
+   const path=new URL(route.request().url()).pathname;
+   if(path.endsWith('/snapshot'))return send(route,200,{item:item()});
+   if(path.endsWith('/command')){
+    const payload=route.request().postDataJSON();
+    assert.equal(payload.type,'fire');assert.equal(payload.shots.length,2);
+    assert.equal(payload.shots[0].aim,'CT');assert.equal(payload.shots[1].aim,null);
+    const effect=runTacticalOrder(g,payload);
+    assert(effect.result.ok&&effect.result.declared);commands++;version++;
+    return send(route,200,{item:{...item(),effect}});
+   }
+   return send(route,404,{error:'not_found'});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v1'));
+  await page.locator('[data-target="0"]').selectOption(String(t.id));
+  await page.locator('[data-target="1"]').selectOption(String(t.id));
+  await page.locator('[data-aim="0"]').selectOption('CT');
+  assert.equal(await page.locator('[data-aim="1"]').inputValue(),'');
+  await page.locator('#fire').click();
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v2'));
+  assert.equal(commands,1);assert.deepEqual(g.declarations[0].shots.map(s=>s.aim),['CT',null]);
+ });
+});

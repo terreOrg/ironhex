@@ -4196,3 +4196,18 @@ test('AGoAC pp.13,21: already-fired spotter defender choice resumes without anot
  assert.equal(g.pendingChoice,null);assert.equal(u.bins[0].shots,23);
  assert.equal(g.declarations.at(-1).shots[0].spotterLosChoice,Number(p.options[0].id));
 });
+test('AGoAC pp.19,21: prone spotter adds cumulative movement modifier to indirect attacks',()=>{
+ const g=fresh(),u=g.units[0],s=g.units[1],t=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,twist:0,moveMode:'stand'});
+ Object.assign(s,{q:4,r:-3,config:'Biped',prone:false,moveMode:'run'});
+ Object.assign(t,{q:4,r:0,prone:false,moveMode:'stand'});
+ g.tile(2,0).height=2;
+ u.weapons=[{name:'LRM 10',heat:4,damage:1,min:6,ammo:24,location:'RT',ranges:[7,14,21],rack:10}];
+ const standing=g.preview(u.id,t.id,0,{spotter:s.id});
+ assert(standing.legal,standing.reason);assert.equal(standing.mods.spotter,2);
+ s.prone=true;
+ const prone=g.preview(u.id,t.id,0,{spotter:s.id});
+ assert(prone.legal,prone.reason);assert.equal(prone.mods.spotter,4);
+ assert.equal(prone.targetNumber,standing.targetNumber+2);
+});
