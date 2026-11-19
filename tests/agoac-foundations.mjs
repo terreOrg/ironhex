@@ -3129,3 +3129,24 @@ test('AGoAC p.9: facing wraps through six hexsides and spends one MP per hexside
   assert.equal(JSON.stringify(u),exhausted);
  }
 });
+
+
+test('AGoAC p.9: forward elevation costs and reverse level restrictions',()=>{
+ for(const mode of ['walk','run'])for(const delta of [-3,-2,-1,0,1,2,3])for(const rear of [false,true]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:8,heat:0,spent:0,moveMode:'stand',distanceMoved:0,pendingHeat:0});
+  for(const t of g.tiles)Object.assign(t,{type:'plain',height:8,depth:0,surface:8});
+  g.tile(0,0).height=0;
+  const [q,r]=DIRS[rear?3:0],tile=g.tile(q,r);
+  assert(tile);tile.height=delta;
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  const route=g.reachable(u,mode).find(t=>t.q===q&&t.r===r);
+  if(Math.abs(delta)>2){assert.equal(route,undefined);continue;}
+  const reverse=rear&&mode==='walk'&&delta===0;
+  const expected=1+Math.abs(delta)+(rear&&!reverse?3:0);
+  assert.equal(route?.cost,expected);
+  assert(g.move(u.id,q,r,mode).ok);
+  assert.equal(u.spent,expected);assert.equal(u.distanceMoved,1);
+  assert.equal(u.facing,rear&&!reverse?3:0);
+ }
+});
