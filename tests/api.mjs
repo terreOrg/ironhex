@@ -363,3 +363,10 @@ test('API accepts canonical empty hex fire targets but rejects malformed coordin
  }
  assert.throws(()=>validateTacticalOrder({...b,primaryTarget:'hex:0,0'}),AuthError);
 });
+
+test('API validates indirect fire spotter without trusting client attack modifiers',()=>{
+ const b={type:'fire',id:0,version:1,shots:[{index:0,target:2,spotter:1}]};
+ assert.deepEqual(validateTacticalOrder(b),b);
+ for(const x of [{spotter:'1'},{spotter:4},{spotter:1,aim:'CT'},{spotter:1,heatMode:true},{spotter:1,targetNumber:2}])
+  assert.throws(()=>validateTacticalOrder({...b,shots:[{...b.shots[0],...x}]}),AuthError);
+});

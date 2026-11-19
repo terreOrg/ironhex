@@ -1169,10 +1169,10 @@ export class Game extends Legacy{
  }
  // Store the selected geometric side on the lower-ID unit so reverse fire
  // uses the same path. The round stamp makes stale selections inert.
- chooseLosPath(attacker,target,choice,team){
+ chooseLosPath(attacker,target,choice,team,{spotting=false}={}){
   const a=this.unit(attacker),b=this.unit(target);
   if(this.phase!=='fire'||!a||!b||a===b||a.team===b.team||b.team!==team||
-     a.fired||![-1,1].includes(choice))return fail('Выбор линии огня недоступен');
+     a.fired&&!spotting||![-1,1].includes(choice))return fail('Выбор линии огня недоступен');
   const paths=this.losAlternatives(a,b);
   if(paths.length!==2||!paths.some(p=>p.choice===choice))return fail('Нет альтернативной линии огня');
   const [first,second]=a.id<b.id?[a,b]:[b,a];
@@ -1196,9 +1196,9 @@ export class Game extends Legacy{
   if(!tile||this.units.some(u=>this.onMap(u)&&u.q===q&&u.r===r))return null;
   return {id,q,r,name:'Гекс '+q+', '+r,hexTarget:true,team:null,prone:false,heat:0,distanceMoved:0,moveMode:'stand'};
  }
- prepareFireLos(id,targets,humanTeams=[0]){
-  const a=this.unit(id);
-  if(this.phase!=='fire'||this.pendingChoice||!this.canAct(a))return fail('Выбор линии огня недоступен');
+ prepareFireLos(id,targets,humanTeams=[0],{sourceId=id}={}){
+  const actor=this.unit(id),a=this.unit(sourceId),spotting=sourceId!==id;
+  if(this.phase!=='fire'||this.pendingChoice||!this.canAct(actor)||!a||a.team!==actor.team||a.dead||a.deployed===false)return fail('Выбор линии огня недоступен');
   let changed=false;
   for(const target of new Set(targets)){
    const b=this.fireTarget(target);
@@ -1212,7 +1212,7 @@ export class Game extends Legacy{
    }
    if(humanTeams.includes(b.team)){
     this.pendingChoice={kind:'los-path',scope:'los',team:b.team,unitId:b.id,
-     key:this.round+':los:'+a.id+':'+b.id,context:{attackerId:a.id},
+     key:this.round+':los:'+a.id+':'+b.id,context:{attackerId:a.id,...(spotting?{spotting:true}:{})},
      options:paths.map(p=>({...p,id:String(p.choice)}))};
     return {ok:true,pending:true,losPrepared:true};
    }
@@ -1220,7 +1220,7 @@ export class Game extends Legacy{
    // then more woods. A human defender always makes their own decision.
    const priority=p=>Number(p.blocked)*100+Number(p.cover)*10+p.woods;
    const chosen=priority(paths[1])>priority(paths[0])?paths[1]:paths[0];
-   const result=this.chooseLosPath(a.id,b.id,chosen.choice,b.team);
+   const result=this.chooseLosPath(a.id,b.id,chosen.choice,b.team,{spotting});
    if(!result.ok)return result;
    changed=true;
   }
@@ -1230,7 +1230,7 @@ export class Game extends Legacy{
   const p=this.pendingChoice;
   if(p?.scope!=='los'||!humanTeams.includes(p.team)||choice?.key!==p.key||
      !p.options.some(o=>o.id===choice.option))return fail('Выберите допустимую линию огня');
-  const result=this.chooseLosPath(p.context.attackerId,p.unitId,Number(choice.option),p.team);
+  const result=this.chooseLosPath(p.context.attackerId,p.unitId,Number(choice.option),p.team,{spotting:!!p.context.spotting});
   if(!result.ok)return result;
   this.pendingChoice=null;
   return {ok:true,losPrepared:true};
@@ -1241,9 +1241,44 @@ export class Game extends Legacy{
      new Set(assignments.map(s=>s.index)).size!==assignments.length||
      primaryTarget!==null&&!this.primaryTargetChoices(id,assignments).includes(primaryTarget))
    return fail('Недопустимая декларация огня');
-  const prepared=this.prepareFireLos(id,assignments.map(s=>s.target),humanTeams);
+  const prepared=this.prepareAttackLos(id,assignments,humanTeams);
   if(!prepared.ok||prepared.losPrepared)return prepared;
   return this.declareFire(id,assignments,primaryTarget);
+ }
+ // AGoAC p.21: one spotter can serve multiple attackers, but only
+ // against one target per turn. The declarations are the journal.
+ spottingTargets(){
+  const targets=new Map();
+  for(const d of this.declarations)for(const s of d.shots)
+   if(s.spotter!=null)targets.set(s.spotter,s.target);
+  return targets;
+ }
+ checkIndirectSpotter(u,t,w,spotterId,targets=this.spottingTargets()){
+  const s=this.unit(spotterId);
+  if(!w.name.startsWith('LRM ')||!w.rack||w.ammo===null)return 'Непрямой огонь только из LRM';
+  if(!Number.isInteger(spotterId)||!s||s===u||s.team!==u.team||s.dead||s.deployed===false||s.charge)
+   return 'Нужен другой союзный мех без тарана/DFA';
+  if(targets.has(s.id)&&targets.get(s.id)!==t.id)return 'Корректировщик уже назначен другой цели';
+  return '';
+ }
+ prepareAttackLos(id,assignments,humanTeams=[]){
+  const u=this.unit(id),spots=this.spottingTargets();
+  for(const s of assignments)if(s.spotter!=null){
+   const t=this.fireTarget(s.target),w=u?.weapons[s.index];
+   if(!t||!w||s.aim||s.heatMode)return fail('Недопустимая непрямая атака');
+   const reason=this.checkIndirectSpotter(u,t,w,s.spotter,spots);
+   if(reason)return fail(reason);
+   spots.set(s.spotter,t.id);
+  }
+  const direct=this.prepareFireLos(id,assignments.map(s=>s.target),humanTeams);
+  if(!direct.ok||direct.pending)return direct;
+  let changed=direct.losPrepared;
+  for(const s of assignments)if(s.spotter!=null){
+   const prepared=this.prepareFireLos(id,[s.target],humanTeams,{sourceId:s.spotter});
+   if(!prepared.ok||prepared.pending)return prepared;
+   changed||=prepared.losPrepared;
+  }
+  return {ok:true,losPrepared:changed};
  }
  aiAttackWithLosChoices(id,{humanTeams=[0]}={}){
   const a=this.unit(id);
@@ -1350,7 +1385,7 @@ export class Game extends Legacy{
   if(this.isImmobile(t))return movement+(includeImmobile?-4:0);
   return movement+(t.skidded?2:0)+(this.tacticalOptions?.standingStill&&t.spent===0?-1:0)+(this.tacticalOptions?.evading&&t.moveMode==='evade'&&!t.prone?1:0);
  }
- preview(id,target,index,opts={}){const u=this.unit(id),t=this.fireTarget(target),w=u?.weapons[index];if(!u||!t||!w)return {legal:false,chance:0,targetNumber:99,reason:'Выберите цель'};if(u.deployed===false||t.deployed===false)return {legal:false,chance:0,targetNumber:99,reason:'Мех ещё не вышел на поле'};const quadProneBonus=quadProneFireBonus(u),range=distance(u,t),act=u.actuators[w.location],sub=this.tile(u.q,u.r).depth>=(u.prone||mechLegLocation(u,w.location)?1:2),waterline=!t.hexTarget&&this.tile(t.q,t.r).depth===1&&!t.prone,targetSub=!t.hexTarget&&this.tile(t.q,t.r).depth>=(t.prone?1:2),underwaterCover=sub&&waterline,los=this.los(u,t,sub),ranges=sub?(UNDERWATER_RANGES[w.name]||[0,0,0]):w.ranges;let reason='';if(!this.mobile(u)||t.dead||u.team===t.team)reason='Мех не может стрелять';else if(u.charge)reason='Заявлен таран/DFA';else if(u.moveMode==='evade')reason='Уклонение запрещает атаки';else if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||w.locations?.some(l=>this.isBreached(u,l)))reason='Оружие уничтожено или затоплено';else if(u.sensorHits>=2)reason='Датчики уничтожены';else if(w.ammo===0)reason='Нет боезапаса';else if(!this.arc(u,t,w))reason='Вне сектора огня';else if(sub&&(!this.tacticalOptions?.underwaterFire||!UNDERWATER_RANGES[w.name]))reason='Оружие не допускает подводную стрельбу';else if(!range||range>ranges[2])reason='Вне дальности';else if(!sub&&mechLegLocation(u,w.location)&&this.los(t,u).cover)reason='Ноги скрыты собственным частичным укрытием';else if(los.blocked)reason='Линия огня перекрыта';else if((sub!==targetSub&&!underwaterCover)||sub&&!UNDERWATER_RANGES[w.name])reason='Стрельба через поверхность воды запрещена';else if(u.prone&&u.config!=='Quad'&&(!u.structure.LA||!u.structure.RA))reason='Для стрельбы лёжа требуются обе сохранившиеся руки';else if(u.prone&&(
+ preview(id,target,index,opts={}){const u=this.unit(id),t=this.fireTarget(target),w=u?.weapons[index];if(!u||!t||!w)return {legal:false,chance:0,targetNumber:99,reason:'Выберите цель'};if(u.deployed===false||t.deployed===false)return {legal:false,chance:0,targetNumber:99,reason:'Мех ещё не вышел на поле'};const quadProneBonus=quadProneFireBonus(u),range=distance(u,t),act=u.actuators[w.location],sub=this.tile(u.q,u.r).depth>=(u.prone||mechLegLocation(u,w.location)?1:2),waterline=!t.hexTarget&&this.tile(t.q,t.r).depth===1&&!t.prone,targetSub=!t.hexTarget&&this.tile(t.q,t.r).depth>=(t.prone?1:2),underwaterCover=sub&&waterline,directLos=this.los(u,t,sub),indirect=opts.spotter!=null,spotter=indirect&&Number.isInteger(opts.spotter)?this.unit(opts.spotter):null,spotterError=indirect?this.checkIndirectSpotter(u,t,w,opts.spotter):'',los=indirect&&!spotterError?this.los(spotter,t):directLos,ranges=sub?(UNDERWATER_RANGES[w.name]||[0,0,0]):w.ranges;let reason='';if(!this.mobile(u)||t.dead||u.team===t.team)reason='Мех не может стрелять';else if(u.charge)reason='Заявлен таран/DFA';else if(u.moveMode==='evade')reason='Уклонение запрещает атаки';else if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||w.locations?.some(l=>this.isBreached(u,l)))reason='Оружие уничтожено или затоплено';else if(u.sensorHits>=2)reason='Датчики уничтожены';else if(w.ammo===0)reason='Нет боезапаса';else if(!this.arc(u,t,w))reason='Вне сектора огня';else if(sub&&(!this.tacticalOptions?.underwaterFire||!UNDERWATER_RANGES[w.name]))reason='Оружие не допускает подводную стрельбу';else if(!range||range>ranges[2])reason='Вне дальности';else if(!sub&&mechLegLocation(u,w.location)&&this.los(t,u).cover)reason='Ноги скрыты собственным частичным укрытием';else if(indirect&&(spotterError||opts.aim||opts.heatMode||sub||targetSub||!directLos.blocked))reason=spotterError||'Непрямой огонь требует отсутствия прямой LOS и запрещает прицеливание/подводную стрельбу';else if(los.blocked)reason=indirect?'Корректировщик не видит цель':'Линия огня перекрыта';else if((sub!==targetSub&&!underwaterCover)||sub&&!UNDERWATER_RANGES[w.name])reason='Стрельба через поверхность воды запрещена';else if(u.prone&&u.config!=='Quad'&&(!u.structure.LA||!u.structure.RA))reason='Для стрельбы лёжа требуются обе сохранившиеся руки';else if(u.prone&&(
   u.config==='Quad'
    ?(!quadProneBonus&&(mechLegLocation(u,w.location)||
       w.locations?.some(loc=>mechLegLocation(u,loc))))
@@ -1359,7 +1394,7 @@ export class Game extends Legacy{
       w.locations?.includes(u.brace||'LA')||
       !u.structure[u.brace||'LA'])))
   reason='Оружие недоступно лёжа';else if(opts.aim&&t.hexTarget)reason='У пустого гекса нет локаций попадания';else if(opts.aim&&!Object.hasOwn(LOCATIONS,opts.aim))reason='Неизвестная прицельная локация';else if(opts.aim&&!this.isImmobile(t))reason='Прицельная стрельба только по обездвиженной цели';else if(opts.aim&&w.rack)reason='Кластерные ракеты нельзя использовать для прицельной стрельбы';else if(opts.aim&&los.cover&&partialCoverObscures(t,opts.aim,underwaterCover))reason='Локация скрыта частичным укрытием';
- const mods={gunnery:u.gunnery,attacker:{stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode]+(u.skidded?1:0),target:t.hexTarget?-4:this.targetMovementModifier(t,{includeImmobile:opts.aim!=='HD'}),terrain:los.woods,cover:opts.aim?0:los.cover?1:0,heat:[8,13,17,24].filter(h=>u.heat>=h).length,range:range<=ranges[0]?0:range<=ranges[1]?2:4,minimum:range<=w.min?w.min-range+1:0,weapon:w.toHit||0,sensor:u.sensorHits?2:0,arm:act&&(u.config==='Quad'||['LA','RA'].includes(w.location))?(act.shoulder?4:Number(act.upper&& (u.config==='Quad'||u.slots[w.location].includes('upper')))+Number(act.lower&&(u.config==='Quad'||u.slots[w.location].includes('lower')))):0,prone:u.prone&&!quadProneBonus?2:0,targetProne:t.prone?(range===1?-2:1):0,secondary:opts.secondary?(this.inForwardFireArc(u,t)?1:2):0,aim:opts.aim==='HD'?3:0,night:this.weather.night?Math.max(0,2-Math.floor(t.heat/20)):0,wind:this.weather.gale?(w.rack?2:w.ammo!==null?1:0):0};const targetNumber=Object.values(mods).reduce((a,b)=>a+b,0);let chance=0;for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)if(a+b>=targetNumber)chance++;return {legal:!reason,reason,range,blocked:los.blocked,cover:los.cover,underwaterCover,side:t.hexTarget?null:this.hitSide(t,u),mods,targetNumber,chance:reason?0:Math.round(chance/36*100)};}
+ const mods={gunnery:u.gunnery,attacker:{stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode]+(u.skidded?1:0),target:t.hexTarget?-4:this.targetMovementModifier(t,{includeImmobile:opts.aim!=='HD'}),terrain:los.woods,cover:opts.aim?0:los.cover?1:0,heat:[8,13,17,24].filter(h=>u.heat>=h).length,range:range<=ranges[0]?0:range<=ranges[1]?2:4,minimum:range<=w.min?w.min-range+1:0,weapon:w.toHit||0,sensor:u.sensorHits?2:0,arm:act&&(u.config==='Quad'||['LA','RA'].includes(w.location))?(act.shoulder?4:Number(act.upper&& (u.config==='Quad'||u.slots[w.location].includes('upper')))+Number(act.lower&&(u.config==='Quad'||u.slots[w.location].includes('lower')))):0,prone:u.prone&&!quadProneBonus?2:0,targetProne:t.prone?(range===1?-2:1):0,secondary:opts.secondary?(this.inForwardFireArc(u,t)?1:2):0,aim:opts.aim==='HD'?3:0,night:this.weather.night?Math.max(0,2-Math.floor(t.heat/20)):0,wind:this.weather.gale?(w.rack?2:w.ammo!==null?1:0):0};if(indirect){mods.indirect=1;mods.spotter=spotter?({stand:0,walk:1,run:2,jump:3,evade:2}[spotter.moveMode]??0)+(spotter.skidded?1:0):0;mods.spotterFires=Number(this.declarations.some(d=>d.id===opts.spotter&&d.shots.length));}if(this.spottingTargets().has(u.id))mods.spotting=1;const targetNumber=Object.values(mods).reduce((a,b)=>a+b,0);let chance=0;for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)if(a+b>=targetNumber)chance++;return {legal:!reason,reason,range,blocked:los.blocked,cover:indirect?waterline:los.cover,underwaterCover,side:t.hexTarget?null:this.hitSide(t,u),mods,targetNumber,chance:reason?0:Math.round(chance/36*100)};}
  setDirectionalTorsoMount(id,index,facing){
   const u=this.unit(id),mount=u?.directionalTorsoMounts?.[index];
   if(this.phase!=='fire'||!this.canAct(u)||u.prone||!mount||mount.locked||
@@ -1399,7 +1434,7 @@ export class Game extends Legacy{
   return !!u.twist&&u.weapons.some(w=>!w.rear&&!w.destroyed&&mechLegLocation(u,w.location))&&
    Math.abs(this.relative(u,t,u.facing))<=60.00001;
  }
- declareFire(id,assignments,primaryTarget=null){const u=this.unit(id);if(this.phase!=='fire'||this.pendingChoice||!this.canAct(u)||!Array.isArray(assignments))return fail('Сейчас очередь другого отряда');const choices=this.primaryTargetChoices(id,assignments);if(primaryTarget!==null&&!choices.includes(primaryTarget))return fail('Основная цель должна быть допустимой заявленной целью');const hexTargets=assignments.map(s=>s.target).filter(t=>typeof t==='string');if(hexTargets.some(t=>!this.fireTarget(t)))return fail('Недопустимый пустой гекс');if(hexTargets.length){const prepared=this.prepareFireLos(id,hexTargets,[]);if(!prepared.ok)return prepared;}const primary=primaryTarget??choices[0];const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(w.ammo===null||!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.fireTarget(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:primary!==a.target,aim:a.aim});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&!this.isImmobile(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer'});}if(!this.commitDeclaredAmmo(u,shots,reservedBins))return fail('Недостаточно доступного боезапаса');this.declarations.push({id,shots,ammoSpent:true});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
+ declareFire(id,assignments,primaryTarget=null){const u=this.unit(id);if(this.phase!=='fire'||this.pendingChoice||!this.canAct(u)||!Array.isArray(assignments))return fail('Сейчас очередь другого отряда');const choices=this.primaryTargetChoices(id,assignments);if(primaryTarget!==null&&!choices.includes(primaryTarget))return fail('Основная цель должна быть допустимой заявленной целью');const hexTargets=assignments.map(s=>s.target).filter(t=>typeof t==='string');if(hexTargets.some(t=>!this.fireTarget(t)))return fail('Недопустимый пустой гекс');if(assignments.some(s=>s.spotter!=null)){const prepared=this.prepareAttackLos(id,assignments,[]);if(!prepared.ok)return prepared;}else if(hexTargets.length){const prepared=this.prepareFireLos(id,hexTargets,[]);if(!prepared.ok)return prepared;}const primary=primaryTarget??choices[0];const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(w.ammo===null||!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.fireTarget(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:primary!==a.target,aim:a.aim,spotter:a.spotter,heatMode:a.heatMode});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&!this.isImmobile(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer',...(a.spotter==null?{}:{spotter:a.spotter})});}if(!this.commitDeclaredAmmo(u,shots,reservedBins))return fail('Недостаточно доступного боезапаса');this.declarations.push({id,shots,ammoSpent:true});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
  wound(u,n){for(let i=0;i<n&&!u.dead;i++){u.pilotWounds=Math.min(6,u.pilotWounds+1);if(u.pilotWounds>=6){this.destroyMech(u);this.note(`${u.name}: пилот погиб.`);break;}u.consciousChecks++;if(!this.deferConsciousness)this.consciousness(u);}}
  consciousness(u){while(u.consciousChecks>0&&!u.dead){
  // AGoAC pp.6,44: defer the throws, not the wound-specific thresholds.
@@ -1684,7 +1719,21 @@ export class Game extends Legacy{
    visit(list.splice(index,1)[0]);
   }
  }
+ finalizeSpottingModifiers(){
+  const spotting=this.spottingTargets();
+  if(!spotting.size)return;
+  const firing=new Set(this.declarations.filter(d=>d.shots.length).map(d=>d.id));
+  for(const d of this.declarations)for(const s of d.shots){
+   const p=s.preview,m=p.mods;
+   if(!m)continue;
+   const nextSpotting=Number(spotting.has(d.id)),nextFires=Number(s.spotter!=null&&firing.has(s.spotter));
+   p.targetNumber+=nextSpotting-(m.spotting??0)+nextFires-(m.spotterFires??0);
+   if(nextSpotting||Object.hasOwn(m,'spotting'))m.spotting=nextSpotting;
+   if(s.spotter!=null)m.spotterFires=nextFires;
+  }
+ }
  resolveFire(){
+  this.finalizeSpottingModifiers();
   this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;
   try{
    const staged=new Map();
