@@ -354,3 +354,12 @@ test('API resumes a persisted defender LOS choice while the opponent is acting',
  assert(restored.los(restored.unit(ai.id),restored.unit(human.id)).blocked);
  assert(restored.unit(ai.id).fired);
 });
+
+test('API accepts canonical empty hex fire targets but rejects malformed coordinates and invalid primary',()=>{
+ const b={type:'fire',id:0,version:1,shots:[{index:0,target:'hex:1,-2'}],primaryTarget:'hex:1,-2'};
+ assert.deepEqual(validateTacticalOrder(b),b);
+ for(const target of ['hex:01,2','hex:-0,1','hex:1,2.5','hex:1,1000','3','hex:1,2\n']){
+  assert.throws(()=>validateTacticalOrder({...b,shots:[{index:0,target}],primaryTarget:target}),AuthError);
+ }
+ assert.throws(()=>validateTacticalOrder({...b,primaryTarget:'hex:0,0'}),AuthError);
+});

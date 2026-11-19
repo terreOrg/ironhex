@@ -4011,3 +4011,46 @@ test('AGoAC pp.15,21–22: interactive cancellation replay refunds exactly one r
  assert.equal(g.resolution.length,1);assert.equal(g.resolution[0].shots[0].index,index);
  assert.equal(g.resolution[0].shots[0].hit,false);
 });
+
+test('AGoAC pp.13,15,17: empty hex attacks use immobility and mixed target modifiers with normal ammo and heat',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2],ally=g.units[1];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,twist:0,moveMode:'stand'});
+ Object.assign(t,{q:3,r:0,prone:false,moveMode:'stand'});
+ Object.assign(ally,{q:1,r:0,prone:false});
+ const hex='hex:4,0';
+ assert.equal(g.fireTarget('hex:1,0'),null);assert.equal(g.fireTarget('hex:3,0'),null);
+ assert.equal(g.fireTarget('hex:999,999'),null);assert.equal(g.fireTarget('hex:04,0'),null);
+ assert.equal(g.preview(u.id,hex,1).mods.target,-4);
+ assert.equal(g.preview(u.id,hex,1,{aim:'HD'}).legal,false);
+ assert.deepEqual(g.primaryTargetChoices(u.id,[{target:t.id},{target:hex}]),[t.id,hex]);
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,t.team];g.actingId=u.id;
+ const ammo=u.bins[0].shots,heat=u.pendingHeat;
+ assert(g.declareFire(u.id,[{index:0,target:t.id},{index:1,target:hex,bin:0}],t.id).ok);
+ assert.equal(u.bins[0].shots,ammo-1);
+ assert.equal(g.declarations[0].shots[1].preview.mods.secondary,1);
+ assert.equal(g.declarations[0].shots[1].preview.mods.target,-4);
+ g.rng=()=>.99;g.resolveFire();
+ const empty=g.resolution.find(x=>x.target===hex);
+ assert(empty);assert.equal(empty.shots[0].damage,0);
+ assert.equal(u.pendingHeat,heat+u.weapons[0].heat+u.weapons[1].heat);
+ assert.equal(u.bins[0].shots,ammo-1);
+});
+test('AGoAC p.13: an empty hex edge LOS is randomized once per attacker and round',()=>{
+ for(const [draw,expected] of [[.1,1],[.9,-1]]){
+  const g=fresh(),u=g.units[0];
+  for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,prone:false});
+  for(const [i,v] of g.units.entries())if(v!==u)Object.assign(v,{q:-3,r:i-2});
+  g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,1-u.team];g.actingId=u.id;
+  const hex='hex:1,1',v=g.fireTarget(hex);
+  assert(v);assert.equal(g.losAlternatives(u,v).length,2);
+  let draws=0;g.rng=()=>{draws++;return draw;};
+  assert(g.prepareFireLos(u.id,[hex,hex],[0,1]).losPrepared);
+  assert.equal(g.selectedLosPath(u,v),expected);assert.equal(g.selectedLosPath(v,u),-expected);
+  assert.equal(draws,1);assert.equal(g.pendingChoice,null);
+  assert.equal(g.prepareFireLos(u.id,[hex],[0,1]).losPrepared,false);assert.equal(draws,1);
+  g.round++;assert.equal(g.selectedLosPath(u,v),0);
+  assert(g.prepareFireLos(u.id,[hex],[0,1]).losPrepared);assert.equal(draws,2);
+ }
+});
