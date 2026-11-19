@@ -3445,3 +3445,19 @@ test('AGoAC p.12: repeated standing attempts each consume two MP and one heat un
   assert.equal(attempts,Math.floor(budget/2));
  }
 });
+
+test('AGoAC p.8: non-hip leg actuator damage requires a jump landing PSR but not an ordinary running PSR',()=>{
+ for(const leg of ['LL','RL'])for(const part of ['upper','lower','foot'])for(const mode of ['walk','run','jump']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:6,jump:3,jumpLost:0,heat:0,spent:0,moveMode:'stand',prone:false,proneAtStart:false,moveStart:{q:0,r:0}});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  u.actuators[leg][part]=true;
+  assert.equal(g.psrMod(u),1);
+  const calls=[];g.psr=(...args)=>{calls.push(args);return true;};
+  assert(g.move(u.id,1,0,mode).ok);
+  assert(g.hold(u.id).ok);
+  assert.equal(calls.length,mode==='jump'?1:0);
+  if(calls.length){assert.equal(calls[0][0],u);assert.equal(calls[0][3],true);}
+ }
+});

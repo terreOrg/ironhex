@@ -3949,7 +3949,7 @@
         11
       ],
       "statement": "Minimum movement: at least one MP, legal forward hex, exclusive expenditure, counted running; water exception and one-MP prone stand.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3968,7 +3968,37 @@
           "test": "AGoAC p.11: minimum movement preserves facing and respects elevation and occupied hex limits"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.11; minimumMove enforces exclusive expenditure, legal forward step, elevation/occupancy and terrain PSR, and selects running. Minimum stand separately covered.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.11; minimumMove enforces exclusive expenditure, legal forward step, elevation/occupancy and terrain PSR, and selects running. Minimum stand separately covered."
+      }
     },
     {
       "id": "agoac-066",
@@ -3977,7 +4007,7 @@
         11
       ],
       "statement": "Immobile classifications versus zero MP, prone or damaged gyro; may select only stand still; automatic required PSR failure unless prone. Combat consumption deferred.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3988,7 +4018,37 @@
           "test": "AGoAC p.11: zero ground MP alone is not immobility and cannot suppress intact jump MP"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.11; immobility is distinct from zero ground MP; limbless standing unit fails PSR, prone exception covered.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.11; immobility is distinct from zero ground MP; limbless standing unit fails PSR, prone exception covered."
+      }
     },
     {
       "id": "agoac-067",
@@ -3997,7 +4057,7 @@
         11
       ],
       "statement": "Movement stacking boundary permits one remaining Mech per hex; involuntary stacking calls existing displacement procedure without auditing its internals.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4012,7 +4072,37 @@
           "test": "AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.11; friendly transit permitted, voluntary occupied landing forbidden; involuntary stacking invokes existing domino resolution. Detailed displacement audit deferred.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.11; friendly transit permitted, voluntary occupied landing forbidden; involuntary stacking invokes existing domino resolution. Detailed displacement audit deferred."
+      }
     },
     {
       "id": "agoac-068",
@@ -4046,7 +4136,7 @@
         12
       ],
       "statement": "Jump landing chooses free facing; no jumping into occupied hex except DFA declaration; downward height unrestricted within legal path.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4061,7 +4151,37 @@
           "test": "AGoAC p.12: jump ceiling is relative to starting elevation and includes landing hex"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.12; landing facing freely selected, occupied ordinary landing forbidden, ceiling only bounds upper terrain elevation. DFA belongs to physical combat.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.12; landing facing freely selected, occupied ordinary landing forbidden, ceiling only bounds upper terrain elevation. DFA belongs to physical combat."
+      }
     },
     {
       "id": "agoac-070",
@@ -4070,7 +4190,7 @@
         12
       ],
       "statement": "Jump into water requires landing PSR; submerged jets unavailable for takeoff, including leg jets at depth one; fall integration only.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4081,7 +4201,37 @@
           "test": "AGoAC p.12: submerged leg jump jets reduce launch MP at depth one and depth two prevents launch"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.12; water landing invokes PSR after facing selection, submerged leg jets excluded at depth one and takeoff forbidden at depth two.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.12; water landing invokes PSR after facing selection, submerged leg jets excluded at depth one and takeoff forbidden at depth two."
+      }
     },
     {
       "id": "agoac-071",
@@ -4090,7 +4240,7 @@
         12
       ],
       "statement": "Voluntary prone posture preserves facing, costs one MP without added heat/damage, unavailable after jump; prone height one level.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4101,7 +4251,37 @@
           "test": "AGoAC p.12: voluntary drop is rejected after a jump, without MP, or outside movement"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.12; voluntary drop spends one MP without independent heat/damage; facing unchanged; jump disallowed. Prone height represented as one level at rules consumers.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.12; voluntary drop spends one MP without independent heat/damage; facing unchanged; jump disallowed. Prone height represented as one level at rules consumers."
+      }
     },
     {
       "id": "agoac-072",
@@ -4110,7 +4290,7 @@
         12
       ],
       "statement": "Prone movement declares walk/run before standing, only turn/stand while prone; no jumping when prone at start.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4121,7 +4301,37 @@
           "test": "AGoAC pp.7,12: prone Mechs with no ground MP cannot escape by jumping"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.12; ground mode locked while standing, prone-at-start prohibits jump, prone ground transit blocked.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.12; ground mode locked while standing, prone-at-start prohibits jump, prone ground transit blocked."
+      }
     },
     {
       "id": "agoac-073",
@@ -4130,7 +4340,7 @@
         12
       ],
       "statement": "Standing eligibility by limb counts; two MP and one heat per attempt, required PSR, repeats while sufficient MP, successful free facing; one-leg single attempt and cumulative PSR.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4145,7 +4355,37 @@
           "test": "AGoAC p.12: repeated standing attempts each consume two MP and one heat until budget exhausted"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual review p.12; standing eligibility, two MP/one heat per normal attempt, repeat and free successful facing, restricted one-leg attempt covered.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "28e9ca298bd8bd2c8212eec6c3da689113ea05fe",
+        "testedTree": "776907e250f6dffd1144491d6cd9baa7ae1d9d2b",
+        "mergedSha": "d84f0891c9af5c35c5b8e5e7a7f03962c49e5dd7",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44553677561,
+            "jobId": 135663845578,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44553677701,
+            "jobId": 135663846055,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44553677730,
+            "jobId": 135663846176,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual review p.12; standing eligibility, two MP/one heat per normal attempt, repeat and free successful facing, restricted one-leg attempt covered."
+      }
     },
     {
       "id": "agoac-074",
