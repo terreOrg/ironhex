@@ -1878,7 +1878,7 @@ export class Game extends Legacy{
 
  const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';// Preview reports nominal damage. Underwater reduction is per hit location
  // and must happen only during damage resolution, not at declaration.
- const underwaterPhysical=targetSub||targetWaterline;// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
+ const underwaterPhysical=targetSub||targetWaterline&&table!=='punch';// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
  // At equal LOS height only non-Kick-table leg hits are absorbed.
  // Charges resolve separately and are explicitly exempt from leg protection.
  const quadWaterCover=t.config==='Quad'&&targetWaterline;

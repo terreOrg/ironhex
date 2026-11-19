@@ -738,7 +738,7 @@ test('Fire from split torso-arm weapon occupies both mounts for later physical a
  assert.equal(g.physicalPreview(0,2,'punch','RA').legal,false);
 });
 
-test('Underwater punches, kicks and hatchets keep nominal preview damage until location-specific resolution (BMM pp.35,65)',()=>{
+test('Underwater punches, kicks and hatchet hits deal half damage rounded down (BMM pp.35,65)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
   Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
  u.q=0;u.r=0;u.facing=0;t.q=1;t.r=0;
@@ -760,6 +760,15 @@ test('Underwater punches, kicks and hatchets keep nominal preview damage until l
  u.slots.RA[7]='hatchet';const axe=g.physicalPreview(0,2,'hatchet','RA');
  assert.equal(axe.legal,true,axe.reason);
  assert.equal(axe.damage,Math.ceil(u.tonnage/5));
+ // The physical preview is nominal. Resolve each fully submerged location
+ // to verify the exact per-hit reduction required by the printed rules.
+ const applied=[];g.damage=(mech,location,amount)=>{applied.push(amount);return [];};
+ g.rng=()=>.99;
+ for(const [preview,table] of [[underwaterPunch,'punch'],[underwaterKick,'kick'],[axe,'normal']]){
+  const hit=g.hit(t,preview.damage,'front',table,null,false,false,true);
+  assert.equal(hit.damage,Math.floor(preview.damage/2));
+ }
+ assert.equal(applied.length,3);
 });
 test('A depth-1 standing mech can only kick a fully submerged adjacent target (BMM p.35)',()=>{
  const g=game(),u=g.units[0],t=g.units[2];for(const tile of g.tiles)
@@ -781,7 +790,10 @@ test('Depth-1 to depth-1 underwater kick halves damage, upper punches do not (BM
  const punch=g.physicalPreview(0,2,'punch','RA'),kick=g.physicalPreview(0,2,'kick','RL');
  assert.equal(punch.underwaterPhysical,false);assert.equal(kick.underwaterPhysical,true);
  assert.equal(punch.damage,Math.ceil(u.tonnage/10));
- assert.equal(kick.damage,Math.floor(Math.ceil(u.tonnage/5)/2));
+ assert.equal(kick.damage,Math.ceil(u.tonnage/5));
+ g.damage=()=>[];g.rng=()=>.99;
+ assert.equal(g.hit(t,punch.damage,'front','punch',null,false,false,true).damage,punch.damage);
+ assert.equal(g.hit(t,kick.damage,'front','kick',null,false,false,true).damage,Math.floor(kick.damage/2));
 });
 
 test('Prone fire with both arms intact allows unbraced torso mounts (BMM p.30)',()=>{
