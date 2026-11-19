@@ -5,7 +5,7 @@ const fields={
   fire:['id','shots','primaryTarget'],physical:['id','target','attack','limb'],
   club:['id'],charge:['id','target','attack'],minimum:['id'],
   shutdown:['id'],dump:['id','bin'],flip:['id','enabled'],brace:['id','limb'],
-  next:['choice'],weather:['night','gale','standingStill','evading','floatingCriticals']
+  next:['choice'],weather:['night','gale','standingStill','evading','floatingCriticals','underwaterFire']
 };
 const int=(x,a,b)=>Number.isInteger(x)&&x>=a&&x<=b;
 const shot=x=>x&&typeof x==='object'&&!Array.isArray(x)&&
@@ -28,7 +28,8 @@ export function validateTacticalOrder(b){
     weather:()=>typeof b.night==='boolean'&&typeof b.gale==='boolean'&&
       (b.standingStill===undefined||typeof b.standingStill==='boolean')&&
       (b.evading===undefined||typeof b.evading==='boolean')&&
-      (b.floatingCriticals===undefined||typeof b.floatingCriticals==='boolean'),
+      (b.floatingCriticals===undefined||typeof b.floatingCriticals==='boolean')&&
+      (b.underwaterFire===undefined||typeof b.underwaterFire==='boolean'),
     move:()=>int(b.q,-6,6)&&int(b.r,-6,6)&&['walk','run','jump','evade','minimum'].includes(b.mode)&&
       (b.facing===undefined||b.mode==='jump'&&int(b.facing,0,5))&&
       (b.lateral===undefined||['shift-left-forward','shift-right-forward',
@@ -93,7 +94,7 @@ export function runTacticalOrder(game,body){
     if(game.phase!=='initiative'||game.round!==1)throw new AuthError(409,'weather_locked');
     game.weather={night:b.night,gale:b.gale};
     game.tacticalOptions={standingStill:!!b.standingStill,evading:!!b.evading,
-      floatingCriticals:!!b.floatingCriticals};
+      floatingCriticals:!!b.floatingCriticals,underwaterFire:!!b.underwaterFire};
     r={ok:true};
   }else{
     if(!game.units[id]||game.units[id].team!==0||

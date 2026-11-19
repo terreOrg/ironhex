@@ -3818,3 +3818,31 @@ test('AGoAC pp.16–20: direct GATOR composes damage heat movement terrain and m
  const clear=g.preview(u.id,t.id,0);
  assert.equal(clear.targetNumber,4);assert.equal(clear.chance,92);
 });
+
+test('AGoAC pp.13–14,19: submerged endpoints and submerged leg weapons cannot fire by default',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,facing:0,twist:0,prone:false});
+ Object.assign(b,{q:1,r:0,facing:3,twist:0,prone:false});
+ const w={name:'Medium Laser',heat:3,damage:5,min:0,ammo:null,location:'CT',ranges:[3,6,9],rack:0};
+ a.weapons=[w,{...w,location:'LL'}];b.weapons=[{...w}];
+ const water=(u,depth)=>Object.assign(g.tile(u.q,u.r),{type:depth?'water':'plain',depth,height:-depth,surface:0});
+ assert.equal(g.tacticalOptions.underwaterFire,false);
+ for(const [ad,bd,prone,expected] of [[0,0,false,true],[0,1,false,true],[1,0,false,true],[1,1,false,true],[2,2,false,false],[2,1,false,false],[1,2,false,false],[0,2,false,false],[0,1,true,false]]){
+  water(a,ad);water(b,bd);b.prone=prone;
+  assert.equal(g.los(a,b).blocked,!expected);assert.equal(g.los(b,a).blocked,!expected);
+  assert.equal(g.preview(a.id,b.id,0).legal,expected);
+  if(ad===1)assert.equal(g.preview(a.id,b.id,1).legal,false);
+ }
+ water(a,2);water(b,1);b.prone=false;g.tacticalOptions.underwaterFire=true;
+ assert(g.preview(a.id,b.id,0).legal);
+});
+test('AGoAC pp.13–14,17: water intervenes at surface elevation only when it reaches LOS',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:3,r:0,prone:false});
+ const t=g.tile(1,0);Object.assign(t,{type:'water',depth:2,height:-2,surface:0});
+ assert.equal(g.los(a,b).blocked,false);
+ Object.assign(t,{height:0,surface:2});
+ assert.equal(g.los(a,b).blocked,true);assert.equal(g.los(b,a).blocked,true);
+});

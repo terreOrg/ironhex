@@ -86,7 +86,7 @@ test('Optional TO movement settings are server-controlled, locked and validated'
   }),e=>e.code==='invalid_command');
   const game=new Game({rng:()=>.5});
   assert.equal(runTacticalOrder(game,cmd).result.ok,true);
-  assert.deepEqual(game.tacticalOptions,{standingStill:true,evading:true,floatingCriticals:false});
+  assert.deepEqual(game.tacticalOptions,{standingStill:true,evading:true,floatingCriticals:false,underwaterFire:false});
   game.phase='move';
   assert.throws(()=>runTacticalOrder(game,{...cmd,evading:false}),
     e=>e.code==='weather_locked');
@@ -108,4 +108,16 @@ test('BMM floating criticals is validated, server-settable and locked after init
  game.phase='move';
  assert.throws(()=>runTacticalOrder(game,{...command,floatingCriticals:false}),
   e=>e.code==='weather_locked');
+});
+
+test('AGoAC p.19: BMM underwater weapon combat is an explicit pre-battle option',()=>{
+ const g=new Game({rng:()=>.5});
+ const command={type:'weather',version:1,night:false,gale:false};
+ assert.equal(g.tacticalOptions.underwaterFire,false);
+ assert.throws(()=>validateTacticalOrder({...command,underwaterFire:1}));
+ runTacticalOrder(g,{...command,underwaterFire:true});
+ assert.equal(g.tacticalOptions.underwaterFire,true);
+ runTacticalOrder(g,{...command,underwaterFire:false});
+ assert.equal(g.tacticalOptions.underwaterFire,false);
+ g.round=2;assert.throws(()=>runTacticalOrder(g,{...command,underwaterFire:true}));
 });
