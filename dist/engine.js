@@ -1434,7 +1434,7 @@ export class Game extends Legacy{
   return !!u.twist&&u.weapons.some(w=>!w.rear&&!w.destroyed&&mechLegLocation(u,w.location))&&
    Math.abs(this.relative(u,t,u.facing))<=60.00001;
  }
- declareFire(id,assignments,primaryTarget=null){const u=this.unit(id);if(this.phase!=='fire'||this.pendingChoice||!this.canAct(u)||!Array.isArray(assignments))return fail('Сейчас очередь другого отряда');const choices=this.primaryTargetChoices(id,assignments);if(primaryTarget!==null&&!choices.includes(primaryTarget))return fail('Основная цель должна быть допустимой заявленной целью');const hexTargets=assignments.map(s=>s.target).filter(t=>typeof t==='string');if(hexTargets.some(t=>!this.fireTarget(t)))return fail('Недопустимый пустой гекс');if(assignments.some(s=>s.spotter!=null)){const prepared=this.prepareAttackLos(id,assignments,[]);if(!prepared.ok)return prepared;}else if(hexTargets.length){const prepared=this.prepareFireLos(id,hexTargets,[]);if(!prepared.ok)return prepared;}const primary=primaryTarget??choices[0];const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(w.ammo===null||!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.fireTarget(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:primary!==a.target,aim:a.aim,spotter:a.spotter,heatMode:a.heatMode});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&!this.isImmobile(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer',...(a.spotter==null?{}:{spotter:a.spotter})});}if(!this.commitDeclaredAmmo(u,shots,reservedBins))return fail('Недостаточно доступного боезапаса');this.declarations.push({id,shots,ammoSpent:true});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
+ declareFire(id,assignments,primaryTarget=null){const u=this.unit(id);if(this.phase!=='fire'||this.pendingChoice||!this.canAct(u)||!Array.isArray(assignments))return fail('Сейчас очередь другого отряда');const choices=this.primaryTargetChoices(id,assignments);if(primaryTarget!==null&&!choices.includes(primaryTarget))return fail('Основная цель должна быть допустимой заявленной целью');const hexTargets=assignments.map(s=>s.target).filter(t=>typeof t==='string');if(hexTargets.some(t=>!this.fireTarget(t)))return fail('Недопустимый пустой гекс');if(assignments.some(s=>!s||!Number.isInteger(s.index)||!u.weapons[s.index]||!this.fireTarget(s.target)||this.fireTarget(s.target).team===u.team)||new Set(assignments.map(s=>s.index)).size!==assignments.length)return fail('Недопустимая декларация огня');const prepared=this.prepareAttackLos(id,assignments,[]);if(!prepared.ok)return prepared;const primary=primaryTarget??choices[0];const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(w.ammo===null||!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.fireTarget(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:primary!==a.target,aim:a.aim,spotter:a.spotter,heatMode:a.heatMode});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&!this.isImmobile(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,losChoice:this.selectedLosPath(u,t),spotterLosChoice:a.spotter==null?null:this.selectedLosPath(this.unit(a.spotter),t),aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer',...(a.spotter==null?{}:{spotter:a.spotter})});}if(!this.commitDeclaredAmmo(u,shots,reservedBins))return fail('Недостаточно доступного боезапаса');this.declarations.push({id,shots,ammoSpent:true});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
  wound(u,n){for(let i=0;i<n&&!u.dead;i++){u.pilotWounds=Math.min(6,u.pilotWounds+1);if(u.pilotWounds>=6){this.destroyMech(u);this.note(`${u.name}: пилот погиб.`);break;}u.consciousChecks++;if(!this.deferConsciousness)this.consciousness(u);}}
  consciousness(u){while(u.consciousChecks>0&&!u.dead){
  // AGoAC pp.6,44: defer the throws, not the wound-specific thresholds.
@@ -1636,24 +1636,29 @@ export class Game extends Legacy{
    }
   }
  }
- rollDeclaredFire(d){
+ refundImpossibleShot(d,s){
+  const u=this.unit(d.id),w=s.weapon;
+  if(d.ammoSpent&&w.ammo!==null&&s.bin!==null&&u.bins[s.bin]){
+   u.bins[s.bin].shots++;this.syncAmmo(u);
+  }
+  this.note(u.name+' · '+w.name+': невозможный выстрел отменён.');
+ }
+ rollDeclaredFire(d,{cancelled=null}={}){
   const u=this.unit(d.id),reserved=new Map(),attacks=[];
-  if(!d.ammoSpent)for(const s of d.shots)if(s.bin!==null&&s.weapon.ammo!==null)
+  const shots=cancelled?d.shots.filter(s=>!cancelled.has(s)):d.shots;
+  if(!d.ammoSpent)for(const s of shots)if(s.bin!==null&&s.weapon.ammo!==null)
    reserved.set(s.bin,(reserved.get(s.bin)||0)+1);
-  this.orderFireStage(u,d.shots,'roll',s=>{
+  this.orderFireStage(u,shots,'roll',s=>{
    const w=s.weapon,p=s.preview;
-   if(p.targetNumber>12){
+   if(!cancelled&&p.targetNumber>12){
     const decision=this.chooseResolutionOption('fire-impossible',u,[{id:'fire'},{id:'cancel'}],'fire',
      {weaponName:w.name,targetId:s.target,targetNumber:p.targetNumber});
     if(decision==='cancel'){
      // No attack, heat, or retarget. Return the exact reserved round
      // already marked off at declaration, if this is a modern save.
-     if(d.ammoSpent&&w.ammo!==null&&s.bin!==null&&u.bins[s.bin]){
-      u.bins[s.bin].shots++;
-      this.syncAmmo(u);
-     }else if(!d.ammoSpent&&s.bin!==null&&w.ammo!==null)
+     this.refundImpossibleShot(d,s);
+     if(!d.ammoSpent&&s.bin!==null&&w.ammo!==null)
       reserved.set(s.bin,Math.max(0,(reserved.get(s.bin)||0)-1));
-     this.note(u.name+' · '+w.name+': невозможный выстрел отменён.');
      return;
     }
    }
@@ -1719,10 +1724,10 @@ export class Game extends Legacy{
    visit(list.splice(index,1)[0]);
   }
  }
- finalizeSpottingModifiers(){
+ finalizeSpottingModifiers(cancelled=new Set()){
   const spotting=this.spottingTargets();
   if(!spotting.size)return;
-  const firing=new Set(this.declarations.filter(d=>d.shots.length).map(d=>d.id));
+  const firing=new Set(this.declarations.filter(d=>d.shots.some(s=>!cancelled.has(s))).map(d=>d.id));
   for(const d of this.declarations)for(const s of d.shots){
    const p=s.preview,m=p.mods;
    if(!m)continue;
@@ -1732,13 +1737,37 @@ export class Game extends Legacy{
    if(s.spotter!=null)m.spotterFires=nextFires;
   }
  }
+ // AGoAC pp.15,21: a cancelled shot is not an attack. Resolve
+ // cancellation decisions before dice when spotting makes one Mech's
+ // TN depend on another. Spotting commitments are retained even if
+ // an attacker cancels; only actual remaining attacks incur +1.
+ // Take decisions in declaration order; after each cancellation,
+ // recalculate the remaining attacks. No target can be changed.
+ prepareSpottingCancellations(){
+  if(!this.spottingTargets().size)return null;
+  const cancelled=new Set();
+  this.finalizeSpottingModifiers(cancelled);
+  // Decide spotters' own shots first: their fire affects other TNs.
+  const spotting=this.spottingTargets();
+  const ordered=[...this.declarations].sort((a,b)=>Number(spotting.has(b.id))-Number(spotting.has(a.id)));
+  for(const d of ordered)for(const s of d.shots){
+   if(s.preview.targetNumber<=12)continue;
+   const u=this.unit(d.id);
+   const decision=this.chooseResolutionOption('fire-impossible',u,[{id:'fire'},{id:'cancel'}],'fire',
+    {weaponName:s.weapon.name,targetId:s.target,targetNumber:s.preview.targetNumber});
+   if(decision==='cancel'){
+    cancelled.add(s);this.refundImpossibleShot(d,s);
+    this.finalizeSpottingModifiers(cancelled);
+   }
+  }
+  return cancelled;
+ }
  resolveFire(){
-  this.finalizeSpottingModifiers();
   this.phaseRolls=[];this.resolution=[];this.deferConsciousness=true;
   try{
-   const staged=new Map();
+   const cancelled=this.prepareSpottingCancellations(),staged=new Map();
    this.orderFireMechs(this.declarations,'roll',d=>{
-    staged.set(d.id,{id:d.id,attacks:this.rollDeclaredFire(d)});
+    staged.set(d.id,{id:d.id,attacks:this.rollDeclaredFire(d,{cancelled})});
    });
    // Damage order is independent and restarts with the initiative loser.
    this.orderFireMechs(this.declarations.filter(d=>staged.has(d.id)).map(d=>staged.get(d.id)),'damage',d=>{
