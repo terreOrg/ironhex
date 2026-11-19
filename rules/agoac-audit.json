@@ -12,7 +12,7 @@
     "extensionsDeferred": true
   },
   "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval.",
-  "currentTopicId": "agoac-movement",
+  "currentTopicId": "agoac-combat",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -195,8 +195,61 @@
         8,
         12
       ],
-      "status": "tested_subset",
-      "reviewNote": "Initial direct inventory of printed pp.8–12 (movement-only scope). Existing regression references are candidates, not verification; start with movement mode validation. Optional movement dice are not a mandatory rule. Later combat/heat/damage/PSR internals are explicitly deferred."
+      "status": "verified",
+      "reviewNote": "Chapter 4 Movement: all 20 scoped requirements verified. Previous direct printed pp.8–12 inventory reconciled with exact green #172 tree. Detailed combat, heat, critical, displacement and fall algorithms remain in their respective chapters; digital maps use complete hexes and bridges model the deck.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "71014aab69f785dee7b045d21944971ca909bd8b",
+        "testedTree": "6d43311b7e1f69a6b65a892c46f9c425b827b091",
+        "mergedSha": "3b23a49f8fe79cf30879ccee577aedc983280d7f",
+        "checks": [
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44558489220,
+            "jobId": 135680956345,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44558489235,
+            "jobId": 135680956674,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44558489405,
+            "jobId": 135680957540,
+            "conclusion": "success"
+          }
+        ],
+        "inventoryComplete": true,
+        "requirementIds": [
+          "agoac-055",
+          "agoac-056",
+          "agoac-057",
+          "agoac-058",
+          "agoac-059",
+          "agoac-060",
+          "agoac-061",
+          "agoac-062",
+          "agoac-063",
+          "agoac-064",
+          "agoac-065",
+          "agoac-066",
+          "agoac-067",
+          "agoac-068",
+          "agoac-069",
+          "agoac-070",
+          "agoac-071",
+          "agoac-072",
+          "agoac-073",
+          "agoac-074"
+        ],
+        "review": "Chapter 4 Movement: all 20 scoped requirements verified. Previous direct printed pp.8–12 inventory reconciled with exact green #172 tree. Detailed combat, heat, critical, displacement and fall algorithms remain in their respective chapters; digital maps use complete hexes and bridges model the deck."
+      }
     },
     {
       "id": "agoac-combat",
@@ -3839,7 +3892,7 @@
         9
       ],
       "statement": "Forward elevation changes of one or two levels cost additional MP; reject larger voluntary differences and upward forced transitions beyond two. Define movement restriction only; detailed displacement deferred.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3850,7 +3903,37 @@
           "test": "AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated water entry"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual source inventory p.9; ground forward elevation and reverse restrictions, forced upward elevation boundary of two verified by exact green regression.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "71014aab69f785dee7b045d21944971ca909bd8b",
+        "testedTree": "6d43311b7e1f69a6b65a892c46f9c425b827b091",
+        "mergedSha": "3b23a49f8fe79cf30879ccee577aedc983280d7f",
+        "checks": [
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44558489220,
+            "jobId": 135680956345,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44558489235,
+            "jobId": 135680956674,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44558489405,
+            "jobId": 135680957540,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual source inventory p.9; ground forward elevation and reverse restrictions, forced upward elevation boundary of two verified by exact green regression."
+      }
     },
     {
       "id": "agoac-063",
@@ -4150,7 +4233,7 @@
         12
       ],
       "statement": "Jump shortest path and terrain level ceiling; intermediate occupants/woods ignored, same-hex jump costs one, landing obeys occupancy and normal terrain checks.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4169,7 +4252,37 @@
           "test": "AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated water entry"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual source inventory pp.11–12; shortest legal jump, no longer detour, relative height ceiling, intervening occupants ignored, occupied landing excluded, same-hex cost one and minimum heat three verified.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "71014aab69f785dee7b045d21944971ca909bd8b",
+        "testedTree": "6d43311b7e1f69a6b65a892c46f9c425b827b091",
+        "mergedSha": "3b23a49f8fe79cf30879ccee577aedc983280d7f",
+        "checks": [
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44558489220,
+            "jobId": 135680956345,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44558489235,
+            "jobId": 135680956674,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44558489405,
+            "jobId": 135680957540,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual source inventory pp.11–12; shortest legal jump, no longer detour, relative height ceiling, intervening occupants ignored, occupied landing excluded, same-hex cost one and minimum heat three verified."
+      }
     },
     {
       "id": "agoac-069",
@@ -4436,7 +4549,7 @@
         12
       ],
       "statement": "Water entry costs combine base, depth and elevation; PSR on each entry including water-to-water, not facing or standing; running restriction and exception; immersion state.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4459,7 +4572,37 @@
           "test": "AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated water entry"
         }
       ],
-      "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
+      "reviewNote": "Prior visual source inventory p.12; terrain/depth cost and elevation combination, successive water entry PSRs, no duplicate on rotation/hold, minimum movement exception and immersion integration covered.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "71014aab69f785dee7b045d21944971ca909bd8b",
+        "testedTree": "6d43311b7e1f69a6b65a892c46f9c425b827b091",
+        "mergedSha": "3b23a49f8fe79cf30879ccee577aedc983280d7f",
+        "checks": [
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44558489220,
+            "jobId": 135680956345,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44558489235,
+            "jobId": 135680956674,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44558489405,
+            "jobId": 135680957540,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual source inventory p.12; terrain/depth cost and elevation combination, successive water entry PSRs, no duplicate on rotation/hold, minimum movement exception and immersion integration covered."
+      }
     }
   ]
 }
