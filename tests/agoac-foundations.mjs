@@ -4451,3 +4451,74 @@ test('AGoAC p.25: fully submerged ordinary attacks use half damage and depth-one
  assert(kick.legal,kick.reason);assert(kick.underwaterPhysical);assert.equal(kick.damage,Math.floor(u.tonnage/5/2));
  assert(!g.physicalPreview(u.id,t.id,'club','RA').legal);
 });
+
+
+test('AGoAC p.28: independent fists select different legal targets atomically',()=>{
+ const g=fresh(),u=g.units[0],a=g.units[2],b=g.units[3];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,moveMode:'stand'});
+ Object.assign(a,{q:0,r:-1,prone:false,moveMode:'stand'});
+ Object.assign(b,{q:-1,r:1,prone:false,moveMode:'stand'});
+ g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+ const wrong=g.declarePhysical(u.id,b.id,'punch','both',{rightTarget:a.id});
+ assert.equal(wrong.ok,false);assert.equal(g.physicalDeclarations.length,0);
+ const result=g.declarePhysical(u.id,a.id,'punch','both',{rightTarget:b.id});assert(result.ok,result.reason||result.error);
+ assert.deepEqual(g.physicalDeclarations.map(d=>[d.limb,d.target,d.targetNumber]),[['LA',a.id,u.piloting],['RA',b.id,u.piloting]]);
+});
+test('AGoAC p.28: hatchet side arc and optional hit tables apply four only when not forced',()=>{
+ const {g,u,t}=physicalBlockFixture();Object.assign(t,{q:0,r:-1});
+ const base=g.physicalPreview(u.id,t.id,'hatchet','LA');assert(base.legal,base.reason);
+ for(const table of ['punch','kick']){
+  const p=g.physicalPreview(u.id,t.id,'hatchet','LA',{locationTable:table});
+  assert(p.legal);assert.equal(p.table,table);assert.equal(p.targetNumber,base.targetNumber+4);assert.equal(p.damage,base.damage);
+  g.tile(t.q,t.r).height=1;
+  const forced=g.physicalPreview(u.id,t.id,'hatchet','LA',{locationTable:table});
+  assert(forced.legal);assert.equal(forced.table,'kick');assert.equal(forced.targetNumber,base.targetNumber);
+  g.tile(t.q,t.r).height=0;
+ }
+ assert(!g.physicalPreview(u.id,t.id,'hatchet','LA',{locationTable:'bad'}).legal);
+});
+test('AGoAC p.26: tree club is consumed on success while limb club is reusable and collected once',()=>{
+ for(const limb of [false,true]){
+  const g=fresh(),u=g.units[0],t=g.units[2];
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+  Object.assign(u,{q:0,r:0,facing:0,prone:false,club:false,moveMode:'stand'});
+  Object.assign(t,{q:1,r:0,prone:false,moveMode:'stand'});
+  const tile=g.tile(u.q,u.r);tile.type=limb?'plain':'woods';tile.club=limb;
+  g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+  assert(g.takeClub(u.id).ok);assert.equal(u.clubKind,limb?'limb':'tree');assert.equal(tile.club,false);
+  const d={type:'club',damage:1,side:'front',table:'normal',targetNumber:2};
+  g.resolveRolledPhysical({u,t,d,roll:1,hit:false,cancelled:false,attackRoll:null});assert(u.club);
+  g.hit=()=>({location:'CT',damage:1,hits:[]});
+  g.resolveRolledPhysical({u,t,d,roll:12,hit:true,cancelled:false,attackRoll:null});assert.equal(u.club,limb);
+ }
+});
+test('AGoAC p.26: blown-off limbs and side torso arm loss supply club stock once',()=>{
+ const g=fresh(),u=g.units[0],tile=g.tile(u.q,u.r);tile.club=false;tile.clubCount=0;
+ g.rng=()=>.99;g.criticalHit(u,'LL');assert.equal(tile.clubCount,1);
+ g.destroyLocation(u,'LT');assert.equal(tile.clubCount,2);
+ g.destroyLocation(u,'LT');assert.equal(tile.clubCount,2);assert(tile.club);
+});
+test('AGoAC p.28: every biped punch and kick location table entry matches printed tables',()=>{
+ const punch={front:['LA','LT','CT','RT','RA','HD'],rear:['LA','LT','CT','RT','RA','HD'],left:['LT','LT','CT','LA','LA','HD'],right:['RT','RT','CT','RA','RA','HD']};
+ const kick={front:['RL','RL','RL','LL','LL','LL'],rear:['RL','RL','RL','LL','LL','LL'],left:Array(6).fill('LL'),right:Array(6).fill('RL')};
+ for(const [type,table] of [['punch',punch],['kick',kick]])for(const [side,locations] of Object.entries(table))for(let i=0;i<6;i++){
+  const g=fresh(),t=g.units[2];let rolls=0;g.rng=()=>{rolls++;return (i+.5)/6;};
+  g.damage=()=>[];assert.equal(g.hit(t,5,side,type).location,locations[i]);assert.equal(rolls,1);
+ }
+});
+
+test('AGoAC p.28: both punch arcs include exact sixty and one hundred twenty degree hexes for every facing',()=>{
+ const {g,u,t}=physicalBlockFixture();u.slots.LA[7]=null;u.hatchets=[];
+ for(let facing=0;facing<6;facing++){
+  u.facing=facing;
+  for(let offset=0;offset<6;offset++){
+   const [dq,dr]=DIRS[(facing+offset)%6];t.q=u.q+dq;t.r=u.r+dr;
+   for(const limb of ['LA','RA']){
+    const allowed=(limb==='LA'?[0,1,2,5]:[0,1,4,5]).includes(offset);
+    const p=g.physicalPreview(u.id,t.id,'punch',limb);
+    assert.equal(p.legal,allowed,JSON.stringify({facing,offset,limb,angle:g.relative(u,t),reason:p.reason}));
+   }
+  }
+ }
+});

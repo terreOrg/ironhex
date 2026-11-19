@@ -428,3 +428,12 @@ test('AGoAC p.22 API: human defender owns boundary direction and restored replay
  assert.equal(restored.phase,'physical');assert.equal(restored.pendingChoice,null);
  assert.equal(restored.unit(t.id).rear.CT,original-1);assert.equal(restored.unit(t.id).armor.CT,front);
 });
+
+test('AGoAC p.28 API validates different punch target and optional hatchet location without trusting client damage',()=>{
+ const base={type:'physical',id:0,target:2,version:1,attack:'punch',limb:'both'};
+ assert.deepEqual(validateTacticalOrder({...base,rightTarget:3}),{...base,rightTarget:3});
+ for(const b of [{...base,rightTarget:4},{...base,limb:'LA',rightTarget:3},{...base,locationTable:'punch'},{...base,damage:1}])assert.throws(()=>validateTacticalOrder(b),AuthError);
+ const axe={...base,attack:'hatchet',limb:'RA',locationTable:'kick'};
+ assert.deepEqual(validateTacticalOrder(axe),axe);
+ assert.throws(()=>validateTacticalOrder({...axe,locationTable:'HD'}),AuthError);
+});

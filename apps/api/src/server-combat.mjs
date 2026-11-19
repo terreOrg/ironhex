@@ -2,7 +2,7 @@ import {AuthError} from './auth.mjs';
 const fields={
   move:['id','q','r','mode','lateral','facing'],rotate:['id','delta','mode'],
   stand:['id','facing','minimum','mode'],drop:['id','mode'],hold:['id'],twist:['id','twist'],turret:['id','mount','facing'],
-  fire:['id','shots','primaryTarget'],physical:['id','target','attack','limb'],
+  fire:['id','shots','primaryTarget'],physical:['id','target','attack','limb','rightTarget','locationTable'],
   club:['id'],charge:['id','target','attack'],minimum:['id'],
   shutdown:['id'],dump:['id','bin'],flip:['id','enabled'],brace:['id','limb'],
   next:['choice'],weather:['night','gale','standingStill','evading','floatingCriticals','underwaterFire']
@@ -46,7 +46,9 @@ export function validateTacticalOrder(b){
       (b.primaryTarget===undefined||fireTarget(b.primaryTarget)&&b.shots.some(s=>s.target===b.primaryTarget)),
     physical:()=>int(b.target,0,3)&&
       ['kick','punch','push','club','hatchet'].includes(b.attack)&&
-      ['LA','RA','LL','RL','both'].includes(b.limb),
+      ['LA','RA','LL','RL','both'].includes(b.limb)&&
+      (b.rightTarget===undefined||b.attack==='punch'&&b.limb==='both'&&int(b.rightTarget,0,3))&&
+      (b.locationTable===undefined||b.attack==='hatchet'&&['normal','punch','kick'].includes(b.locationTable)),
     club:()=>true,
     charge:()=>int(b.target,0,3)&&['charge','dfa'].includes(b.attack),
     minimum:()=>true,shutdown:()=>true,dump:()=>int(b.bin,0,79),
@@ -111,7 +113,7 @@ export function runTacticalOrder(game,body){
       case 'twist':r=game.twist(id,b.twist);break;
       case 'turret':r=game.setDirectionalTorsoMount(id,b.mount,b.facing);break;
       case 'fire':r=game.declareFireWithLosChoices(id,b.shots,b.primaryTarget??null,{humanTeams:[0]});break;
-      case 'physical':r=game.declarePhysical(id,b.target,b.attack,b.limb);break;
+      case 'physical':r=game.declarePhysical(id,b.target,b.attack,b.limb,{rightTarget:b.rightTarget,locationTable:b.locationTable});break;
       case 'club':r=game.takeClub(id);break;
       case 'charge':r=game.chargeWithChoices(id,b.target,b.attack,{humanTeams:[0]});break;
       case 'minimum':r=game.minimumMove(id);break;
