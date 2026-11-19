@@ -3388,3 +3388,20 @@ test('AGoAC p.11: jumping over occupied hexes is allowed but ordinary occupied l
   assert.equal(JSON.stringify(v),occupant);
  }
 });
+
+test('AGoAC p.12: jump ceiling is relative to starting elevation and includes landing hex',()=>{
+ for(const start of [-1,0,3])for(const obstacle of [2,3,4])for(const landing of [3,4]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,jump:3,jumpLost:0,heat:0,spent:0,moveMode:'stand',moveStart:{q:0,r:0}});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:start,surface:start,depth:0});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  Object.assign(g.tile(1,0),{height:start+obstacle,surface:start+obstacle});
+  Object.assign(g.tile(2,0),{height:start+landing,surface:start+landing});
+  const legal=obstacle<=3&&landing<=3;
+  assert.equal(g.reachable(u,'jump').some(t=>t.q===2&&t.r===0),legal);
+  const before=JSON.stringify(u),result=g.move(u.id,2,0,'jump');
+  assert.equal(result.ok,legal);
+  if(legal){assert.equal(u.spent,2);assert.equal(u.pendingHeat,3);}
+  else assert.equal(JSON.stringify(u),before);
+ }
+});
