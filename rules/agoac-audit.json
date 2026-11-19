@@ -312,7 +312,7 @@
         24
       ],
       "status": "tested_subset",
-      "reviewNote": "Chapter inventory: attack direction, normal location table, sequential damage, partial cover, missile table/grouping and damage phase timing. Exact evidence pending; boundary UI/API and interactions to be audited before closure."
+      "reviewNote": "Exact #199 head 86cb8dbf: CI 431/431, browser 39/39, full Docker smoke passed; identical merged tree f0340b3d. Main Sonar pending. Re-reviewed CAT3500D printed pp.22–24 including diagram, every entry of both tables, separate SRM hits and 5-point/remainder LRM groups, printed example and phase boundary. Added final packet cover, actual 20-point weapon phase PSR and AI defender tests before certification. AI uses a deterministic legal default; base book assigns choice to controlling player but does not specify computer strategy. Full critical allocation belongs to Chapter 8, physical attack interactions Chapter 7. No promotion before exact CI and Sonar."
     },
     {
       "id": "agoac-physical",
@@ -5624,6 +5624,10 @@
         {
           "file": "tests/browser.mjs",
           "test": "AGoAC p.22 browser: defender selects rear hit direction after reconnect"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.22: AI defender resolves a legal boundary without requesting a human choice"
         }
       ],
       "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion. The first package's four engine regressions passed exact CI 44614648171 on a087b603. Additional API saved-state authorization and browser reconnect evidence is pending."
@@ -5681,6 +5685,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.21: aimed location check is independent of normal hit location and cover rerolls"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.22–24: partial cover absorbs only its own missile hit packets"
         }
       ],
       "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
@@ -5722,6 +5730,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.21,30: resolve each target and each missile packet completely in declared order"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.24: weapon damage accumulates before phase-end PSR and physical attacks"
         }
       ],
       "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
