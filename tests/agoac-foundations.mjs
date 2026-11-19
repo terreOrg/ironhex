@@ -3008,3 +3008,35 @@ test('AGoAC p.8: zero-distance ground movement commits mode and generates heat e
   assert.equal(u.pendingHeat,heat);
  }
 });
+
+
+test('AGoAC p.8: undamaged walking and running allowances and reverse travel',()=>{
+ for(const walking of [1,2,3,4,5,6,7,8]){
+  for(const mode of ['walk','run']){
+   const g=fresh(),u=g.units[0];
+   g.phase='move';g.activeTeam=0;g.queue=[0,1];
+   Object.assign(u,{q:0,r:0,facing:0,walk:walking,heat:0,spent:0,moveMode:'stand',distanceMoved:0,pendingHeat:0});
+   for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+   const allowance=mode==='walk'?walking:Math.ceil(walking*1.5);
+   assert.equal(g.mp(u,mode),allowance);
+   const routes=g.reachable(u,mode);
+   assert(routes.length);
+   assert(routes.every(route=>route.cost<=allowance));
+   for(const route of routes){
+    let previous={q:u.q,r:u.r,facing:u.facing};
+    for(const step of route.path){
+     if(mode==='run'&&(step.q!==previous.q||step.r!==previous.r)){
+      const [dq,dr]=DIRS[previous.facing];
+      assert.deepEqual([step.q-previous.q,step.r-previous.r],[dq,dr]);
+     }
+     previous=step;
+    }
+   }
+   const [dq,dr]=DIRS[3],reverse=routes.find(t=>t.q===dq&&t.r===dr);
+   if(mode==='walk'&&g.tile(dq,dr)&&!g.occupied(dq,dr,u.id))assert.equal(reverse?.cost,1);
+   if(mode==='run'&&reverse)assert(reverse.cost>1);
+   u.spent=allowance;
+   assert(g.reachable(u,mode).every(t=>t.cost===0));
+  }
+ }
+});
