@@ -4617,9 +4617,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.6: movement and LOS cross joined mapsheets without artificial border costs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: shared-edge LOS exposes both reciprocal terrain paths"
         }
       ],
-      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation."
+      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing."
     },
     {
       "id": "agoac-076",

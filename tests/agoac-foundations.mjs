@@ -3516,3 +3516,13 @@ test('AGoAC p.14: own partial cover obstructs leg weapons but not torso weapons'
  assert.equal(g.los(v,u).cover,true);assert.equal(g.preview(u.id,v.id,0).legal,false);assert.equal(g.preview(u.id,v.id,1).legal,true);
  g.tile(1,0).height=0;assert.equal(g.preview(u.id,v.id,0).legal,true);
 });
+
+test('AGoAC p.13: shared-edge LOS exposes both reciprocal terrain paths',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:1,r:1,prone:false});g.tile(1,0).height=2;
+ const paths=g.losAlternatives(a,b),back=g.losAlternatives(b,a);
+ assert.equal(paths.length,2);assert.deepEqual(paths.map(p=>p.blocked).sort(),[false,true]);
+ for(const p of paths){const reverse=back.find(x=>x.choice===-p.choice);assert.deepEqual(reverse.path,[...p.path].reverse());assert.equal(reverse.blocked,p.blocked);}
+ b.q=2;b.r=0;assert.equal(g.losAlternatives(a,b).length,1);
+});
