@@ -3639,14 +3639,22 @@
         10
       ],
       "statement": "All printed movement cost table entries: base, clear/paved/bridge/road, rough/woods, rubble, depth and elevation; road only along road; terrain PSR triggers/modifiers.",
-      "status": "not_audited",
+      "status": "known_missing",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.4: all seven illustrated terrain types have the stated basic movement costs and rubble requires a PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: basic terrain entry costs constrain the actual remaining movement budget"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: ground terrain PSR dispatch uses the entered hex and depth"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Confirmed code gap on main 47c8312b286a4ab4a10f0b6a84b1aa350e97ab89: terrainCost(t) has no predecessor or direction argument; reachable() uses destination terrain only. isPaved(t) is a tile predicate, not connected road edges. Road-only-along-road cost and bridge crossing cannot be certified. Basic terrain budget and PSR dispatch regressions passed in #155 and #156; their success is not proof of road/bridge support. Need directional road/bridge representation and shared transition cost, including movement entry and execution, before closing."
     },
     {
       "id": "agoac-065",
