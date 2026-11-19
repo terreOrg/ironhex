@@ -3270,3 +3270,40 @@ test('AGoAC p.10: Woodland preset supplies connected road edges on rectangular s
   }
  }
 });
+
+
+test('AGoAC p.10: rotated woodland road edges remain reciprocal on native hex maps',()=>{
+ for(let rotation=0;rotation<6;rotation++){
+  const g=fresh();
+  assert(g.configureSetupMap({id:'woodland',rotation}).ok);
+  const road=g.tiles.filter(t=>t.roadEdges?.length);
+  assert(road.length>1);
+  let connections=0;
+  for(const a of road)for(const d of a.roadEdges){
+   const [dq,dr]=DIRS[d],b=g.tile(a.q+dq,a.r+dr);
+   if(!b?.roadEdges?.length)continue;
+   assert(b.roadEdges.includes((d+3)%6));
+   assert(g.roadConnection(a,b));
+   assert(g.roadConnection(b,a));
+   connections++;
+  }
+  assert.equal(connections,2*(road.length-1));
+ }
+});
+
+test('AGoAC p.10: river preset bridge deck permits ground running without water checks',()=>{
+ const g=fresh();
+ assert(g.configureRectangularSheets('sheet',[{id:'river',rotation:0}]).ok);
+ const deck=g.tiles.find(t=>t.type==='bridge');
+ assert(deck);assert.equal(deck.depth,0);assert.equal(deck.height,0);
+ assert.equal(g.terrainCost(deck),1);
+ assert(g.isPaved(deck));
+ const u=g.units[0],a=g.tile(deck.q-1,deck.r);
+ Object.assign(a,{type:'plain',height:0,depth:0,surface:0});
+ g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ Object.assign(u,{q:a.q,r:a.r,facing:0,walk:4,heat:0,spent:0,moveMode:'stand'});
+ for(const v of g.units)if(v!==u)v.deployed=false;
+ const calls=[];g.psr=(...args)=>{calls.push(args);return true;};
+ assert(g.move(u.id,deck.q,deck.r,'run').ok);
+ assert.equal(u.spent,1);assert.equal(calls.length,0);
+});
