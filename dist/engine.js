@@ -744,7 +744,7 @@ export class Game extends Legacy{
  initiative(){this.phaseRolls=[];let a,b,tries=0;do{a=this.roll('Инициатива: зелёные');b=this.roll('Инициатива: красные');}while(a===b&&++tries<10000);if(a===b)throw Error('Генератор выдаёт только ничьи инициативы');this.initiativeWinner=a>b?0:1;
   // AGoAC pp.7,44: only a pilot already unconscious at Initiative
   // may attempt recovery in this turn's End Phase.
-  for(const u of this.units)u.wasUnconscious=!!u.unconscious;
+  for(const u of this.units){u.wasUnconscious=!!u.unconscious;u.chargeTargetAtInitiative=!!(u.shutdown||u.unconscious);}
   this.phase='move';this.buildQueue();this.note(`Инициатива ${a}:${b}. ${this.initiativeWinner?'Красные':'Зелёные'} действуют вторыми.`);}
  psrMod(u,fallAvoidance=false){
   let n=Math.min(2,u.gyroHits)*3+(this.weather.gale?1:0);
@@ -2399,8 +2399,21 @@ export class Game extends Legacy{
   this.phaseRolls=[];u.shutdownNext=!u.shutdownNext;
   return {ok:true};
  }
- declareCharge(id,target,type='charge',moveMode='run'){const u=this.unit(id),t=this.unit(target);if(u?.deployed===false||t?.deployed===false)return fail('Мех ещё не вышел на поле');if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone||!t||t.team===u.team||t.dead||t.charge||t.airborne||(type==='charge'&&t.prone)||!(t.moved||!this.mobile(t)))return fail('Цель должна завершить движение; для тарана цель должна стоять');if(this.displacementTargetReserved(target))return fail('Эта цель уже выбрана для тарана/DFA');if(!['charge','dfa'].includes(type)||type==='charge'&&!['walk','run'].includes(moveMode))return fail('Недопустимый тип тарана или режим движения');const mode=type==='dfa'?'jump':moveMode;if(u.spent||u.moveMode!=='stand')return fail('Заявите таран/DFA до обычного движения');let options=this.reachable(u,mode).filter(p=>distance(p,t)===1);if(type==='dfa'){if(!this.mp(u,'jump')||distance(u,t)>this.mp(u,'jump')||this.tile(t.q,t.r).height+(t.prone?0:2)>this.tile(u.q,u.r).height+this.mp(u,'jump'))return fail('Не хватает высоты или дальности прыжка');}else options=options.filter(p=>p.cost+this.terrainCost(this.tile(t.q,t.r))+Math.abs(this.tile(p.q,p.r).height-this.tile(t.q,t.r).height)<=this.mp(u,mode));
- options.sort((a,b)=>a.cost-b.cost);const p=options[0];if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},targetStart={q:t.q,r:t.r},r=this.move(id,p.q,p.r,mode);if(!r.ok)return r;
+ declareCharge(id,target,type='charge',moveMode='run'){const u=this.unit(id),t=this.unit(target);if(u?.deployed===false||t?.deployed===false)return fail('Мех ещё не вышел на поле');if(this.phase!=='move'||!this.canAct(u)||!this.mobile(u)||u.prone||!t||t.team===u.team||t.dead||t.charge||t.airborne||(type==='charge'&&t.prone)||!(t.moved||(t.chargeTargetAtInitiative??(t.shutdown||t.unconscious))))return fail('Цель должна завершить движение; для тарана цель должна стоять');if(this.displacementTargetReserved(target))return fail('Эта цель уже выбрана для тарана/DFA');if(!['charge','dfa'].includes(type)||type==='charge'&&!['walk','run'].includes(moveMode))return fail('Недопустимый тип тарана или режим движения');const mode=type==='dfa'?'jump':moveMode;if(u.spent||u.moveMode!=='stand')return fail('Заявите таран/DFA до обычного движения');const originTile=this.tile(u.q,u.r),targetTile=this.tile(t.q,t.r);
+ if(type==='dfa'&&(originTile.depth>=2||targetTile.depth>=(t.prone?1:2)))return fail('DFA не может начинаться или заканчиваться полностью под водой');
+ let options=this.reachable(u,mode).filter(p=>distance(p,t)===1);if(type==='dfa'){if(!this.mp(u,'jump')||distance(u,t)>this.mp(u,'jump')||this.tile(t.q,t.r).height+(t.prone?0:2)>this.tile(u.q,u.r).height+this.mp(u,'jump'))return fail('Не хватает высоты или дальности прыжка');}else options=options.filter(p=>{
+  const approach=this.tile(p.q,p.r),dh=Math.abs(approach.height-targetTile.height);
+  const submergedApproach=approach.depth>=2,submergedTarget=targetTile.depth>=2;
+  if(dh>1||mode==='run'&&targetTile.depth||submergedTarget&&!submergedApproach||submergedApproach&&!submergedTarget&&targetTile.depth!==1)return false;
+  return p.cost+this.terrainCost(targetTile,approach)+dh<=this.mp(u,mode);
+ });
+ if(type==='dfa'&&distance(u,t)>1){
+  const path=[...this.losHexPath(u,t,1),...this.losHexPath(u,t,-1)];
+  options=options.filter(p=>path.some(h=>h.q===p.q&&h.r===p.r)&&distance(u,p)===distance(u,t)-1);
+ }
+ options.sort((a,b)=>a.cost-b.cost);const candidates=type==='dfa'?options.filter(o=>o.cost===options[0]?.cost):[];
+ const chosen=candidates.length>1?this.chooseResolutionOption('dfa-approach',u,candidates.map(o=>({id:key(o.q,o.r),q:o.q,r:o.r})),key(candidates[0].q,candidates[0].r),{targetId:t.id}):null;
+ const p=chosen===null?options[0]:candidates.find(o=>key(o.q,o.r)===chosen);if(!p)return fail('Нет допустимого подхода к цели');const start={q:u.q,r:u.r},targetStart={q:t.q,r:t.r},r=this.move(id,p.q,p.r,mode);if(!r.ok)return r;
  // An involuntary stop during the approach cannot create a declared
  // physical attack from the planned (but never reached) hex.
  if(u.dead||u.prone||this.isImmobile(u)||u.moveEndedByLegLoss||u.skidded||
@@ -2445,13 +2458,62 @@ export class Game extends Legacy{
    if(!t.dead&&!t.prone)this.psr(t,2,'Попадание DFA');
   }else if(!u.dead)this.fall(u,2,fallTN,'rear');
  }
- resolveSpecial(u){const s=u.charge;if(!s||s.resolved||u.dead)return;const t=this.unit(s.target);if(!t)return;if(t.dead||t.q!==s.targetPos.q||t.r!==s.targetPos.r||t.prone&&s.type==='charge'){u.airborne=false;this.note(`${u.name}: специальная атака отменена — цель изменилась.`);return;}const start=this.phaseRolls.length,dfa=s.type==='dfa',tn=Math.max(2,u.piloting+(u.piloting-t.piloting)+(dfa?3:u.moveMode==='run'?2:1)+(this.isImmobile(t)?-4:this.tmm(t))+(dfa?0:this.los(u,t).woods)),roll=this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn),hit=!u.prone&&roll>=tn;const old={q:t.q,r:t.r},side=this.hitSide(t,dfa?(s.startPos??u.moveStart??u):u);let damage=0;u.airborne=false;
- if(hit){damage=dfa?Math.ceil(u.tonnage/10*3):Math.ceil(u.tonnage/10*s.hexes);this.packets(t,damage,dfa&&t.prone?'rear':side,dfa&&!t.prone?'punch':'normal');this.packets(u,dfa?u.tonnage/5:Math.ceil(t.tonnage/10),'front',dfa?'kick':'normal');if(dfa)this.resolveDFALanding(u,t,s.dir,true,old);else{
- // AGoAC pp.26,42: a successful charge may cause damage without
- // displacing either Mech when the destination is prohibited. Destruction
- // by the charge itself instead permits the attacker to enter the hex.
- const advance=t.dead||this.displace(t,s.dir);
- if(!u.dead){if(advance){u.q=old.q;u.r=old.r;}this.psr(u,2,'Таран');}this.psr(t,2,'Попадание тарана');}}else if(dfa){this.resolveDFALanding(u,t,s.dir,false,old);}else{const d=[wrap(s.dir+1),wrap(s.dir-1)].find(d=>{const v=DIRS[d];return this.tile(u.q+v[0],u.r+v[1])&&!this.occupied(u.q+v[0],u.r+v[1],u.id);});if(d!==undefined){u.q+=DIRS[d][0];u.r+=DIRS[d][1];}}
- this.resolution.push({id:u.id,target:t.id,ok:true,shots:[{weapon:dfa?'DFA':'Таран',hit,roll,targetNumber:tn,damage,rolls:this.phaseRolls.slice(start)}]});}
+ // AGoAC pp.24–28: charge/DFA use comparative Pilot Skill and the
+ // ordinary movement/immobility terms; DFA alone excludes all terrain.
+ specialPhysicalTN(u,t,dfa){
+  const move=({stand:0,walk:1,run:2,jump:3,evade:2})[u.moveMode]??0;
+  const from=this.tile(u.q,u.r),to=this.tile(t.q,t.r);
+  const woods=to.type==='heavy'?2:to.type==='woods'?1:0;
+  const cover=to.depth===1&&!t.prone&&from.depth<2?1:0;
+  return Math.max(2,u.piloting+(u.piloting-t.piloting)+(dfa?3:move)
+   +(u.skidded?1:0)+this.targetMovementModifier(t)+(t.prone?-2:0)+(dfa?0:woods+cover));
+ }
+ missedCharge(u,t,dir){
+  const from=this.tile(u.q,u.r);
+  const options=[wrap(dir+1),wrap(dir-1)].flatMap(d=>{
+   const [dq,dr]=DIRS[d],tile=this.tile(u.q+dq,u.r+dr);
+   if(!tile||Math.abs(tile.height-from.height)>2||this.occupied(tile.q,tile.r,u.id))return [];
+   return [{id:String(d),q:tile.q,r:tile.r}];
+  });
+  if(!options.length)return;
+  const pick=this.chooseResolutionOption('charge-miss',u,options,options[0].id,{targetId:t.id});
+  const tile=options.find(o=>o.id===pick);u.q=tile.q;u.r=tile.r;
+ }
+ resolveSpecial(u){
+  const s=u.charge;if(!s||s.resolved||u.dead)return;
+  const t=this.unit(s.target);if(!t)return;
+  const dfa=s.type==='dfa',start=this.phaseRolls.length;
+  if(t.dead||t.q!==s.targetPos.q||t.r!==s.targetPos.r||t.prone&&!dfa){
+   u.airborne=false;s.resolved=true;
+   this.note(u.name+': специальная атака отменена — цель изменилась.');return;
+  }
+  const tn=this.specialPhysicalTN(u,t,dfa);
+  const cancelled=!dfa&&!u.prone&&this.cancelImpossiblePhysical(u,{target:t.id,targetNumber:tn,type:'charge',limb:null});
+  const roll=!cancelled&&!u.prone?this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn):null;
+  const hit=roll!==null&&roll>=tn,old={q:t.q,r:t.r};
+  let damage=0;u.airborne=false;
+  if(hit){
+   const source=dfa?(s.startPos??u.moveStart??u):u;
+   const sides=dfa&&t.prone?['rear']:this.hitSideOptions(t,source);
+   const side=this.chooseResolutionOption('hit-direction',t,sides.map(id=>({id})),sides[0],
+    {attackerId:u.id,weaponName:dfa?'DFA':'Таран'});
+   const underwater=!dfa&&this.tile(u.q,u.r).depth>=2;
+   damage=dfa?Math.ceil(u.tonnage/10*3):Math.ceil(u.tonnage/10*s.hexes);
+   let selfDamage=dfa?u.tonnage/5:Math.ceil(t.tonnage/10);
+   if(underwater){damage=Math.floor(damage/2);selfDamage=Math.floor(selfDamage/2);}
+   this.packets(t,damage,side,dfa&&!t.prone?'punch':'normal');
+   this.packets(u,selfDamage,'front',dfa?'kick':'normal');
+   if(dfa)this.resolveDFALanding(u,t,s.dir,true,old);
+   else{
+    // A prohibited displacement still causes damage and the required PSRs.
+    const advance=t.dead||this.displace(t,s.dir);
+    if(!u.dead){if(advance){u.q=old.q;u.r=old.r;}this.psr(u,2,'Таран');}
+    this.psr(t,2,'Попадание тарана');
+   }
+  }else if(dfa){this.resolveDFALanding(u,t,s.dir,false,old);}
+  else if(!cancelled&&!u.prone)this.missedCharge(u,t,s.dir);
+  s.resolved=true;
+  this.resolution.push({id:u.id,target:t.id,ok:true,shots:[{weapon:dfa?'DFA':'Таран',hit,roll,targetNumber:tn,damage,cancelled,rolls:this.phaseRolls.slice(start)}]});
+ }
 
 }
