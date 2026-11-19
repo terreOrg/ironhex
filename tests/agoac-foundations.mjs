@@ -4722,6 +4722,21 @@ test('CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack wi
  assert.equal(g.physicalDeclarations.length,0);
 });
 
+test('CAT3500D p.15 and errata v8.01 p.2: reversed arms prohibit clubs but not kicks',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const club=g.physicalPreview(u.id,t.id,'club','RA');
+ assert(club.legal,club.reason);
+ u.flip=true;
+ const blocked=g.physicalPreview(u.id,t.id,'club','RA');
+ assert(!blocked.legal);
+ assert(g.physicalPreview(u.id,t.id,'kick','RL').legal);
+ g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+ assert.equal(g.declarePhysical(u.id,t.id,'club','RA').ok,false);
+ assert.equal(g.physicalDeclarations.length,0);
+ u.flip=false;
+ assert(g.physicalPreview(u.id,t.id,'club','RA').legal);
+});
+
 test('CAT3500D p.25 and errata v8.01 p.3: legal charge turns to face the target and spends its MP',()=>{
  for(const facing of [0,1,2,3,4,5]){
   const g=fresh(),[u,a,t,b]=g.units;
