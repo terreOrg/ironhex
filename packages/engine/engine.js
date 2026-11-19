@@ -465,7 +465,13 @@ export class Game extends Legacy{
      else if(r===-2&&Math.abs(q)<3){type='hill';height=surface=1;}
     }
    }
-   const roadEdges=id==='woodland'&&r===0?[0,3].map(d=>wrap(d+rotation)):[];
+   const bridge=id==='river'&&q===3&&r===0;
+   if(bridge){type='bridge';height=surface;depth=0;}
+   const roadEdges=id==='woodland'&&r===0?[0,3].map(d=>{
+    let [dq,dr]=DIRS[d];
+    for(let n=0;n<rotation;n++)[dq,dr]=[-dr,dq+dr];
+    return DIRS.findIndex(([x,y])=>x===dq&&y===dr);
+   }):[];
    for(let n=0;n<rotation;n++)[q,r]=[-r,q+r];
    return {q,r,type,height,depth,surface,roadEdges};
   });
@@ -507,6 +513,7 @@ export class Game extends Legacy{
     else if(b===-2&&Math.abs(a)<3){type='hill';h=1;}
    }
    const r=row-Math.floor(height/2),q=col-Math.floor(width/2)-Math.floor(r/2);
+   if(preset.id==='river'&&a===0&&b===0){type='bridge';h+=depth;depth=0;}
    const roadEdges=preset.id==='woodland'&&b===0?[0,3]:[];
    tiles.push({q,r,type,height:h,depth,surface:h+depth,sheet,roadEdges});
   }
@@ -873,7 +880,7 @@ export class Game extends Legacy{
   return reached;
  }
  jumpClear(u,t,max){return this.jumpShortestReach(u,max).has(key(t.q,t.r));}
- isPaved(t){return !!t&&(t.paved===true||t.road===true||['pavement','road'].includes(t.type));}
+ isPaved(t){return !!t&&(t.paved===true||t.road===true||['pavement','road','bridge'].includes(t.type));}
  skidTerrainCost(t){return t.type==='heavy'?3:['woods','rough','rubble'].includes(t.type)?2:1;}
  resolveSkid(u,direction,moved,tn){
   u.skidded=true;u.skidDirection=null;u.skidCollisionPending=null;
