@@ -11,8 +11,8 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence.",
-  "currentTopicId": "agoac-hit-location",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment.",
+  "currentTopicId": "agoac-physical",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -311,8 +311,61 @@
         22,
         24
       ],
-      "status": "tested_subset",
-      "reviewNote": "Three groups (086,087,089) verified with exact #199 evidence and green main Sonar. Remaining 085,088,090 require green final package #200 and reconciliation. #200 first CI 433/434; only the missile-cover fixture failed (wrong underwater firing flag), now corrected. No deployment. The corrected cover regression passed (433/434); the only failure was the registry's exact three branch checks assertion. Main Sonar evidence is now represented separately and mandatory for verified Chapter 6 requirements; the existing strict branch-check assertion is unchanged."
+      "status": "verified",
+      "reviewNote": "Final direct visual inventory CAT3500D printed pp.22–24: p.22 hit direction (standing/prone body facing, diagram, boundary defender choice), location roll and attacker ordering, through-armor critical dispatch and partial cover; p.23 all normal hit location and cluster table entries; p.24 missile count, per-SRM and grouped LRM damage including printed Catapult example, damage timing and phase-end PSRs. All six individual groups verified with exact passing engine/API/browser evidence. #199 full Docker smoke passed; #200 changed tests/registry only and used scope planner. Exact #200 CI 434/434, browser 39/39, merged tree identical, main Sonar success. Detailed physical attacks, damage and PSR algorithms retained for their own chapters; no authorization to begin Chapter 7. No deployment.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "7f256cdcc23411350ad4126ccedb57284fe7f6d0",
+        "testedTree": "ae47af0c209e9124c9b4e2b10a3fda371da33e0c",
+        "mergedSha": "7e7271675dd651ae078f013df0f295d47c915595",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44620408723,
+            "jobId": 135900224927,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44620408681,
+            "jobId": 135900224434,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44620408932,
+            "jobId": 135900225040,
+            "conclusion": "success",
+            "scope": "planner-only; no container inputs changed"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44621347636,
+          "jobId": 135903537081,
+          "conclusion": "success",
+          "headSha": "7e7271675dd651ae078f013df0f295d47c915595"
+        },
+        "priorFullSmoke": {
+          "runId": 44616748444,
+          "jobId": 135887367040,
+          "headSha": "86cb8dbf269bc4395386a64bf4b29582fe9ceba4",
+          "conclusion": "success"
+        },
+        "inventoryComplete": true,
+        "requirementIds": [
+          "agoac-085",
+          "agoac-086",
+          "agoac-087",
+          "agoac-088",
+          "agoac-089",
+          "agoac-090"
+        ],
+        "review": "Final direct visual inventory CAT3500D printed pp.22–24: p.22 hit direction (standing/prone body facing, diagram, boundary defender choice), location roll and attacker ordering, through-armor critical dispatch and partial cover; p.23 all normal hit location and cluster table entries; p.24 missile count, per-SRM and grouped LRM damage including printed Catapult example, damage timing and phase-end PSRs. All six individual groups verified with exact passing engine/API/browser evidence. #199 full Docker smoke passed; #200 changed tests/registry only and used scope planner. Exact #200 CI 434/434, browser 39/39, merged tree identical, main Sonar success. Detailed physical attacks, damage and PSR algorithms retained for their own chapters; no authorization to begin Chapter 7. No deployment."
+      }
     },
     {
       "id": "agoac-physical",
@@ -5607,7 +5660,7 @@
         22
       ],
       "statement": "Attack direction: body facing, all four hit zones and defender's boundary decision before location roll.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5630,7 +5683,51 @@
           "test": "AGoAC p.22: AI defender resolves a legal boundary without requesting a human choice"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion. The first package's four engine regressions passed exact CI 44614648171 on a087b603. Additional API saved-state authorization and browser reconnect evidence is pending."
+      "reviewNote": "Printed p.22 diagram and text visually checked again: front three hexsides, rear one, flanks one each; exact ambiguous zone boundaries chosen by defender before the location roll. Body facing governs including prone targets; torso twist does not alter it. Six rotations, all four boundary rays, human defender authority, forged-choice rejection, replay persistence, browser reconnect and deterministic legal AI fallback passed. AI decision strategy is a digital convention, not a prescribed tabletop rule. Physical attack-specific choices are deferred to Chapter 7. Exact #200 head CI 434/434, Browser E2E 39/39, scope-planner smoke passed; full smoke already passed on #199, with no later application changes. Identical tested/merged tree and main Sonar success.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "7f256cdcc23411350ad4126ccedb57284fe7f6d0",
+        "testedTree": "ae47af0c209e9124c9b4e2b10a3fda371da33e0c",
+        "mergedSha": "7e7271675dd651ae078f013df0f295d47c915595",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44620408723,
+            "jobId": 135900224927,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44620408681,
+            "jobId": 135900224434,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44620408932,
+            "jobId": 135900225040,
+            "conclusion": "success",
+            "scope": "planner-only; no container inputs changed"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44621347636,
+          "jobId": 135903537081,
+          "conclusion": "success",
+          "headSha": "7e7271675dd651ae078f013df0f295d47c915595"
+        },
+        "priorFullSmoke": {
+          "runId": 44616748444,
+          "jobId": 135887367040,
+          "headSha": "86cb8dbf269bc4395386a64bf4b29582fe9ceba4",
+          "conclusion": "success"
+        },
+        "review": "Printed p.22 diagram and text visually checked again: front three hexsides, rear one, flanks one each; exact ambiguous zone boundaries chosen by defender before the location roll. Body facing governs including prone targets; torso twist does not alter it. Six rotations, all four boundary rays, human defender authority, forged-choice rejection, replay persistence, browser reconnect and deterministic legal AI fallback passed. AI decision strategy is a digital convention, not a prescribed tabletop rule. Physical attack-specific choices are deferred to Chapter 7. Exact #200 head CI 434/434, Browser E2E 39/39, scope-planner smoke passed; full smoke already passed on #199, with no later application changes. Identical tested/merged tree and main Sonar success."
+      }
     },
     {
       "id": "agoac-086",
@@ -5750,7 +5847,7 @@
         22
       ],
       "statement": "Partial cover intercepts a normal leg hit, including water; indirect and aimed exceptions remain applicable.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5765,7 +5862,51 @@
           "test": "AGoAC pp.22–24: partial cover absorbs only its own missile hit packets"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion. #200 failed only the underwater flag in an above-water fixture. Corrected underwaterCover=false for both terrain and depth-one targets; exact CI pending."
+      "reviewNote": "Printed p.22 and direct p.17/p.21 cross-references: each normal hit intercepted by partial cover contributes no damage to the target; surface weapons against a standing depth-one target lose leg hits, not torso hits. Independent SRM packets continue; actual terrain and water cases pass. Previously verified aimed/indirect exceptions retained; submerged-weapon extensions out of base scope. Exact #200 head CI 434/434, Browser E2E 39/39, scope-planner smoke passed; full smoke already passed on #199, with no later application changes. Identical tested/merged tree and main Sonar success.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "7f256cdcc23411350ad4126ccedb57284fe7f6d0",
+        "testedTree": "ae47af0c209e9124c9b4e2b10a3fda371da33e0c",
+        "mergedSha": "7e7271675dd651ae078f013df0f295d47c915595",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44620408723,
+            "jobId": 135900224927,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44620408681,
+            "jobId": 135900224434,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44620408932,
+            "jobId": 135900225040,
+            "conclusion": "success",
+            "scope": "planner-only; no container inputs changed"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44621347636,
+          "jobId": 135903537081,
+          "conclusion": "success",
+          "headSha": "7e7271675dd651ae078f013df0f295d47c915595"
+        },
+        "priorFullSmoke": {
+          "runId": 44616748444,
+          "jobId": 135887367040,
+          "headSha": "86cb8dbf269bc4395386a64bf4b29582fe9ceba4",
+          "conclusion": "success"
+        },
+        "review": "Printed p.22 and direct p.17/p.21 cross-references: each normal hit intercepted by partial cover contributes no damage to the target; surface weapons against a standing depth-one target lose leg hits, not torso hits. Independent SRM packets continue; actual terrain and water cases pass. Previously verified aimed/indirect exceptions retained; submerged-weapon extensions out of base scope. Exact #200 head CI 434/434, Browser E2E 39/39, scope-planner smoke passed; full smoke already passed on #199, with no later application changes. Identical tested/merged tree and main Sonar success."
+      }
     },
     {
       "id": "agoac-089",
@@ -5832,7 +5973,7 @@
         24
       ],
       "statement": "Resolve every weapon attack before applying damage; all resulting PSRs after weapon damage, before physical phase.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5847,7 +5988,51 @@
           "test": "AGoAC p.24: weapon damage accumulates before phase-end PSR and physical attacks"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+      "reviewNote": "Printed p.24 Damage Resolution, cross-referenced pp.6,30,40: all weapon to-hit rolls precede damage; declared attacks survive same-phase shooter destruction, accumulated damage is applied before phase-end PSRs and entry into Physical phase. Actual damage 18 versus 20 verifies the trigger and phase reset. Detailed PSR and critical allocation algorithms remain in their own chapters. Exact #200 head CI 434/434, Browser E2E 39/39, scope-planner smoke passed; full smoke already passed on #199, with no later application changes. Identical tested/merged tree and main Sonar success.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "7f256cdcc23411350ad4126ccedb57284fe7f6d0",
+        "testedTree": "ae47af0c209e9124c9b4e2b10a3fda371da33e0c",
+        "mergedSha": "7e7271675dd651ae078f013df0f295d47c915595",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44620408723,
+            "jobId": 135900224927,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44620408681,
+            "jobId": 135900224434,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44620408932,
+            "jobId": 135900225040,
+            "conclusion": "success",
+            "scope": "planner-only; no container inputs changed"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44621347636,
+          "jobId": 135903537081,
+          "conclusion": "success",
+          "headSha": "7e7271675dd651ae078f013df0f295d47c915595"
+        },
+        "priorFullSmoke": {
+          "runId": 44616748444,
+          "jobId": 135887367040,
+          "headSha": "86cb8dbf269bc4395386a64bf4b29582fe9ceba4",
+          "conclusion": "success"
+        },
+        "review": "Printed p.24 Damage Resolution, cross-referenced pp.6,30,40: all weapon to-hit rolls precede damage; declared attacks survive same-phase shooter destruction, accumulated damage is applied before phase-end PSRs and entry into Physical phase. Actual damage 18 versus 20 verifies the trigger and phase reset. Detailed PSR and critical allocation algorithms remain in their own chapters. Exact #200 head CI 434/434, Browser E2E 39/39, scope-planner smoke passed; full smoke already passed on #199, with no later application changes. Identical tested/merged tree and main Sonar success."
+      }
     }
   ]
 }
