@@ -3425,3 +3425,23 @@ test('AGoAC p.12: submerged leg jump jets reduce launch MP at depth one and dept
   assert.equal(g.reachable(u,'jump').some(t=>t.q===3&&t.r===0),expected===3);
  }
 });
+
+test('AGoAC p.12: repeated standing attempts each consume two MP and one heat until budget exhausted',()=>{
+ for(const mode of ['walk','run']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,heat:0,spent:0,prone:true,proneAtStart:true,moveMode:'stand'});
+  let attempts=0;
+  // Isolate the movement accounting from the later falling-damage rules.
+  g.psr=(unit)=>{attempts++;unit.prone=true;return false;};
+  const budget=g.mp(u,mode);
+  for(let i=1;i<=Math.floor(budget/2);i++){
+   assert(g.stand(u.id,5,{mode}).ok);
+   assert(u.prone);assert.equal(u.facing,0);assert.equal(u.spent,2*i);
+   assert.equal(u.pendingHeat,i);assert.equal(attempts,i);
+  }
+  const before=JSON.stringify(u);
+  assert.equal(g.stand(u.id,5,{mode}).ok,false);
+  assert.equal(JSON.stringify(u),before);
+  assert.equal(attempts,Math.floor(budget/2));
+ }
+});
