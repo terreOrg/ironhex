@@ -4645,9 +4645,13 @@
         {
           "file": "tests/api.mjs",
           "test": "API resumes a persisted defender LOS choice while the opponent is acting"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: AI requests a defender LOS choice only for its nominated attack and preserves that target"
         }
       ],
-      "reviewNote": "Re-reviewed p.13; #180 integrates controller choice, round-stamped reciprocity and persistence for interactive attacks. Remaining: actual-attacks-only AI selection, direct noninteractive enforcement, random side for non-player-controlled targets, and consistent handoff to attack-direction rules (chapter 6 handles direction itself). Do not mark Verified yet."
+      "reviewNote": "Re-reviewed p.13; #180 integrates controller choice, round-stamped reciprocity and persistence for interactive attacks. Remaining: actual-attacks-only AI selection, direct noninteractive enforcement, random side for non-player-controlled targets, and consistent handoff to attack-direction rules (chapter 6 handles direction itself). Do not mark Verified yet. P.13 rechecked: AI now chooses an intended attack before requesting defender LOS and retains the nominated target across interactive resolution/save, rather than querying all possible targets; shared ammunition pool checked during planning. Direct human noninteractive bypass, random LOS for uncontrolled hexes and later direction handoff remain open; exact gates pending."
     },
     {
       "id": "agoac-076",
@@ -5324,9 +5328,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.15,19: impossible attack misses even on twelve but a target number of two succeeds"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.15,22: cancel impossible declared attack without heat or ammunition expenditure or retargeting"
         }
       ],
-      "reviewNote": "Direct visual CAT3500D pp.15,21 and 22: ammunition exact bin usage at declaration now implemented atomically, including shared pool and explicit-vs-automatic allocation; marked saved declarations avoid double debit, legacy unmarked declarations retain roll-time compatibility. Automatic hit/miss boundaries tested. Explicit optional cancellation when a declared attack is impossible is still open; do not promote until cancellation and ordered resolution verified. Exact gates pending."
+      "reviewNote": "CAT3500D pp.15,21–22: exact declaration-time ammunition debit passed #187 CI 409/409, E2E and selective Smoke. Added explicit resolution choice to cancel impossible attack (no alternate target; exact allocated round returned, no heat or fired location) or retain automatic miss. Legacy fallback preserves existing noninteractive behavior. UI handles new choice. Exact gates and source corner-case audit pending."
     }
   ]
 }

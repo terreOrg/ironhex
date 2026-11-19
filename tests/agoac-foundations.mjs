@@ -3927,3 +3927,47 @@ test('AGoAC pp.15,19: impossible attack misses even on twelve but a target numbe
   assert.equal(a.roll,roll);assert.equal(a.hit,hit);
  }
 });
+
+test('AGoAC p.13: AI requests a defender LOS choice only for its nominated attack and preserves that target',()=>{
+ const g=fresh(),u=g.units[2],a=g.units[0],b=g.units[1];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,heat:0,moveMode:'stand',fired:false});
+ Object.assign(a,{q:1,r:1,prone:false,fired:false});
+ Object.assign(b,{q:2,r:-1,prone:false,fired:false});
+ u.weapons=[{name:'Medium Laser',location:'CT',heat:3,damage:5,min:0,ammo:null,ranges:[3,6,9],rack:0}];
+ g.phase='fire';g.queue=[u.team,a.team];g.activeTeam=u.team;g.actingId=u.id;
+ g.planAiFire=()=>({target:a.id,indices:[0],twist:0,score:50});
+ const result=g.aiAttackWithLosChoices(u.id,{humanTeams:[a.team]});
+ assert(result.pending);assert.equal(g.pendingChoice.unitId,a.id);
+ assert.equal(g.selectedLosPath(u,b),0);assert.equal(g.declarations.length,0);
+ const p=g.pendingChoice;
+ g.planAiFire=()=>{throw Error('Must keep nominated target after defender choice');};
+ assert(g.resolveFireLosChoice({key:p.key,option:p.options[0].id},[a.team]).ok);
+ assert(g.aiAttackWithLosChoices(u.id,{humanTeams:[a.team]}).ok);
+ assert.equal(g.selectedLosPath(u,b),0);assert.equal(g.declarations.at(-1).shots[0].target,a.id);
+ assert.equal(u.aiFirePlan,undefined);
+});
+test('AGoAC pp.15,22: cancel impossible declared attack without heat or ammunition expenditure or retargeting',()=>{
+ for(const cancel of [true,false]){
+  const g=fresh(),u=g.units[0],t=g.units[2];
+  for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,moveMode:'stand',gunnery:13});
+  Object.assign(t,{q:4,r:0,prone:false,moveMode:'stand'});
+  g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,t.team];g.actingId=u.id;
+  const initial=u.bins[0].shots,heat=u.pendingHeat;
+  assert(g.declareFire(u.id,[{index:1,target:t.id,bin:0}]).ok);
+  assert.equal(u.bins[0].shots,initial-1);
+  const decisions=[];
+  g._resolutionChooser=(request,fallback)=>{
+   if(request.kind!=='fire-impossible')return fallback;
+   decisions.push(request.context);return cancel?'cancel':'fire';
+  };
+  g.rng=()=>.99;
+  const results=g.resolveFire();
+  assert.equal(decisions.length,1);assert.equal(decisions[0].targetId,t.id);
+  assert.equal(u.bins[0].shots,initial-Number(!cancel));
+  assert.equal(u.pendingHeat,heat+(cancel?0:u.weapons[1].heat));
+  if(cancel){assert.equal(results.length,0);assert.equal(u.firedLocations.length,0);}
+  else{assert.equal(results.length,1);assert.equal(results[0].shots[0].hit,false);}
+ }
+});
