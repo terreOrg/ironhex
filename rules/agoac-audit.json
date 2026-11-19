@@ -375,7 +375,7 @@
         29
       ],
       "status": "tested_subset",
-      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks."
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit."
     },
     {
       "id": "agoac-damage",
@@ -3028,7 +3028,7 @@
         33
       ],
       "statement": "Punches apply missing or damaged arm actuator modifiers and cumulative damage reduction with minimum one; intact physical weapon prevents punch with its arm. Weapon TN ignores missing-by-design actuators and leg actuator damage.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3039,7 +3039,44 @@
           "test": "AGoAC p.28: intact arm-mounted hatchet prevents a punch until destroyed"
         }
       ],
-      "reviewNote": "Original pages 28,32–33 checked. Weapon fire arm effects only; hatchet attack modifiers and multi-target punch declaration remain separate. Exact CI pending."
+      "reviewNote": "Printed p.28 and actuator cross-reference: independent damaged/missing upper/lower, hand and shoulder punch restrictions, cumulative halving/minimum one and intact arm weapon exclusion; #203 exact passing evidence plus earlier actuator tests. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "3e60ca8c4b8e1d5b10e6a2158b06bff332834f04",
+        "testedTree": "cc9d6dee6cf719beaf24f79bbc304028c30601a0",
+        "mergedSha": "0096e8025ca58109847c930db73c779190204869",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44626123248,
+            "jobId": 135920306685,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44626123320,
+            "jobId": 135920307027,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44626123290,
+            "jobId": 135920306620,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44627378855,
+          "jobId": 135924688699,
+          "conclusion": "success",
+          "headSha": "0096e8025ca58109847c930db73c779190204869"
+        },
+        "review": "Printed p.28 and actuator cross-reference: independent damaged/missing upper/lower, hand and shoulder punch restrictions, cumulative halving/minimum one and intact arm weapon exclusion; #203 exact passing evidence plus earlier actuator tests. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed."
+      }
     },
     {
       "id": "agoac-044",
@@ -3050,14 +3087,51 @@
         33
       ],
       "statement": "Club attacks require both working hands and shoulders; damaged upper/lower arm actuators add two each without reducing club damage. Picking up a club prohibits weapon attacks that turn.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.26,32–33: clubbing requires working shoulders and hands but damaged arm joints only add modifiers"
         }
       ],
-      "reviewNote": "Club finding checks fired locations; club life-cycle, limb wreckage and absent upper/lower club modifiers remain separately audited. Exact CI pending."
+      "reviewNote": "Printed p.26 club eligibility: both shoulders/hands intact, +2 per damaged arm joint, no damage penalty; pickup disallows weapons fired that turn. #203 passing existing and new pickup evidence. Complete club lifecycle tracked separately in 096. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "3e60ca8c4b8e1d5b10e6a2158b06bff332834f04",
+        "testedTree": "cc9d6dee6cf719beaf24f79bbc304028c30601a0",
+        "mergedSha": "0096e8025ca58109847c930db73c779190204869",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44626123248,
+            "jobId": 135920306685,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44626123320,
+            "jobId": 135920307027,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44626123290,
+            "jobId": 135920306620,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44627378855,
+          "jobId": 135924688699,
+          "conclusion": "success",
+          "headSha": "0096e8025ca58109847c930db73c779190204869"
+        },
+        "review": "Printed p.26 club eligibility: both shoulders/hands intact, +2 per damaged arm joint, no damage penalty; pickup disallows weapons fired that turn. #203 passing existing and new pickup evidence. Complete club lifecycle tracked separately in 096. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed."
+      }
     },
     {
       "id": "agoac-045",
@@ -6080,14 +6154,51 @@
         25
       ],
       "statement": "Different-level table; prone target restrictions and hit-location table override.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.25: standing and prone elevation matrix selects legal physical attacks and hit tables"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "reviewNote": "Printed p.25 Different Levels and prone section visually checked; six elevation/posture cases and ordinary attack legality and prescribed tables pass. DFA-specific prone table remains covered by 097. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "3e60ca8c4b8e1d5b10e6a2158b06bff332834f04",
+        "testedTree": "cc9d6dee6cf719beaf24f79bbc304028c30601a0",
+        "mergedSha": "0096e8025ca58109847c930db73c779190204869",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44626123248,
+            "jobId": 135920306685,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44626123320,
+            "jobId": 135920307027,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44626123290,
+            "jobId": 135920306620,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44627378855,
+          "jobId": 135924688699,
+          "conclusion": "success",
+          "headSha": "0096e8025ca58109847c930db73c779190204869"
+        },
+        "review": "Printed p.25 Different Levels and prone section visually checked; six elevation/posture cases and ordinary attack legality and prescribed tables pass. DFA-specific prone table remains covered by 097. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed."
+      }
     },
     {
       "id": "agoac-094",
@@ -6117,9 +6228,26 @@
         26
       ],
       "statement": "Charge: movement declaration, legal approach, comparative modifier, normal hit packets, water, miss side and PSRs.",
-      "status": "not_audited",
-      "evidence": [],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.24–27: comparative physical TN combines target movement and immobility and DFA ignores all terrain"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.26: missed charge attacker chooses either legal flanking hex with replay preserving attack dice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.25: fully submerged DFA is illegal before movement and charge requires an adjacent legal ground entry"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.26: underwater charge halves both rounded damage amounts and cancelled or fallen charge cannot advance"
+        }
+      ],
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review."
     },
     {
       "id": "agoac-096",
@@ -6150,9 +6278,18 @@
         28
       ],
       "statement": "DFA declaration, airborne limits, comparative TN, resolution, damage, displacement and landing.",
-      "status": "not_audited",
-      "evidence": [],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.24–27: comparative physical TN combines target movement and immobility and DFA ignores all terrain"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.25: fully submerged DFA is illegal before movement and charge requires an adjacent legal ground entry"
+        }
+      ],
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review."
     },
     {
       "id": "agoac-098",
@@ -6161,7 +6298,7 @@
         28
       ],
       "statement": "Kick arc, leg eligibility, attack table, damage and hit/miss PSRs.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6172,7 +6309,44 @@
           "test": "AGoAC p.28: every biped punch and kick location table entry matches printed tables"
         }
       ],
-      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion."
+      "reviewNote": "Printed p.28 kick attack and 1D6 location tables: exact six facings, inclusive forward boundary, both intact hips, fired-leg rule, tone-based damage, actuator halves, successful-target and missed-attacker PSR. Existing kick actuator requirement 038 remains distinct. #203 entire location-table sweep passed. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "3e60ca8c4b8e1d5b10e6a2158b06bff332834f04",
+        "testedTree": "cc9d6dee6cf719beaf24f79bbc304028c30601a0",
+        "mergedSha": "0096e8025ca58109847c930db73c779190204869",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44626123248,
+            "jobId": 135920306685,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44626123320,
+            "jobId": 135920307027,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44626123290,
+            "jobId": 135920306620,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44627378855,
+          "jobId": 135924688699,
+          "conclusion": "success",
+          "headSha": "0096e8025ca58109847c930db73c779190204869"
+        },
+        "review": "Printed p.28 kick attack and 1D6 location tables: exact six facings, inclusive forward boundary, both intact hips, fired-leg rule, tone-based damage, actuator halves, successful-target and missed-attacker PSR. Existing kick actuator requirement 038 remains distinct. #203 entire location-table sweep passed. CI 446/446, browser 39/39, full Docker Smoke and main Quality Gate passed."
+      }
     },
     {
       "id": "agoac-099",

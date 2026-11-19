@@ -4522,3 +4522,51 @@ test('AGoAC p.28: both punch arcs include exact sixty and one hundred twenty deg
   }
  }
 });
+
+
+test('AGoAC pp.24–27: comparative physical TN combines target movement and immobility and DFA ignores all terrain',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ Object.assign(u,{piloting:5,moveMode:'run'});Object.assign(t,{piloting:3,moveMode:'jump',distanceMoved:7,shutdown:true});
+ Object.assign(g.tile(t.q,t.r),{type:'heavy'});
+ assert.equal(g.specialPhysicalTN(u,t,false),11);
+ assert.equal(g.specialPhysicalTN(u,t,true),10);
+ t.prone=true;assert.equal(g.specialPhysicalTN(u,t,true),8);
+ Object.assign(t,{prone:false,shutdown:false});assert.equal(g.specialPhysicalTN(u,t,false),15);
+ Object.assign(g.tile(t.q,t.r),{type:'water',height:-1,depth:1,surface:0});
+ assert.equal(g.specialPhysicalTN(u,t,false),14);assert.equal(g.specialPhysicalTN(u,t,true),14);
+});
+test('AGoAC p.26: missed charge attacker chooses either legal flanking hex with replay preserving attack dice',()=>{
+ const {g,u,t}=physicalBlockFixture();g.phase='physical';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+ Object.assign(u,{moveMode:'run',piloting:5,charge:{type:'charge',target:t.id,dir:0,hexes:2,targetPos:{q:t.q,r:t.r}}});
+ t.piloting=5;
+ let draws=0;g.rng=()=>{draws++;return 0;};
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
+ const p=structuredClone(g.pendingChoice);assert.equal(p.kind,'charge-miss');assert.equal(p.unitId,u.id);assert.equal(draws,2);
+ assert.equal(p.options.length,2);
+ assert(!g.nextPhaseWithChoices({choice:{key:p.key,option:'3'}}).ok);assert.equal(draws,2);
+ const chosen=p.options.at(-1);assert(g.nextPhaseWithChoices({choice:{key:p.key,option:chosen.id}}).ok);
+ assert.equal(draws,2);assert.deepEqual([g.unit(u.id).q,g.unit(u.id).r],[chosen.q,chosen.r]);
+ assert.equal(g.resolution[0].shots[0].hit,false);
+});
+test('AGoAC p.25: fully submerged DFA is illegal before movement and charge requires an adjacent legal ground entry',()=>{
+ for(const [originDepth,targetDepth,prone,mode] of [[2,0,false,'dfa'],[0,2,false,'dfa'],[1,1,true,'dfa'],[0,1,false,'charge']]){
+  const {g,u,t}=physicalBlockFixture();u.jump=5;t.moved=true;t.prone=prone;
+  for(const [v,depth] of [[u,originDepth],[t,targetDepth]])Object.assign(g.tile(v.q,v.r),{type:depth?'water':'plain',depth,height:-depth,surface:0});
+  g.phase='move';g.queue=[0];g.activeTeam=0;g.actingId=u.id;
+  const before=[u.q,u.r,u.spent];const result=g.declareCharge(u.id,t.id,mode);
+  assert.equal(result.ok,false);assert.deepEqual([u.q,u.r,u.spent],before);assert(!u.charge);
+ }
+});
+test('AGoAC p.26: underwater charge halves both rounded damage amounts and cancelled or fallen charge cannot advance',()=>{
+ for(const variant of ['underwater','fallen','cancel']){
+  const {g,u,t}=physicalBlockFixture();Object.assign(u,{moveMode:'walk',tonnage:65,piloting:5,charge:{type:'charge',dir:0,target:t.id,hexes:5,targetPos:{q:t.q,r:t.r}}});t.tonnage=45;t.piloting=5;
+  if(variant==='underwater')for(const v of [u,t])Object.assign(g.tile(v.q,v.r),{type:'water',height:-2,depth:2,surface:0});
+  else if(variant==='fallen')u.prone=true;
+  else{u.piloting=12;g._resolutionChooser=p=>{assert.equal(p.kind,'physical-impossible');return 'cancel';};}
+  const packets=[];g.packets=(v,amount)=>packets.push([v.id,amount]);
+  g.rng=()=>{assert.equal(variant,'underwater');return .99;};
+  g.resolveSpecial(u);assert(u.charge.resolved);
+  assert.deepEqual(packets,variant==='underwater'?[[t.id,16],[u.id,2]]:[]);
+  if(variant!=='underwater'){assert.deepEqual([u.q,u.r],[0,0]);assert.equal(g.resolution[0].shots[0].roll,null);}
+ }
+});
