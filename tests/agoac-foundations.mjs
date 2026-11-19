@@ -2982,3 +2982,29 @@ test('AGoAC p.8: one-legged bipeds cannot select jumping even with intact jets',
   assert.equal(JSON.stringify(u),before);
  }
 });
+
+
+test('AGoAC p.8: zero-distance ground movement commits mode and generates heat exactly once',()=>{
+ for(const [mode,heat,other] of [['walk',1,'run'],['run',2,'walk']]){
+  const g=fresh(),u=g.units[0];
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,moveMode:'stand',spent:0,pendingHeat:0,distanceMoved:0});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  assert(g.move(u.id,u.q,u.r,mode).ok);
+  assert.equal(u.moveMode,mode);
+  assert.equal(u.spent,0);assert.equal(u.distanceMoved,0);
+  assert.equal(g.tmm(u),0);assert.equal(u.pendingHeat,0);
+  const before=JSON.stringify(u);
+  for(const invalid of [other,'jump','stand']){
+   assert.deepEqual(g.reachable(u,invalid),[]);
+   assert.equal(g.move(u.id,u.q,u.r,invalid).ok,false);
+   assert.equal(JSON.stringify(u),before);
+  }
+  assert(g.hold(u.id).ok);
+  assert.equal(u.pendingHeat,heat);
+  assert.equal(u.moveMode,mode);
+  assert.deepEqual([u.q,u.r,u.facing],[0,0,0]);
+  assert.equal(g.hold(u.id).ok,false);
+  assert.equal(u.pendingHeat,heat);
+ }
+});
