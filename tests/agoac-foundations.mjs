@@ -80,6 +80,14 @@ test('AGoAC audit never promotes a topic without complete reviewed child evidenc
   assert.match(q.audit.mergedSha,/^[0-9a-f]{40}$/);
   assert.deepEqual(q.audit.checks.map(c=>c.name).sort(),['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
   assert(q.audit.checks.every(c=>Number.isSafeInteger(c.runId)&&c.conclusion==='success'));
+  if(q.topicId==='agoac-hit-location'){
+   const gate=q.audit.mainQualityGate;
+   assert(gate,q.id+' missing main Quality Gate evidence');
+   assert.equal(gate.name,'Ironhex SonarQube');
+   assert.equal(gate.headSha,q.audit.mergedSha);
+   assert.equal(gate.conclusion,'success');
+   assert(Number.isSafeInteger(gate.runId)&&Number.isSafeInteger(gate.jobId));
+  }
  }
  for(const t of r.topics.filter(t=>t.status==='verified')){
   const children=r.requirements.filter(q=>q.topicId===t.id);
@@ -4299,4 +4307,63 @@ test('AGoAC p.24: LRM20 example resolves twelve missiles as three independent hi
  assert.deepEqual(hits,[['CT',5,false],['LA',5,false],['RL',2,false]]);
  assert.equal(result[0].shots[0].damage,12);
  assert.equal(result[0].shots[0].rolls.length,5);assert.equal(dice.length,0);
+});
+
+
+test('AGoAC pp.22–24: partial cover absorbs only its own missile hit packets',()=>{
+ for(const water of [false,true]){
+  const g=fresh(),u=g.units[0],t=g.units[2];
+  Object.assign(t,{q:0,r:0,facing:0,prone:false});Object.assign(u,{q:2,r:0});
+  for(const hex of g.tiles)Object.assign(hex,{type:'plain',depth:0,height:0,surface:0});
+  if(water)Object.assign(g.tile(0,0),{type:'water',depth:1,height:-1,surface:0});
+  const before={...t.armor};
+  const dice=[10,12,5,7,9,6].flatMap(diceFor);
+  g.rng=()=>{assert(dice.length,'Unexpected die');return dice.shift();};
+  g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+  g.declarations=[{id:u.id,ammoSpent:true,shots:[{index:0,target:t.id,bin:null,aim:null,heatMode:false,
+   weapon:{name:'SRM 4',rack:4,ammo:null,heat:3,damage:2,location:'CT'},
+   // Above-water fire against a depth-one target obscures legs, not its torso.
+   preview:{targetNumber:2,side:'front',sideOptions:['front'],cover:true,underwaterCover:false}}]}];
+  const r=g.resolveFire()[0].shots[0];
+  assert.equal(r.damage,4);assert.equal(r.rolls.length,6);
+  assert.equal(t.armor.RL,before.RL);assert.equal(t.armor.LL,before.LL);
+  assert.equal(t.armor.CT,before.CT-2);assert.equal(t.armor.RT,before.RT-2);
+  assert.equal(dice.length,0);
+ }
+});
+test('AGoAC p.24: weapon damage accumulates before phase-end PSR and physical attacks',()=>{
+ for(const damage of [9,10]){
+  const g=fresh(),u=g.units[0],t=g.units[2];
+  Object.assign(t,{q:0,r:0,facing:0,prone:false,unconscious:false,shutdown:false});
+  Object.assign(u,{q:2,r:0,facing:3});
+  t.armor.CT=t.armor.RT=30;
+  g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+  const shot=index=>({index,target:t.id,bin:null,aim:null,heatMode:false,
+   weapon:{name:'Test laser '+index,rack:0,ammo:null,heat:1,damage,location:'CT'},
+   preview:{targetNumber:2,side:'front',sideOptions:['front'],cover:false,underwaterCover:false}});
+  g.declarations=[{id:u.id,ammoSpent:true,shots:[shot(0),shot(1)]}];
+  const dice=[10,10,7,6,...(damage===10?[12]:[])].flatMap(diceFor);
+  g.rng=()=>{assert(dice.length,'Unexpected die');return dice.shift();};
+  assert(g.nextPhase().ok);assert.equal(g.phase,'physical');
+  assert.deepEqual(g.resolution.map(r=>r.shots[0].damage),[damage,damage]);
+  assert.equal(t.armor.CT,30-damage);assert.equal(t.armor.RT,30-damage);
+  assert.equal(t.phaseDamage,0);assert.deepEqual(t.psrs,[]);assert.equal(t.prone,false);
+  assert.equal(g.afterRolls.length,damage===10?1:0);
+  if(damage===10){assert.match(g.afterRolls[0].kind,/20\+ урона/);assert.equal(g.afterRolls[0].target,t.piloting+1);}
+  assert.equal(dice.length,0);
+ }
+});
+test('AGoAC p.22: AI defender resolves a legal boundary without requesting a human choice',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ Object.assign(u,{q:-1,r:-1});Object.assign(t,{q:0,r:0,facing:0,prone:false});
+ g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+ const options=g.hitSideOptions(t,u);assert.deepEqual(options,['left','rear']);
+ g.declarations=[{id:u.id,ammoSpent:true,shots:[{index:0,target:t.id,bin:null,aim:null,heatMode:false,
+  weapon:{name:'Medium Laser',rack:0,ammo:null,heat:3,damage:1,location:'CT'},
+  preview:{targetNumber:2,side:options[0],sideOptions:options,cover:false,underwaterCover:false}}]}];
+ const before=t.armor.LT,dice=[10,7].flatMap(diceFor);let draws=0;
+ g.rng=()=>{assert(dice.length,'Unexpected die');draws++;return dice.shift();};
+ const result=g.nextPhaseWithChoices({humanTeams:[0]});
+ assert(result.ok&&!result.pending);assert.equal(g.pendingChoice,null);assert.equal(draws,4);
+ assert.equal(g.unit(t.id).armor.LT,before-1);assert.equal(g.phase,'physical');
 });
