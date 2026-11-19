@@ -1876,6 +1876,9 @@ export class Game extends Legacy{
   else if(table==='normal'&&opts.locationTable!=='normal'){table=opts.locationTable;mod+=4;}
  }
 
+ // CAT3500D errata v8.01 p.2, Reversing Arms: flipped arms cannot
+ // punch or use an arm-mounted physical weapon in the Physical Phase.
+ if(u.flip&&['punch','hatchet'].includes(type))reason='Перевёрнутые назад руки не могут наносить удары или применять физическое оружие';
  const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';// Preview reports nominal damage. Underwater reduction is per hit location
  // and must happen only during damage resolution, not at declaration.
  const underwaterPhysical=targetSub||targetWaterline&&table!=='punch';// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
@@ -2455,7 +2458,12 @@ export class Game extends Legacy{
   const approach=this.tile(p.q,p.r),dh=Math.abs(approach.height-targetTile.height);
   const submergedApproach=approach.depth>=2,submergedTarget=targetTile.depth>=2;
   if(dh>1||mode==='run'&&targetTile.depth||submergedTarget&&!submergedApproach||submergedApproach&&!submergedTarget&&targetTile.depth!==1)return false;
-  return p.cost+this.terrainCost(targetTile,approach)+dh<=this.mp(u,mode);
+  // Errata v8.01 p.3: the target must be directly ahead when the
+  // charge is declared. Turning to face it costs real Movement MP;
+  // it is not a free facing change upon entering the physical phase.
+  const dir=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);
+  const turnMp=Math.min(wrap(dir-p.facing),wrap(p.facing-dir));
+  return p.cost+turnMp+this.terrainCost(targetTile,approach)+dh<=this.mp(u,mode);
  });
  if(type==='dfa'&&distance(u,t)>1){
   const path=[...this.losHexPath(u,t,1),...this.losHexPath(u,t,-1)];
@@ -2478,7 +2486,11 @@ export class Game extends Legacy{
   this.note(u.name+': подход прерван; физическая атака не заявлена.');
   this.hold(id);return {...r,ended:true,chargeInterrupted:true,rolls:[...this.phaseRolls]};
  }
- const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r},startPos:start};if(type==='dfa'){u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
+ const d=DIRS.findIndex(d=>p.q+d[0]===t.q&&p.r+d[1]===t.r);
+ // DFA uses airborne facing; ground charge must pay each 60° turn.
+ const turnMp=type==='charge'?Math.min(wrap(d-u.facing),wrap(u.facing-d)):0;
+ if(type==='charge'){u.spent+=turnMp;r.turnMp=turnMp;}
+ u.facing=d;u.charge={target,type,dir:d,hexes:type==='dfa'?distance(start,u):chargeTravelHexes(start,p.path),targetPos:{q:t.q,r:t.r},startPos:start};if(type==='dfa'){u.airborne=true;}this.note(`${u.name}: заявлен ${type==='dfa'?'DFA':'таран'} против ${t.name}.`);this.hold(id);return r;}
  // AGoAC p.27: a missed DFA allows any legal neighboring hex,
  // including an occupied one. A successful DFA searches by angular
  // distance from the original displacement direction.
