@@ -113,7 +113,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=ironhex
-            -Dsonar.sources=apps/web/src,apps/api/src,packages/engine,scripts
+            -Dsonar.sources=apps/web/src,apps/api/src,packages/engine,packages/ui/mech-toggle/mech-toggle.js,scripts
             -Dsonar.tests=tests
             -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/**
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,coverage/browser.info
