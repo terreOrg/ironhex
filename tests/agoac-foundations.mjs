@@ -3040,3 +3040,26 @@ test('AGoAC p.8: undamaged walking and running allowances and reverse travel',()
   }
  }
 });
+
+
+test('AGoAC p.8: jump allowance and minimum heat at each reachable distance',()=>{
+ for(const jets of [1,2,3,4,5,6])for(let travelled=1;travelled<=jets;travelled++){
+  const g=fresh(),u=g.units[0];
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,jump:jets,jumpLost:0,heat:0,spent:0,moveMode:'stand',distanceMoved:0,pendingHeat:0,prone:false,proneAtStart:false,moveStart:{q:0,r:0}});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  assert.equal(g.mp(u,'jump'),jets);
+  const routes=g.reachable(u,'jump');
+  assert(routes.every(t=>t.cost<=jets&&distance(u,t)<=jets));
+  const t=routes.find(t=>distance(u,t)===travelled);
+  assert(t,'missing legal jump at distance '+travelled);
+  assert(g.move(u.id,t.q,t.r,'jump').ok);
+  assert.equal(u.spent,travelled);assert.equal(u.distanceMoved,travelled);
+  assert.equal(u.pendingHeat,Math.max(3,travelled));
+  assert.deepEqual(g.reachable(u,'walk'),[]);
+  assert.deepEqual(g.reachable(u,'run'),[]);
+  assert.deepEqual(g.reachable(u,'jump'),[]);
+  assert(g.hold(u.id).ok);
+  assert.equal(u.pendingHeat,Math.max(3,travelled));
+ }
+});
