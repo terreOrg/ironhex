@@ -3470,9 +3470,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.6: surviving immobile or unarmed units retain declaration selections"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: zero-distance ground movement commits mode and generates heat exactly once"
         }
       ],
-      "reviewNote": "Printed p.8 reviewed. Guard on-board reachable() against unsupported movement mode values (including stand as a movement command); stand-still remains hold. Prepared regression checks state immutability and zero heat/MP. Existing evade extension remains gated; exact CI pending. Other movement-mode outputs and edge cases tracked separately."
+      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
     },
     {
       "id": "agoac-056",
@@ -3481,9 +3485,22 @@
         8
       ],
       "statement": "Walk within walking allowance; allow reverse travel; report walking heat and attacker/target movement outputs.",
-      "status": "not_audited",
-      "evidence": [],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: zero-distance ground movement commits mode and generates heat exactly once"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: undamaged walking and running allowances and reverse travel"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
+        }
+      ],
+      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
     },
     {
       "id": "agoac-057",
@@ -3492,14 +3509,26 @@
         8
       ],
       "statement": "Run within rounded-up 1.5 times walking allowance; no reverse travel; report running heat and movement outputs.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.33: biped hip damage halves Walking MP downward and derives Running MP upward"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: zero-distance ground movement commits mode and generates heat exactly once"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: undamaged walking and running allowances and reverse travel"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
         }
       ],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
     },
     {
       "id": "agoac-058",
@@ -3508,9 +3537,18 @@
         8
       ],
       "statement": "Jump mode eligibility, available jump jets, distance-based heat with minimum, and movement modifier outputs.",
-      "status": "not_audited",
-      "evidence": [],
-      "reviewNote": "Direct inventory from printed source, existing candidate regression references where located. Detailed code audit and verification pending."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: jump allowance and minimum heat at each reachable distance"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
+        }
+      ],
+      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
     },
     {
       "id": "agoac-059",
@@ -3519,7 +3557,7 @@
         8
       ],
       "statement": "One-leg restrictions and running/jumping damage-related PSR triggers; verify movement integration, not critical/fall algorithms.",
-      "status": "not_audited",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3528,9 +3566,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.8: one-legged bipeds cannot select jumping even with intact jets"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: gyro and hip damage trigger movement PSR only for run and jump"
         }
       ],
-      "reviewNote": "Printed p.8 visually reviewed: one-legged bipeds may walk or stand still only. Fixed jump allowance for missing leg; new regression pending checks. Damage-related PSR triggers remain to audit."
+      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
     },
     {
       "id": "agoac-060",
