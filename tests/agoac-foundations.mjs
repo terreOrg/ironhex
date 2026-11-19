@@ -3329,3 +3329,21 @@ test('AGoAC p.10: bridge and adjacent water retain distinct running eligibility'
   assert(DIRS.some(([dq,dr])=>g.tile(deck.q+dq,deck.r+dr)?.depth>0));
  }
 });
+
+test('AGoAC p.11: minimum movement preserves facing and respects elevation and occupied hex limits',()=>{
+ for(const delta of [-3,-2,-1,0,1,2,3])for(const occupied of [false,true]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:1,heat:0,spent:0,moveMode:'stand',moveStart:{q:0,r:0}});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  Object.assign(g.tile(0,0),{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(g.tile(1,0),{type:'heavy',depth:0,height:delta,surface:delta});
+  if(occupied)Object.assign(g.units[2],{q:1,r:0,deployed:true});
+  const before=JSON.stringify(u),result=g.minimumMove(u.id);
+  const legal=!occupied&&Math.abs(delta)<=2;
+  assert.equal(result.ok,legal);
+  if(legal){
+   assert(result.ended);assert.equal(u.facing,0);assert.equal(u.q,1);
+   assert.equal(u.distanceMoved,1);assert.equal(u.pendingHeat,2);assert(u.moved);
+  }else assert.equal(JSON.stringify(u),before);
+ }
+});
