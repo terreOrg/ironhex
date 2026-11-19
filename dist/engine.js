@@ -1467,6 +1467,14 @@ export class Game extends Legacy{
  psr(u,modifier,reason,immediate=false,fallLevels=0,shutdownCheck=false){if(u.dead||u.prone)return true;if(!immediate){u.psrs.push({modifier,reason});return true;}this.consciousness(u);const tn=u.piloting+this.psrMod(u,reason!=='Подъём')+modifier;if(u.unconscious||u.abandoned||['LA','RA','LL','RL'].every(l=>u.structure?.[l]===0)||u.gyroHits>=2||(u.shutdown&&!shutdownCheck)||this.roll(u.name+' · '+reason,tn)<tn){this.fall(u,fallLevels,tn);return false;}return true;}
  endPSR(){// AGoAC p.6: every phase-end Consciousness Roll precedes the phase's PSRs.
  for(const u of this.units)this.consciousness(u);
+ // AGoAC errata v8.01 p.4: a destroyed DFA target converts the flight
+ // to a normal jump; an unconscious pilot otherwise automatically misses.
+ if(this.phase==='fire')for(const u of this.units){
+  if(u.dead||!u.airborne||u.charge?.type!=='dfa'||u.charge.resolved)continue;
+  const target=this.unit(u.charge.target);
+  if(target?.dead&&!target.escaped)this.completeDFAJump(u,u.charge.targetPos);
+  else if(u.unconscious)this.interruptAirborneDFA(u,u.piloting+this.psrMod(u,true));
+ }
  for(const u of this.units){if(u.phaseDamage>=20)u.psrs.push({modifier:1,reason:'20+ урона'});if(!u.dead&&!u.prone){const tn=u.piloting+this.psrMod(u,true)+u.psrs.reduce((s,p)=>s+p.modifier,0);for(const p of u.psrs){if(this.isImmobile(u)||u.gyroHits>=2||p.reason==='Потеря ноги'||this.roll(u.name+' · '+p.reason,tn)<tn){this.fall(u,0,tn);break;}}}u.psrs=[];u.phaseDamage=0;}}
  // AGoAC p.43: water surface and water bottom are separate impacts.
  fallDamageGroups(u,levels,extraDamage=0,origin=null){
@@ -1840,7 +1848,7 @@ export class Game extends Legacy{
   u.actuators.RL.hip||u.firedLocations.includes(limb)||Math.abs(a)>60.00001||dh===1)
   reason='Нога/цель недоступна для удара';
  if(dh===-1&&!t.prone)table='punch';
-}else if(type==='hatchet'){damage=Math.ceil(u.tonnage/5);mod=-1+2*Number(act.upper)+2*Number(act.lower)+Number(act.hand);if(!arm||!u.hatchets?.some(h=>h.location===limb)||u.slots[limb].some((s,i)=>s==='hatchet'&&u.crit[limb][i])||!u.structure[limb]||act.shoulder||act.lower||u.firedLocations.includes(limb)||Math.abs(a)>120.00001||limb==='LA'&&a< -60.00001||limb==='RA'&&a>60.00001)reason='Топор или рука недоступны';damage=Math.max(1,Math.floor(damage/2**Number(act.upper)));}else if(type==='push'){mod=-1+2*Number(u.actuators.LA.shoulder)+2*Number(u.actuators.RA.shoulder);if(!u.structure.LA||!u.structure.RA||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>30||dh||t.prone)reason='Толчок требует двух рук и цель прямо перед мехом';}else if(type==='club'){mod=-1+2*['LA','RA'].reduce((n,l)=>n+Number(u.actuators[l].upper)+Number(u.actuators[l].lower),0);damage=Math.ceil(u.tonnage/5);if(!u.club||!clubArmsAvailable(u)||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>60.00001)reason='Нужна дубина и две свободные исправные руки';}else return {legal:false,reason:'Неизвестная атака',targetNumber:99};// AGoAC p.25: the different-level table takes precedence over the default attack table.
+}else if(type==='hatchet'){damage=Math.ceil(u.tonnage/5);mod=-1+2*Number(act.upper)+2*Number(act.lower);if(!arm||!u.hatchets?.some(h=>h.location===limb)||u.slots[limb].some((s,i)=>s==='hatchet'&&u.crit[limb][i])||!u.structure[limb]||act.shoulder||physicalArmActuators(u,limb).hand||u.firedLocations.includes(limb)||Math.abs(a)>120.00001||limb==='LA'&&a< -60.00001||limb==='RA'&&a>60.00001)reason='Топор или рука недоступны';}else if(type==='push'){mod=-1+2*Number(u.actuators.LA.shoulder)+2*Number(u.actuators.RA.shoulder);if(!u.structure.LA||!u.structure.RA||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>30||dh||t.prone)reason='Толчок требует двух рук и цель прямо перед мехом';}else if(type==='club'){mod=-1+2*['LA','RA'].reduce((n,l)=>n+Number(u.actuators[l].upper)+Number(u.actuators[l].lower),0);damage=Math.ceil(u.tonnage/5);if(!u.club||!clubArmsAvailable(u)||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>60.00001)reason='Нужна дубина и две свободные исправные руки';}else return {legal:false,reason:'Неизвестная атака',targetNumber:99};// AGoAC p.25: the different-level table takes precedence over the default attack table.
  if(t.prone&&dh===-1)reason='Лежащая цель ниже атакующего недоступна';
  if(['club','hatchet'].includes(type))table=t.prone?'normal':dh===1?'kick':dh===-1?'punch':'normal';
  if(type==='hatchet'&&opts.locationTable!==undefined){
@@ -2462,6 +2470,19 @@ export class Game extends Legacy{
   }
   return [];
  }
+ // Errata v8.01 p.4: a DFA whose target was destroyed by weapon fire
+ // completes an ordinary jump, with no DFA damage or DFA-specific PSR.
+ completeDFAJump(u,pos){
+  u.airborne=false;u.charge.resolved=true;
+  if(u.dead||!pos||!this.tile(pos.q,pos.r)||this.occupied(pos.q,pos.r,u.id))return;
+  u.q=pos.q;u.r=pos.r;
+  if(u.charge.startPos)u.distanceMoved=distance(u.charge.startPos,u);
+  const tile=this.tile(u.q,u.r),modifier=u.config==='Quad'&&['LA','RA','LL','RL'].filter(l=>!u.structure[l]).length===1?5:0;
+  this.checkExistingHullBreaches(u);
+  if(u.dead)return;
+  if(tile.depth)this.psr(u,modifier,'Посадка в воду',true,tile.depth);
+  else if(modifier||this.psrMod(u)||this.isImmobile(u))this.psr(u,modifier,'Посадка',true);
+ }
  resolveDFALanding(u,t,dir,hit,old,fallTN=null){
   if(u.dead)return;
   const options=t.dead?[]:this.dfaDisplacementOptions(t,dir,hit);
@@ -2507,13 +2528,23 @@ export class Game extends Legacy{
   const s=u.charge;if(!s||s.resolved||u.dead)return;
   const t=this.unit(s.target);if(!t)return;
   const dfa=s.type==='dfa',start=this.phaseRolls.length;
+  if(t.dead&&!t.escaped){
+   if(dfa)this.completeDFAJump(u,s.targetPos);
+   else{
+    s.resolved=true;
+    if(this.mobile(u)&&!u.prone&&!this.occupied(s.targetPos.q,s.targetPos.r,u.id)){
+     u.q=s.targetPos.q;u.r=s.targetPos.r;
+    }
+   }
+   this.note(u.name+': цель уничтожена; специальная атака не проводится.');return;
+  }
   if(t.dead||t.q!==s.targetPos.q||t.r!==s.targetPos.r||t.prone&&!dfa){
    u.airborne=false;s.resolved=true;
    this.note(u.name+': специальная атака отменена — цель изменилась.');return;
   }
   const tn=this.specialPhysicalTN(u,t,dfa);
-  const cancelled=!dfa&&!u.prone&&this.cancelImpossiblePhysical(u,{target:t.id,targetNumber:tn,type:'charge',limb:null});
-  const roll=!cancelled&&!u.prone?this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn):null;
+  const cancelled=!dfa&&!u.prone&&this.mobile(u)&&this.cancelImpossiblePhysical(u,{target:t.id,targetNumber:tn,type:'charge',limb:null});
+  const roll=!cancelled&&!u.prone&&this.mobile(u)?this.roll(u.name+' · '+(dfa?'DFA':'Таран'),tn):null;
   const hit=roll!==null&&roll>=tn,old={q:t.q,r:t.r};
   let damage=0;u.airborne=false;
   if(hit){
@@ -2535,7 +2566,7 @@ export class Game extends Legacy{
     this.psr(t,2,'Попадание тарана');
    }
   }else if(dfa){this.resolveDFALanding(u,t,s.dir,false,old);}
-  else if(!cancelled&&!u.prone)this.missedCharge(u,t,s.dir);
+  else if(!cancelled&&!u.prone&&this.mobile(u))this.missedCharge(u,t,s.dir);
   s.resolved=true;
   this.resolution.push({id:u.id,target:t.id,ok:true,shots:[{weapon:dfa?'DFA':'Таран',hit,roll,targetNumber:tn,damage,cancelled,rolls:this.phaseRolls.slice(start)}]});
  }
