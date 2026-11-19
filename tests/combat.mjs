@@ -1003,3 +1003,37 @@ test('AGoAC: front arc target is primary regardless of weapon assignment order',
   assert.equal(shots.find(s=>s.target===side.id).preview.mods.secondary,1);
  }
 });
+
+test('AGoAC p.17: explicit primary target choice is validated before committing any fire',()=>{
+ const g=game(),u=g.units[0],a=g.units[2],b=g.units[3];
+ Object.assign(u,{q:0,r:0,facing:0,twist:0});Object.assign(a,{q:2,r:0});Object.assign(b,{q:2,r:-1});
+ const w={name:'Medium Laser',damage:5,heat:3,ranges:[3,6,9],min:0,ammo:null,location:'CT',rack:0};u.weapons=[{...w},{...w}];
+ acting(g,0,'fire');
+ const shots=[{index:0,target:a.id},{index:1,target:b.id}];
+ g.preview=(id,target,index,opts)=>({legal:true,mods:{secondary:Number(opts.secondary)}});
+ assert.deepEqual(g.primaryTargetChoices(0,shots),[a.id,b.id]);
+ assert.equal(g.declareFire(0,shots,1).ok,false);assert.equal(g.declarations.length,0);assert.equal(u.fired,false);
+ b.q=-1;b.r=2;assert.deepEqual(g.primaryTargetChoices(0,shots),[a.id]);
+ assert.equal(g.declareFire(0,shots,b.id).ok,false);assert.equal(u.fired,false);
+ a.q=-2;a.r=0;
+ assert.deepEqual(g.primaryTargetChoices(0,shots),[a.id,b.id]);
+ assert(g.declareFire(0,shots,b.id).ok);const declared=g.declarations.at(-1).shots;
+ assert.equal(declared.find(s=>s.target===b.id).preview.mods.secondary,0);
+ assert.equal(declared.find(s=>s.target===a.id).preview.mods.secondary,1);
+});
+
+test('AGoAC pp.16–20: weapon GATOR movement, heat, range and secondary boundaries',()=>{
+ const g=game(),u=g.units[0],t=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false,gunnery:4,heat:0,moveMode:'stand',skidded:false,sensorHits:0});
+ Object.assign(t,{q:3,r:0,prone:false,distanceMoved:0,moveMode:'stand',skidded:false});
+ u.weapons=[{name:'PPC',damage:10,heat:10,ranges:[3,4,6],min:3,ammo:null,location:'CT',rack:0}];
+ const preview=opts=>g.preview(u.id,t.id,0,opts);
+ for(const [mode,n] of [['stand',0],['walk',1],['run',2],['jump',3]]){u.moveMode=mode;assert.equal(preview().mods.attacker,n);}
+ for(const [heat,n] of [[0,0],[7,0],[8,1],[12,1],[13,2],[16,2],[17,3],[23,3],[24,4]]){u.heat=heat;assert.equal(preview().mods.heat,n);}
+ for(const [distance,n] of [[0,0],[2,0],[3,1],[4,1],[5,2],[6,2],[7,3],[9,3],[10,4],[17,4],[18,5],[24,5],[25,6]]){t.distanceMoved=distance;assert.equal(preview().mods.target,n);}
+ t.moveMode='jump';assert.equal(preview().mods.target,7);
+ for(const [q,n,min] of [[1,0,3],[2,0,2],[3,0,1],[4,2,0],[5,4,0],[6,4,0]]){t.q=q;const p=preview();assert.equal(p.mods.range,n);assert.equal(p.mods.minimum,min);}
+ assert.equal(preview({secondary:true}).mods.secondary,1);
+ t.q=-1;t.r=2;assert.equal(preview({secondary:true}).mods.secondary,2);
+});

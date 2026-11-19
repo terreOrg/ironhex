@@ -4765,9 +4765,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.6: weapon declarations and facing commitments cannot change after selection"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "AGoAC p.17: explicit primary target choice is validated before committing any fire"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "API validates optional primary fire target against declared shots"
         }
       ],
-      "reviewNote": "declareFire, canAct and selection commitments exist; legal targets review pending; candidate regression references, not final verification."
+      "reviewNote": "declareFire, canAct and selection commitments exist; legal targets review pending; candidate regression references, not final verification. Explicit primary target now travels through engine, UI and server order validation; empty-hex declarations remain open."
     },
     {
       "id": "agoac-080",
@@ -4804,9 +4812,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.13,17: both physically adjacent terrain cells affect elevation and partial cover"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "AGoAC pp.16–20: weapon GATOR movement, heat, range and secondary boundaries"
         }
       ],
-      "reviewNote": "preview sums gunnery, movement, range, minimum, terrain, heat, sensor, arm and posture; verify complete tables; candidate regression references, not final verification. Added terrain/cover primitive evidence; full GATOR modifier integration still pending. Cover/terrain primitive updated, full modifier audit remains pending. Exact CI not yet run; no Verified promotion."
+      "reviewNote": "preview sums gunnery, movement, range, minimum, terrain, heat, sensor, arm and posture; verify complete tables; candidate regression references, not final verification. Added terrain/cover primitive evidence; full GATOR modifier integration still pending. Cover/terrain primitive updated, full modifier audit remains pending. Exact CI not yet run; no Verified promotion. Added boundary matrix for weapon movement, heat, distance, jump, range and secondary target modifiers (printed pp.16–20). Exact CI pending."
     },
     {
       "id": "agoac-081",
@@ -4825,9 +4837,17 @@
         {
           "file": "tests/combat.mjs",
           "test": "AGoAC: front arc target is primary regardless of weapon assignment order"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "AGoAC p.17: explicit primary target choice is validated before committing any fire"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "API validates optional primary fire target against declared shots"
         }
       ],
-      "reviewNote": "Front-arc primary selection now independent of assignment order; existing immobility regression plus targeted declaration regression. Source and final gate verification pending."
+      "reviewNote": "Front-arc primary selection now independent of assignment order; existing immobility regression plus targeted declaration regression. Source and final gate verification pending. Player can designate eligible declared primary target; forward priority enforced in engine, consistent secondary preview in UI and optional API field. Multiple forward arcs with twisted leg weapons still require explicit audit."
     },
     {
       "id": "agoac-082",
