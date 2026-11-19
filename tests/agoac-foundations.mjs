@@ -4280,3 +4280,23 @@ test('AGoAC p.22: defender selects a boundary side before location rolls and sav
  assert.equal(g.pendingChoice,null);assert.equal(draws,4);
  assert.equal(g.units[2].rear.CT,rear-5);assert.equal(g.units[2].armor.CT,front);
 });
+
+test('AGoAC p.24: LRM20 example resolves twelve missiles as three independent hit locations',()=>{
+ const g=fresh(),a=g.units[0],t=g.units[2];
+ Object.assign(t,{q:0,r:0,facing:0,prone:false});
+ Object.assign(a,{q:0,r:-2});
+ assert.deepEqual(g.hitSideOptions(t,a),['left']);
+ g.phase='fire';g.queue=[];g.activeTeam=null;g.initiativeWinner=1;
+ const s={index:0,target:t.id,bin:null,aim:null,heatMode:false,
+  weapon:{name:'LRM 20',rack:20,ammo:null,heat:6,damage:1,location:'CT'},
+  preview:{targetNumber:2,side:'left',sideOptions:['left'],cover:false,underwaterCover:false}};
+ g.declarations=[{id:a.id,ammoSpent:true,shots:[s]}];
+ const dice=[...diceFor(10),...diceFor(8),...diceFor(8),...diceFor(4),...diceFor(11)];
+ g.rng=()=>{assert(dice.length,'Unexpected die');return dice.shift();};
+ const hits=[];
+ g.damage=(u,loc,amount,opts)=>{assert.equal(u.id,t.id);hits.push([loc,amount,opts.rear]);return [];};
+ const result=g.resolveFire();
+ assert.deepEqual(hits,[['CT',5,false],['LA',5,false],['RL',2,false]]);
+ assert.equal(result[0].shots[0].damage,12);
+ assert.equal(result[0].shots[0].rolls.length,5);assert.equal(dice.length,0);
+});

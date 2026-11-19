@@ -5616,9 +5616,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.22: defender selects a boundary side before location rolls and saved replay preserves dice"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "AGoAC p.22 API: human defender owns boundary direction and restored replay rejects forged choices"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC p.22 browser: defender selects rear hit direction after reconnect"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion. The first package's four engine regressions passed exact CI 44614648171 on a087b603. Additional API saved-state authorization and browser reconnect evidence is pending."
     },
     {
       "id": "agoac-086",
@@ -5690,9 +5698,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.23–24: all base launcher cluster rolls allocate separate SRM or five-point LRM packets"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.24: LRM20 example resolves twelve missiles as three independent hit locations"
         }
       ],
-      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion. Printed p.24 Catapult example independently extracted (12 missiles, 5/5/2, locations CT/LA/RL). Added actual damage resolution regression; pending exact CI."
     },
     {
       "id": "agoac-090",

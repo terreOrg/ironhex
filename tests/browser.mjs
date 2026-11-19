@@ -1405,3 +1405,51 @@ test('AGoAC p.21: browser declares aimed and ordinary weapons independently',{ti
    assert.equal(await gale.evaluate(el=>el.checked),true);
   });
  });
+
+test('AGoAC p.22 browser: defender selects rear hit direction after reconnect',{timeout:120000},async()=>{
+ const operationId='88888888-8888-4888-8888-888888888888';
+ await withPage('server-hit-direction',{path:'/index.html?battle=1&operation='+operationId,noWebGL:true},async page=>{
+  const dice=[.5,.5,.4,.6];let draws=0,version=1;
+  const referee=new TestBattleGame({rng:()=>{draws++;return dice.shift()??.99;}});
+  const [t,,a]=referee.units;
+  Object.assign(t,{q:0,r:0,facing:0,prone:false,twist:1});
+  Object.assign(a,{q:-1,r:-1,facing:5});
+  referee.phase='fire';referee.queue=[];referee.activeTeam=null;referee.initiativeWinner=1;
+  const options=referee.hitSideOptions(t,a),rear=t.rear.CT,front=t.armor.CT;
+  referee.declarations=[{id:a.id,ammoSpent:true,shots:[{index:0,target:t.id,bin:null,aim:null,heatMode:false,
+   weapon:{name:'Medium Laser',rack:0,ammo:null,heat:3,damage:1,location:'CT'},
+   preview:{targetNumber:2,side:options[0],sideOptions:options,cover:false,underwaterCover:false}}]}];
+  const snapshot=()=>JSON.parse(JSON.stringify(referee,
+   (key,value)=>['map','rng','_resolutionReplay'].includes(key)?undefined:value));
+  const send=(route,status,body)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
+   const url=new URL(route.request().url());
+   const item=()=>({id:operationId,controlMode:'interactive',status:'active',version,game:snapshot()});
+   if(url.pathname.endsWith('/snapshot'))return send(route,200,{item:item()});
+   if(url.pathname.endsWith('/command')){
+    const payload=route.request().postDataJSON();
+    assert.equal(payload.type,'next');assert.equal(payload.version,version);
+    if(version===2)assert.deepEqual(payload.choice,{key:referee.pendingChoice.key,option:'rear'});
+    const result=referee.nextPhaseWithChoices({humanTeams:[0],choice:payload.choice});
+    assert(result.ok);version++;
+    return send(route,200,{item:{...item(),effect:{type:'next',result,rolls:[],resolution:[],afterRolls:[],ai:[]}}});
+   }
+   return send(route,404,{error:'not_found'});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v1'));
+  await page.locator('#next').click();
+  const rearButton=page.locator('[data-resolution-option="rear"]');
+  await rearButton.waitFor({state:'visible'});
+  assert.match(await page.locator('#actions').textContent(),/СТОРОНА ПОПАДАНИЯ/);
+  assert.equal(await rearButton.textContent(),'Кормовая');
+  assert.equal(await page.locator('[data-resolution-option="left"]').count(),1);
+  assert.equal(await page.locator('[data-resolution-option="front"]').count(),0);
+  assert.equal(draws,2);assert.equal(referee.unit(t.id).rear.CT,rear);
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);await rearButton.waitFor({state:'visible'});
+  assert.equal(draws,2);await rearButton.click();
+  await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='ФИЗИЧЕСКИЕ АТАКИ');
+  assert.equal(draws,4);assert.equal(version,3);assert.equal(referee.pendingChoice,null);
+  assert.equal(referee.unit(t.id).rear.CT,rear-1);assert.equal(referee.unit(t.id).armor.CT,front);
+ });
+});
