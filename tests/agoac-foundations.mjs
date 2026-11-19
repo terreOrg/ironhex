@@ -3178,3 +3178,23 @@ test('AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes'
   }
  }
 });
+
+
+test('AGoAC p.10: basic terrain entry costs constrain the actual remaining movement budget',()=>{
+ for(const [type,depth,cost] of [['plain',0,1],['road',0,1],['pavement',0,1],['rough',0,2],['woods',0,2],['heavy',0,3],['rubble',0,2],['water',1,2],['water',2,4],['water',3,4]])for(const mode of ['walk','run'])for(const remaining of [cost-1,cost]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:6,heat:0,spent:0,moveMode:'stand',distanceMoved:0,pendingHeat:0});
+  for(const t of g.tiles)Object.assign(t,{type:'plain',height:8,depth:0,surface:8});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  g.tile(0,0).height=0;
+  const [q,r]=DIRS[0],tile=g.tile(q,r);
+  Object.assign(tile,{type,depth,height:0,surface:0});
+  u.spent=g.mp(u,mode)-remaining;u.moveMode=mode;
+  assert.equal(g.terrainCost(tile),cost);
+  const route=g.reachable(u,mode).find(t=>t.q===q&&t.r===r);
+  const legal=remaining===cost&&!(depth&&mode==='run');
+  assert.equal(Boolean(route),legal);
+  if(legal)assert.equal(route.cost,cost);
+  else{const before=JSON.stringify(u);assert.equal(g.move(u.id,q,r,mode).ok,false);assert.equal(JSON.stringify(u),before);}
+ }
+});
