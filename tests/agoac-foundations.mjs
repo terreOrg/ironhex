@@ -3082,3 +3082,24 @@ test('AGoAC p.8: gyro and hip damage trigger movement PSR only for run and jump'
   if(calls.length){assert.equal(calls[0][0],u);assert.equal(calls[0][3],true);}
  }
 });
+
+
+test('AGoAC p.8: movement modes export attacker and target modifiers independently of heat',()=>{
+ const g=fresh(),u=g.units[0],t=g.units.find(x=>x.team!==u.team);
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,heat:0,skidded:false});
+ Object.assign(t,{q:1,r:0,heat:0,skidded:false,prone:false});
+ g.tacticalOptions={};
+ for(const [mode,attacker] of [['stand',0],['walk',1],['run',2],['jump',3]]){
+  u.moveMode=mode;
+  for(const [d,base] of [[0,0],[2,0],[3,1],[4,1],[5,2],[6,2],[7,3],[9,3],[10,4],[17,4],[18,5],[24,5],[25,6]]){
+   t.distanceMoved=d;t.moveMode=mode;
+   const expected=base+Number(mode==='jump');
+   assert.equal(g.tmm(t),expected);
+   assert.equal(g.targetMovementModifier(t),expected);
+   const p=g.preview(u.id,t.id,0);
+   assert.equal(p.mods.attacker,attacker);
+   assert.equal(p.mods.target,expected);
+  }
+ }
+});
