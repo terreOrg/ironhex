@@ -1175,6 +1175,61 @@ export class Game extends Legacy{
   selections[second.id]={round:this.round,choice:a===first?choice:-choice};
   return {ok:true};
  }
+ // Interactive declarations resolve each ambiguous pair before firing.
+ // Choices are independent of weapon damage/dice and stored in plain state.
+ prepareFireLos(id,targets,humanTeams=[0]){
+  const a=this.unit(id);
+  if(this.phase!=='fire'||this.pendingChoice||!this.canAct(a))return fail('Выбор линии огня недоступен');
+  let changed=false;
+  for(const target of new Set(targets)){
+   const b=this.unit(target);
+   if(!b||b.team===a.team||b.dead||b.deployed===false||this.selectedLosPath(a,b))continue;
+   const paths=this.losAlternatives(a,b);
+   if(paths.length!==2)continue;
+   if(humanTeams.includes(b.team)){
+    this.pendingChoice={kind:'los-path',scope:'los',team:b.team,unitId:b.id,
+     key:this.round+':los:'+a.id+':'+b.id,context:{attackerId:a.id},
+     options:paths.map(p=>({...p,id:String(p.choice)}))};
+    return {ok:true,pending:true,losPrepared:true};
+   }
+   // In single-player the defending AI prefers obstruction, then cover,
+   // then more woods. A human defender always makes their own decision.
+   const priority=p=>Number(p.blocked)*100+Number(p.cover)*10+p.woods;
+   const chosen=paths.reduce((best,p)=>priority(p)>priority(best)?p:best);
+   const result=this.chooseLosPath(a.id,b.id,chosen.choice,b.team);
+   if(!result.ok)return result;
+   changed=true;
+  }
+  return {ok:true,losPrepared:changed};
+ }
+ resolveFireLosChoice(choice,humanTeams=[0]){
+  const p=this.pendingChoice;
+  if(p?.scope!=='los'||!humanTeams.includes(p.team)||choice?.key!==p.key||
+     !p.options.some(o=>o.id===choice.option))return fail('Выберите допустимую линию огня');
+  const result=this.chooseLosPath(p.context.attackerId,p.unitId,Number(choice.option),p.team);
+  if(!result.ok)return result;
+  this.pendingChoice=null;
+  return {ok:true,losPrepared:true};
+ }
+ declareFireWithLosChoices(id,assignments,primaryTarget=null,{humanTeams=[0]}={}){
+  const u=this.unit(id);
+  if(!u||!Array.isArray(assignments)||assignments.some(s=>!u.weapons[s.index]||!this.unit(s.target))||
+     new Set(assignments.map(s=>s.index)).size!==assignments.length||
+     primaryTarget!==null&&!this.primaryTargetChoices(id,assignments).includes(primaryTarget))
+   return fail('Недопустимая декларация огня');
+  const prepared=this.prepareFireLos(id,assignments.map(s=>s.target),humanTeams);
+  if(!prepared.ok||prepared.losPrepared)return prepared;
+  return this.declareFire(id,assignments,primaryTarget);
+ }
+ aiAttackWithLosChoices(id,{humanTeams=[0]}={}){
+  const a=this.unit(id);
+  if(!this.canAct(a)||!this.mobile(a)||a.moveMode==='evade')return this.hold(id);
+  const targets=this.units.filter(b=>b.team!==a.team&&!b.dead&&b.deployed!==false&&
+   a.weapons.some(w=>!w.destroyed&&w.ammo!==0&&distance(a,b)<=w.ranges[2])).map(b=>b.id);
+  const prepared=this.prepareFireLos(id,targets,humanTeams);
+  if(!prepared.ok||prepared.pending)return prepared;
+  return this.aiAttack(id);
+ }
  selectedLosPath(a,b){
   const [first,second]=a.id<b.id?[a,b]:[b,a];
   const selected=first.losPathSelections?.[second.id];
@@ -1983,6 +2038,7 @@ export class Game extends Legacy{
   return this.resolveWithChoices({humanTeams,movement:{kind:'charge',id,target,attack,mode}});
  }
  nextPhaseWithChoices({humanTeams=[0],choice}={}){
+  if(this.pendingChoice?.scope==='los')return this.resolveFireLosChoice(choice,humanTeams);
   if(this.pendingChoice?.scope==='movement')return this.resolveWithChoices({humanTeams,choice});
   if(!this.pendingChoice&&!['setup','fire','physical','heat','end'].includes(this.phase)){
    return choice===undefined?this.nextPhase():fail('Нет ожидающего решения');
