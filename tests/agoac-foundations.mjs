@@ -3150,3 +3150,31 @@ test('AGoAC p.9: forward elevation costs and reverse level restrictions',()=>{
   assert.equal(u.facing,rear&&!reverse?3:0);
  }
 });
+
+
+test('AGoAC p.9: ground transit distinguishes friendly and enemy occupied hexes',()=>{
+ for(const mode of ['walk','run'])for(const occupant of ['none','friendly','enemy'])for(const prone of [false,true]){
+  const g=fresh(),u=g.units[0],v=g.units.find(x=>x.team!==u.team);
+  g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:4,heat:0,spent:0,moveMode:'stand',distanceMoved:0});
+  for(const t of g.tiles)Object.assign(t,{type:'plain',height:8,depth:0,surface:8});
+  const [dq,dr]=DIRS[0];
+  for(let i=0;i<=2;i++)g.tile(i*dq,i*dr).height=0;
+  for(const other of g.units)if(other!==u)other.deployed=false;
+  Object.assign(v,{q:dq,r:dr,team:occupant==='friendly'?u.team:1-u.team,prone,deployed:occupant!=='none'});
+  const routes=g.reachable(u,mode);
+  assert.equal(routes.some(t=>t.q===dq&&t.r===dr),occupant==='none');
+  assert.equal(routes.some(t=>t.q===2*dq&&t.r===2*dr),occupant!=='enemy');
+  const before=JSON.stringify(u);
+  assert.equal(g.move(u.id,999,999,mode).ok,false);
+  assert.equal(JSON.stringify(u),before);
+  if(occupant!=='none'){
+   assert.equal(g.move(u.id,dq,dr,mode).ok,false);
+   assert.equal(JSON.stringify(u),before);
+  }
+  if(occupant!=='enemy'){
+   assert(g.move(u.id,2*dq,2*dr,mode).ok);
+   assert.equal(u.spent,2);assert.equal(u.distanceMoved,2);
+  }
+ }
+});
