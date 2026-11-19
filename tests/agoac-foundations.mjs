@@ -3347,3 +3347,25 @@ test('AGoAC p.11: minimum movement preserves facing and respects elevation and o
   }else assert.equal(JSON.stringify(u),before);
  }
 });
+
+
+test('AGoAC p.11: zero ground MP alone is not immobility and cannot suppress intact jump MP',()=>{
+ for(const cause of ['zero-walk','shutdown','unconscious','limbless']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,walk:0,jump:3,jumpLost:0,spent:0,prone:false,proneAtStart:false,moveMode:'stand'});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+  if(cause==='shutdown')u.shutdown=true;
+  if(cause==='unconscious')u.unconscious=true;
+  if(cause==='limbless')for(const limb of ['LA','RA','LL','RL'])u.structure[limb]=0;
+  const mobile=cause==='zero-walk';
+  assert.equal(g.isImmobile(u),!mobile,cause);
+  assert.equal(g.mp(u,'walk'),0,cause);assert.equal(g.mp(u,'run'),0,cause);
+  assert.equal(g.mp(u,'jump'),mobile?3:0,cause);
+  assert.equal(g.reachable(u,'jump').some(t=>t.q===1&&t.r===0),mobile,cause);
+  if(!mobile){
+   assert.equal(g.minimumMove(u.id).ok,false,cause);
+   assert.equal(g.rotate(u.id,1).ok,false,cause);
+   assert(g.hold(u.id).ok);assert.equal(u.pendingHeat,0,cause);
+  }
+ }
+});
