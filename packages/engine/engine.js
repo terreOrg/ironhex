@@ -1877,8 +1877,8 @@ export class Game extends Legacy{
  }
 
  // CAT3500D errata v8.01 p.2, Reversing Arms: flipped arms cannot
- // punch or use an arm-mounted physical weapon in the Physical Phase.
- if(u.flip&&['punch','hatchet'].includes(type))reason='Перевёрнутые назад руки не могут наносить удары или применять физическое оружие';
+ // punch or use a physical weapon, including clubs in the Physical Phase.
+ if(u.flip&&['punch','hatchet','club'].includes(type))reason='Перевёрнутые назад руки не могут наносить удары или применять физическое оружие';
  const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';// Preview reports nominal damage. Underwater reduction is per hit location
  // and must happen only during damage resolution, not at declaration.
  const underwaterPhysical=targetSub||targetWaterline&&table!=='punch';// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
