@@ -3580,3 +3580,36 @@ test('AGoAC p.17: partial cover is standing only, negated downhill except depth-
  Object.assign(g.tile(3,0),{type:'water',depth:1,height:-1,surface:0});
  assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(a,b).cover,true);
 });
+
+test('AGoAC p.13: exact LOS includes corner-only and non-sampled hexes in both directions',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:4,r:1,prone:false});
+ const paths=g.losAlternatives(a,b),reverse=g.losAlternatives(b,a);
+ assert.equal(paths.length,1);assert.equal(reverse.length,1);
+ assert.deepEqual(reverse[0].path,[...paths[0].path].reverse());
+ for(const [q,r] of [[1,1],[3,0]]){
+  assert(paths[0].path.some(p=>p.q===q&&p.r===r));
+  const t=g.tile(q,r);t.height=2;
+  assert.equal(g.los(a,b).blocked,true);assert.equal(g.los(b,a).blocked,true);
+  t.height=0;
+ }
+ g.tile(1,1).type='heavy';g.tile(3,0).type='woods';
+ assert.equal(g.los(a,b).blocked,true);
+ g.tile(3,0).type='plain';assert.equal(g.los(a,b).blocked,false);
+ assert.equal(g.los(b,a).woods,2);
+});
+
+test('AGoAC pp.13,17: both physically adjacent terrain cells affect elevation and partial cover',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false});Object.assign(b,{q:3,r:1,prone:false});
+ // One side of the traversed line is adjacent to each endpoint even
+ // when it is not the first or last sampled cell.
+ const path=g.losAlternatives(a,b)[0].path;
+ assert.deepEqual(path,[{q:1,r:0},{q:1,r:1},{q:2,r:0},{q:2,r:1}]);
+ g.tile(0,0).height=3;g.tile(2,1).height=2;
+ assert.equal(g.los(a,b).blocked,true);assert.equal(g.los(b,a).blocked,true);
+ g.tile(2,1).height=1;assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(a,b).cover,false);
+ g.tile(0,0).height=0;assert.equal(g.los(a,b).cover,true);
+});
