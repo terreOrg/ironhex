@@ -370,3 +370,31 @@ test('API validates indirect fire spotter without trusting client attack modifie
  for(const x of [{spotter:'1'},{spotter:4},{spotter:1,aim:'CT'},{spotter:1,heatMode:true},{spotter:1,targetNumber:2}])
   assert.throws(()=>validateTacticalOrder({...b,shots:[{...b.shots[0],...x}]}),AuthError);
 });
+
+test('AGoAC p.21 API: authoritative indirect declaration rejects hostile spotter and persists a valid shot',()=>{
+ const g=new Game();
+ const [u,s,t,other]=g.units;
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,twist:0,moveMode:'stand',fired:false});
+ Object.assign(s,{q:4,r:-3,facing:5,prone:false,twist:0,moveMode:'stand',fired:false});
+ Object.assign(t,{q:4,r:0,prone:false,moveMode:'stand',fired:false});
+ Object.assign(other,{q:-3,r:0});
+ g.tile(2,0).height=2;
+ u.weapons=[{name:'LRM 10',heat:4,damage:1,min:6,ammo:24,location:'RT',ranges:[7,14,21],rack:10}];
+ u.bins=[{weapon:0,location:'RT',slot:1,shots:24,destroyed:false}];
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,s.team,t.team];g.actingId=u.id;
+ assert(g.los(u,t).blocked);assert(!g.los(s,t).blocked);
+ const order={type:'fire',id:u.id,version:1,shots:[{index:0,target:t.id,spotter:s.id,bin:0}],primaryTarget:t.id};
+ const invalid={...order,shots:[{...order.shots[0],spotter:t.id}]};
+ assert.throws(()=>runTacticalOrder(g,invalid),AuthError);
+ assert.equal(u.bins[0].shots,24);assert.equal(g.declarations.length,0);assert(!u.fired);
+ const effect=runTacticalOrder(g,order);
+ assert(effect.result.ok&&effect.result.declared);assert.equal(u.bins[0].shots,23);
+ const saved=JSON.parse(JSON.stringify(g));
+ const restored=new Game();Object.assign(restored,saved);restored.rebuildMap();
+ const state=publicSnapshot({game:saved});
+ const shot=state.declarations[0].shots[0];
+ assert.equal(shot.spotter,s.id);assert.equal(shot.target,t.id);assert.equal(shot.preview.mods.indirect,1);
+ assert.equal(shot.preview.mods.minimum,3);assert.equal(shot.preview.range,4);
+ assert.equal(restored.spottingTargets().get(s.id),t.id);assert.equal(restored.unit(u.id).bins[0].shots,23);
+});
