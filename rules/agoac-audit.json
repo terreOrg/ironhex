@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence.",
   "currentTopicId": "agoac-hit-location",
   "topics": [
     {
@@ -311,7 +311,8 @@
         22,
         24
       ],
-      "status": "not_audited"
+      "status": "tested_subset",
+      "reviewNote": "Chapter inventory: attack direction, normal location table, sequential damage, partial cover, missile table/grouping and damage phase timing. Exact evidence pending; boundary UI/API and interactions to be audited before closure."
     },
     {
       "id": "agoac-physical",
@@ -5598,6 +5599,120 @@
         ],
         "review": "Printed CAT3500D pp.15,21–22 visually rechecked: each individual weapon attack uses its own target number and roll; automatic miss above 12 and hit at/below 2; separate user-selected roll/damage order by target; exact magazine accounting, one round per launcher and shared-ammo reservation, mark off on declaration; impossible shot can be canceled without retargeting. #187 and #188 exact passing checks, identical merged tree, 411/411 unit tests. Additional replay/atomicity regression in this PR to confirm no duplicate refund and no heat for canceled shot. Empty-hex and indirect declaration/target eligibility remain explicitly open in 079/083; attack direction and hit-location resolution audited separately in chapter 6."
       }
+    },
+    {
+      "id": "agoac-085",
+      "topicId": "agoac-hit-location",
+      "pages": [
+        22
+      ],
+      "statement": "Attack direction: body facing, all four hit zones and defender's boundary decision before location roll.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.22: six neighboring directions, four boundary rays and target body facing"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.22: defender selects a boundary side before location rolls and saved replay preserves dice"
+        }
+      ],
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+    },
+    {
+      "id": "agoac-086",
+      "topicId": "agoac-hit-location",
+      "pages": [
+        22,
+        23
+      ],
+      "statement": "Normal 2D6 hit location, all four sides, rear armor addressing and torso critical opportunity on natural two.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.23: every normal hit location and through-armor opportunity by direction"
+        }
+      ],
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+    },
+    {
+      "id": "agoac-087",
+      "topicId": "agoac-hit-location",
+      "pages": [
+        22
+      ],
+      "statement": "One location roll at a time, independent damage order and full resolution of each attack.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.21,30: resolve each target and each missile packet completely in declared order"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,21,30: independent controller choices for to-hit and damage order replay without rerolling"
+        }
+      ],
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+    },
+    {
+      "id": "agoac-088",
+      "topicId": "agoac-hit-location",
+      "pages": [
+        22
+      ],
+      "statement": "Partial cover intercepts a normal leg hit, including water; indirect and aimed exceptions remain applicable.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.14,17: normal direct leg hits are absorbed by terrain and water partial cover"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.21: aimed location check is independent of normal hit location and cover rerolls"
+        }
+      ],
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+    },
+    {
+      "id": "agoac-089",
+      "topicId": "agoac-hit-location",
+      "pages": [
+        23,
+        24
+      ],
+      "statement": "All standard missile launchers resolve 2D6 cluster table, one SRM packet per missile and LRM lots up to five.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.23–24: all base launcher cluster rolls allocate separate SRM or five-point LRM packets"
+        }
+      ],
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
+    },
+    {
+      "id": "agoac-090",
+      "topicId": "agoac-hit-location",
+      "pages": [
+        24
+      ],
+      "statement": "Resolve every weapon attack before applying damage; all resulting PSRs after weapon damage, before physical phase.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,21,30: every weapon attack rolls and spends ammo before damage, even a destroyed shooter"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.21,30: resolve each target and each missile packet completely in declared order"
+        }
+      ],
+      "reviewNote": "Source visually inspected CAT3500D printed pp.22–24. First Chapter 6 package; evidence listed but exact CI and edge-case review are pending. No verified promotion."
     }
   ]
 }

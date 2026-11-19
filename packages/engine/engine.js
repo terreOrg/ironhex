@@ -1142,7 +1142,21 @@ export class Game extends Legacy{
  }
  hold(id){const u=this.unit(id);if(u?.deployed===false&&!u.dead)return fail('Сначала войдите на поле');if(!this.canAct(u)&&!(u.dead&&this.phase==='move'&&this.actingId===id&&this.activeTeam===u.team))return fail('Выберите меха действующего отряда');if(this.phase==='move'){if(u.moveMode==='walk')u.pendingHeat++;if(u.moveMode==='evade'){u.pendingHeat+=4;}if(u.moveMode==='run'){u.pendingHeat+=2;if(!(u.config!=='Quad'&&u.restrictedStandThisTurn)&&(u.gyroHits||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip)))this.psr(u,0,'Бег с повреждениями',true);}}this.finish(u);return {ok:true};}
  relative(a,b,f=a.facing){const x=Math.sqrt(3)*(b.q-a.q+(b.r-a.r)/2),y=-1.5*(b.r-a.r),v=Math.atan2(y,x)-f*Math.PI/3;return Math.atan2(Math.sin(v),Math.cos(v))*180/Math.PI;}
- hitSide(u,a){const v=this.relative(u,a);return Math.abs(v)<=60.00001?'front':Math.abs(v)>=120-.00001?'rear':v>0?'left':'right';}
+ // AGoAC p.22: front spans three hexsides, rear one, each flank one.
+ // A line through the front/flank or flank/rear vertex is the defender's choice.
+ hitSideOptions(u,a){
+  const angle=this.relative(u,a),absolute=Math.abs(angle),flank=angle>0?'left':'right';
+  if(Math.abs(absolute-90)<1e-7)return ['front',flank];
+  if(Math.abs(absolute-150)<1e-7)return [flank,'rear'];
+  return [absolute<90?'front':absolute>150?'rear':flank];
+ }
+ hitSide(u,a){return this.hitSideOptions(u,a)[0];}
+ weaponHitSide(t,u,s){
+  const options=s.preview.sideOptions??[s.preview.side];
+  // Legacy saved declarations have their original single side frozen.
+  return this.chooseResolutionOption('hit-direction',t,options.map(id=>({id})),options[0],
+   {attackerId:u.id,weaponName:s.weapon.name,weaponIndex:s.index});
+ }
  arc(u,t,w){
   // BMM p.83: a directional torso mount is a separately configured
   // device attached to a specific installed weapon. The 3-point Quad
@@ -1394,7 +1408,7 @@ export class Game extends Legacy{
       w.locations?.includes(u.brace||'LA')||
       !u.structure[u.brace||'LA'])))
   reason='Оружие недоступно лёжа';else if(opts.aim&&t.hexTarget)reason='У пустого гекса нет локаций попадания';else if(opts.aim&&!Object.hasOwn(LOCATIONS,opts.aim))reason='Неизвестная прицельная локация';else if(opts.aim&&!this.isImmobile(t))reason='Прицельная стрельба только по обездвиженной цели';else if(opts.aim&&w.rack)reason='Кластерные ракеты нельзя использовать для прицельной стрельбы';else if(opts.aim&&los.cover&&partialCoverObscures(t,opts.aim,underwaterCover))reason='Локация скрыта частичным укрытием';
- const mods={gunnery:u.gunnery,attacker:{stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode]+(u.skidded?1:0),target:t.hexTarget?-4:this.targetMovementModifier(t,{includeImmobile:opts.aim!=='HD'}),terrain:los.woods,cover:opts.aim?0:los.cover?1:0,heat:[8,13,17,24].filter(h=>u.heat>=h).length,range:range<=ranges[0]?0:range<=ranges[1]?2:4,minimum:range<=w.min?w.min-range+1:0,weapon:w.toHit||0,sensor:u.sensorHits?2:0,arm:act&&(u.config==='Quad'||['LA','RA'].includes(w.location))?(act.shoulder?4:Number(act.upper&& (u.config==='Quad'||u.slots[w.location].includes('upper')))+Number(act.lower&&(u.config==='Quad'||u.slots[w.location].includes('lower')))):0,prone:u.prone&&!quadProneBonus?2:0,targetProne:t.prone?(range===1?-2:1):0,secondary:opts.secondary?(this.inForwardFireArc(u,t)?1:2):0,aim:opts.aim==='HD'?3:0,night:this.weather.night?Math.max(0,2-Math.floor(t.heat/20)):0,wind:this.weather.gale?(w.rack?2:w.ammo!==null?1:0):0};if(indirect){mods.indirect=1;mods.spotter=spotter?({stand:0,walk:1,run:2,jump:3,evade:2}[spotter.moveMode]??0)+(spotter.skidded?1:0)+(spotter.prone&&!quadProneFireBonus(spotter)?2:0):0;mods.spotterFires=Number(this.declarations.some(d=>d.id===opts.spotter&&d.shots.length));}if(this.spottingTargets().has(u.id))mods.spotting=1;const targetNumber=Object.values(mods).reduce((a,b)=>a+b,0);let chance=0;for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)if(a+b>=targetNumber)chance++;return {legal:!reason,reason,range,blocked:los.blocked,cover:indirect?waterline:los.cover,underwaterCover,side:t.hexTarget?null:this.hitSide(t,u),mods,targetNumber,chance:reason?0:Math.round(chance/36*100)};}
+ const mods={gunnery:u.gunnery,attacker:{stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode]+(u.skidded?1:0),target:t.hexTarget?-4:this.targetMovementModifier(t,{includeImmobile:opts.aim!=='HD'}),terrain:los.woods,cover:opts.aim?0:los.cover?1:0,heat:[8,13,17,24].filter(h=>u.heat>=h).length,range:range<=ranges[0]?0:range<=ranges[1]?2:4,minimum:range<=w.min?w.min-range+1:0,weapon:w.toHit||0,sensor:u.sensorHits?2:0,arm:act&&(u.config==='Quad'||['LA','RA'].includes(w.location))?(act.shoulder?4:Number(act.upper&& (u.config==='Quad'||u.slots[w.location].includes('upper')))+Number(act.lower&&(u.config==='Quad'||u.slots[w.location].includes('lower')))):0,prone:u.prone&&!quadProneBonus?2:0,targetProne:t.prone?(range===1?-2:1):0,secondary:opts.secondary?(this.inForwardFireArc(u,t)?1:2):0,aim:opts.aim==='HD'?3:0,night:this.weather.night?Math.max(0,2-Math.floor(t.heat/20)):0,wind:this.weather.gale?(w.rack?2:w.ammo!==null?1:0):0};if(indirect){mods.indirect=1;mods.spotter=spotter?({stand:0,walk:1,run:2,jump:3,evade:2}[spotter.moveMode]??0)+(spotter.skidded?1:0)+(spotter.prone&&!quadProneFireBonus(spotter)?2:0):0;mods.spotterFires=Number(this.declarations.some(d=>d.id===opts.spotter&&d.shots.length));}if(this.spottingTargets().has(u.id))mods.spotting=1;const targetNumber=Object.values(mods).reduce((a,b)=>a+b,0);let chance=0;for(let a=1;a<=6;a++)for(let b=1;b<=6;b++)if(a+b>=targetNumber)chance++;return {legal:!reason,reason,range,blocked:los.blocked,cover:indirect?waterline:los.cover,underwaterCover,side:t.hexTarget?null:this.hitSide(t,u),sideOptions:t.hexTarget?[]:this.hitSideOptions(t,u),mods,targetNumber,chance:reason?0:Math.round(chance/36*100)};}
  setDirectionalTorsoMount(id,index,facing){
   const u=this.unit(id),mount=u?.directionalTorsoMounts?.[index];
   if(this.phase!=='fire'||!this.canAct(u)||u.prone||!mount||mount.locked||
@@ -1688,11 +1702,12 @@ export class Game extends Legacy{
   const t=this.unit(s.target);
   if(hit&&s.heatMode)this.applyExternalHeat(t,2);
   let damage=0,location=null;const hits=[];
+  const side=hit&&!s.heatMode&&!t.dead?this.weaponHitSide(t,u,s):p.side;
   for(const amount of this.fireAmounts(s,hit)){
    if(t.dead)break;
-   const out=this.hit(t,amount,p.side,'normal',s.aim,p.cover,p.underwaterCover);
+   const out=this.hit(t,amount,side,'normal',s.aim,p.cover,p.underwaterCover);
    damage+=out.damage;location=out.location;hits.push(...out.hits);
-   if(p.side==='rear'&&['LT','CT','RT'].includes(location)&&t.dumping.length)
+   if(side==='rear'&&['LT','CT','RT'].includes(location)&&t.dumping.length)
     for(const index of [...t.dumping])this.explode(t,t.bins[index]);
   }
   this.resolution.push({id:u.id,target:t.id,ok:true,shots:[{
