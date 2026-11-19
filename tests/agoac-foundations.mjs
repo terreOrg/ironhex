@@ -3103,3 +3103,29 @@ test('AGoAC p.8: movement modes export attacker and target modifiers independent
   }
  }
 });
+
+
+test('AGoAC p.9: facing wraps through six hexsides and spends one MP per hexside',()=>{
+ for(let start=0;start<6;start++)for(const delta of [-3,-2,-1,1,2,3])for(const mode of ['walk','run']){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:start,twist:1,walk:4,heat:0,spent:0,moveMode:'stand',distanceMoved:0,pendingHeat:0});
+  for(const t of g.tiles)Object.assign(t,{type:'plain',height:0,depth:0,surface:0});
+  assert(g.rotate(u.id,delta,{mode}).ok);
+  assert.equal(u.facing,(start+delta+6)%6);
+  assert.equal(u.spent,Math.abs(delta));assert.equal(u.distanceMoved,0);
+  assert.equal(u.q,0);assert.equal(u.r,0);assert.equal(u.twist,1);
+  assert.equal(u.moveMode,mode);
+  for(const invalid of [0,4,-4,0.5]){
+   const before=JSON.stringify(u);
+   assert.equal(g.rotate(u.id,invalid,{mode}).ok,false);
+   assert.equal(JSON.stringify(u),before);
+  }
+  const before=JSON.stringify(u);
+  assert.equal(g.rotate(u.id,1,{mode:mode==='walk'?'run':'walk'}).ok,false);
+  assert.equal(JSON.stringify(u),before);
+  u.spent=g.mp(u,mode);
+  const exhausted=JSON.stringify(u);
+  assert.equal(g.rotate(u.id,1,{mode}).ok,false);
+  assert.equal(JSON.stringify(u),exhausted);
+ }
+});
