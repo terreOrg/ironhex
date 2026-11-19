@@ -4647,7 +4647,7 @@
           "test": "API resumes a persisted defender LOS choice while the opponent is acting"
         }
       ],
-      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing. Engine defender authorization, round-stamped reciprocal selection and use by LOS/preview added. API/UI choice enforcement, serialization verification and exact corner-touch remain open. Added adjacent endpoint and mutual surface visibility regression; API/UI and exact corner-touch remain open. Visual re-review printed p.13 confirms corner-only contact. Replaced center sampling with closed hex-footprint intersection, shared-edge side filtering and reciprocal default preview. Mandatory controller choice/API/UI and resolution direction integration still open. Exact CI not yet run; no Verified promotion. Interactive declarations and AI requests now use defender-controlled choices, with reciprocal round persistence and resumable API/UI. AI considers eligible range candidates before choosing shots; explicit direct noninteractive APIs still use deterministic default geometry. Exact CI and full source/edge audit pending."
+      "reviewNote": "Re-reviewed p.13; #180 integrates controller choice, round-stamped reciprocity and persistence for interactive attacks. Remaining: actual-attacks-only AI selection, direct noninteractive enforcement, random side for non-player-controlled targets, and consistent handoff to attack-direction rules (chapter 6 handles direction itself). Do not mark Verified yet."
     },
     {
       "id": "agoac-076",
@@ -4657,7 +4657,7 @@
         14
       ],
       "statement": "Discrete intervening elevation thresholds, standing/prone height, intervening woods and target terrain distinction.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4680,7 +4680,37 @@
           "test": "AGoAC pp.13,17: both physically adjacent terrain cells affect elevation and partial cover"
         }
       ],
-      "reviewNote": "Direct visual review CAT3500D pp.13–14 confirms discrete elevation conditions, standing/prone heights and intervening woods threshold, separate target terrain. Existing tests cover elevation and woods; prone-height edge evidence and exact gates still needed. Added direct prone/standing elevation matrix with bidirectional assertions; exact CI gates pending. Elevation and woods now evaluate all intersected cells, with actual hex adjacency instead of sample index; target woods remain separate. Exact CI not yet run; no Verified promotion."
+      "reviewNote": "Direct visual review CAT3500D (2018), printed pp.13–14 and 17: for dry terrain, standing/prone LOS height, the three discrete elevation thresholds, corner/adjacent terrain inclusion, woods rising two levels, light/heavy weights and separate endpoint woods match evaluateLos and the five named regressions. The evaluateLos method is byte-identical to the tested #178 implementation. Water/partial-cover and selection rules are separately tracked in 075/077. #178 exact CI, E2E and selective Smoke passed; merged tree matched; Sonar on that main passed (44578376193).",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "c68720a7387dedbe95b15c2713ecd61764117e81",
+        "testedTree": "d2ab14b05e09e462684c46321815fdd3504e6f1c",
+        "mergedSha": "3c29cb78dc386b674a09f9583af39d0feb5f55d2",
+        "checks": [
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44577133668,
+            "jobId": 135747535086,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44577133623,
+            "jobId": 135747535476,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44577134615,
+            "jobId": 135747538707,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct visual review CAT3500D (2018), printed pp.13–14 and 17: for dry terrain, standing/prone LOS height, the three discrete elevation thresholds, corner/adjacent terrain inclusion, woods rising two levels, light/heavy weights and separate endpoint woods match evaluateLos and the five named regressions. The evaluateLos method is byte-identical to the tested #178 implementation. Water/partial-cover and selection rules are separately tracked in 075/077. #178 exact CI, E2E and selective Smoke passed; merged tree matched; Sonar on that main passed (44578376193)."
+      }
     },
     {
       "id": "agoac-077",
@@ -4726,7 +4756,7 @@
           "test": "AGoAC pp.13,17: both physically adjacent terrain cells affect elevation and partial cover"
         }
       ],
-      "reviewNote": "Direct visual pp.13–14: intervening units do not obstruct; baseline submerged LOS is forbidden even though engine supports expanded underwater weapon fire. Leg-mounted weapons cannot fire through own partial cover. Implemented own partial cover restriction for leg weapons on surface. Base/expanded underwater behavior and remaining geometry still open. Added intervening standing/prone units and partial-cover elevation, posture, woods and water regressions; base/expanded submerged policy remains open. Partial cover now checks all traversed hexes adjacent to target. Baseline submerged LOS vs BMM extended policy still open. Exact CI not yet run; no Verified promotion."
+      "reviewNote": "Re-reviewed pp.13–14,17,19: intervening Mechs do not obstruct, standing terrain/depth-one cover and leg mount restriction implemented. Base fully submerged LOS and water terrain versus expanded BMM behavior are not separated. Bridge cannot provide cover; verify this exception. Known missing."
     },
     {
       "id": "agoac-078",
@@ -4757,18 +4787,23 @@
         {
           "file": "tests/combat.mjs",
           "test": "Split torso-arm weapon uses restrictive torso firing arc (TechManual p.57)"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.14–15: biped firing sectors rotate with torso except legs and reversed arms reset"
         }
       ],
-      "reviewNote": "arc, twist, flipArms and rear/split weapons exist; enumerate exact sector boundaries; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
+      "reviewNote": "Re-reviewed pp.14–15 diagram and engine arc/twist/flipArms/endPhase, including feet-based leg arcs and rear weapons. Added combined regression of rotated sectors and reversal reset, exact gates pending. Review all original actuator configurations and no newly acquired reversal eligibility after damage before Verified."
     },
     {
       "id": "agoac-079",
       "topicId": "agoac-combat",
       "pages": [
+        13,
         15
       ],
       "statement": "Attack declarations, legal targets and orientation commitments.",
-      "status": "tested_case",
+      "status": "known_missing",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4795,7 +4830,7 @@
           "test": "API resumes a persisted defender LOS choice while the opponent is acting"
         }
       ],
-      "reviewNote": "declareFire, canAct and selection commitments exist; legal targets review pending; candidate regression references, not final verification. Explicit primary target now travels through engine, UI and server order validation; empty-hex declarations remain open. Interactive fire must prepare ambiguous LOS before committing a declaration; blocked path cannot commit a shot."
+      "reviewNote": "Re-reviewed pp.13,15: per-weapon declaration, orientation commitment and no friendly fire are implemented. Source permits attacks against empty hexes with normal heat and ammo costs; engine/API only accept unit targets. Also specialized indirect declaration remains open. Known missing."
     },
     {
       "id": "agoac-080",
@@ -4804,7 +4839,9 @@
         15,
         16,
         17,
-        18
+        18,
+        19,
+        20
       ],
       "statement": "Gunnery, range and movement, terrain, heat and damage modifiers.",
       "status": "tested_case",
@@ -4838,7 +4875,7 @@
           "test": "AGoAC pp.16–20: weapon GATOR movement, heat, range and secondary boundaries"
         }
       ],
-      "reviewNote": "preview sums gunnery, movement, range, minimum, terrain, heat, sensor, arm and posture; verify complete tables; candidate regression references, not final verification. Added terrain/cover primitive evidence; full GATOR modifier integration still pending. Cover/terrain primitive updated, full modifier audit remains pending. Exact CI not yet run; no Verified promotion. Added boundary matrix for weapon movement, heat, distance, jump, range and secondary target modifiers (printed pp.16–20). Exact CI pending."
+      "reviewNote": "Re-reviewed pp.16–20 table against preview and existing regression; standard gunnery/movement/heat/range and damage modifiers covered in part. Need cumulative target modifiers (including immobility after movement), multiple forward arcs, precise terrain and water rules, and indirect modifiers. Do not certify until these cases are reviewed."
     },
     {
       "id": "agoac-081",
@@ -4867,17 +4904,17 @@
           "test": "API validates optional primary fire target against declared shots"
         }
       ],
-      "reviewNote": "Front-arc primary selection now independent of assignment order; existing immobility regression plus targeted declaration regression. Source and final gate verification pending. Player can designate eligible declared primary target; forward priority enforced in engine, consistent secondary preview in UI and optional API field. Multiple forward arcs with twisted leg weapons still require explicit audit."
+      "reviewNote": "Re-reviewed pp.17,20: designated primary, front priority and two secondary modifiers have passing tests; mixed forward arcs when twisted legs and torso weapons, and exact cumulative immobilized-target modifiers remain to audit."
     },
     {
       "id": "agoac-082",
       "topicId": "agoac-combat",
       "pages": [
         19,
-        20
+        21
       ],
       "statement": "Water and prone weapon attacks.",
-      "status": "tested_case",
+      "status": "known_missing",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4924,7 +4961,7 @@
           "test": "Prone bracing forbids split weapons occupying the braced arm (BMM p.30)"
         }
       ],
-      "reviewNote": "preview checks submerged ranges, waterline and prone limb restrictions; setBrace exists; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
+      "reviewNote": "Re-reviewed pp.19–21: prone arm bracing, leg restriction and posture modifiers implemented. AGoAC water restrictions are not independently selected from BMM expanded underwater fire; share the outstanding 077 dependency. Known missing."
     },
     {
       "id": "agoac-083",
@@ -4964,16 +5001,18 @@
           "test": "Flamer heat mode adds heat without armor damage"
         }
       ],
-      "reviewNote": "Direct visual p.21: indirect LRM requires no direct LOS, eligible friendly spotter limited to one target per turn, spotter movement and firing penalties, spotter terrain, no aimed shot and distinct water cover behavior. Engine declaration path missing."
+      "reviewNote": "Re-reviewed p.21: aimed shot eligibility and cover exist; indirect LRM with spotter, target and declaration constraints, movement/terrain/firing modifiers and water cover remains missing."
     },
     {
       "id": "agoac-084",
       "topicId": "agoac-combat",
       "pages": [
-        21
+        15,
+        21,
+        22
       ],
       "statement": "Attack rolls and ammunition expenditure.",
-      "status": "tested_case",
+      "status": "known_missing",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5016,7 +5055,7 @@
           "test": "Selected ammunition bin is decremented"
         }
       ],
-      "reviewNote": "rollDeclaredFire, spendDeclaredAmmo, fireAmounts, resolveRolledFire and ordering implemented; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
+      "reviewNote": "Re-reviewed pp.15,21 and ammunition continuation p.22 (before Hit Location). Code rolls 2D6 and spends ammunition during rollDeclaredFire, but source requires deduction at attack declaration. Explicit optional cancellation of an impossible attack without retargeting also missing. Grouped weapon/target resolution and separate magazine tests exist; do not certify until timing and cancellation are correct."
     }
   ]
 }

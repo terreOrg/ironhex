@@ -3646,3 +3646,28 @@ test('AGoAC p.13: automated defender selects obstruction before an interactive a
  assert.equal(g.prepareFireLos(a.id,[b.id],[a.team]).losPrepared,false);
  g.round++;assert.equal(g.selectedLosPath(a,b),0);
 });
+
+test('AGoAC pp.14–15: biped firing sectors rotate with torso except legs and reversed arms reset',()=>{
+ const g=fresh(),u=g.units[0],t=g.units[2];
+ Object.assign(u,{q:0,r:0,config:'Biped',facing:0,twist:0,prone:false,flip:false});
+ const at=(q,r)=>Object.assign(t,{q,r});
+ const weapon=(location,rear=false)=>({location,rear});
+ at(1,0);assert(g.arc(u,t,weapon('CT')));assert(g.arc(u,t,weapon('LL')));
+ at(-1,0);assert(!g.arc(u,t,weapon('CT')));assert(g.arc(u,t,weapon('CT',true)));assert(g.arc(u,t,weapon('RL',true)));
+ // Side and forward sectors follow torso twist; legs retain feet facing.
+ u.twist=1;at(0,-1);
+ assert(g.arc(u,t,weapon('CT')));assert(!g.arc(u,t,weapon('LL')));
+ at(0,1);assert(!g.arc(u,t,weapon('CT')));assert(g.arc(u,t,weapon('LL')));
+ u.twist=0;u.prone=true;
+ assert(g.arc(u,t,weapon('CT')));assert(g.arc(u,t,weapon('LA')));assert(g.arc(u,t,weapon('RA')));
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,t.team];g.actingId=u.id;
+ assert.equal(g.twist(u.id,1).ok,false);assert.equal(g.flipArms(u.id,true).ok,false);
+ u.prone=false;
+ for(const l of ['LA','RA']){u.slots[l][2]=null;u.slots[l][3]=null;}
+ u.weapons=u.weapons.filter(w=>!w.locations?.some(l=>['CT','LT','RT'].includes(l))||!w.locations.some(l=>['LA','RA'].includes(l)));
+ assert(g.flipArms(u.id,true).ok);at(-1,0);
+ assert(g.arc(u,t,weapon('LA')));assert(g.arc(u,t,weapon('RA')));assert(!g.arc(u,t,weapon('CT')));
+ at(1,0);assert(!g.arc(u,t,weapon('RA')));
+ assert(!g.twist(u.id,1).ok);
+ g.endPhase();assert.equal(u.flip,false);assert.equal(u.twist,0);
+});
