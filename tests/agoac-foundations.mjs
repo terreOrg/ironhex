@@ -4133,3 +4133,47 @@ test('AGoAC p.21: one spotter per target, multiple launchers, direct LOS and non
  Object.assign(g.tile(4,0),{type:'water',depth:1,height:-1,surface:0});g.tile(4,-1).height=0;
  const wet=g.preview(u.id,a.id,0,{spotter:s.id});assert.equal(wet.cover,true);
 });
+
+test('AGoAC p.13: noninteractive occupied-target declarations commit reciprocal defender LOS',()=>{
+ for(const blocked of [false,true]){
+  const g=fresh(),a=g.units[0],b=g.units[2];
+  for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(a,{q:0,r:0,prone:false,facing:0,twist:0,fired:false});
+  Object.assign(b,{q:1,r:1,prone:false,fired:false});
+  a.weapons=[{name:'Medium Laser',location:'CT',damage:5,heat:3,min:0,ammo:null,ranges:[3,6,9],rack:0}];
+  g.phase='fire';g.queue=[a.team,b.team];g.activeTeam=a.team;g.actingId=a.id;
+  if(blocked)g.tile(1,0).height=2;else g.tile(1,0).type='woods';
+  const result=g.declareFire(a.id,[{index:0,target:b.id}]);
+  assert.notEqual(g.selectedLosPath(a,b),0);
+  assert.equal(g.selectedLosPath(b,a),-g.selectedLosPath(a,b));
+  assert.equal(g.los(a,b).blocked,blocked);
+  assert.equal(result.ok,!blocked);
+  if(blocked){assert.equal(g.declarations.length,0);assert(!a.fired);}
+  else assert.equal(g.declarations[0].shots[0].preview.mods.terrain,1);
+ }
+});
+
+test('AGoAC p.21: indirect fire waits for defender choice of spotter LOS before commitment',()=>{
+ const g=fresh(),u=g.units[0],s=g.units[1],t=g.units[2],other=g.units[3];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,twist:0,moveMode:'stand',fired:false});
+ Object.assign(s,{q:3,r:-1,prone:false,fired:false});
+ Object.assign(t,{q:4,r:0,prone:false,fired:false});
+ Object.assign(other,{q:-3,r:0});
+ g.tile(2,0).height=2;g.tile(4,-1).height=2;
+ u.weapons=[{name:'LRM 10',heat:4,damage:1,min:6,ammo:24,location:'RT',ranges:[7,14,21],rack:10}];
+ u.bins=[{weapon:0,location:'RT',slot:1,shots:24,destroyed:false}];
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,t.team];g.actingId=u.id;
+ const order=[{index:0,target:t.id,spotter:s.id}];
+ const initial=g.declareFireWithLosChoices(u.id,order,null,{humanTeams:[0,1]});
+ assert(initial.pending);assert.equal(g.pendingChoice.context.attackerId,s.id);
+ assert.equal(g.pendingChoice.context.spotting,true);assert.equal(g.pendingChoice.team,t.team);
+ assert.equal(u.bins[0].shots,24);assert.equal(g.declarations.length,0);
+ const p=g.pendingChoice,clear=p.options.find(o=>!o.blocked);
+ assert(clear);assert(g.resolveFireLosChoice({key:p.key,option:clear.id},[t.team]).ok);
+ const final=g.declareFireWithLosChoices(u.id,order,null,{humanTeams:[0,1]});
+ assert(final.ok,final.error);assert(final.declared);assert.equal(u.bins[0].shots,23);
+ assert.equal(g.declarations[0].shots[0].spotter,s.id);
+ assert.equal(g.selectedLosPath(s,t),clear.choice);
+ assert.equal(g.selectedLosPath(t,s),-clear.choice);
+});
