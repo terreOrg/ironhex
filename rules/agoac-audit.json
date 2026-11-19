@@ -4621,9 +4621,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.13: shared-edge LOS exposes both reciprocal terrain paths"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.13: defender LOS choice persists reciprocally for the round"
         }
       ],
-      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing."
+      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation. Added explicit reciprocal edge-path enumeration as engine primitive; defender selection, turn persistence, API/UI and exact corner-touch cases remain missing. Engine defender authorization, round-stamped reciprocal selection and use by LOS/preview added. API/UI choice enforcement, serialization verification and exact corner-touch remain open."
     },
     {
       "id": "agoac-076",

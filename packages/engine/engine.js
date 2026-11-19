@@ -1160,6 +1160,26 @@ export class Game extends Legacy{
     a>=-120.00001&&a<=60.00001;
   return Math.abs(a)<=60.00001;
  }
+ // Store the selected geometric side on the lower-ID unit so reverse fire
+ // uses the same path. The round stamp makes stale selections inert.
+ chooseLosPath(attacker,target,choice,team){
+  const a=this.unit(attacker),b=this.unit(target);
+  if(this.phase!=='fire'||!a||!b||a===b||a.team===b.team||b.team!==team||
+     a.fired||![-1,1].includes(choice))return fail('Выбор линии огня недоступен');
+  const paths=this.losAlternatives(a,b);
+  if(paths.length!==2||!paths.some(p=>p.choice===choice))return fail('Нет альтернативной линии огня');
+  const [first,second]=a.id<b.id?[a,b]:[b,a];
+  const selections=first.losPathSelections??(first.losPathSelections={});
+  const previous=selections[second.id];
+  if(previous?.round===this.round)return fail('Линия огня уже выбрана');
+  selections[second.id]={round:this.round,choice:a===first?choice:-choice};
+  return {ok:true};
+ }
+ selectedLosPath(a,b){
+  const [first,second]=a.id<b.id?[a,b]:[b,a];
+  const selected=first.losPathSelections?.[second.id];
+  return selected?.round===this.round?(a===first?selected.choice:-selected.choice):0;
+ }
  losAlternatives(a,b,underwaterWeapon=null){
   a=this.unit(a);b=this.unit(b);
   if(!a||!b)return [];
@@ -1171,7 +1191,7 @@ export class Game extends Legacy{
   const first={path:left,choice:1,...this.los(a,b,underwaterWeapon,1)};
   return JSON.stringify(left)===JSON.stringify(right)?[first]:[first,{path:right,choice:-1,...this.los(a,b,underwaterWeapon,-1)}];
  }
- los(a,b,underwaterWeapon=null,edgeChoice=0){a=this.unit(a);b=this.unit(b);const n=distance(a,b),ta=this.tile(a.q,a.r),tb=this.tile(b.q,b.r),subA=underwaterWeapon===null?ta.depth>=(a.prone?1:2):underwaterWeapon,subB=tb.depth>=(b.prone?1:2)||(subA&&tb.depth===1&&!b.prone);if(subA!==subB)return {woods:0,blocked:true,cover:false};let woods=0,interveningWoods=0,blocked=false,cover=tb.depth===1&&!b.prone,seen=new Set();const ah=ta.height+(a.prone?1:2),bh=tb.height+(b.prone?1:2);for(let i=1;i<=n;i++){const sign=edgeChoice===0?0:edgeChoice>0?1:-1;const dq=b.q-a.q,dr=b.r-a.r;const p=roundHex(a.q+dq*i/n-sign*dr*1e-7,a.r+dr*i/n+sign*dq*1e-7),t=this.tile(p.q,p.r);if(!t||seen.has(key(p.q,p.r)))continue;seen.add(key(p.q,p.r));const intervenes=level=>level>=Math.max(ah,bh)||i===1&&level>=ah||i===n-1&&level>=bh;const terrainLevel=t.depth&&!subA? t.surface:t.height;if(i<n&&intervenes(terrainLevel))blocked=true;if(i===n-1&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;if((t.type==='woods'||t.type==='heavy')&&(i===n||intervenes(t.height+2))){const weight=t.type==='heavy'?2:1;woods+=weight;if(i<n)interveningWoods+=weight;}}return {woods,blocked:blocked||interveningWoods>=3,cover};}
+ los(a,b,underwaterWeapon=null,edgeChoice=null){a=this.unit(a);b=this.unit(b);edgeChoice=edgeChoice??this.selectedLosPath(a,b);const n=distance(a,b),ta=this.tile(a.q,a.r),tb=this.tile(b.q,b.r),subA=underwaterWeapon===null?ta.depth>=(a.prone?1:2):underwaterWeapon,subB=tb.depth>=(b.prone?1:2)||(subA&&tb.depth===1&&!b.prone);if(subA!==subB)return {woods:0,blocked:true,cover:false};let woods=0,interveningWoods=0,blocked=false,cover=tb.depth===1&&!b.prone,seen=new Set();const ah=ta.height+(a.prone?1:2),bh=tb.height+(b.prone?1:2);for(let i=1;i<=n;i++){const sign=edgeChoice===0?0:edgeChoice>0?1:-1;const dq=b.q-a.q,dr=b.r-a.r;const p=roundHex(a.q+dq*i/n-sign*dr*1e-7,a.r+dr*i/n+sign*dq*1e-7),t=this.tile(p.q,p.r);if(!t||seen.has(key(p.q,p.r)))continue;seen.add(key(p.q,p.r));const intervenes=level=>level>=Math.max(ah,bh)||i===1&&level>=ah||i===n-1&&level>=bh;const terrainLevel=t.depth&&!subA? t.surface:t.height;if(i<n&&intervenes(terrainLevel))blocked=true;if(i===n-1&&t.height===tb.height+1&&ah<=bh&&!b.prone)cover=true;if((t.type==='woods'||t.type==='heavy')&&(i===n||intervenes(t.height+2))){const weight=t.type==='heavy'?2:1;woods+=weight;if(i<n)interveningWoods+=weight;}}return {woods,blocked:blocked||interveningWoods>=3,cover};}
  tmm(u){const d=u.distanceMoved;return (d>=25?6:d>=18?5:d>=10?4:d>=7?3:d>=5?2:d>=3?1:0)+(u.moveMode==='jump'?1:0);}
  targetMovementModifier(t){return this.isImmobile(t)?-4:this.tmm(t)+(t.skidded?2:0)+(this.tacticalOptions?.standingStill&&t.spent===0?-1:0)+(this.tacticalOptions?.evading&&t.moveMode==='evade'&&!t.prone?1:0);}
  preview(id,target,index,opts={}){const u=this.unit(id),t=this.unit(target),w=u?.weapons[index];if(!u||!t||!w)return {legal:false,chance:0,targetNumber:99,reason:'Выберите цель'};if(u.deployed===false||t.deployed===false)return {legal:false,chance:0,targetNumber:99,reason:'Мех ещё не вышел на поле'};const quadProneBonus=quadProneFireBonus(u),range=distance(u,t),act=u.actuators[w.location],sub=this.tile(u.q,u.r).depth>=(u.prone||mechLegLocation(u,w.location)?1:2),waterline=this.tile(t.q,t.r).depth===1&&!t.prone,targetSub=this.tile(t.q,t.r).depth>=(t.prone?1:2),underwaterCover=sub&&waterline,los=this.los(u,t,sub),ranges=sub?(UNDERWATER_RANGES[w.name]||[0,0,0]):w.ranges;let reason='';if(!this.mobile(u)||t.dead||u.team===t.team)reason='Мех не может стрелять';else if(u.charge)reason='Заявлен таран/DFA';else if(u.moveMode==='evade')reason='Уклонение запрещает атаки';else if(w.destroyed||!u.structure[w.location]||this.isBreached(u,w.location)||w.locations?.some(l=>this.isBreached(u,l)))reason='Оружие уничтожено или затоплено';else if(u.sensorHits>=2)reason='Датчики уничтожены';else if(w.ammo===0)reason='Нет боезапаса';else if(!this.arc(u,t,w))reason='Вне сектора огня';else if(sub&&!UNDERWATER_RANGES[w.name])reason='Оружие не допускает подводную стрельбу';else if(!range||range>ranges[2])reason='Вне дальности';else if(!sub&&mechLegLocation(u,w.location)&&this.los(t,u).cover)reason='Ноги скрыты собственным частичным укрытием';else if(los.blocked)reason='Линия огня перекрыта';else if((sub!==targetSub&&!underwaterCover)||sub&&!UNDERWATER_RANGES[w.name])reason='Стрельба через поверхность воды запрещена';else if(u.prone&&u.config!=='Quad'&&(!u.structure.LA||!u.structure.RA))reason='Для стрельбы лёжа требуются обе сохранившиеся руки';else if(u.prone&&(

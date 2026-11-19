@@ -3526,3 +3526,16 @@ test('AGoAC p.13: shared-edge LOS exposes both reciprocal terrain paths',()=>{
  for(const p of paths){const reverse=back.find(x=>x.choice===-p.choice);assert.deepEqual(reverse.path,[...p.path].reverse());assert.equal(reverse.blocked,p.blocked);}
  b.q=2;b.r=0;assert.equal(g.losAlternatives(a,b).length,1);
 });
+
+test('AGoAC p.13: defender LOS choice persists reciprocally for the round',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];g.phase='fire';
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false,fired:false});Object.assign(b,{q:1,r:1,prone:false,fired:false});g.tile(1,0).height=2;
+ const blocked=g.losAlternatives(a,b).find(x=>x.blocked).choice;
+ assert.equal(g.chooseLosPath(a.id,b.id,blocked,a.team).ok,false);
+ assert(g.chooseLosPath(a.id,b.id,blocked,b.team).ok);
+ assert.equal(g.los(a,b).blocked,true);assert.equal(g.los(b,a).blocked,true);
+ assert.equal(g.chooseLosPath(b.id,a.id,blocked,a.team).ok,false);
+ g.round++;assert(g.chooseLosPath(a.id,b.id,-blocked,b.team).ok);
+ assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(b,a).blocked,false);
+});
