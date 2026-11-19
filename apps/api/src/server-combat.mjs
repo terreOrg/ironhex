@@ -10,10 +10,11 @@ const fields={
 const int=(x,a,b)=>Number.isInteger(x)&&x>=a&&x<=b;
 const fireTarget=x=>int(x,0,3)||typeof x==='string'&&/^hex:(0|-?[1-9]\d{0,2}),(0|-?[1-9]\d{0,2})$/.test(x);
 const shot=x=>x&&typeof x==='object'&&!Array.isArray(x)&&
- Object.keys(x).every(k=>['index','target','aim','bin','heatMode'].includes(k))&&
+ Object.keys(x).every(k=>['index','target','aim','bin','heatMode','spotter'].includes(k))&&
  int(x.index,0,31)&&fireTarget(x.target)&&
  (x.aim==null||['HD','CT','LT','RT','LA','RA','LL','RL'].includes(x.aim))&&
  (x.bin==null||int(x.bin,0,79))&&
+ (x.spotter==null||int(x.spotter,0,3)&&x.aim==null&&!x.heatMode)&&
  (x.heatMode===undefined||typeof x.heatMode==='boolean');
 export function validateTacticalOrder(b){
   if(!b||typeof b!=='object'||Array.isArray(b)||
