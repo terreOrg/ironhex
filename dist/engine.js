@@ -1361,7 +1361,7 @@ export class Game extends Legacy{
   return !!u.twist&&u.weapons.some(w=>!w.rear&&!w.destroyed&&mechLegLocation(u,w.location))&&
    Math.abs(this.relative(u,t,u.facing))<=60.00001;
  }
- declareFire(id,assignments,primaryTarget=null){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const choices=this.primaryTargetChoices(id,assignments);if(primaryTarget!==null&&!choices.includes(primaryTarget))return fail('Основная цель должна быть допустимой заявленной целью');const primary=primaryTarget??choices[0];const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.unit(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:primary!==a.target,aim:a.aim});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&!this.isImmobile(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer'});}this.declarations.push({id,shots});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
+ declareFire(id,assignments,primaryTarget=null){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const choices=this.primaryTargetChoices(id,assignments);if(primaryTarget!==null&&!choices.includes(primaryTarget))return fail('Основная цель должна быть допустимой заявленной целью');const primary=primaryTarget??choices[0];const seen=new Set(),shots=[],reserved=new Map(),reservedBins=new Map();for(const a of assignments){if(seen.has(a.index))return fail('Оружие уже заявлено');seen.add(a.index);const w=u.weapons[a.index];if(!w)return fail('Оружие не найдено');if(w.ammo!==null){const pool=w.shared??a.index,n=(reserved.get(pool)||0)+1;if(n>w.ammo)return fail('Недостаточно общего боезапаса');reserved.set(pool,n);}if(a.bin!==undefined&&a.bin!==null){const b=u.bins[a.bin],n=(reservedBins.get(a.bin)||0)+1;if(!b||b.destroyed||u.dumping.includes(a.bin)||this.isBreached(u,b.location)||b.weapon!==(w.shared??a.index)||b.shots<n)return fail('Выбранный бункер недоступен');reservedBins.set(a.bin,n);}const t=this.unit(a.target);if(!t)return fail('Нет цели');const p=this.preview(id,a.target,a.index,{secondary:primary!==a.target,aim:a.aim});if(!p.legal)return fail(`${u.weapons[a.index].name}: ${p.reason}`);if(a.aim&&!Object.hasOwn(LOCATIONS,a.aim))return fail('Неизвестная прицельная локация');if(a.aim&&!this.isImmobile(t))return fail('Прицельная стрельба только по обездвиженной цели');shots.push({index:a.index,target:a.target,weapon:clone(u.weapons[a.index]),preview:p,aim:a.aim||null,bin:a.bin??null,heatMode:!!a.heatMode&&w.name==='Flamer'});}if(!this.commitDeclaredAmmo(u,shots,reservedBins))return fail('Недостаточно доступного боезапаса');this.declarations.push({id,shots,ammoSpent:true});this.note(`${u.name}: заявлено ${shots.length} выстрелов. Разрешение — после всех деклараций.`);this.finish(u);return {ok:true,declared:true,shots:[]};}
  wound(u,n){for(let i=0;i<n&&!u.dead;i++){u.pilotWounds=Math.min(6,u.pilotWounds+1);if(u.pilotWounds>=6){this.destroyMech(u);this.note(`${u.name}: пилот погиб.`);break;}u.consciousChecks++;if(!this.deferConsciousness)this.consciousness(u);}}
  consciousness(u){while(u.consciousChecks>0&&!u.dead){
  // AGoAC pp.6,44: defer the throws, not the wound-specific thresholds.
@@ -1490,8 +1490,25 @@ export class Game extends Legacy{
   }
   u.psrs.push({modifier:0,reason:'Актуатор '+loc});
  }}}}
- // AGoAC pp.6,21,30: all declared to-hit rolls and ammunition expenditure
- // precede the first hit-location roll. Keep the declaration snapshot intact.
+ // AGoAC p.22: allocate exact magazines and mark off ammunition as
+ // part of the accepted attack declaration, never a partial rejection.
+ commitDeclaredAmmo(u,shots,explicitReservations){
+  const counts=new Map(explicitReservations);
+  for(const s of shots){
+   if(s.weapon.ammo===null||s.bin!==null)continue;
+   const pool=s.weapon.shared??s.index;
+   const ix=u.bins.findIndex((b,i)=>b.weapon===pool&&!b.destroyed&&
+    !u.dumping.includes(i)&&!this.isBreached(u,b.location)&&
+    b.shots>(counts.get(i)||0));
+   if(ix<0)return false;
+   s.bin=ix;counts.set(ix,(counts.get(ix)||0)+1);
+  }
+  for(const [ix,n] of counts)u.bins[ix].shots-=n;
+  if(counts.size)this.syncAmmo(u);
+  return true;
+ }
+ // Compatibility for saved declarations created before p.22 ammo timing
+ // was implemented, and resolution fixtures without the marker.
  spendDeclaredAmmo(u,s,reserved){
   const w=s.weapon;if(w.ammo===null)return;
   const bin=s.bin!==null?u.bins[s.bin]:u.bins.find((b,ix)=>
@@ -1537,7 +1554,7 @@ export class Game extends Legacy{
  }
  rollDeclaredFire(d){
   const u=this.unit(d.id),reserved=new Map(),attacks=[];
-  for(const s of d.shots)if(s.bin!==null&&s.weapon.ammo!==null)
+  if(!d.ammoSpent)for(const s of d.shots)if(s.bin!==null&&s.weapon.ammo!==null)
    reserved.set(s.bin,(reserved.get(s.bin)||0)+1);
   this.orderFireStage(u,d.shots,'roll',s=>{
    const w=s.weapon,p=s.preview;
@@ -1545,7 +1562,7 @@ export class Game extends Legacy{
    const attackRoll=this.phaseRolls.at(-1);
    u.pendingHeat+=w.heat;
    u.firedLocations.push(...(w.locations?.length?w.locations:[w.location]));
-   this.spendDeclaredAmmo(u,s,reserved);
+   if(!d.ammoSpent)this.spendDeclaredAmmo(u,s,reserved);
    attacks.push({u,s,roll,attackRoll,hit:roll>=p.targetNumber});
   });
   return attacks;
