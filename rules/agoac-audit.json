@@ -4721,7 +4721,7 @@
         19
       ],
       "statement": "Water visibility, intervening Mechs and partial cover.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4770,9 +4770,43 @@
         {
           "file": "tests/tactical-operations.mjs",
           "test": "AGoAC p.19: BMM underwater weapon combat is an explicit pre-battle option"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.14,17: normal direct leg hits are absorbed by terrain and water partial cover"
         }
       ],
-      "reviewNote": "Source pp.14,17,19 rechecked: bridge exception tested successfully in #183 (399/399); remaining base versus expanded submerged LOS and water firing. Source pp.13–14,17,19–20 visually checked: default AGoAC forbids weapon LOS to/from fully submerged BattleMechs and submerged leg weapons. Expanded BMM underwater weapons now opt-in via locked pre-battle setting (engine, server, UI and overlay). Regressions pending exact checks; no promotion before gates. Physical combat outside current scope."
+      "reviewNote": "Direct visual CAT3500D pp.13–14,17,19: depth-based mutual weapon LOS exception; intervening water at surface elevation, intervening Mechs ignored; standing-only terrain and depth-one water cover, bridge and woods exceptions, downhill rule and own leg weapon restriction. #185 exact CI 404/404, E2E and full Docker Smoke passed, identical merged tree, main Sonar success (44590430129). Separate ambiguous path rule 075 and physical rules remain outside this requirement. Added direct normal-hit cover regression here.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "81cf75a57804c086938bcd7c4ea1c295bb8ddc8d",
+        "testedTree": "319dd71956027b3dbe89da7b6862d018b605c9f0",
+        "mergedSha": "abb46f3f15c8d759b40a798202f247f8e9bbe091",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44589344346,
+            "jobId": 135790788476,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44589344334,
+            "jobId": 135790789222,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44589344429,
+            "jobId": 135790791191,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct visual CAT3500D pp.13–14,17,19: depth-based mutual weapon LOS exception; intervening water at surface elevation, intervening Mechs ignored; standing-only terrain and depth-one water cover, bridge and woods exceptions, downhill rule and own leg weapon restriction. #185 exact CI 404/404, E2E and full Docker Smoke passed, identical merged tree, main Sonar success (44590430129). Separate ambiguous path rule 075 and physical rules remain outside this requirement. Added direct normal-hit cover regression here."
+      }
     },
     {
       "id": "agoac-078",
@@ -4964,9 +4998,21 @@
         {
           "file": "tests/tactical-operations.mjs",
           "test": "AGoAC p.19: BMM underwater weapon combat is an explicit pre-battle option"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.16: only walking distance since the last forward backward reversal modifies the target number"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.14,17: normal direct leg hits are absorbed by terrain and water partial cover"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.19–21: prone bracing and modifiers agree across weapon preview and firing arcs"
         }
       ],
-      "reviewNote": "Direct visual source pp.16–20 confirmed all standard range, heat, movement and damage table entries. #183 CI 399/399 including bridge correction; combined direct GATOR sum, hit chance and actuator precedence regression added here. Await exact results. Direct-weapon dry-terrain certification separable from unimplemented water and indirect-fire cases, but their dependencies must remain explicit; do not mark whole requirement verified prematurely. Source pp.13–14,17,19–20 visually checked: default AGoAC forbids weapon LOS to/from fully submerged BattleMechs and submerged leg weapons. Expanded BMM underwater weapons now opt-in via locked pre-battle setting (engine, server, UI and overlay). Regressions pending exact checks; no promotion before gates. Physical combat outside current scope."
+      "reviewNote": "Visual re-review printed pp.16–20: explicit last forward/backward reversal for TMM missing in production movement; implemented separate offset without changing total distanceMoved or jump extension. New end-to-end movement regression and water/prone modifier checks; exact gates pending. Standard direct GATOR certification after gates; retain specialized indirect modifier gap in 083 and unoccupied target gap in 079 explicitly."
     },
     {
       "id": "agoac-081",
@@ -5055,7 +5101,7 @@
         21
       ],
       "statement": "Water and prone weapon attacks.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5112,9 +5158,43 @@
         {
           "file": "tests/tactical-operations.mjs",
           "test": "AGoAC p.19: BMM underwater weapon combat is an explicit pre-battle option"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.19–21: prone bracing and modifiers agree across weapon preview and firing arcs"
         }
       ],
-      "reviewNote": "Re-reviewed pp.19–21: prone arm bracing, leg restriction and posture modifiers implemented. AGoAC water restrictions are not independently selected from BMM expanded underwater fire; share the outstanding 077 dependency. Known missing. Source pp.13–14,17,19–20 visually checked: default AGoAC forbids weapon LOS to/from fully submerged BattleMechs and submerged leg weapons. Expanded BMM underwater weapons now opt-in via locked pre-battle setting (engine, server, UI and overlay). Regressions pending exact checks; no promotion before gates. Physical combat outside current scope."
+      "reviewNote": "Direct visual CAT3500D pp.19–21: base water weapons restriction, fully submerged prone, both arms intact, supporting arm and split mounts, no leg weapons, same fixed firing arcs and cumulative prone attacker/target modifiers. #185 exact CI 404/404, E2E and full Docker Smoke passed, identical merged tree, main Sonar success (44590430129). BMM underwater tests explicitly select expanded option. Added cross-check of prone UI overlay and weapon preview in this PR; physical combat excluded.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "81cf75a57804c086938bcd7c4ea1c295bb8ddc8d",
+        "testedTree": "319dd71956027b3dbe89da7b6862d018b605c9f0",
+        "mergedSha": "abb46f3f15c8d759b40a798202f247f8e9bbe091",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44589344346,
+            "jobId": 135790788476,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44589344334,
+            "jobId": 135790789222,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44589344429,
+            "jobId": 135790791191,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct visual CAT3500D pp.19–21: base water weapons restriction, fully submerged prone, both arms intact, supporting arm and split mounts, no leg weapons, same fixed firing arcs and cumulative prone attacker/target modifiers. #185 exact CI 404/404, E2E and full Docker Smoke passed, identical merged tree, main Sonar success (44590430129). BMM underwater tests explicitly select expanded option. Added cross-check of prone UI overlay and weapon preview in this PR; physical combat excluded."
+      }
     },
     {
       "id": "agoac-083",
