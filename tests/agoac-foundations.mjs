@@ -80,6 +80,14 @@ test('AGoAC audit never promotes a topic without complete reviewed child evidenc
   assert.match(q.audit.mergedSha,/^[0-9a-f]{40}$/);
   assert.deepEqual(q.audit.checks.map(c=>c.name).sort(),['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
   assert(q.audit.checks.every(c=>Number.isSafeInteger(c.runId)&&c.conclusion==='success'));
+  if(q.topicId==='agoac-hit-location'){
+   const gate=q.audit.mainQualityGate;
+   assert(gate,q.id+' missing main Quality Gate evidence');
+   assert.equal(gate.name,'Ironhex SonarQube');
+   assert.equal(gate.headSha,q.audit.mergedSha);
+   assert.equal(gate.conclusion,'success');
+   assert(Number.isSafeInteger(gate.runId)&&Number.isSafeInteger(gate.jobId));
+  }
  }
  for(const t of r.topics.filter(t=>t.status==='verified')){
   const children=r.requirements.filter(q=>q.topicId===t.id);
