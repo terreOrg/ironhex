@@ -11,8 +11,8 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval.",
-  "currentTopicId": "agoac-combat",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment.",
+  "currentTopicId": "agoac-hit-location",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -258,8 +258,51 @@
         13,
         21
       ],
-      "status": "tested_subset",
-      "reviewNote": "Initial production inventory across all ten provisional groups. Existing tests reused; missing indirect declaration and primary target constraints identified. Full original-source reconciliation and test adequacy review remain."
+      "status": "verified",
+      "reviewNote": "Chapter 5 Combat (printed pp.13–21): all ten scoped groups reconciled against the printed source and passing production, API and browser evidence from #178–195; exact #195 tree equals merged e9ef8f2a; CI 425/425, Browser E2E 37/37 and Docker Smoke successful. Digital empty-hex endpoint and spotter cancellation ordering conventions documented in 075/083. Detailed attack direction and hit-location resolution belong to Chapter 6, and physical attacks, damage, heat and PSR remain separate. No authorization to begin Chapter 6.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "efef1afd231a10b3e0bf29a03f3f177ce3c3988b",
+        "testedTree": "531ac8da9d1378b7de39502f8e92aaec448e7eef",
+        "mergedSha": "e9ef8f2a3a89b707fe26fa32f31bc3ef02948967",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44604256090,
+            "jobId": 135843591759,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44604256316,
+            "jobId": 135843789536,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44604256194,
+            "jobId": 135843593955,
+            "conclusion": "success"
+          }
+        ],
+        "inventoryComplete": true,
+        "requirementIds": [
+          "agoac-075",
+          "agoac-076",
+          "agoac-077",
+          "agoac-078",
+          "agoac-079",
+          "agoac-080",
+          "agoac-081",
+          "agoac-082",
+          "agoac-083",
+          "agoac-084"
+        ],
+        "review": "Chapter 5 Combat (printed pp.13–21): all ten scoped groups reconciled against the printed source and passing production, API and browser evidence from #178–195; exact #195 tree equals merged e9ef8f2a; CI 425/425, Browser E2E 37/37 and Docker Smoke successful. Digital empty-hex endpoint and spotter cancellation ordering conventions documented in 075/083. Detailed attack direction and hit-location resolution belong to Chapter 6, and physical attacks, damage, heat and PSR remain separate. No authorization to begin Chapter 6."
+      }
     },
     {
       "id": "agoac-hit-location",
@@ -4612,7 +4655,7 @@
         13
       ],
       "statement": "LOS endpoints, adjacency, mutual visibility, exact hex geometry and controller-selected ambiguous paths.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4671,7 +4714,37 @@
           "test": "AGoAC pp.13,21: already-fired spotter defender choice resumes without another selection or ammo debit"
         }
       ],
-      "reviewNote": "CAT3500D p.13 screenshot rechecked; #190 exact green tests for empty hex and #191 green indirect LOS (420/420). All declaration entrypoints now prepare occupied and unoccupied LOS before commitment; noninteractive defenders use existing AI priority. Exact selected attacker/spotter LOS side stored with each shot, handing off to chapter 6 hit-direction audit. New tests for noninteractive defender choice and already-fired spotter replay. No certification until exact gates. #192 exact head 9adc274e CI 423/423, Browser E2E and full Docker Smoke green; merged 4ace3874. This follow-up exercises the real tactical command and browser LRM spotter selection/reconnect. Pending exact test evidence and final source review. Keep Known Missing until closure."
+      "reviewNote": "Reconciled prior visual CAT3500D p.13 inventory with the merged #190–195 evidence; p.13 visually rechecked. Closed-hex intersections, reciprocal LOS, adjacent endpoint exception, defender side selection for controlled targets and random persistent selection for empty hexes, interactive and direct paths, automated defender policy, stored LOS in declared shots and replay. Bare-hex surface endpoint comparison is a digital modeling convention. The selected path is handed off in shot data; hit-direction tie-breaking itself belongs to Chapter 6 (not certified here). Exact #195 CI 425/425, E2E 37/37 and Docker Smoke passed; tested and merged trees identical.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "efef1afd231a10b3e0bf29a03f3f177ce3c3988b",
+        "testedTree": "531ac8da9d1378b7de39502f8e92aaec448e7eef",
+        "mergedSha": "e9ef8f2a3a89b707fe26fa32f31bc3ef02948967",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44604256090,
+            "jobId": 135843591759,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44604256316,
+            "jobId": 135843789536,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44604256194,
+            "jobId": 135843593955,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Reconciled prior visual CAT3500D p.13 inventory with the merged #190–195 evidence; p.13 visually rechecked. Closed-hex intersections, reciprocal LOS, adjacent endpoint exception, defender side selection for controlled targets and random persistent selection for empty hexes, interactive and direct paths, automated defender policy, stored LOS in declared shots and replay. Bare-hex surface endpoint comparison is a digital modeling convention. The selected path is handed off in shot data; hit-direction tie-breaking itself belongs to Chapter 6 (not certified here). Exact #195 CI 425/425, E2E 37/37 and Docker Smoke passed; tested and merged trees identical."
+      }
     },
     {
       "id": "agoac-076",
@@ -4916,7 +4989,7 @@
         17
       ],
       "statement": "Attack declarations, legal targets and orientation commitments, including unoccupied-hex targeting and its immobile -4 and primary/secondary modifiers.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4979,7 +5052,37 @@
           "test": "AGoAC p.21: browser declares aimed and ordinary weapons independently"
         }
       ],
-      "reviewNote": "Pp.13,15,17 and 21 reviewed; #190 empty-hex and #191 indirect attack declaration exact gates passed. Added direct-entry validation and mandatory LOS, selected paths in declared shots. Await amended exact green tests and browser/API audit. #192 exact head 9adc274e CI 423/423, Browser E2E and full Docker Smoke green; merged 4ace3874. This follow-up exercises the real tactical command and browser LRM spotter selection/reconnect. Pending exact test evidence and final source review. Keep Known Missing until closure. Printed pp.15,19,21 rechecked: the web client now declares aims independently for each eligible weapon, preserves aim and heat-mode draft through LOS preparation, and clears it for a new acting Mech. Prone spotter contributes the cumulative +2 movement modifier (base biped). New browser and engine evidence pending exact gates; no Verified promotion yet."
+      "reviewNote": "Reconciled CAT3500D printed pp.13,15,17,21 with #190–195; pp.13,15,21 visually rechecked. Empty-hex targeting includes normal ammo/heat and secondary modifiers; friendly/occupied invalid hex declarations, legal primary selection, declared weapons, orientation commitment and per-weapon special choices are covered. API and browser use server-authoritative validation, and the current firing draft survives LOS preparation without leaking to a new acting Mech. Exact #195 CI 425/425, E2E 37/37 and Docker Smoke passed; identical tested/merged tree.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "efef1afd231a10b3e0bf29a03f3f177ce3c3988b",
+        "testedTree": "531ac8da9d1378b7de39502f8e92aaec448e7eef",
+        "mergedSha": "e9ef8f2a3a89b707fe26fa32f31bc3ef02948967",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44604256090,
+            "jobId": 135843591759,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44604256316,
+            "jobId": 135843789536,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44604256194,
+            "jobId": 135843593955,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Reconciled CAT3500D printed pp.13,15,17,21 with #190–195; pp.13,15,21 visually rechecked. Empty-hex targeting includes normal ammo/heat and secondary modifiers; friendly/occupied invalid hex declarations, legal primary selection, declared weapons, orientation commitment and per-weapon special choices are covered. API and browser use server-authoritative validation, and the current firing draft survives LOS preparation without leaking to a new acting Mech. Exact #195 CI 425/425, E2E 37/37 and Docker Smoke passed; identical tested/merged tree."
+      }
     },
     {
       "id": "agoac-080",
@@ -5293,7 +5396,7 @@
         21
       ],
       "statement": "Specialized attacks: aimed shots and indirect LRM fire, including all spotter/indirect GATOR modifiers and indirect cover exceptions.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -5364,7 +5467,37 @@
           "test": "AGoAC pp.19,21: prone spotter adds cumulative movement modifier to indirect attacks"
         }
       ],
-      "reviewNote": "P.21 screenshot rechecked: spotter who actually fires incurs +1 on own and indirect attacks. Added pre-roll cancellation for spotting battles; spotters' shots first in declaration order, recalculating firing modifiers after each cancellation. Modeling convention: spotting assignment remains fixed if an indirect attack is cancelled; cancellation order among dependent attacks is deterministic, as source does not specify a tie-break. No dice before choices. New tests for actual cancelling spotter fire and previously-fired spotter's LOS replay. Remaining dedicated end-to-end browser/API scenario and technical audit. #192 exact head 9adc274e CI 423/423, Browser E2E and full Docker Smoke green; merged 4ace3874. This follow-up exercises the real tactical command and browser LRM spotter selection/reconnect. Pending exact test evidence and final source review. Keep Known Missing until closure. Printed pp.15,19,21 rechecked: the web client now declares aims independently for each eligible weapon, preserves aim and heat-mode draft through LOS preparation, and clears it for a new acting Mech. Prone spotter contributes the cumulative +2 movement modifier (base biped). New browser and engine evidence pending exact gates; no Verified promotion yet."
+      "reviewNote": "Reconciled printed CAT3500D pp.19–21 with #191–195; p.21 visually rechecked. Per-weapon aimed shots are limited to immobile targets with missile exclusion, independent 6–8 aim check, head and cover exceptions. Indirect LRM requires blocked direct LOS and eligible friendly spotter, one target per spotter, attacker/target/spotter movement including cumulative prone modifier, spotter-based terrain, attacker range/minimum, actual-firing penalty and water-only damage interception. Spotter-first deterministic pre-roll cancellation order and continued spotting assignment after cancellation are documented digital conventions where source does not define a tie-break. API, engine and browser evidence passed in exact #195 (425/425, 37/37, Docker Smoke); identical tested/merged tree. Later hit-location algorithms audited separately.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "efef1afd231a10b3e0bf29a03f3f177ce3c3988b",
+        "testedTree": "531ac8da9d1378b7de39502f8e92aaec448e7eef",
+        "mergedSha": "e9ef8f2a3a89b707fe26fa32f31bc3ef02948967",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44604256090,
+            "jobId": 135843591759,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44604256316,
+            "jobId": 135843789536,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44604256194,
+            "jobId": 135843593955,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Reconciled printed CAT3500D pp.19–21 with #191–195; p.21 visually rechecked. Per-weapon aimed shots are limited to immobile targets with missile exclusion, independent 6–8 aim check, head and cover exceptions. Indirect LRM requires blocked direct LOS and eligible friendly spotter, one target per spotter, attacker/target/spotter movement including cumulative prone modifier, spotter-based terrain, attacker range/minimum, actual-firing penalty and water-only damage interception. Spotter-first deterministic pre-roll cancellation order and continued spotting assignment after cancellation are documented digital conventions where source does not define a tie-break. API, engine and browser evidence passed in exact #195 (425/425, 37/37, Docker Smoke); identical tested/merged tree. Later hit-location algorithms audited separately."
+      }
     },
     {
       "id": "agoac-084",
