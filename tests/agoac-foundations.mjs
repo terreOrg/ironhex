@@ -3198,3 +3198,24 @@ test('AGoAC p.10: basic terrain entry costs constrain the actual remaining movem
   else{const before=JSON.stringify(u);assert.equal(g.move(u.id,q,r,mode).ok,false);assert.equal(JSON.stringify(u),before);}
  }
 });
+
+
+test('AGoAC p.10: ground terrain PSR dispatch uses the entered hex and depth',()=>{
+ for(const [type,depth,modifier] of [['plain',0,null],['rough',0,null],['woods',0,null],['heavy',0,null],['rubble',0,0],['water',1,-1],['water',2,0],['water',3,1]]){
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:6,heat:0,spent:0,moveMode:'stand',distanceMoved:0,pendingHeat:0});
+  for(const t of g.tiles)Object.assign(t,{type:'plain',height:8,depth:0,surface:8});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  g.tile(0,0).height=0;
+  const [q,r]=DIRS[0];Object.assign(g.tile(q,r),{type,depth,height:0,surface:0});
+  const calls=[];g.psr=(unit,mod,reason,immediate)=>{calls.push({unit,mod,reason,immediate,q:unit.q,r:unit.r});return true;};
+  assert(g.move(u.id,q,r,'walk').ok);
+  assert.equal(calls.length,modifier===null?0:1);
+  if(calls.length){
+   assert.equal(calls[0].unit,u);assert.equal(calls[0].mod,modifier);
+   assert.equal(calls[0].immediate,true);assert.deepEqual([calls[0].q,calls[0].r],[q,r]);
+  }
+  assert(g.hold(u.id).ok);
+  assert.equal(calls.length,modifier===null?0:1);
+ }
+});
