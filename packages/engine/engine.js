@@ -1231,11 +1231,21 @@ export class Game extends Legacy{
  aiAttackWithLosChoices(id,{humanTeams=[0]}={}){
   const a=this.unit(id);
   if(!this.canAct(a)||!this.mobile(a)||a.moveMode==='evade')return this.hold(id);
-  const targets=this.units.filter(b=>b.team!==a.team&&!b.dead&&b.deployed!==false&&
-   a.weapons.some(w=>!w.destroyed&&w.ammo!==0&&distance(a,b)<=w.ranges[2])).map(b=>b.id);
-  const prepared=this.prepareFireLos(id,targets,humanTeams);
+  // Pick a real intended attack before asking its defender. Persist that
+  // intent while an interactive choice is outstanding (including saves).
+  const plan=a.aiFirePlan?.round===this.round?a.aiFirePlan:this.planAiFire(a);
+  if(!plan?.indices.length){delete a.aiFirePlan;return this.hold(id);}
+  a.aiFirePlan={...plan,round:this.round};
+  a.twist=plan.twist;
+  const prepared=this.prepareFireLos(id,[plan.target],humanTeams);
   if(!prepared.ok||prepared.pending)return prepared;
-  return this.aiAttack(id);
+  delete a.aiFirePlan;
+  // A defender may block the attack. Do not seek another defender or
+  // change the nominated target after that choice.
+  const indices=plan.indices.filter(i=>this.preview(id,plan.target,i).legal);
+  if(!indices.length)return this.hold(id);
+  const result=this.attack(id,plan.target,indices);
+  return result.ok?result:this.hold(id);
  }
  selectedLosPath(a,b){
   const [first,second]=a.id<b.id?[a,b]:[b,a];
@@ -1558,6 +1568,21 @@ export class Game extends Legacy{
    reserved.set(s.bin,(reserved.get(s.bin)||0)+1);
   this.orderFireStage(u,d.shots,'roll',s=>{
    const w=s.weapon,p=s.preview;
+   if(p.targetNumber>12){
+    const decision=this.chooseResolutionOption('fire-impossible',u,[{id:'fire'},{id:'cancel'}],'fire',
+     {weaponName:w.name,targetId:s.target,targetNumber:p.targetNumber});
+    if(decision==='cancel'){
+     // No attack, heat, or retarget. Return the exact reserved round
+     // already marked off at declaration, if this is a modern save.
+     if(d.ammoSpent&&w.ammo!==null&&s.bin!==null&&u.bins[s.bin]){
+      u.bins[s.bin].shots++;
+      this.syncAmmo(u);
+     }else if(!d.ammoSpent&&s.bin!==null&&w.ammo!==null)
+      reserved.set(s.bin,Math.max(0,(reserved.get(s.bin)||0)-1));
+     this.note(u.name+' · '+w.name+': невозможный выстрел отменён.');
+     return;
+    }
+   }
    const roll=this.roll(u.name+' · '+w.name,p.targetNumber);
    const attackRoll=this.phaseRolls.at(-1);
    u.pendingHeat+=w.heat;
@@ -2132,7 +2157,31 @@ export class Game extends Legacy{
  nextPhase(){if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
  this.endPSR();this.afterRolls=[...this.phaseRolls];this.removeDestroyedMechs();this.checkWin();if(this.winner===null){this.phase='fire';this.buildQueue();}}else if(this.phase==='fire'){this.resolveFire();this.checkWin();if(this.winner===null){this.phase='physical';this.buildQueue();}}else if(this.phase==='physical'){this.resolvePhysical();this.checkWin();this.activeTeam=null;if(this.winner===null)this.phase='heat';}else if(this.phase==='heat'){this.heatPhase();this.checkWin();if(this.winner===null)this.phase='end';}else{this.endPhase();this.checkWin({stalemate:true});if(this.winner===null)this.phase='initiative';}if(this.winner===null)this.note(`Раунд ${this.round}: ${PHASES[this.phase]}.`);else{this.activeTeam=null;this.actingId=null;}return {ok:true};}
  aiMove(id){const u=this.unit(id);if(!this.canAct(u))return fail('Не очередь ИИ');if(u.deployed===false){const choices=this.deploymentOptions(u);const best=choices.sort((a,b)=>Number(a.mode==='minimum')-Number(b.mode==='minimum')||distance(a,{q:0,r:0})-distance(b,{q:0,r:0})||a.cost-b.cost)[0];if(!best)return {...fail('Нет допустимого входа: требуется изменить условия сценария'),code:'deployment_blocked'};const result=this.enterDeployment(u,best.q,best.r,best.mode);if(result.ok&&!result.ended)this.hold(id);return result;}if(this.isImmobile(u))return this.hold(id);if(u.prone){const s=this.stand(id);if(!s.ok||u.prone)return this.hold(id);}const options=['walk','run',...(this.mp(u,'jump')?['jump']:[])].flatMap(m=>this.reachable(u,m).map(p=>({...p,mode:m})));let best=null,score=-Infinity;const enemies=this.units.filter(t=>t.team!==u.team&&!t.dead&&t.deployed!==false);for(const p of options){const old={q:u.q,r:u.r,facing:u.facing};u.q=p.q;u.r=p.r;u.facing=p.facing;let value=-Infinity;for(const t of enemies){let v=u.weapons.reduce((n,w,i)=>n+this.preview(id,t.id,i).chance*(w.rack?w.rack*.6*w.damage:w.damage)/100,0)-Math.abs(distance(u,t)-5)*.5;if(p.mode==='jump')v-=1;value=Math.max(value,v);}Object.assign(u,old);if(value>score){score=value;best=p;}}const r=best?this.move(id,best.q,best.r,best.mode):{ok:true};this.hold(id);return r;}
- aiAttack(id){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||u.moveMode==='evade')return this.hold(id);let best=null;for(const twist of (u.config==='Quad'?(u.quirks?.extendedTorsoTwist===true?[-1,0,1]:[0]):(u.quirks?.extendedTorsoTwist===true?[-2,-1,0,1,2]:[-1,0,1]))){if(u.prone&&twist)continue;u.twist=twist;for(const t of this.units.filter(x=>x.team!==u.team&&!x.dead)){let indices=[],heat=u.heat+u.pendingHeat-u.sinks+u.sinksLost;for(let i=0;i<u.weapons.length;i++){const p=this.preview(id,t.id,i),w=u.weapons[i];if(p.legal&&p.chance>=17&&heat+w.heat<18){indices.push(i);heat+=w.heat;}}const score=indices.reduce((s,i)=>s+this.preview(id,t.id,i).chance*(u.weapons[i].rack||u.weapons[i].damage),0);if(!best||score>best.score)best={target:t.id,indices,twist,score};}}u.twist=best?.twist??0;return best?.indices.length?this.attack(id,best.target,best.indices):this.hold(id);}
+ planAiFire(u){
+  const prior=u.twist;
+  let best=null;
+  const extended=u.quirks?.extendedTorsoTwist===true;
+  const twists=u.config==='Quad'?(extended?[-1,0,1]:[0]):(extended?[-2,-1,0,1,2]:[-1,0,1]);
+  for(const twist of twists){
+   if((u.prone||u.flip)&&twist)continue;
+   u.twist=twist;
+   for(const t of this.units.filter(x=>x.team!==u.team&&!x.dead&&x.deployed!==false)){
+    const indices=[],pools=new Map();
+    let heat=u.heat+u.pendingHeat-u.sinks+u.sinksLost,score=0;
+    for(const [i,w] of u.weapons.entries()){
+     const p=this.preview(u.id,t.id,i),pool=w.shared??i;
+     if(!p.legal||p.chance<17||heat+w.heat>=18||
+        w.ammo!==null&&(pools.get(pool)||0)>=w.ammo)continue;
+     indices.push(i);heat+=w.heat;score+=p.chance*(w.rack||w.damage);
+     if(w.ammo!==null)pools.set(pool,(pools.get(pool)||0)+1);
+    }
+    if(!best||score>best.score)best={target:t.id,indices,twist,score};
+   }
+  }
+  u.twist=prior;
+  return best;
+ }
+ aiAttack(id){return this.aiAttackWithLosChoices(id,{humanTeams:[]});}
  aiPhysical(id){const u=this.unit(id);if(u?.moveMode==='evade')return this.hold(id);if(u.charge)return this.hold(id);let best=null;for(const t of this.units.filter(t=>t.team!==u.team&&!t.dead))for(const [type,limb]of (u.config==='Quad'?[['kick','LA'],['kick','RA'],['kick','LL'],['kick','RL']]:[['kick','RL'],['kick','LL'],['punch','RA'],['punch','LA'],['club','RA'],['push','RA']])){const p=this.physicalPreview(id,t.id,type,limb);if(p.legal&&(!best||p.damage-p.targetNumber>best.score))best={target:t.id,type,limb,score:p.damage-p.targetNumber};}return best?this.declarePhysical(id,best.target,best.type,best.limb):this.hold(id);}
  // AGoAC pp.9,11–12: the exceptional step is the entire movement
  // action. It cannot change a previously declared mode or bypass a
