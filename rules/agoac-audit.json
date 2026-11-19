@@ -375,7 +375,7 @@
         29
       ],
       "status": "tested_subset",
-      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending."
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks."
     },
     {
       "id": "agoac-damage",
@@ -6210,9 +6210,13 @@
         {
           "file": "tests/api.mjs",
           "test": "AGoAC p.28 API validates different punch target and optional hatchet location without trusting client damage"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: both punch arcs include exact sixty and one hundred twenty degree hexes for every facing"
         }
       ],
-      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion."
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. First block-2 CI 444/445: exact 120-degree punch boundary was rejected by floating-point comparison; tolerance now matches the existing hatchet arc and all six facings are covered."
     },
     {
       "id": "agoac-101",
