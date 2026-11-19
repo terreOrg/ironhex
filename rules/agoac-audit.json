@@ -3461,7 +3461,7 @@
         8
       ],
       "statement": "Choose one permitted movement mode; standing still spends no MP or movement heat, changes neither location nor facing, and consumes a selection.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3476,7 +3476,37 @@
           "test": "AGoAC p.8: zero-distance ground movement commits mode and generates heat exactly once"
         }
       ],
-      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
+      "reviewNote": "Printed p.8 visually rechecked: exclusive mode, stand no movement/heat/facing change; zero-distance declared ground mode and selection consumption covered. Optional physical movement dice are not required; engine tracks mode and selection.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "dc75b3b14c4c9d5250132a44fbdf2bb7c50dbec2",
+        "testedTree": "fb79f73e5a07b0b659b6002d1b5ce6d8966b9fa4",
+        "mergedSha": "1c06e6428e17e4ffbddc5f7b32cc5dbeff82931e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44548438999,
+            "jobId": 135645280763,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44548437789,
+            "jobId": 135645275972,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44548437805,
+            "jobId": 135645277372,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.8 visually rechecked: exclusive mode, stand no movement/heat/facing change; zero-distance declared ground mode and selection consumption covered. Optional physical movement dice are not required; engine tracks mode and selection."
+      }
     },
     {
       "id": "agoac-056",
@@ -3485,7 +3515,7 @@
         8
       ],
       "statement": "Walk within walking allowance; allow reverse travel; report walking heat and attacker/target movement outputs.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3500,7 +3530,37 @@
           "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
         }
       ],
-      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
+      "reviewNote": "Printed p.8 visually rechecked: walk budget, reverse, one heat and attacker/target outputs; allowances 1–8, zero-distance and modifier boundaries covered.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "dc75b3b14c4c9d5250132a44fbdf2bb7c50dbec2",
+        "testedTree": "fb79f73e5a07b0b659b6002d1b5ce6d8966b9fa4",
+        "mergedSha": "1c06e6428e17e4ffbddc5f7b32cc5dbeff82931e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44548438999,
+            "jobId": 135645280763,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44548437789,
+            "jobId": 135645275972,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44548437805,
+            "jobId": 135645277372,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.8 visually rechecked: walk budget, reverse, one heat and attacker/target outputs; allowances 1–8, zero-distance and modifier boundaries covered."
+      }
     },
     {
       "id": "agoac-057",
@@ -3509,7 +3569,7 @@
         8
       ],
       "statement": "Run within rounded-up 1.5 times walking allowance; no reverse travel; report running heat and movement outputs.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3528,7 +3588,37 @@
           "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
         }
       ],
-      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
+      "reviewNote": "Printed p.8 visually rechecked: rounded running budget, no reverse, two heat and attacker/target outputs. Water entry restrictions separately tracked in 074 and damage PSR in 059.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "dc75b3b14c4c9d5250132a44fbdf2bb7c50dbec2",
+        "testedTree": "fb79f73e5a07b0b659b6002d1b5ce6d8966b9fa4",
+        "mergedSha": "1c06e6428e17e4ffbddc5f7b32cc5dbeff82931e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44548438999,
+            "jobId": 135645280763,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44548437789,
+            "jobId": 135645275972,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44548437805,
+            "jobId": 135645277372,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.8 visually rechecked: rounded running budget, no reverse, two heat and attacker/target outputs. Water entry restrictions separately tracked in 074 and damage PSR in 059."
+      }
     },
     {
       "id": "agoac-058",
@@ -3537,7 +3627,7 @@
         8
       ],
       "statement": "Jump mode eligibility, available jump jets, distance-based heat with minimum, and movement modifier outputs.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3548,7 +3638,37 @@
           "test": "AGoAC p.8: movement modes export attacker and target modifiers independently of heat"
         }
       ],
-      "reviewNote": "Named regression evidence merged through PRs #146–150 after successful CI, Browser E2E and Container Smoke for their respective heads. Latest integrated main 1fa2a76310c56cc552605a556a448dd135bb6ee7. Final source/edge review and exact-tree audit metadata pending; not yet verified."
+      "reviewNote": "Printed p.8 visually rechecked: jump availability, distance and minimum heat, attacker/target outputs; tests cover jets 1–6 and mode lock. Detailed landing and damage rules separately tracked in 059 and 068–070.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "dc75b3b14c4c9d5250132a44fbdf2bb7c50dbec2",
+        "testedTree": "fb79f73e5a07b0b659b6002d1b5ce6d8966b9fa4",
+        "mergedSha": "1c06e6428e17e4ffbddc5f7b32cc5dbeff82931e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44548438999,
+            "jobId": 135645280763,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44548437789,
+            "jobId": 135645275972,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44548437805,
+            "jobId": 135645277372,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Printed p.8 visually rechecked: jump availability, distance and minimum heat, attacker/target outputs; tests cover jets 1–6 and mode lock. Detailed landing and damage rules separately tracked in 059 and 068–070."
+      }
     },
     {
       "id": "agoac-059",
