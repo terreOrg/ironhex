@@ -3734,3 +3734,43 @@ test('AGoAC p.19: immobilized movement remains cumulative without optional mobil
  Object.assign(t,{moveMode:'stand',distanceMoved:0,spent:0});
  assert.equal(g.targetMovementModifier(t),-1);
 });
+
+test('AGoAC p.17: bridge decks never grant partial cover to either endpoint',()=>{
+ const g=fresh(),a=g.units[0],b=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(a,{q:0,r:0,prone:false,facing:0});
+ Object.assign(b,{q:3,r:0,prone:false,facing:3});
+ const nearB=g.tile(2,0),nearA=g.tile(1,0);
+ Object.assign(nearB,{type:'bridge',height:1,surface:1});
+ Object.assign(nearA,{type:'bridge',height:1,surface:1});
+ assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(b,a).blocked,false);
+ assert.equal(g.los(a,b).cover,false);assert.equal(g.los(b,a).cover,false);
+ nearB.type='plain';nearA.type='plain';
+ assert.equal(g.los(a,b).cover,true);assert.equal(g.los(b,a).cover,true);
+ nearB.type='bridge';nearA.type='bridge';
+ Object.assign(g.tile(b.q,b.r),{type:'water',depth:1,height:-1,surface:0});
+ nearB.height=0;
+ assert.equal(g.los(a,b).cover,true,'depth-one water remains cover independently of the bridge');
+});
+test('AGoAC pp.11,17,19: zero MP does not imply immobility and true immobilizing states stack with movement',()=>{
+ const g=fresh(),t=g.units[2];
+ Object.assign(t,{shutdown:false,unconscious:false,abandoned:false,walk:0,jump:0,moveMode:'stand',distanceMoved:0,spent:0});
+ assert.equal(g.mp(t,'walk'),0);assert.equal(g.isImmobile(t),false);assert.equal(g.targetMovementModifier(t),0);
+ Object.assign(t,{moveMode:'run',distanceMoved:7,spent:7});
+ for(const field of ['shutdown','unconscious','abandoned']){
+  t[field]=true;assert.equal(g.isImmobile(t),true);assert.equal(g.targetMovementModifier(t),-1);t[field]=false;
+ }
+ for(const l of ['LL','RL','LA'])t.structure[l]=0;
+ assert.equal(g.isImmobile(t),false);assert.equal(g.targetMovementModifier(t),3);
+ t.structure.RA=0;
+ assert.equal(g.isImmobile(t),true);assert.equal(g.targetMovementModifier(t),-1);
+});
+test('AGoAC pp.14–17: facing-based attack direction persists when torso is twisted',()=>{
+ const g=fresh(),u=g.units[0],a=g.units[2];
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false});
+ Object.assign(a,{q:0,r:-2});
+ const side=g.hitSide(u,a);const weapon={location:'CT',rear:false};
+ assert.equal(g.arc(u,a,weapon),false);
+ u.twist=1;
+ assert.equal(g.arc(u,a,weapon),true);assert.equal(g.hitSide(u,a),side);
+});
