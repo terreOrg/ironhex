@@ -4612,14 +4612,14 @@
         13
       ],
       "statement": "LOS endpoints, adjacency, mutual visibility, exact hex geometry and controller-selected ambiguous paths.",
-      "status": "not_audited",
+      "status": "known_missing",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.6: movement and LOS cross joined mapsheets without artificial border costs"
         }
       ],
-      "reviewNote": "los uses single rounded path; review ambiguous edge selection; joined-map LOS exists; candidate regression references, not final verification."
+      "reviewNote": "Direct visual p.13: single rounded path misses defender choice at shared hex boundaries and corner-touch geometry; choice persists for turn. Adjacent and mutual LOS also require validation."
     },
     {
       "id": "agoac-076",
@@ -4640,7 +4640,7 @@
           "test": "AGoAC p.13: discrete LOS elevation thresholds and target woods"
         }
       ],
-      "reviewNote": "los discrete thresholds and target woods correction in #174; full source review pending; candidate regression references, not final verification."
+      "reviewNote": "Direct visual review CAT3500D pp.13–14 confirms discrete elevation conditions, standing/prone heights and intervening woods threshold, separate target terrain. Existing tests cover elevation and woods; prone-height edge evidence and exact gates still needed."
     },
     {
       "id": "agoac-077",
@@ -4651,7 +4651,7 @@
         19
       ],
       "statement": "Water visibility, intervening Mechs and partial cover.",
-      "status": "not_audited",
+      "status": "known_missing",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -4668,9 +4668,13 @@
         {
           "file": "tests/combat.mjs",
           "test": "Surface shots at depth-1 target continue to be blocked only by leg water cover"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.14: own partial cover obstructs leg weapons but not torso weapons"
         }
       ],
-      "reviewNote": "los and hit implement water and cover; verify height and cover rules; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
+      "reviewNote": "Direct visual pp.13–14: intervening units do not obstruct; baseline submerged LOS is forbidden even though engine supports expanded underwater weapon fire. Leg-mounted weapons cannot fire through own partial cover. Implemented own partial cover restriction for leg weapons on surface. Base/expanded underwater behavior and remaining geometry still open."
     },
     {
       "id": "agoac-078",
@@ -4872,7 +4876,7 @@
           "test": "Flamer heat mode adds heat without armor damage"
         }
       ],
-      "reviewNote": "preview handles aimed shot; direct declareFire passes only secondary and aim to preview, no actual indirect fire declaration path; candidate regression references, not final verification. Existing combat suite references added; cross-edition applicability still under review."
+      "reviewNote": "Direct visual p.21: indirect LRM requires no direct LOS, eligible friendly spotter limited to one target per turn, spotter movement and firing penalties, spotter terrain, no aimed shot and distinct water cover behavior. Engine declaration path missing."
     },
     {
       "id": "agoac-084",
