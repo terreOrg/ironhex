@@ -3507,3 +3507,12 @@ test('AGoAC p.13: discrete LOS elevation thresholds and target woods',()=>{
  g.tile(1,0).type='heavy';g.tile(4,0).type='woods';
  assert.equal(g.los(a,b).blocked,false);assert.equal(g.los(a,b).woods,3);
 });
+
+test('AGoAC p.14: own partial cover obstructs leg weapons but not torso weapons',()=>{
+ const g=fresh(),u=g.units[0],v=g.units[2];
+ for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:false});Object.assign(v,{q:3,r:0,prone:false});g.tile(1,0).height=1;
+ const w={name:'Medium Laser',damage:5,heat:3,ranges:[3,6,9],min:0,ammo:null,rack:0,location:'LL'};u.weapons=[w,{...w,location:'CT'}];
+ assert.equal(g.los(v,u).cover,true);assert.equal(g.preview(u.id,v.id,0).legal,false);assert.equal(g.preview(u.id,v.id,1).legal,true);
+ g.tile(1,0).height=0;assert.equal(g.preview(u.id,v.id,0).legal,true);
+});
