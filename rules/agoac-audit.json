@@ -4671,7 +4671,7 @@
           "test": "AGoAC pp.13,21: already-fired spotter defender choice resumes without another selection or ammo debit"
         }
       ],
-      "reviewNote": "CAT3500D p.13 screenshot rechecked; #190 exact green tests for empty hex and #191 green indirect LOS (420/420). All declaration entrypoints now prepare occupied and unoccupied LOS before commitment; noninteractive defenders use existing AI priority. Exact selected attacker/spotter LOS side stored with each shot, handing off to chapter 6 hit-direction audit. New tests for noninteractive defender choice and already-fired spotter replay. No certification until exact gates."
+      "reviewNote": "CAT3500D p.13 screenshot rechecked; #190 exact green tests for empty hex and #191 green indirect LOS (420/420). All declaration entrypoints now prepare occupied and unoccupied LOS before commitment; noninteractive defenders use existing AI priority. Exact selected attacker/spotter LOS side stored with each shot, handing off to chapter 6 hit-direction audit. New tests for noninteractive defender choice and already-fired spotter replay. No certification until exact gates. #192 exact head 9adc274e CI 423/423, Browser E2E and full Docker Smoke green; merged 4ace3874. This follow-up exercises the real tactical command and browser LRM spotter selection/reconnect. Pending exact test evidence and final source review. Keep Known Missing until closure."
     },
     {
       "id": "agoac-076",
@@ -4965,9 +4965,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.13,21: already-fired spotter defender choice resumes without another selection or ammo debit"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "AGoAC p.21 API: authoritative indirect declaration rejects hostile spotter and persists a valid shot"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC p.21: browser selects LRM spotter, submits server declaration and restores the committed shot"
         }
       ],
-      "reviewNote": "Pp.13,15,17 and 21 reviewed; #190 empty-hex and #191 indirect attack declaration exact gates passed. Added direct-entry validation and mandatory LOS, selected paths in declared shots. Await amended exact green tests and browser/API audit."
+      "reviewNote": "Pp.13,15,17 and 21 reviewed; #190 empty-hex and #191 indirect attack declaration exact gates passed. Added direct-entry validation and mandatory LOS, selected paths in declared shots. Await amended exact green tests and browser/API audit. #192 exact head 9adc274e CI 423/423, Browser E2E and full Docker Smoke green; merged 4ace3874. This follow-up exercises the real tactical command and browser LRM spotter selection/reconnect. Pending exact test evidence and final source review. Keep Known Missing until closure."
     },
     {
       "id": "agoac-080",
@@ -5334,9 +5342,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.13,21: already-fired spotter defender choice resumes without another selection or ammo debit"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "AGoAC p.21 API: authoritative indirect declaration rejects hostile spotter and persists a valid shot"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC p.21: browser selects LRM spotter, submits server declaration and restores the committed shot"
         }
       ],
-      "reviewNote": "P.21 screenshot rechecked: spotter who actually fires incurs +1 on own and indirect attacks. Added pre-roll cancellation for spotting battles; spotters' shots first in declaration order, recalculating firing modifiers after each cancellation. Modeling convention: spotting assignment remains fixed if an indirect attack is cancelled; cancellation order among dependent attacks is deterministic, as source does not specify a tie-break. No dice before choices. New tests for actual cancelling spotter fire and previously-fired spotter's LOS replay. Remaining dedicated end-to-end browser/API scenario and technical audit."
+      "reviewNote": "P.21 screenshot rechecked: spotter who actually fires incurs +1 on own and indirect attacks. Added pre-roll cancellation for spotting battles; spotters' shots first in declaration order, recalculating firing modifiers after each cancellation. Modeling convention: spotting assignment remains fixed if an indirect attack is cancelled; cancellation order among dependent attacks is deterministic, as source does not specify a tie-break. No dice before choices. New tests for actual cancelling spotter fire and previously-fired spotter's LOS replay. Remaining dedicated end-to-end browser/API scenario and technical audit. #192 exact head 9adc274e CI 423/423, Browser E2E and full Docker Smoke green; merged 4ace3874. This follow-up exercises the real tactical command and browser LRM spotter selection/reconnect. Pending exact test evidence and final source review. Keep Known Missing until closure."
     },
     {
       "id": "agoac-084",

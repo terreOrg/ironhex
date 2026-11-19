@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { createBrowserCoverage } from './browser-coverage.mjs';
 import { Game as TestBattleGame } from '../packages/engine/engine.js';
+import { runTacticalOrder } from '../apps/api/src/server-combat.mjs';
 
 const dist = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8',
@@ -1288,5 +1289,53 @@ test('AGoAC pp.6–7: ordinary physical Mech order choices survive reconnect and
   await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='НАГРЕВ');
   assert.equal(version,6);assert.equal(referee.pendingChoice,null);assert(draws>6);
   assert.deepEqual(referee.resolution.map(o=>o.id),[a.id,a.id,b.id]);
+ });
+});
+
+test('AGoAC p.21: browser selects LRM spotter, submits server declaration and restores the committed shot',{timeout:120000},async()=>{
+ const operationId='99999999-9999-4999-8999-999999999999';
+ await withPage('server-indirect-lrm',{path:'/index.html?battle=1&operation='+operationId,noWebGL:true},async page=>{
+  let version=1,commands=0;
+  const g=new TestBattleGame({rng:()=>.5});
+  const [u,s,t,other]=g.units;
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,prone:false,twist:0,moveMode:'stand',fired:false});
+ Object.assign(s,{q:4,r:-3,facing:5,prone:false,twist:0,moveMode:'stand',fired:false});
+ Object.assign(t,{q:4,r:0,prone:false,moveMode:'stand',fired:false});
+ Object.assign(other,{q:-3,r:0});
+ g.tile(2,0).height=2;
+ u.weapons=[{name:'LRM 10',heat:4,damage:1,min:6,ammo:24,location:'RT',ranges:[7,14,21],rack:10}];
+ u.bins=[{weapon:0,location:'RT',slot:1,shots:24,destroyed:false}];
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team,s.team,t.team];g.actingId=u.id;
+  const snapshot=()=>JSON.parse(JSON.stringify(g,(key,value)=>['map','rng','_resolutionReplay'].includes(key)?undefined:value));
+  const send=(route,status,body)=>route.fulfill({status,contentType:'application/json',body:JSON.stringify(body)});
+  await page.route('**/api/v1/operations/'+operationId+'/*',async route=>{
+   const url=new URL(route.request().url());
+   const item=()=>({id:operationId,controlMode:'interactive',status:'active',version,game:snapshot()});
+   if(url.pathname.endsWith('/snapshot'))return send(route,200,{item:item()});
+   if(url.pathname.endsWith('/command')){
+    const payload=route.request().postDataJSON();
+    assert.equal(payload.type,'fire');assert.equal(payload.version,version);assert.equal(payload.id,u.id);
+    assert.equal(payload.primaryTarget,t.id);assert.equal(payload.shots.length,1);
+    assert.equal(payload.shots[0].spotter,s.id);assert.equal(payload.shots[0].target,t.id);
+    const effect=runTacticalOrder(g,payload);
+    assert(effect.result.ok&&effect.result.declared);commands++;version++;
+    return send(route,200,{item:{...item(),effect}});
+   }
+   return send(route,404,{error:'not_found'});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v1'));
+  const target=page.locator('[data-target="0"]'),spotter=page.locator('[data-spotter="0"]');
+  await target.selectOption(String(t.id));
+  assert.match(await page.locator('.weapon').first().textContent(),/Линия огня перекрыта/);
+  await spotter.selectOption(String(s.id));
+  assert.match(await page.locator('.weapon').first().textContent(),/\d+\+ · \d+%/);
+  await page.locator('#fire').click();
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v2'));
+  assert.equal(commands,1);assert.equal(g.declarations[0].shots[0].spotter,s.id);assert.equal(u.bins[0].shots,23);
+  await page.reload({waitUntil:'domcontentloaded'});await loaded(page);
+  await page.waitForFunction(()=>document.querySelector('#status')?.textContent.includes('v2'));
+  assert.equal(commands,1);assert.equal(u.bins[0].shots,23);
  });
 });
