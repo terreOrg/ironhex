@@ -2,6 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds,normalizeMapHex} from '../dist/engine.js';
 import {recordSheet} from '../dist/record-sheet.js';
+import {firingArcTiles} from '../dist/fire-arcs.js';
 import {example as setupExample} from '../dist/construction.js';
 import {readFileSync} from 'node:fs';
 
@@ -3845,4 +3846,50 @@ test('AGoAC pp.13–14,17: water intervenes at surface elevation only when it re
  assert.equal(g.los(a,b).blocked,false);
  Object.assign(t,{height:0,surface:2});
  assert.equal(g.los(a,b).blocked,true);assert.equal(g.los(b,a).blocked,true);
+});
+
+test('AGoAC p.16: only walking distance since the last forward backward reversal modifies the target number',()=>{
+ const g=fresh(),u=g.units[0];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ for(const v of g.units)if(v!==u)v.dead=true;
+ Object.assign(u,{q:0,r:0,facing:0,walk:10,heat:0,spent:0,moveMode:'stand',distanceMoved:0,prone:false,moveStart:{q:0,r:0}});
+ g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=u.id;
+ assert(g.move(u.id,-3,0,'walk').ok);assert.equal(u.distanceMoved,3);assert.equal(g.tmm(u),1);
+ assert(g.move(u.id,-1,0,'walk').ok);assert.equal(u.distanceMoved,5);assert.equal(g.tmm(u),0);
+ assert(g.move(u.id,0,0,'walk').ok);assert.equal(u.distanceMoved,6);assert.equal(g.tmm(u),1);
+ assert(g.move(u.id,-1,0,'walk').ok);assert.equal(u.distanceMoved,7);assert.equal(g.tmm(u),0);
+ g.endPhase();assert.equal(g.tmm(u),0);assert.equal(u.tmmTravel,null);
+});
+test('AGoAC pp.14,17: normal direct leg hits are absorbed by terrain and water partial cover',()=>{
+ for(const water of [false,true]){
+  const g=fresh(),a=g.units[0],b=g.units[2];
+  for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(a,{q:0,r:0,facing:0,prone:false,twist:0});Object.assign(b,{q:3,r:0,facing:3,prone:false});
+  if(water)Object.assign(g.tile(3,0),{type:'water',depth:1,height:-1,surface:0});
+  else g.tile(2,0).height=1;
+  const p=g.preview(a.id,b.id,0);
+  assert(p.legal,p.reason);assert.equal(p.mods.cover,1);assert.equal(p.cover,true);
+  const before=b.armor.RL,dice=diceFor(5);g.rng=()=>dice.shift()??.5;
+  const out=g.hit(b,5,'front','normal',null,p.cover,p.underwaterCover);
+  assert.equal(out.location,'RL');assert.equal(out.damage,0);assert.equal(b.armor.RL,before);
+ }
+});
+test('AGoAC pp.19–21: prone bracing and modifiers agree across weapon preview and firing arcs',()=>{
+ const g=fresh(),u=g.units[0],v=g.units[2];
+ for(const h of g.tiles)Object.assign(h,{type:'plain',depth:0,height:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,prone:true,moveMode:'run',brace:'LA'});
+ Object.assign(v,{q:3,r:0,prone:false});
+ const w={name:'Medium Laser',heat:3,damage:5,min:0,ammo:null,location:'CT',ranges:[3,6,9],rack:0};
+ u.weapons=[w,{...w,location:'LA'},{...w,location:'RA'},{...w,location:'LL'},{...w,location:'LT',locations:['LA','LT']}];
+ for(const brace of ['LA','RA']){
+  u.brace=brace;
+  const legal=brace==='LA'?[true,false,true,false,false]:[true,true,false,false,true];
+  for(const [i,expected] of legal.entries()){
+   const p=g.preview(u.id,v.id,i);assert.equal(p.legal,expected,p.reason);
+   assert.equal(firingArcTiles(g,u,[i]).has('3,0'),expected);
+   if(expected){assert.equal(p.mods.attacker,2);assert.equal(p.mods.prone,2);}
+  }
+ }
+ u.structure.LA=0;
+ assert.equal(g.preview(u.id,v.id,0).legal,false);assert.equal(firingArcTiles(g,u,[0]).size,0);
 });

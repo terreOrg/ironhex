@@ -170,7 +170,7 @@ export class Game extends Legacy{
  reset(){super.reset();this.victoryTerms=null;this.victoryAdjudicated=false;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false,underwaterFire:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
- this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
+ this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,tmmTravel:null,tmmReversalOffset:0,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
  if(i===2)u.weapons[3].location='CT';if(i===0)u.weapons[1].ammo=24;if(i===3){u.weapons.push({name:'Machine Gun A',damage:2,heat:0,ranges:[1,2,3],min:0,ammo:200,location:'LA',rack:0,shared:6});u.weapons.push({...u.weapons[6],name:'Machine Gun B'});}
  u.weapons.forEach(w=>{w.destroyed=false;w.rear=false;});u.slots={HD:['life','sensors','cockpit',null,'sensors','life'],CT:['engine','engine','engine','gyro','gyro','gyro','gyro','engine','engine','engine',null,null],LT:Array(12).fill(null),RT:Array(12).fill(null),LA:['shoulder','upper','lower','hand',...Array(8).fill(null)],RA:['shoulder','upper','lower','hand',...Array(8).fill(null)],LL:['hip','upper','lower','foot',null,null],RL:['hip','upper','lower','foot',null,null]};
  const set=(l,start,items)=>u.slots[l].splice(start-1,items.length,...items);if(i===0){set('RA',5,['w:0','w:0','w:0']);set('LT',1,['jump','jump']);set('RT',1,['jump','jump','w:1','w:1','ammo:1:12','ammo:1:12']);set('CT',11,['sink','jump']);}
@@ -695,7 +695,7 @@ export class Game extends Legacy{
    // checks immediately, before any subsequent movement.
    const first=route.transit.origin,entryPath=[{q:first.q,r:first.r}];
    Object.assign(u,{q:first.q,r:first.r,deployed:true,facing:first.facing,moveStart:{...from},
-    moveMode:mode,spent:first.cost,distanceMoved:1,lastMovementDirection:first.facing});
+    moveMode:mode,spent:first.cost,distanceMoved:1,lastMovementDirection:first.facing,tmmTravel:'forward',tmmReversalOffset:0});
    // Resolve entry exactly once before the shared on-map move processes
    // later terrain, turning and skid checks. A friendly occupant alone
    // does not prevent entry transit (AGoAC pp.6,9).
@@ -717,7 +717,7 @@ export class Game extends Legacy{
   }
   if(minimum)mode='run';
   Object.assign(u,{q,r,deployed:true,facing:options.facing??route.facing,moveStart:{...from},
-   moveMode:mode,spent:route.cost,distanceMoved:mode==='jump'?route.cost:1,lastMovementDirection:route.facing});
+   moveMode:mode,spent:route.cost,distanceMoved:mode==='jump'?route.cost:1,lastMovementDirection:route.facing,tmmTravel:mode==='jump'?null:'forward',tmmReversalOffset:0});
   const tile=this.tile(q,r);
   if(mode==='jump'){
    u.pendingHeat+=Math.max(3,route.cost);
@@ -1068,6 +1068,11 @@ export class Game extends Legacy{
  u.q=p.q;u.r=p.r;u.facing=p.facing;u.spent+=p.cost;
  if(moved){
   u.lastMovementDirection=DIRS.findIndex(d=>d[0]===u.q-oldQ&&d[1]===u.r-oldR);
+  // AGoAC p.16: only travel since the last forward/backward reversal
+  // contributes to TMM. Turning alone does not reset the distance.
+  const travel=p.lateral??(u.lastMovementDirection===wrap(u.facing+3)?'backward':'forward');
+  if(u.tmmTravel&&u.tmmTravel!==travel)u.tmmReversalOffset=u.distanceMoved+path.length;
+  u.tmmTravel=travel;
   path.push({q:u.q,r:u.r});
   this.resolveVoluntaryBuildingEntry(u,{q:oldQ,r:oldR},
    {q:u.q,r:u.r},u.distanceMoved+path.length);
@@ -1298,7 +1303,7 @@ export class Game extends Legacy{
   const targetWoods=tb.type==='heavy'?2:tb.type==='woods'?1:0;
   return {woods:interveningWoods+targetWoods,blocked:blocked||interveningWoods>=3,cover};
  }
- tmm(u){const d=u.distanceMoved;return (d>=25?6:d>=18?5:d>=10?4:d>=7?3:d>=5?2:d>=3?1:0)+(u.moveMode==='jump'?1:0);}
+ tmm(u){const d=Math.max(0,u.distanceMoved-(u.moveMode==='jump'?0:u.tmmReversalOffset??0));return (d>=25?6:d>=18?5:d>=10?4:d>=7?3:d>=5?2:d>=3?1:0)+(u.moveMode==='jump'?1:0);}
  targetMovementModifier(t,{includeImmobile=true}={}){
   const movement=this.tmm(t);
   // AGoAC p.19: movement and immobility are cumulative.
@@ -2017,7 +2022,7 @@ export class Game extends Legacy{
      {heat:u.heat,shutdown:u.shutdown,roll:{total:roll.total,target:roll.target}});
     u.shutdownNext=selected===action;
    }
-  }for(const i of u.dumping){const b=u.bins[i];if(b)b.shots=0;}u.dumping=u.dumpNext;u.dumpNext=[];this.syncAmmo(u);if(u.shutdownNext){u.shutdownNext=false;if(u.unconscious||u.abandoned){this.note(u.name+': приказ реактору отменён — пилот недоступен.');}else if(!u.shutdown){u.shutdown=true;u.voluntaryShutdown=true;this.note(`${u.name}: добровольное отключение реактора.`);}else if(u.voluntaryShutdown){const tn=shut(u.heat);if(tn!==99&&(tn===0||this.roll(u.name+' · Добровольный перезапуск',tn)>=tn)){u.shutdown=false;u.voluntaryShutdown=false;this.note(`${u.name}: реактор перезапущен.`);}else this.note(`${u.name}: перезапуск не удался.`);}}u.wasUnconscious=u.unconscious;u.proneAtStart=u.prone;u.moveStart={q:u.q,r:u.r};u.moved=false;u.fired=false;u.physicalDone=false;u.spent=0;u.moveMode='stand';u.distanceMoved=0;u.skidded=false;u.skidDirection=null;u.lastMovementDirection=null;u.skidCollisionPending=null;u.twist=0;u.flip=false;u.firedLocations=[];u.standAttempts=0;u.restrictedStandThisTurn=false;u.moveEndedByLegLoss=false;u.charge=null;}this.removeDestroyedMechs();this.round++;}
+  }for(const i of u.dumping){const b=u.bins[i];if(b)b.shots=0;}u.dumping=u.dumpNext;u.dumpNext=[];this.syncAmmo(u);if(u.shutdownNext){u.shutdownNext=false;if(u.unconscious||u.abandoned){this.note(u.name+': приказ реактору отменён — пилот недоступен.');}else if(!u.shutdown){u.shutdown=true;u.voluntaryShutdown=true;this.note(`${u.name}: добровольное отключение реактора.`);}else if(u.voluntaryShutdown){const tn=shut(u.heat);if(tn!==99&&(tn===0||this.roll(u.name+' · Добровольный перезапуск',tn)>=tn)){u.shutdown=false;u.voluntaryShutdown=false;this.note(`${u.name}: реактор перезапущен.`);}else this.note(`${u.name}: перезапуск не удался.`);}}u.wasUnconscious=u.unconscious;u.proneAtStart=u.prone;u.moveStart={q:u.q,r:u.r};u.moved=false;u.fired=false;u.physicalDone=false;u.spent=0;u.moveMode='stand';u.distanceMoved=0;u.tmmTravel=null;u.tmmReversalOffset=0;u.skidded=false;u.skidDirection=null;u.lastMovementDirection=null;u.skidCollisionPending=null;u.twist=0;u.flip=false;u.firedLocations=[];u.standAttempts=0;u.restrictedStandThisTurn=false;u.moveEndedByLegLoss=false;u.charge=null;}this.removeDestroyedMechs();this.round++;}
  // Resolve an interactive phase on a detached rules-state copy. A choice
  // commits no partial damage/movement; recorded RNG samples are replayed
  // exactly once, even after restoring an authoritative saved battle.
@@ -2127,7 +2132,7 @@ export class Game extends Legacy{
    return fail('Впереди препятствие');
   const from={q:u.q,r:u.r},to={q:t.q,r:t.r},cost=Math.max(1,this.mp(u,'run'));
   this.phaseRolls=[];this.actingId=id;
-  Object.assign(u,to,{spent:cost,moveMode:'run',distanceMoved:1,lastMovementDirection:u.facing});
+  Object.assign(u,to,{spent:cost,moveMode:'run',distanceMoved:1,lastMovementDirection:u.facing,tmmTravel:'forward',tmmReversalOffset:0});
   this.resolveVoluntaryBuildingEntry(u,from,to,1);
   this.checkExistingHullBreaches(u);
   if(!u.dead&&!u.moveEndedByLegLoss&&(t.depth||t.type==='rubble'))
