@@ -375,7 +375,7 @@
         29
       ],
       "status": "tested_subset",
-      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment."
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending."
     },
     {
       "id": "agoac-damage",
@@ -6128,9 +6128,18 @@
         26
       ],
       "statement": "Club sources, pickup, disappearance, eligibility, modifiers and attack resolution.",
-      "status": "not_audited",
-      "evidence": [],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.26: tree club is consumed on success while limb club is reusable and collected once"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.26: blown-off limbs and side torso arm loss supply club stock once"
+        }
+      ],
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion."
     },
     {
       "id": "agoac-097",
@@ -6157,9 +6166,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.28,32–34: all biped kick actuator penalties accumulate across both legs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: every biped punch and kick location table entry matches printed tables"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion."
     },
     {
       "id": "agoac-099",
@@ -6168,9 +6181,18 @@
         28
       ],
       "statement": "Arm-mounted physical weapon/hatchet arc, eligibility, optional location tables and damage.",
-      "status": "known_missing",
-      "evidence": [],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: hatchet side arc and optional hit tables apply four only when not forced"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "AGoAC p.28 API validates different punch target and optional hatchet location without trusting client damage"
+        }
+      ],
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion."
     },
     {
       "id": "agoac-100",
@@ -6179,9 +6201,18 @@
         28
       ],
       "statement": "Punch arc, independent arms and different targets, damage and actuator restrictions.",
-      "status": "known_missing",
-      "evidence": [],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: independent fists select different legal targets atomically"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "AGoAC p.28 API validates different punch target and optional hatchet location without trusting client damage"
+        }
+      ],
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion."
     },
     {
       "id": "agoac-101",

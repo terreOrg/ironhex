@@ -1555,7 +1555,7 @@ export class Game extends Legacy{
   u.structure[loc]=0;u.armor[loc]=0;for(const b of u.bins)if(b.location===loc){b.destroyed=true;b.shots=0;}this.syncAmmo(u);if(u.rear[loc]!==undefined)u.rear[loc]=0;u.slots[loc].forEach((s,i)=>{if(u.crit[loc][i])return;u.crit[loc][i]=true;if(s==='sink')u.sinksLost++;if(s==='jump')u.jumpLost++;if(s==='engine')u.engineHits++;});
   // AGoAC pp.32,34–35: destroying a section destroys its engine slots too.
   if(this.effectiveEngineHits(u)>=3)this.destroyMech(u);
-  u.weapons.filter(w=>w.location===loc||w.locations?.includes(loc)).forEach(w=>w.destroyed=true);if(loc==='HD'||loc==='CT'){this.destroyMech(u);if(loc==='HD')u.pilotWounds=6;this.note(`${u.name}: ${locationNameForMech(u,loc)} уничтожен.`);}if(loc==='LT'||loc==='RT')this.destroyLocation(u,loc==='LT'?'LA':'RA');
+  u.weapons.filter(w=>w.location===loc||w.locations?.includes(loc)).forEach(w=>w.destroyed=true);if(loc==='HD'||loc==='CT'){this.destroyMech(u);if(loc==='HD')u.pilotWounds=6;this.note(`${u.name}: ${locationNameForMech(u,loc)} уничтожен.`);}if(loc==='LT'||loc==='RT'){const arm=loc==='LT'?'LA':'RA';if(u.structure[arm]>0)this.leaveLimbClub(u);this.destroyLocation(u,arm);}
  if(u.config==='Quad'&&mechLegLocation(u,loc)){
   // BMM p.45: a standing Quad falls immediately upon *any* leg loss,
   // not later at the end-of-phase PSR. The moving unit may not proceed
@@ -1571,7 +1571,7 @@ export class Game extends Legacy{
  // External heat sources are cumulative to 15 heat points each turn (BMM p.50).
  applyExternalHeat(u,amount){const n=Number.isFinite(amount)?Math.max(0,Math.trunc(amount)):0,added=Math.min(n,Math.max(0,15-(u.externalHeat??0)));u.externalHeat=(u.externalHeat??0)+added;u.pendingHeat+=added;return added;}
  explode(u,bin){if(!bin||bin.destroyed||!bin.shots)return;const w=u.weapons[bin.weapon],amount=bin.shots*w.damage*(w.rack||1);bin.shots=0;bin.destroyed=true;this.syncAmmo(u);this.wound(u,2);this.note(`${u.name}: взрыв боезапаса, ${amount} внутреннего урона.`);this.damage(u,bin.location,amount,{internal:true,explosion:true});if(u.structure.CT===0){u.pilotWounds=6;this.destroyMech(u);}}
- criticalHit(u,loc,destroyed=false,caseIIVenting=false){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)return;if(['LA','RA'].includes(loc))this.tile(u.q,u.r).club=true;this.destroyLocation(u,loc);return;}const eligible=l=>u.slots[l].map((s,i)=>s&&s!=='case'&&s!=='case2'&&!u.crit[l][i]?i:-1).filter(i=>i>=0);let valid=eligible(loc);if(!valid.length){if(destroyed||newlyHit.includes(loc))return;while(!valid.length&&transfer[loc]&&!newlyHit.includes(loc)){loc=transfer[loc];valid=eligible(loc);}if(!valid.length)return;}for(let k=0;k<n&&!u.dead;k++){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)continue;valid=eligible(loc);if(!valid.length)break;let ix=-1,tries=0;while(!valid.includes(ix)&&tries++<60){const first=valid.some(i=>i<6),second=valid.some(i=>i>=6),block=first&&second?(this.d6('Критический слот: блок')>=4?1:0):second?1:0;ix=block*6+this.d6('Критический слот: позиция')-1;}if(!valid.includes(ix))ix=valid[0];u.crit[loc][ix]=true;newlyHit.push(loc);const s=u.slots[loc][ix];this.note(`${u.name}: ${loc}, слот ${ix+1} — ${s}.`);if(s.startsWith('ammo:'))this.explode(u,u.bins.find(b=>b.location===loc&&b.slot===ix));else if(destroyed){
+ criticalHit(u,loc,destroyed=false,caseIIVenting=false){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)return;if(['LA','RA','LL','RL'].includes(loc)&&!u.destroyedSections?.includes(loc))this.leaveLimbClub(u);this.destroyLocation(u,loc);return;}const eligible=l=>u.slots[l].map((s,i)=>s&&s!=='case'&&s!=='case2'&&!u.crit[l][i]?i:-1).filter(i=>i>=0);let valid=eligible(loc);if(!valid.length){if(destroyed||newlyHit.includes(loc))return;while(!valid.length&&transfer[loc]&&!newlyHit.includes(loc)){loc=transfer[loc];valid=eligible(loc);}if(!valid.length)return;}for(let k=0;k<n&&!u.dead;k++){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)continue;valid=eligible(loc);if(!valid.length)break;let ix=-1,tries=0;while(!valid.includes(ix)&&tries++<60){const first=valid.some(i=>i<6),second=valid.some(i=>i>=6),block=first&&second?(this.d6('Критический слот: блок')>=4?1:0):second?1:0;ix=block*6+this.d6('Критический слот: позиция')-1;}if(!valid.includes(ix))ix=valid[0];u.crit[loc][ix]=true;newlyHit.push(loc);const s=u.slots[loc][ix];this.note(`${u.name}: ${loc}, слот ${ix+1} — ${s}.`);if(s.startsWith('ammo:'))this.explode(u,u.bins.find(b=>b.location===loc&&b.slot===ix));else if(destroyed){
   // Already marked slots will be skipped by destroyLocation. Count these
   // losses now but let the destruction finish its ammunition-critical checks.
   if(s==='engine')u.engineHits++;else if(s==='sink')u.sinksLost++;else if(s==='jump')u.jumpLost++;
@@ -1799,7 +1799,7 @@ export class Game extends Legacy{
   return this.units.some(u=>u.charge?.target===target)||
    this.physicalDeclarations.some(d=>d.type==='push'&&d.target===target);
  }
- physicalPreview(id,target,type='kick',limb='RL'){const u=this.unit(id),t=this.unit(target);if(!u||!t)return {legal:false,reason:'Выберите цель',targetNumber:99};
+ physicalPreview(id,target,type='kick',limb='RL',opts={}){const u=this.unit(id),t=this.unit(target);if(!u||!t)return {legal:false,reason:'Выберите цель',targetNumber:99};
  if(u.deployed===false||t.deployed===false)return {legal:false,reason:'Мех ещё не вышел на поле',targetNumber:99};
  if(t.charge?.type==='dfa'||t.airborne)return {legal:false,reason:'Мех, выполняющий DFA, нельзя атаковать физически',targetNumber:99};
  if(type==='push'&&(t.charge||this.displacementTargetReserved(target)))return {legal:false,reason:'Цель выполняет или уже выбрана для вытесняющей атаки',targetNumber:99};
@@ -1807,7 +1807,7 @@ export class Game extends Legacy{
  // hand-held physical weapon attacks require actual biped arms.
  if(u.config==='Quad'&&['punch','push','club','hatchet'].includes(type))
   return {legal:false,reason:'У четырёхногого меха нет рук для этой атаки',targetNumber:99};
- if(type==='punch'&&limb==='both'){const a=this.physicalPreview(id,target,type,'LA'),b=this.physicalPreview(id,target,type,'RA');return {...a,legal:a.legal&&b.legal,reason:a.reason||b.reason,damage:a.damage+b.damage,targetNumber:Math.max(a.targetNumber,b.targetNumber)};}const attackerTile=this.tile(u.q,u.r),targetTile=this.tile(t.q,t.r),attackerSub=attackerTile.depth>=(u.prone?1:2),targetSub=targetTile.depth>=(t.prone?1:2),attackerWaterline=attackerTile.depth===1&&!u.prone,targetWaterline=targetTile.depth===1&&!t.prone,range=distance(u,t),dh=targetTile.height-attackerTile.height,side=this.hitSide(t,u),a=this.relative(u,t),act=u.actuators[limb]||{};let reason='',mod=0,damage=0,table='normal';if(!this.mobile(u)||u.prone||u.team===t.team||t.dead||u.charge||t.airborne||u.moveMode==='evade')reason='Атака недоступна';else if(range!==1&&!(range===0&&t.prone))reason='Нужна соседняя цель';else if(Math.abs(dh)>1)reason='Разница высот слишком велика';else if(attackerSub&&!targetSub&&!targetWaterline||targetSub&&!attackerSub&&!attackerWaterline)reason='Атака через поверхность воды запрещена';else if(attackerWaterline&&targetSub&&type!=='kick')reason='По погружённой цели с глубины 1 допустим только удар ногой';let arm=limb==='LA'||limb==='RA';if(type==='punch'){const pa=physicalArmActuators(u,limb);mod=Number(pa.upper)*2+Number(pa.lower)*2+Number(pa.hand);damage=Math.max(1,Math.floor(Math.ceil(u.tonnage/10)/2**(Number(pa.upper)+Number(pa.lower))));table='punch';if(!arm||!u.structure[limb]||pa.shoulder||u.slots[limb].some((s,i)=>s==='hatchet'&&!u.crit[limb][i])||u.firedLocations.includes(limb)||dh<0||t.prone&&dh<=0||Math.abs(a)>120||limb==='LA'&&a< -60||limb==='RA'&&a>60)reason='Рука/цель недоступна для удара';if(dh===1)table=t.prone?'normal':'kick';}else if(type==='kick'){
+ if(type==='punch'&&limb==='both'){const a=this.physicalPreview(id,target,type,'LA'),b=this.physicalPreview(id,opts.rightTarget??target,type,'RA');return {...a,legal:a.legal&&b.legal,reason:a.reason||b.reason,damage:a.damage+b.damage,targetNumber:Math.max(a.targetNumber,b.targetNumber)};}const attackerTile=this.tile(u.q,u.r),targetTile=this.tile(t.q,t.r),attackerSub=attackerTile.depth>=(u.prone?1:2),targetSub=targetTile.depth>=(t.prone?1:2),attackerWaterline=attackerTile.depth===1&&!u.prone,targetWaterline=targetTile.depth===1&&!t.prone,range=distance(u,t),dh=targetTile.height-attackerTile.height,side=this.hitSide(t,u),a=this.relative(u,t),act=u.actuators[limb]||{};let reason='',mod=0,damage=0,table='normal';if(!this.mobile(u)||u.prone||u.team===t.team||t.dead||u.charge||t.airborne||u.moveMode==='evade')reason='Атака недоступна';else if(range!==1&&!(range===0&&t.prone))reason='Нужна соседняя цель';else if(Math.abs(dh)>1)reason='Разница высот слишком велика';else if(attackerSub&&!targetSub&&!targetWaterline||targetSub&&!attackerSub&&!attackerWaterline)reason='Атака через поверхность воды запрещена';else if(attackerWaterline&&targetSub&&type!=='kick')reason='По погружённой цели с глубины 1 допустим только удар ногой';let arm=limb==='LA'||limb==='RA';if(type==='punch'){const pa=physicalArmActuators(u,limb);mod=Number(pa.upper)*2+Number(pa.lower)*2+Number(pa.hand);damage=Math.max(1,Math.floor(Math.ceil(u.tonnage/10)/2**(Number(pa.upper)+Number(pa.lower))));table='punch';if(!arm||!u.structure[limb]||pa.shoulder||u.slots[limb].some((s,i)=>s==='hatchet'&&!u.crit[limb][i])||u.firedLocations.includes(limb)||dh<0||t.prone&&dh<=0||Math.abs(a)>120||limb==='LA'&&a< -60||limb==='RA'&&a>60)reason='Рука/цель недоступна для удара';if(dh===1)table=t.prone?'normal':'kick';}else if(type==='kick'){
  // AGoAC pp.28,32–34: biped kick penalties apply across both legs.
  // Quad behavior is intentionally unchanged here.
  const kickActuators=u.config==='Quad'?[act]:['LL','RL'].map(l=>u.actuators[l]);
@@ -1830,9 +1830,14 @@ export class Game extends Legacy{
   u.actuators.RL.hip||u.firedLocations.includes(limb)||Math.abs(a)>60||dh===1)
   reason='Нога/цель недоступна для удара';
  if(dh===-1&&!t.prone)table='punch';
-}else if(type==='hatchet'){damage=Math.ceil(u.tonnage/5);mod=-1+2*Number(act.upper)+2*Number(act.lower)+Number(act.hand);if(!arm||!u.hatchets?.some(h=>h.location===limb)||u.slots[limb].some((s,i)=>s==='hatchet'&&u.crit[limb][i])||!u.structure[limb]||act.shoulder||act.lower||u.firedLocations.includes(limb)||Math.abs(a)>60)reason='Топор или рука недоступны';damage=Math.max(1,Math.floor(damage/2**Number(act.upper)));}else if(type==='push'){mod=-1+2*Number(u.actuators.LA.shoulder)+2*Number(u.actuators.RA.shoulder);if(!u.structure.LA||!u.structure.RA||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>30||dh||t.prone)reason='Толчок требует двух рук и цель прямо перед мехом';}else if(type==='club'){mod=-1+2*['LA','RA'].reduce((n,l)=>n+Number(u.actuators[l].upper)+Number(u.actuators[l].lower),0);damage=Math.ceil(u.tonnage/5);if(!u.club||!clubArmsAvailable(u)||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>60)reason='Нужна дубина и две свободные исправные руки';}else return {legal:false,reason:'Неизвестная атака',targetNumber:99};// AGoAC p.25: the different-level table takes precedence over the default attack table.
+}else if(type==='hatchet'){damage=Math.ceil(u.tonnage/5);mod=-1+2*Number(act.upper)+2*Number(act.lower)+Number(act.hand);if(!arm||!u.hatchets?.some(h=>h.location===limb)||u.slots[limb].some((s,i)=>s==='hatchet'&&u.crit[limb][i])||!u.structure[limb]||act.shoulder||act.lower||u.firedLocations.includes(limb)||Math.abs(a)>120.00001||limb==='LA'&&a< -60.00001||limb==='RA'&&a>60.00001)reason='Топор или рука недоступны';damage=Math.max(1,Math.floor(damage/2**Number(act.upper)));}else if(type==='push'){mod=-1+2*Number(u.actuators.LA.shoulder)+2*Number(u.actuators.RA.shoulder);if(!u.structure.LA||!u.structure.RA||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>30||dh||t.prone)reason='Толчок требует двух рук и цель прямо перед мехом';}else if(type==='club'){mod=-1+2*['LA','RA'].reduce((n,l)=>n+Number(u.actuators[l].upper)+Number(u.actuators[l].lower),0);damage=Math.ceil(u.tonnage/5);if(!u.club||!clubArmsAvailable(u)||u.firedLocations.some(l=>['LA','RA'].includes(l))||Math.abs(a)>60)reason='Нужна дубина и две свободные исправные руки';}else return {legal:false,reason:'Неизвестная атака',targetNumber:99};// AGoAC p.25: the different-level table takes precedence over the default attack table.
  if(t.prone&&dh===-1)reason='Лежащая цель ниже атакующего недоступна';
  if(['club','hatchet'].includes(type))table=t.prone?'normal':dh===1?'kick':dh===-1?'punch':'normal';
+ if(type==='hatchet'&&opts.locationTable!==undefined){
+  if(!['normal','punch','kick'].includes(opts.locationTable))reason='Недопустимая таблица попадания';
+  else if(table==='normal'&&opts.locationTable!=='normal'){table=opts.locationTable;mod+=4;}
+ }
+
  const affectedLimbs=['club','push'].includes(type)?['LA','RA']:['punch','kick','hatchet'].includes(type)?[limb]:[];if(affectedLimbs.some(l=>this.isBreached(u,l)))reason='Затопленная конечность не может атаковать';const underwaterPhysical=attackerSub&&(targetSub||targetWaterline&&table==='kick')||(attackerWaterline&&type==='kick'&&(targetSub||targetWaterline));if(underwaterPhysical)damage=Math.floor(damage/2);// BMM pp.26,28,35: standing Quad in Depth 1 always has physical partial cover.
  // At equal LOS height only non-Kick-table leg hits are absorbed.
  // Charges resolve separately and are explicitly exempt from leg protection.
@@ -1843,8 +1848,29 @@ export class Game extends Legacy{
  const physicalCover=bipedWaterCover||quadWaterCover&&attackerTile.height+(u.prone?1:2)===targetTile.height+(t.prone?1:2)&&table!=='kick';
  const targetNumber=u.piloting+mod+({stand:0,walk:1,run:2,jump:3,evade:2}[u.moveMode])+(u.skidded?1:0)+this.targetMovementModifier(t)+this.los(u,t).woods+(t.prone?-2:0)+(quadWaterCover||bipedWaterCover?1:0);
  return {legal:!reason,reason,targetNumber,damage,underwaterPhysical,table,side,physicalCover};}
- declarePhysical(id,target,type,limb){const u=this.unit(id);if(this.phase!=='physical'||!this.canAct(u))return fail('Сейчас очередь другого отряда');const limbs=type==='punch'&&limb==='both'?['LA','RA']:[limb],pending=[];for(const l of limbs){const p=this.physicalPreview(id,target,type,l);if(!p.legal)return fail(p.reason);pending.push({id,target,type,limb:l,...p});}this.physicalDeclarations.push(...pending);this.finish(u);return {ok:true,declared:true};}
- takeClub(id){const u=this.unit(id),t=this.tile(u.q,u.r);if(u.config==='Quad'||this.phase!=='physical'||!this.canAct(u)||!this.mobile(u)||(!['woods','heavy'].includes(t.type)&&!t.club)||!clubArmsAvailable(u)||u.firedLocations.length)return fail('Нужны две исправные кисти и плеча, отсутствие стрельбы и дубина в гексе');u.club=true;this.finish(u);return {ok:true};}
+ declarePhysical(id,target,type,limb,opts={}){
+ const u=this.unit(id);if(this.phase!=='physical'||!this.canAct(u))return fail('Сейчас очередь другого отряда');
+ if(opts.rightTarget!==undefined&&!(type==='punch'&&limb==='both')||opts.locationTable!==undefined&&type!=='hatchet')return fail('Недопустимые параметры атаки');
+ const limbs=type==='punch'&&limb==='both'?['LA','RA']:[limb],pending=[];
+ for(const l of limbs){
+  const defender=limb==='both'&&l==='RA'?opts.rightTarget??target:target;
+  const p=this.physicalPreview(id,defender,type,l,opts);
+  if(!p.legal)return fail(p.reason);
+  pending.push({id,target:defender,type,limb:l,...p,...(opts.locationTable===undefined?{}:{locationTable:opts.locationTable})});
+ }
+ this.physicalDeclarations.push(...pending);this.finish(u);return {ok:true,declared:true};
+ }
+ takeClub(id){
+ const u=this.unit(id);if(!u)return fail('Мех не найден');const t=this.tile(u.q,u.r);
+ if(!t||u.config==='Quad'||this.phase!=='physical'||!this.canAct(u)||!this.mobile(u)||u.prone||u.club||u.charge||(!['woods','heavy'].includes(t.type)&&!t.club)||!clubArmsAvailable(u)||u.firedLocations.length)return fail('Нужны две исправные кисти и плеча, отсутствие стрельбы и дубина в гексе');
+ u.club=true;u.clubKind=t.club?'limb':'tree';
+ if(t.club){t.clubCount=Math.max(0,(t.clubCount??1)-1);t.club=t.clubCount>0;}
+ this.finish(u);return {ok:true};
+ }
+ leaveLimbClub(u){
+ const t=this.tile(u.q,u.r);if(!t)return;
+ t.clubCount=(t.clubCount??Number(!!t.club))+1;t.club=true;
+ }
  // AGoAC pp.40–42: the domino check occurs before moving the target.
  // The target falls in its destination, not in the hex it is vacating.
  dominoCheck(u){
@@ -2074,7 +2100,7 @@ export class Game extends Legacy{
   // from this phase cannot remove a declared attack or increase its TN.
   const atCurrentPosition=(original,current)=>({...original,q:current.q,r:current.r,
    facing:current.facing,prone:current.prone});
-  const p=this.physicalPreview(atCurrentPosition(originalU,u),atCurrentPosition(originalT,t),d.type,d.limb);
+  const p=this.physicalPreview(atCurrentPosition(originalU,u),atCurrentPosition(originalT,t),d.type,d.limb,{locationTable:d.locationTable});
   return p.legal?{...d,...p}:null;
  }
  // AGoAC p.25: the controller may decline a known impossible attack;
@@ -2099,7 +2125,7 @@ export class Game extends Legacy{
     damage=out.damage;
     if(d.type==='kick')this.psr(t,0,'Удар ногой');
    }
-   if(d.type==='club')u.club=false;
+   if(d.type==='club'&&u.clubKind!=='limb'){u.club=false;u.clubKind=null;}
   }else if(!cancelled&&d.type==='kick')this.psr(u,0,'Промах ногой');
   this.resolution.push({id:d.id,target:d.target,ok:true,shots:[{
    weapon:d.type,hit,roll,targetNumber:d.targetNumber,damage,cancelled,
