@@ -3677,7 +3677,7 @@
         8
       ],
       "statement": "One-leg restrictions and running/jumping damage-related PSR triggers; verify movement integration, not critical/fall algorithms.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3690,9 +3690,43 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.8: gyro and hip damage trigger movement PSR only for run and jump"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: non-hip leg actuator damage requires a jump landing PSR but not an ordinary running PSR"
         }
       ],
-      "reviewNote": "Printed p.8 rechecked 2026-11-19: jumping PSR includes any leg actuator, not just hip and gyro. Existing matrix covers hip/gyro only; expand to upper/lower/foot and verify actual dispatch before certifying."
+      "reviewNote": "Prior visual source review p.8; gyro/hip running and jumping, non-hip actuator jump-only PSR, one-leg jump prohibition covered by named evidence.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018)",
+        "verifiedOn": "2026-11-19",
+        "testedSha": "af42e6e920dcb7d4210be6f0ad0007999cec30b1",
+        "testedTree": "46bcebe03ea6a13374ced35ea85030d9c6c2a3ed",
+        "mergedSha": "2037d560535b19e8a9c974bb5e274ad7fb5dc67e",
+        "checks": [
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44556699192,
+            "jobId": 135674563196,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex CI",
+            "runId": 44556699231,
+            "jobId": 135674563399,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44556699259,
+            "jobId": 135674563684,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Prior visual source review p.8; gyro/hip running and jumping, non-hip actuator jump-only PSR, one-leg jump prohibition covered by named evidence."
+      }
     },
     {
       "id": "agoac-060",
@@ -3810,6 +3844,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.9: forward elevation costs and reverse level restrictions"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated water entry"
         }
       ],
       "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
@@ -4125,6 +4163,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.11: jumping over occupied hexes is allowed but ordinary occupied landings are rejected"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated water entry"
         }
       ],
       "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."
@@ -4411,6 +4453,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.10: bridge and adjacent water retain distinct running eligibility"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated water entry"
         }
       ],
       "reviewNote": "Integrated named regression evidence on main 6beca0ef6052b1e229ab0ec3a3e2116f6a4f9c21; PRs #152–167 passed their respective CI, Browser E2E and Container Smoke gates. Tested cases are not final certification. Direct source and remaining edge review pending."

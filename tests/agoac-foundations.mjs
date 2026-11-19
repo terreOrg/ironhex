@@ -3461,3 +3461,34 @@ test('AGoAC p.8: non-hip leg actuator damage requires a jump landing PSR but not
   if(calls.length){assert.equal(calls[0][0],u);assert.equal(calls[0][3],true);}
  }
 });
+
+test('AGoAC pp.9,11–12: forced level boundary, same-hex jump and repeated water entry',()=>{
+ for(const delta of [2,3]){
+  const g=fresh(),u=g.units[0];Object.assign(u,{q:0,r:0,facing:0});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  g.tile(0,0).height=0;g.tile(1,0).height=delta;
+  assert.equal(g.displace(u,0),delta===2);
+  assert.equal(u.q,delta===2?1:0);
+ }
+ {
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,walk:6,jump:3,jumpLost:0,heat:0,spent:0,prone:false,proneAtStart:false,moveMode:'stand',moveStart:{q:0,r:0},pendingHeat:0});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,surface:0,depth:0});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  assert(g.move(u.id,0,0,'jump',{facing:4}).ok);
+  assert.equal(u.spent,1);assert.equal(u.pendingHeat,3);assert.equal(u.distanceMoved,0);assert.equal(u.facing,4);
+ }
+ {
+  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1];
+  Object.assign(u,{q:0,r:0,facing:0,walk:8,heat:0,spent:0,prone:false,moveMode:'stand'});
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:8,surface:8,depth:0});
+  for(const v of g.units)if(v!==u)v.deployed=false;
+  g.tile(0,0).height=0;
+  for(const q of [1,2])Object.assign(g.tile(q,0),{type:'water',height:0,surface:1,depth:1});
+  const calls=[];g.psr=(...args)=>{calls.push(args);return true;};
+  assert(g.move(u.id,2,0,'walk').ok);assert.equal(u.spent,4);
+  assert.equal(calls.length,2);assert(calls.every(x=>x[1]===-1&&x[3]===true));
+  assert(g.rotate(u.id,1,{mode:'walk'}).ok);assert.equal(calls.length,2);
+  assert(g.hold(u.id).ok);assert.equal(calls.length,2);
+ }
+});
