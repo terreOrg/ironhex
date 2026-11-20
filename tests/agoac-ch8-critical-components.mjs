@@ -109,3 +109,40 @@ test('CAT3500D pp.32–33: destroyed weapon is rejected by actual fire preview',
  hit();
  assert.equal(game.preview(unit.id,enemy.id,0).reason,'Оружие уничтожено или затоплено');
 });
+
+test('CAT3500D p.32: engine critical adds five heat to the next heat phase',()=>{
+ const make=(damaged)=>{
+  const game=new Game({rng:()=>0.5}),unit=game.units[0];
+  game.units=[unit];
+  game.phase='heat';
+  unit.heat=0;unit.pendingHeat=12;unit.shutdown=false;
+  if(damaged)unit.engineHits=1;
+  game.heatPhase();
+  return unit.heat;
+ };
+ assert.equal(make(true)-make(false),5,'one engine critical adds exactly five heat');
+});
+
+test('CAT3500D p.33: destroyed heat sink raises heat retained at phase end by one',()=>{
+ const make=(damaged)=>{
+  const game=new Game({rng:()=>0.5}),unit=game.units[0];
+  game.units=[unit];
+  game.phase='heat';
+  unit.heat=0;unit.pendingHeat=12;unit.shutdown=false;
+  if(damaged)unit.sinksLost=1;
+  game.heatPhase();
+  return unit.heat;
+ };
+ assert.equal(make(true)-make(false),1,'one heat sink critical removes one cooling point');
+});
+
+test('CAT3500D p.33: damaged life support inflicts heat injury at actual heat-phase resolution',()=>{
+ const game=new Game({rng:()=>0.5}),unit=game.units[0];
+ game.units=[unit];game.phase='heat';
+ unit.lifeSupport=true;unit.shutdown=true;unit.heat=15;unit.sinks=0;unit.pendingHeat=0;
+ const injuries=[];
+ game.wound=(u,n)=>{assert.equal(u,unit);injuries.push(n);};
+ game.consciousness=()=>{};
+ game.heatPhase();
+ assert.deepEqual(injuries,[1]);
+});
