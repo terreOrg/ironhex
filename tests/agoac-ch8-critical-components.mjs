@@ -174,3 +174,29 @@ test('CAT3500D pp.34–35: head and center torso loss destroy the BattleMech',()
   if(location==='HD')assert.equal(unit.pilotWounds,6);
  }
 });
+
+test('CAT3500D pp.31–33: natural critical 12 severs an intact head or limb without a player choice',()=>{
+ for(const location of ['HD','LA','RA','LL','RL']){
+  const {game,unit,hit}=harness(location,['sink']);
+  const chosen=[];
+  game.chooseResolutionOption=(...args)=>{chosen.push(args);throw Error('No optional three-slot alternative for limb/head roll 12');};
+  game.roll=()=>{game.phaseRolls.push({});return 12;};
+  game.fall=(u)=>{u.prone=true;};
+  hit();
+  assert.equal(unit.structure[location],0,location+' must be destroyed');
+  assert.equal(chosen.length,0,'automatic blowoff must never request controller choice');
+ }
+});
+
+test('CAT3500D p.31: natural critical 12 in a torso rolls three slots rather than severing torso',()=>{
+ const {game,unit,positions,hit}=harness('LT',['sink','jump','engine']);
+ const initial=unit.structure.LT;
+ game.roll=()=>{game.phaseRolls.push({});return 12;};
+ positions.push(1,2,3);
+ hit();
+ assert.equal(unit.structure.LT,initial,'torso remains intact after the three critical slots');
+ assert.deepEqual(unit.crit.LT.slice(0,3),[true,true,true]);
+ assert.equal(unit.sinksLost,1);
+ assert.equal(unit.jumpLost,1);
+ assert.equal(unit.engineHits,1);
+});
