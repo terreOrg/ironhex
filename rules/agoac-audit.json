@@ -441,7 +441,7 @@
         36
       ],
       "status": "not_audited",
-      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy. PR221 additionally implements official Hip errata phase chronology for 037 with distinct turn-vs-phase MP and PSR history tests; status not yet promoted. Subsequent grouped missing critical-effects patch: immediate Biped leg destruction fall, no nested fall, next-turn facing; register 108 without early verification."
+      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy. PR221 additionally implements official Hip errata phase chronology for 037 with distinct turn-vs-phase MP and PSR history tests; status not yet promoted. Subsequent grouped missing critical-effects patch: immediate Biped leg destruction fall, no nested fall, next-turn facing; register 108 without early verification. 20.11.2026: five requirement batches 037/104/105/106/107 individually source-reviewed and certified in PR branch; 108 explicitly Known Missing for natural-12 critical blowoff alternative, entire topic remains not_audited, no deploy/Chapter9."
     },
     {
       "id": "agoac-heat",
@@ -2769,7 +2769,7 @@
         34
       ],
       "statement": "Biped Hip errata v8.01: halve base Walking MP rounding UP before leg/foot actuator reductions, derive Running MP rounding UP; two hips give zero ground MP without immobility. For MOVEMENT ignore same-leg actuator MP penalties from PREVIOUS TURNS, but apply those from hip-hit turn or later. For PSRs the Hip +2 OVERRIDES same-leg actuator modifiers from PREVIOUS PHASES only; modifiers from its phase or later are cumulative. Save/restore the separate histories.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -2792,36 +2792,39 @@
           "test": "AGOAC errata v8.01 p.4: hip critical PSR suppression does not erase other-leg damage"
         }
       ],
-      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI completed successfully; tested and squashed main trees are identical. 20.11.2026 re-audit against official AGoAC Errata v8.01 p.4 discovered previously certified 2018 rounding-down formula was superseded; status temporarily reverted to Tested Case. Updated source and tests to round upward. PSR same-phase versus previous-phase actuator timing still needs a distinct source audit before re-verification. 20.11.2026 formal errata v8.01 p.4 PSR clause: overridden actuator penalties apply only to prior PHASES; base Walking MP has separate prior TURNS exemption. Corrected biped psrMod and stored independently round and phase acquisition stamps, including snapshot restore and old undated saves; narrow 037 still Tested Case pending exact branch checks and post-merge Sonar.",
+      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI completed successfully; tested and squashed main trees are identical. 20.11.2026 re-audit against official AGoAC Errata v8.01 p.4 discovered previously certified 2018 rounding-down formula was superseded; status temporarily reverted to Tested Case. Updated source and tests to round upward. PSR same-phase versus previous-phase actuator timing still needs a distinct source audit before re-verification. 20.11.2026 formal errata v8.01 p.4 PSR clause: overridden actuator penalties apply only to prior PHASES; base Walking MP has separate prior TURNS exemption. Corrected biped psrMod and stored independently round and phase acquisition stamps, including snapshot restore and old undated saves; narrow 037 still Tested Case pending exact branch checks and post-merge Sonar. Source-certification 20.11.2026: CAT3500D p.33 Hip (Leg) and official errata v8.01 p.4: base Walking MP halved rounding UP before non-hip actuator reductions; Running MP recomputed round up; prior-TURN actuator hits excluded for movement, prior-PHASE hits excluded for +2 Hip PSR only; same/later hits remain additive; other leg remains additive; two hip hits zero MP but not immobile. Reviewed mp(),psrMod(),criticalHit(),actuatorHitRounds/Phases and serialization; five deterministic evidence names cover all cases. Previous exact #221 post-merge CI/Browser/Smoke and strict Sonar all green; final #222 main exact-gate completion and this PR gates still required before merged certification.",
       "audit": {
         "sourceChecked": true,
         "edgeCasesChecked": true,
-        "sourceEdition": "CAT3500D (2018)",
-        "review": "Printed p.33 rechecked against the merged biped MP and PSR-modifier implementation. Both hip locations, walking/run rounding, heat, previous/same/later-turn damage, serialized dates, legal reach and legacy undated snapshots considered. This requirement excludes kick damage and movement-triggered PSR timing; old saves cannot reconstruct absent acquisition turns.",
-        "verifiedOn": "2026-11-18",
-        "testedSha": "254fa4a356e6ed64108584fc25676ddac2de2149",
-        "testedTree": "7b253a44b0889f38c9d84895170f7d678905962e",
-        "mergedSha": "be28c31a179f7a234d05aa2132147426c0a94ef1",
+        "sourceEdition": "CAT3500D (2018) printed pp.30–36; official AGoAC errata v8.01 p.4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "testedTree": "e5590fde89b5d457c5098a6b905455f87e5faa88",
+        "mergedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
         "checks": [
           {
             "name": "Ironhex CI",
-            "runId": 44294607280,
-            "jobId": 134768237019,
-            "conclusion": "success"
-          },
-          {
-            "name": "Ironhex Container Smoke",
-            "runId": 44294607077,
-            "jobId": 134768235835,
+            "runId": 44735528300,
             "conclusion": "success"
           },
           {
             "name": "Ironhex Browser E2E",
-            "runId": 44294607196,
-            "jobId": 134768236337,
+            "runId": 44735528257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44735528296,
             "conclusion": "success"
           }
-        ]
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44735528434,
+          "conclusion": "success",
+          "headSha": "3da5cd5de4bad8e401d4a71add4e651afe4b5320"
+        },
+        "review": "CAT3500D p.33 Hip (Leg) and official errata v8.01 p.4: base Walking MP halved rounding UP before non-hip actuator reductions; Running MP recomputed round up; prior-TURN actuator hits excluded for movement, prior-PHASE hits excluded for +2 Hip PSR only; same/later hits remain additive; other leg remains additive; two hip hits zero MP but not immobile. Reviewed mp(),psrMod(),criticalHit(),actuatorHitRounds/Phases and serialization; five deterministic evidence names cover all cases."
       }
     },
     {
@@ -7212,7 +7215,7 @@
         36
       ],
       "statement": "Damage first removes correct front/rear armor then internal structure, transfers excess from destroyed limbs to side torso to center torso, and includes remaining armor lost with an entire destroyed section for same-phase 20+ damage PSR.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7231,7 +7234,40 @@
           "test": "CAT3500D pp.30,34–36: rear armor survives front damage and receives same-side transfers"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish. Source-certification 20.11.2026: CAT3500D pp.30,34–36: armor correct front/rear facing then internal structure; when a location is destroyed, carry excess ordinary damage inward via LA/LL→LT, RA/RL→RT, LT/RT→CT and into appropriate facing; remaining lost armor of destroyed location counts toward 20+ PSR; ordinary transfer to armor but ammo explosion transfer bypasses armor. Reviewed damage(),destroyLocation(),endPSR() and four deterministic tests. Excludes roll-12 limb blowoff choice, tracked in 108. Previous exact #221 post-merge CI/Browser/Smoke and strict Sonar all green; final #222 main exact-gate completion and this PR gates still required before merged certification.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.30–36; official AGoAC errata v8.01 p.4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "testedTree": "e5590fde89b5d457c5098a6b905455f87e5faa88",
+        "mergedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44735528300,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44735528257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44735528296,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44735528434,
+          "conclusion": "success",
+          "headSha": "3da5cd5de4bad8e401d4a71add4e651afe4b5320"
+        },
+        "review": "CAT3500D pp.30,34–36: armor correct front/rear facing then internal structure; when a location is destroyed, carry excess ordinary damage inward via LA/LL→LT, RA/RL→RT, LT/RT→CT and into appropriate facing; remaining lost armor of destroyed location counts toward 20+ PSR; ordinary transfer to armor but ammo explosion transfer bypasses armor. Reviewed damage(),destroyLocation(),endPSR() and four deterministic tests. Excludes roll-12 limb blowoff choice, tracked in 108."
+      }
     },
     {
       "id": "agoac-105",
@@ -7243,7 +7279,7 @@
         36
       ],
       "statement": "Destroyed location critical flow: normal internal-structure hit checks criticals, but a location reduced to zero structure skips the roll unless it contains ammunition slots; if rolled, only ammunition criticals count; other results do not transfer.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7266,7 +7302,40 @@
           "test": "CAT3500D pp.30–32: roll 12 on destroyed ammo-carrying leg checks three slots"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion. Source-certification 20.11.2026: CAT3500D pp.30–31,34 and printed p.36 flowchart Steps 2–5: critical check for structural damage; if entire section is destroyed, critical roll only if ammunition in section, ignoring all nonammo slot effects and never transferring destroyed-section criticals; natural 12 on newly destroyed ammo leg still resolves its three slot hits. Reviewed damage(),criticalHit(),destroyLocation() and five named deterministic cases for destroyed/non-destroyed components. Previous exact #221 post-merge CI/Browser/Smoke and strict Sonar all green; final #222 main exact-gate completion and this PR gates still required before merged certification.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.30–36; official AGoAC errata v8.01 p.4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "testedTree": "e5590fde89b5d457c5098a6b905455f87e5faa88",
+        "mergedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44735528300,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44735528257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44735528296,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44735528434,
+          "conclusion": "success",
+          "headSha": "3da5cd5de4bad8e401d4a71add4e651afe4b5320"
+        },
+        "review": "CAT3500D pp.30–31,34 and printed p.36 flowchart Steps 2–5: critical check for structural damage; if entire section is destroyed, critical roll only if ammunition in section, ignoring all nonammo slot effects and never transferring destroyed-section criticals; natural 12 on newly destroyed ammo leg still resolves its three slot hits. Reviewed damage(),criticalHit(),destroyLocation() and five named deterministic cases for destroyed/non-destroyed components."
+      }
     },
     {
       "id": "agoac-106",
@@ -7277,7 +7346,7 @@
         34
       ],
       "statement": "Critical slot assignment and transfer: head/leg one D6, arm/torso six-slot block then position, reroll inapplicable slots; transfer only when all eligible slots were exhausted in previous phases, never on destruction; multi-slot non-engine/gyro/sensor weapons disable on first hit.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7304,7 +7373,40 @@
           "test": "CAT3500D p.31: inapplicable torso/arm slot rerolls the full pair of dice"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion. Source-certification 20.11.2026: CAT3500D p.31 Applying/Transferring Critical Hits, p.32 Multiple Critical Hits: head/leg one D6, arm/torso block plus position 2D6, if individual slot inapplicable reroll both; if entire block inapplicable use one D6 for other block; all eligible criticals exhausted in previous phases transfer inward, current-phase exhaustion does not; multi-slot weapon disables with first slot. Reviewed criticalHit(),critMarkedThisPhase; six named deterministic tests. Optional attacker choice on natural 12 is out of this requirement and tracked as missing 108. Previous exact #221 post-merge CI/Browser/Smoke and strict Sonar all green; final #222 main exact-gate completion and this PR gates still required before merged certification.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.30–36; official AGoAC errata v8.01 p.4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "testedTree": "e5590fde89b5d457c5098a6b905455f87e5faa88",
+        "mergedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44735528300,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44735528257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44735528296,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44735528434,
+          "conclusion": "success",
+          "headSha": "3da5cd5de4bad8e401d4a71add4e651afe4b5320"
+        },
+        "review": "CAT3500D p.31 Applying/Transferring Critical Hits, p.32 Multiple Critical Hits: head/leg one D6, arm/torso block plus position 2D6, if individual slot inapplicable reroll both; if entire block inapplicable use one D6 for other block; all eligible criticals exhausted in previous phases transfer inward, current-phase exhaustion does not; multi-slot weapon disables with first slot. Reviewed criticalHit(),critMarkedThisPhase; six named deterministic tests. Optional attacker choice on natural 12 is out of this requirement and tracked as missing 108."
+      }
     },
     {
       "id": "agoac-107",
@@ -7316,7 +7418,7 @@
         36
       ],
       "statement": "Ammo-bin critical explosion deals internal structure damage based on each remaining shot and missile count, causes two pilot wounds, transfers inward bypassing armor, and respects destroyed compartment flow.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7339,7 +7441,40 @@
           "test": "CAT3500D pp.32,35: ammunition explosion bypasses armor on inward transfer"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion. Source-certification 20.11.2026: CAT3500D p.32 Ammunition; pp.35–36 transfer: ammunition critical explosion equals damage-per-shot×remaining shots×missiles, adds exactly two wounds to pilot, applies to internal structure without armor, transfers inward bypassing armor, empties bin and does not re-explode; destroyed ammunition section critical applies only ammo effect. Reviewed explode(),damage() with explosion, bins lifecycle; five deterministic tests. Advanced CASE systems not part of base AGoAC audit. Previous exact #221 post-merge CI/Browser/Smoke and strict Sonar all green; final #222 main exact-gate completion and this PR gates still required before merged certification.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.30–36; official AGoAC errata v8.01 p.4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "testedTree": "e5590fde89b5d457c5098a6b905455f87e5faa88",
+        "mergedSha": "fff533250b958b83ed4978b4fe85db408c4ed3a3",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44735528300,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44735528257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44735528296,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44735528434,
+          "conclusion": "success",
+          "headSha": "3da5cd5de4bad8e401d4a71add4e651afe4b5320"
+        },
+        "review": "CAT3500D p.32 Ammunition; pp.35–36 transfer: ammunition critical explosion equals damage-per-shot×remaining shots×missiles, adds exactly two wounds to pilot, applies to internal structure without armor, transfers inward bypassing armor, empties bin and does not re-explode; destroyed ammunition section critical applies only ammo effect. Reviewed explode(),damage() with explosion, bins lifecycle; five deterministic tests. Advanced CASE systems not part of base AGoAC audit."
+      }
     },
     {
       "id": "agoac-108",
@@ -7351,7 +7486,7 @@
         35
       ],
       "statement": "Critical results destroy equipment and impose correct actuator/engine/gyro/cockpit/heat sink/jump jet/sensor/life support effects; head or limb blown off by roll 12, side torso arm loss, CT/head destruction and delayed removal.",
-      "status": "tested_case",
+      "status": "known_missing",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7382,7 +7517,7 @@
           "test": "CAT3500D p.34: one-legged prone biped may rotate one hexside on a later turn"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 direct printed p.34 comparison: standing biped leg destruction must immediately cause automatic fall and end movement (not queue delayed lost-leg PSR), while already prone/falling cannot re-enter fall; the subsequent turn preserves a single prone hexside facing change. Engine and dist repaired and deterministic tests added. 108 remains Tested Case pending full effects matrix and exact gates."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 direct printed p.34 comparison: standing biped leg destruction must immediately cause automatic fall and end movement (not queue delayed lost-leg PSR), while already prone/falling cannot re-enter fall; the subsequent turn preserves a single prone hexside facing change. Engine and dist repaired and deterministic tests added. 108 remains Tested Case pending full effects matrix and exact gates. Confirmed missing base CAT3500D pp.31–33 natural 12 option: attacking player may choose three normal critical slots instead of automatic head/arm/leg blowoff. criticalHit() has no interactive option and always blows off. Must implement and test choice, respecting attacker team and replay, before 108 becomes Verified."
     }
   ]
 }
