@@ -375,7 +375,7 @@
         29
       ],
       "status": "tested_subset",
-      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit. #204 merged; 450/450 CI, 39/39 E2E, smoke planner succeeded. Next DFA sub-block corrects airborne LOS/stacking and movement timing; #205 still pending; final special and mixed physical resolution audit remains. #205 merged, CI 453/453, browser 39/39 and scoped smoke success. Chapter 7 errata follow-up corrects hatchet actuators, destroyed charge and DFA target and unconscious DFA pilot. Errata p.3 water location-specific damage and cover still require correction; mixed-phase ordering and final validation remain. No deployment."
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit. #204 merged; 450/450 CI, 39/39 E2E, smoke planner succeeded. Next DFA sub-block corrects airborne LOS/stacking and movement timing; #205 still pending; final special and mixed physical resolution audit remains. #205 merged, CI 453/453, browser 39/39 and scoped smoke success. Chapter 7 errata follow-up corrects hatchet actuators, destroyed charge and DFA target and unconscious DFA pilot. Errata p.3 water location-specific damage and cover still require correction; mixed-phase ordering and final validation remain. No deployment. 20.11: source-to-code audit certifies 092 physical TN/auto miss cancellation and 094 errata water partial-cover/location-halving on main 07a856b3; 7/15 Verified, 8 Tested Case, 0 Known Missing. Two additional regression matrices in audit PR #212; final PR exact SHA CI/E2E/Smoke and merge still required."
     },
     {
       "id": "agoac-damage",
@@ -6142,7 +6142,7 @@
         25
       ],
       "statement": "Piloting-based TN, physical type and standard modifiers; exclude heat, sensors and PSR-only modifiers; impossible ordinary attack cancellation.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6151,9 +6151,50 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.25: cancelling impossible kick avoids missed-kick PSR and reuses no dice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.24–25: physical TN matrix includes type modifiers and excludes weapon-only penalties"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "reviewNote": "Source audit CAT3500D printed p.24 Physical Attack Modifiers Table and p.24–25 Making a Physical Attack: base TN is Piloting, type modifiers charging 0, club -1, kick -2, punch 0, push -1, hatchet -1 (p.28), standard movement/terrain/TMM apply, heat/sensors and PSR-only gyro ignored. Engine physicalPreview and cancelImpossiblePhysical implement TN <=2 automatic success and TN >12 optional cancellation, with no failed-kick PSR on cancellation. All individual branches plus explicit modifier matrix pass CI 470/470, browser 39/39 and scope-planner smoke on code-equivalent main; strict Sonar passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), AGoAC official errata v8.01",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "0a31c79cfcc6d0ac020578fcfe5664973acb9d20",
+        "testedTree": "fa084376f4473d00854188d4d5dcf39f9964ab51",
+        "mergedSha": "07a856b3fa8fdc08d00f0522738508343c4152bb",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44691650778,
+            "jobId": 136138631925,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44691650741,
+            "jobId": 136138635763,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44691650726,
+            "jobId": 136138652996,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44692630360,
+          "jobId": 136141813543,
+          "conclusion": "success",
+          "headSha": "07a856b3fa8fdc08d00f0522738508343c4152bb"
+        },
+        "review": "Source audit CAT3500D printed p.24 Physical Attack Modifiers Table and p.24–25 Making a Physical Attack: base TN is Piloting, type modifiers charging 0, club -1, kick -2, punch 0, push -1, hatchet -1 (p.28), standard movement/terrain/TMM apply, heat/sensors and PSR-only gyro ignored. Engine physicalPreview and cancelImpossiblePhysical implement TN <=2 automatic success and TN >12 optional cancellation, with no failed-kick PSR on cancellation. All individual branches plus explicit modifier matrix pass CI 470/470, browser 39/39 and scope-planner smoke on code-equivalent main; strict Sonar passed."
+      }
     },
     {
       "id": "agoac-093",
@@ -6215,7 +6256,7 @@
         25
       ],
       "statement": "Ordinary physical attacks in water: submerged eligibility and damage; depth-one partial cover excludes kicks.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6228,9 +6269,50 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.25 + errata v8.01 p.3: physical damage is halved per submerged location"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.25 / errata v8.01 p.3: Depth-1 Punch table has no cover, Kick table has +1 but never masks leg damage"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Remaining discrepancy explicitly identified on re-reading official errata v8.01 p.3: physical damage is location-specific in water; partial cover exceptions depend on table and equal LOS height, not on attack type alone. A separate correction is still required. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted."
+      "reviewNote": "Source audit CAT3500D p.25 Physical Attacks And Water superseded by official errata v8.01 p.3: attack legality across water surface, depth-one standing submerged legs, prone/depth-two all underwater, damage halved after rolling each submerged hit location rounding down. Depth-one target physical cover applies except Punch Location Table; equal LOS heights suppress leg hits except Kick Location Table, while any Kick-table leg hit still gets water damage reduction. Engine physicalPreview, physicalLocationDamage, hit and resolveRolledPhysical implement these rules. Regression matrices cover exposed and submerged locations, target level changes, normal/punch/kick tables, differing LOS levels, and individual hit groups. Branch CI 470/470, browser 39/39 and scoped smoke pass; code-equivalent main Sonar strict passes.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), AGoAC official errata v8.01",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "0a31c79cfcc6d0ac020578fcfe5664973acb9d20",
+        "testedTree": "fa084376f4473d00854188d4d5dcf39f9964ab51",
+        "mergedSha": "07a856b3fa8fdc08d00f0522738508343c4152bb",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44691650778,
+            "jobId": 136138631925,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44691650741,
+            "jobId": 136138635763,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44691650726,
+            "jobId": 136138652996,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44692630360,
+          "jobId": 136141813543,
+          "conclusion": "success",
+          "headSha": "07a856b3fa8fdc08d00f0522738508343c4152bb"
+        },
+        "review": "Source audit CAT3500D p.25 Physical Attacks And Water superseded by official errata v8.01 p.3: attack legality across water surface, depth-one standing submerged legs, prone/depth-two all underwater, damage halved after rolling each submerged hit location rounding down. Depth-one target physical cover applies except Punch Location Table; equal LOS heights suppress leg hits except Kick Location Table, while any Kick-table leg hit still gets water damage reduction. Engine physicalPreview, physicalLocationDamage, hit and resolveRolledPhysical implement these rules. Regression matrices cover exposed and submerged locations, target level changes, normal/punch/kick tables, differing LOS levels, and individual hit groups. Branch CI 470/470, browser 39/39 and scoped smoke pass; code-equivalent main Sonar strict passes."
+      }
     },
     {
       "id": "agoac-095",
