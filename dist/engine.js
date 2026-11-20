@@ -2090,25 +2090,22 @@ export class Game extends Legacy{
    ...this.physicalDeclarations
   ];
   if(this.initiativeWinner!==0&&this.initiativeWinner!==1)return orders;
-  // AGoAC pp.6–7: the ordinary Physical Attack Phase repeats the
-  // weapon resolution sequence, starting again with the initiative loser.
-  // Preserve established displacement exception ordering; its detailed
-  // adjudication is outside this ordinary phase scheduling path.
-  if(orders.some(d=>d.special||d.type==='push'))
-   return orders.sort((a,b)=>Number(this.unit(a.id).team===this.initiativeWinner)-
-    Number(this.unit(b.id).team===this.initiativeWinner));
-  const groups=[new Map(),new Map()];
+  // CAT3500D p.7: the same alternating declaration slots govern EVERY
+  // Physical Attack Phase, including those with a charge, DFA or push.
+  // Do not move all of the initiative-loser's attacks ahead of all of
+  // the winner's attacks simply because a displacement is declared.
+  // Keep a Mech's two punches together in its single declaration slot.
+  const grouped=[new Map(),new Map()];
   for(const d of orders){
-   const group=groups[this.unit(d.id).team];
-   if(!group.has(d.id))group.set(d.id,[]);
-   group.get(d.id).push(d);
+   const team=this.unit(d.id).team;
+   if(!grouped[team].has(d.id))grouped[team].set(d.id,[]);
+   grouped[team].get(d.id).push(d);
   }
-  const sides=groups.map(group=>[...group.values()]),ordered=[];
-  const first=1-this.initiativeWinner;
-  for(let slot=0;slot<Math.max(sides[0].length,sides[1].length);slot++){
-   ordered.push(...(sides[first][slot]??[]),...(sides[1-first][slot]??[]));
-  }
-  return ordered;
+  const sides=grouped.map(m=>[...m.values()]);
+  // The existing CAT3500D p.7 selection plan also covers unequal sides:
+  // e.g. two declarations from the larger side for one smaller-side slot.
+  const slots=this.selectionPlan(sides.map(side=>side.length)).slots;
+  return slots.flatMap(team=>sides[team].shift()??[]);
  }
  // AGoAC p.42: the lower-Initiative side acts first in displacement
  // conflicts; within that side, its controller can order its own attacks.
