@@ -58,3 +58,34 @@ test('CAT3500D p.32 and AGoAC errata v8.01: gyro critical has immediate first PS
  assert.equal(psrs[0].immediate,true);assert.equal(falls.length,0);
  hit();assert.equal(unit.gyroHits,2);assert.equal(falls.length,1);
 });
+
+test('CAT3500D p.33: cockpit critical kills pilot and schedules removal',()=>{
+ const {unit,hit}=harness('HD',['cockpit']);
+ assert.equal(unit.dead,false);
+ hit();
+ assert.equal(unit.pilotWounds,6);
+ assert.equal(unit.dead,true);
+ assert.equal(unit.removalPending,true);
+});
+
+test('CAT3500D pp.32–34: leg actuators have separate damage and phase history',()=>{
+ const {game,unit,positions,hit}=harness('LL',['hip','upper','lower','foot']);
+ game.round=4;game.phase='fire';
+ positions.push(1,2,3,4);
+ hit();
+ assert.equal(unit.actuators.LL.hip,true);
+ assert.equal(unit.actuatorHitRounds.LL.hip,4);
+ assert.equal(unit.actuatorHitPhases.LL.hip,26);
+ assert(unit.psrs.some(p=>p.reason==='Актуатор LL'));
+ hit();hit();hit();
+ assert.deepEqual(unit.actuators.LL,{hip:true,upper:true,lower:true,foot:true});
+ assert.deepEqual(unit.actuatorHitRounds.LL,{hip:4,upper:4,lower:4,foot:4});
+});
+
+test('CAT3500D pp.32–33: weapon critical permanently disables the affected weapon',()=>{
+ const {unit,hit}=harness('RA',['w:0']);
+ assert.equal(unit.weapons[0].destroyed,false);
+ hit();
+ assert.equal(unit.weapons[0].destroyed,true);
+ assert.equal(unit.crit.RA[0],true);
+});
