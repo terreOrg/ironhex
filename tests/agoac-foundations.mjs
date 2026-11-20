@@ -5376,7 +5376,7 @@ test('CAT3500D pp.30–36: Chapter 8 closes only with twelve source-reviewed dam
  assert(chapter.audit.checks.every(x=>x.conclusion==='success'&&Number.isInteger(x.runId)));
  const crit=r.requirements.find(x=>x.id==='agoac-108');
  const criticalTests=readFileSync(new URL('./agoac-ch8-critical-components.mjs',import.meta.url),'utf8');
- assert((criticalTests.match(/test\\('/g)||[]).length>=21,'full component effects matrix must not disappear');
+ assert(criticalTests.split("test('").length-1>=21,'full component effects matrix must not disappear');
  assert(crit.evidence.some(x=>x.file==='tests/agoac-ch8-critical-components.mjs'));
  assert.equal(r.currentTopicId,'agoac-heat','cursor must point at next unverified chapter without starting it');
 });
