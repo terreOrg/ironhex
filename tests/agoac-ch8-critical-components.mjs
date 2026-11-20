@@ -228,3 +228,26 @@ test('CAT3500D p.33: damaged life support inflicts underwater injury only when s
   assert.equal(wounds.reduce((sum,n)=>sum+n,0),expected,'depth '+depth+' prone '+prone);
  }
 });
+
+test('CAT3500D pp.32–33: destroyed shoulder increases arm-weapon targeting modifier by four',()=>{
+ const {game,unit,hit}=harness('RA',['shoulder']);
+ const enemy=game.units.find(x=>x.team!==unit.team);
+ const weapon=unit.weapons.findIndex(w=>w.location==='RA');
+ assert(weapon>=0,'fixture needs a right-arm weapon');
+ const before=game.preview(unit.id,enemy.id,weapon).mods.arm;
+ hit();
+ assert.equal(unit.actuators.RA.shoulder,true);
+ const after=game.preview(unit.id,enemy.id,weapon).mods.arm;
+ assert.equal(after-before,4,'shoulder critical applies real +4 firing modifier');
+});
+
+test('CAT3500D p.32 and AGoAC errata v8.01: damaged hip reduces walking movement in actual MP API',()=>{
+ const {game,unit,hit}=harness('LL',['hip']);
+ const before=game.mp(unit,'walk');
+ assert(before>0,'fixture must begin mobile');
+ hit();
+ assert.equal(unit.actuators.LL.hip,true);
+ const after=game.mp(unit,'walk');
+ assert(after<before,'hip hit must reduce actual walking MP');
+ assert(after>=0,'walking MP never negative');
+});
