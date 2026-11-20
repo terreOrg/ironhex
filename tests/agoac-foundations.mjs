@@ -2011,16 +2011,16 @@ test('AGoAC pp.32–34: same-leg actuator hits before, during and after hip-hit 
   g.criticalHit(u,leg);assert.equal(dice.length,0);};
  g.round=1;hit('LL',1);assert.equal(g.mp(u),6);
  g.round=2;hit('LL',2);assert.equal(g.mp(u),5);
- hit('LL',0);assert.equal(g.mp(u),3);assert.equal(g.psrMod(u),2);
+ hit('LL',0);assert.equal(g.mp(u),3);assert.equal(g.psrMod(u),3); // Same-phase lower leg damage remains cumulative.
  // The lower-leg hit in round 2 remains relevant even in later rounds.
  g.round=3;assert.equal(g.mp(u),3);
- hit('LL',3);assert.equal(g.mp(u),2);assert.equal(g.psrMod(u),2);
- hit('RL',1);assert.equal(g.mp(u),1);assert.equal(g.psrMod(u),3);
+ hit('LL',3);assert.equal(g.mp(u),2);assert.equal(g.psrMod(u),4);
+ hit('RL',1);assert.equal(g.mp(u),1);assert.equal(g.psrMod(u),5);
  assert.deepEqual(u.actuatorHitRounds,{LL:{upper:1,lower:2,hip:2,foot:3},RL:{upper:3}});
  const restored=new Game({rng:()=>.5});
  Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
  restored.rebuildMap();assert.equal(restored.mp(restored.unit(u.id)),1);
- assert.equal(restored.psrMod(restored.unit(u.id)),3);
+ assert.equal(restored.psrMod(restored.unit(u.id)),5);
 });
 test('AGoAC p.33 errata v8.01: hip movement permits only the rounded-up MP budget',()=>{
  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1,0,1];
@@ -5450,4 +5450,136 @@ test('CAT3500D p.36 Step 5: ammo critical in destroyed section is resolved, not 
  assert.deepEqual(events,[[u.id,0,2]],'the ammunition hit still explodes before section cleanup');
  assert.equal(bin.destroyed,true);
  assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
+});
+
+
+test('CAT3500D p.31: prior-phase exhausted arm criticals transfer to ipsilateral torso',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.LA=Array(12).fill('w:0');u.crit.LA=Array(12).fill(true);
+ u.slots.LT=['sink',...Array(11).fill(null)];u.crit.LT=Array(12).fill(false);
+ const before=u.sinksLost,dice=[...diceFor(8),.5/6];
+ g.rng=()=>{assert(dice.length,'critical transfer must not repeat a location roll');return dice.shift();};
+ g.criticalHit(u,'LA');
+ assert.equal(dice.length,0);assert(u.crit.LT[0]);assert.equal(u.sinksLost,before+1);
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
+});
+
+test('CAT3500D pp.31–32: same-phase exhausted critical slots do not transfer',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.LA=['w:0',...Array(11).fill(null)];u.crit.LA=Array(12).fill(false);
+ u.slots.LT=['engine',...Array(11).fill(null)];u.crit.LT=Array(12).fill(false);
+ const before=u.engineHits,dice=[...diceFor(10),.5/6];
+ g.rng=()=>{assert(dice.length,'the second inapplicable critical is lost without a transfer roll');return dice.shift();};
+ g.criticalHit(u,'LA');
+ assert.equal(dice.length,0);assert(u.crit.LA[0]);assert.equal(u.crit.LT[0],false);
+ assert.equal(u.engineHits,before);
+ assert.equal(u.critMarkedThisPhase.includes('LA'),true);
+});
+
+test('CAT3500D p.31: fully inapplicable torso/arm critical block uses one D6',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.RA=Array(12).fill(null);u.slots.RA[7]='sink';
+ u.crit.RA=Array(12).fill(false);
+ const before=u.sinksLost,dice=[...diceFor(8),(1.5)/6];
+ g.rng=()=>{assert(dice.length,'inapplicable six-slot block must never be rolled');return dice.shift();};
+ g.criticalHit(u,'RA');
+ assert.equal(dice.length,0);assert(u.crit.RA[7]);assert.equal(u.sinksLost,before+1);
+});
+
+test('CAT3500D p.31: inapplicable torso/arm slot rerolls the full pair of dice',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.RA=Array(12).fill(null);u.slots.RA[0]='sink';u.slots.RA[7]='jump';
+ u.crit.RA=Array(12).fill(false);
+ const sinkBefore=u.sinksLost,jumpBefore=u.jumpLost;
+ const dice=[...diceFor(8),(3.5)/6,.5/6,.5/6,.5/6];
+ g.rng=()=>{assert(dice.length,'a used/empty slot rerolls block AND position, not merely position');return dice.shift();};
+ g.criticalHit(u,'RA');
+ assert.equal(dice.length,0);assert(u.crit.RA[0]);assert(!u.crit.RA[7]);
+ assert.equal(u.sinksLost,sinkBefore+1);assert.equal(u.jumpLost,jumpBefore);
+});
+
+test('CAT3500D pp.30–32: roll 12 on destroyed ammo-carrying leg checks three slots',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.armor.RL=0;u.structure.RL=1;
+ u.slots.RL=['ammo:0:1',...Array(5).fill(null)];u.crit.RL=Array(6).fill(false);
+ const bin={weapon:0,location:'RL',slot:0,shots:1,destroyed:false};
+ u.bins.push(bin);
+ const explosion=[];g.explode=(v,b)=>{explosion.push([v.id,b.location,b.shots]);b.shots=0;b.destroyed=true;};
+ const dice=[...diceFor(12),.5/6];
+ g.rng=()=>{assert(dice.length,'a 12 in destroyed ammo section must resolve its explosive slots');return dice.shift();};
+ g.damage(u,'RL',1,{internal:true});
+ assert.equal(dice.length,0);
+ assert.deepEqual(explosion,[[u.id,'RL',1]]);
+ assert.equal(bin.destroyed,true);assert.equal(u.structure.RL,0);
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
+});
+
+test('CAT3500D p.32: ammunition explosion uses remaining shots times missile count and inflicts two wounds',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ const w=u.weapons[0];w.damage=2;w.rack=6;
+ const bin={weapon:0,location:'LA',slot:9,shots:3,destroyed:false};
+ u.bins.push(bin);
+ let wounds=0;const applied=[];
+ g.wound=(v,n)=>{assert.equal(v,u);wounds+=n;};
+ g.damage=(v,l,n,opts)=>{applied.push([v.id,l,n,opts]);return [];};
+ g.explode(u,bin);
+ assert.deepEqual(applied,[[u.id,'LA',36,{internal:true,explosion:true}]]);
+ assert.equal(wounds,2);assert(bin.destroyed);assert.equal(bin.shots,0);
+ g.explode(u,bin);assert.equal(wounds,2);assert.equal(applied.length,1);
+});
+
+test('CAT3500D pp.32,35: ammunition explosion bypasses armor on inward transfer',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ const bin=u.bins.find(b=>b.location==='RT');assert(bin);
+ u.weapons[bin.weapon].damage=2;u.weapons[bin.weapon].rack=1;bin.shots=2;
+ u.slots.RT=Array(12).fill(null);u.crit.RT=Array(12).fill(false);
+ u.structure.RT=2;u.structure.CT=10;
+ u.armor.RT=14;u.armor.CT=18;u.rear.CT=8;
+ const before=[u.armor.RT,u.armor.CT,u.rear.CT];
+ g.rng=()=>.99;
+ g.explode(u,bin);
+ assert.equal(u.structure.RT,0);assert.equal(u.structure.CT,8);
+ assert.equal(u.armor.CT,before[1]);assert.equal(u.rear.CT,before[2]);
+ assert.equal(u.pilotWounds,2);assert(bin.destroyed);
+});
+
+
+test('AGOAC errata v8.01 p.4: hip PSR preserves only same/later-phase leg actuator penalties',()=>{
+ const scenarios=[
+  {name:'earlier phase of same turn',events:[['upper',4,'move'],['hip',4,'fire']],psr:2,mp:2},
+  {name:'same phase before hip',events:[['upper',4,'fire'],['hip',4,'fire']],psr:3,mp:2},
+  {name:'later phase of same turn',events:[['hip',4,'move'],['upper',4,'fire']],psr:3,mp:2},
+  {name:'previous turn',events:[['upper',3,'fire'],['hip',4,'fire']],psr:2,mp:3},
+  {name:'next turn',events:[['hip',3,'fire'],['upper',4,'move']],psr:3,mp:2},
+  {name:'multiple later phases',events:[['hip',4,'move'],['lower',4,'fire'],['foot',4,'physical']],psr:4,mp:1}
+ ];
+ for(const {name,events,psr,mp} of scenarios){
+  const g=fresh(),u=g.units[0];u.walk=5;u.heat=0;
+  const slot={hip:0,upper:1,lower:2,foot:3};
+  for(const [part,round,phase] of events){
+   g.round=round;g.phase=phase;
+   const dice=[...diceFor(8),(slot[part]+.5)/6];
+   g.rng=()=>{assert(dice.length,name+': missing critical die');return dice.shift();};
+   g.criticalHit(u,'LL');assert.equal(dice.length,0,name);
+  }
+  assert.equal(g.psrMod(u),psr,name+': PSR uses phase-accurate actuator chronology');
+  assert.equal(g.mp(u,'walk'),mp,name+': movement deliberately uses turn-level chronology');
+  assert.equal(g.mp(u,'run'),Math.ceil(mp*1.5),name);
+  const snap=JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v));
+  const restored=new Game({rng:()=>.5});
+  Object.assign(restored,snap);restored.rebuildMap();
+  assert.equal(restored.psrMod(restored.unit(u.id)),psr,name+' serialized PSR');
+  assert.equal(restored.mp(restored.unit(u.id),'walk'),mp,name+' serialized MP');
+ }
+});
+
+test('AGOAC errata v8.01 p.4: hip critical PSR suppression does not erase other-leg damage',()=>{
+ const g=fresh(),u=g.units[0];u.round=5;g.round=5;g.phase='fire';
+ const dice=[...diceFor(8),.5/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+ g.criticalHit(u,'LL');assert.equal(dice.length,0);
+ u.actuators.RL.upper=true;
+ assert.equal(g.psrMod(u),3,'hip +2 and unaffected opposite-leg upper actuator +1');
+ delete u.actuatorHitPhases;
+ u.actuators.LL.lower=true;
+ assert.equal(g.psrMod(u),3,'legacy undated same-leg actuator is not invented as a new hit');
 });

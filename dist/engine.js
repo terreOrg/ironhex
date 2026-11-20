@@ -773,8 +773,17 @@ export class Game extends Legacy{
   }
   for(const l of ['LL','RL']){
    const a=u.actuators[l];
-   n+=u.structure[l]===0?5:a.hip||this.isBreached(u,l)?2:
-     Number(a.upper)+Number(a.lower)+Number(a.foot);
+   if(u.structure[l]===0){n+=5;continue;}
+   if(a.hip){
+    // AGoAC errata v8.01 p.4: hip +2 suppresses same-leg actuator
+    // modifiers from PREVIOUS PHASES, not hits in the hip phase or later.
+    n+=2;
+    const hits=u.actuatorHitPhases?.[l],hipPhase=hits?.hip;
+    for(const part of ['upper','lower','foot'])
+     if(a[part]&&Number.isInteger(hipPhase)&&
+        Number.isInteger(hits?.[part])&&hits[part]>=hipPhase)n++;
+   }else if(this.isBreached(u,l))n+=2;
+   else n+=Number(a.upper)+Number(a.lower)+Number(a.foot);
   }
   return n;
  }
@@ -1610,7 +1619,7 @@ export class Game extends Legacy{
  // External heat sources are cumulative to 15 heat points each turn (BMM p.50).
  applyExternalHeat(u,amount){const n=Number.isFinite(amount)?Math.max(0,Math.trunc(amount)):0,added=Math.min(n,Math.max(0,15-(u.externalHeat??0)));u.externalHeat=(u.externalHeat??0)+added;u.pendingHeat+=added;return added;}
  explode(u,bin){if(!bin||bin.destroyed||!bin.shots)return;const w=u.weapons[bin.weapon],amount=bin.shots*w.damage*(w.rack||1);bin.shots=0;bin.destroyed=true;this.syncAmmo(u);this.wound(u,2);this.note(`${u.name}: взрыв боезапаса, ${amount} внутреннего урона.`);this.damage(u,bin.location,amount,{internal:true,explosion:true});if(u.structure.CT===0){u.pilotWounds=6;this.destroyMech(u);}}
- criticalHit(u,loc,destroyed=false,caseIIVenting=false){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)){if(destroyed)return; // Step 5: destroyed-section criticals may only explode ammunition.
+ criticalHit(u,loc,destroyed=false,caseIIVenting=false){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)&&!destroyed){ // CAT3500D pp.30–32,34: destroyed limbs with ammo resolve three slot rolls, not an irrelevant blow-off.
   if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)return;if(['LA','RA','LL','RL'].includes(loc)&&!u.destroyedSections?.includes(loc))this.leaveLimbClub(u);this.destroyLocation(u,loc);return;}const eligible=l=>u.slots[l].map((s,i)=>s&&s!=='case'&&s!=='case2'&&!u.crit[l][i]?i:-1).filter(i=>i>=0);let valid=eligible(loc);if(!valid.length){if(destroyed||newlyHit.includes(loc))return;while(!valid.length&&transfer[loc]&&!newlyHit.includes(loc)){loc=transfer[loc];valid=eligible(loc);}if(!valid.length)return;}for(let k=0;k<n&&!u.dead;k++){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)continue;valid=eligible(loc);if(!valid.length)break;let ix=-1,tries=0;while(!valid.includes(ix)&&tries++<60){const first=valid.some(i=>i<6),second=valid.some(i=>i>=6),block=first&&second?(this.d6('Критический слот: блок')>=4?1:0):second?1:0;ix=block*6+this.d6('Критический слот: позиция')-1;}if(!valid.includes(ix))ix=valid[0];const s=u.slots[loc][ix];if(destroyed&&!s.startsWith('ammo:'))continue; // Discard this destroyed-location critical; destruction accounts for non-ammo components.
   u.crit[loc][ix]=true;newlyHit.push(loc);this.note(`${u.name}: ${loc}, слот ${ix+1} — ${s}.`);if(s.startsWith('ammo:'))this.explode(u,u.bins.find(b=>b.location===loc&&b.slot===ix));else if(destroyed){
   // CAT3500D p.36 Step 5: non-ammunition criticals in a newly destroyed
@@ -1626,6 +1635,12 @@ export class Game extends Legacy{
    u.actuatorHitRounds??={};
    u.actuatorHitRounds[loc]??={};
    u.actuatorHitRounds[loc][s]=this.round;
+   // Phase precision matters for hip PSR errata, while movement MP
+   // intentionally compares *turns*, not phases. Both survive snapshots.
+   u.actuatorHitPhases??={};
+   u.actuatorHitPhases[loc]??={};
+   const phaseOrdinal={initiative:0,move:1,fire:2,physical:3,heat:4,end:5}[this.phase]??0;
+   u.actuatorHitPhases[loc][s]=this.round*6+phaseOrdinal;
   }
   u.psrs.push({modifier:0,reason:'Актуатор '+loc});
  }}}}
