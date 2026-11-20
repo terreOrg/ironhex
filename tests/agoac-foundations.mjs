@@ -5037,14 +5037,14 @@ test('CAT3500D pp.7,24: mixed push, kick and punches alternate initiative team s
   // Deliberately shuffled declarations. Every slot is a whole Mech;
   // the mere presence of a push must not reorder the whole team.
   g.physicalDeclarations=[kick,counter,punch,push];
-  assert.deepEqual(g.physicalOrder(),[push,kick,punch,counter]);
+  assert.deepEqual(g.physicalOrder(),[punch,kick,push,counter]);
   const events=[];
   g.resolvePush=(d)=>{events.push([d.id,'push']);};
   g.rollPhysical=(d)=>{events.push([d.id,d.type]);return {u:g.unit(d.id),t:g.unit(d.target),d,roll:2,hit:false,cancelled:false,attackRoll:null};};
   g.resolveRolledPhysical=()=>{};
   g.endPSR=()=>{};
   g.resolvePhysical();
-  assert.deepEqual(events,[[lo0.id,'push'],[hi0.id,'kick'],[lo1.id,'punch'],[hi1.id,'punch']]);
+  assert.deepEqual(events,[[lo1.id,'punch'],[hi0.id,'kick'],[lo0.id,'push'],[hi1.id,'punch']]);
  }
 });
 
@@ -5058,10 +5058,12 @@ test('CAT3500D p.7: unequal mixed physical declarations preserve the 2-to-1 init
   const p=mk(a,c,'push'),p2=mk(b,c,'punch'),p3=mk(c,a,'punch');
   g.physicalDeclarations=[p3,p2,p];
   // The larger side gets two declarations in the first pair, following
-  // the same 2:1 rule as movement and weapon declarations.
-  assert.deepEqual(g.physicalOrder(),[p,p2,p3]);
+  // the same 2:1 rule as movement and weapon declarations. The default
+  // order inside one side remains the recorded declaration order; its
+  // controller can separately choose a different order when applicable.
+  assert.deepEqual(g.physicalOrder(),[p2,p,p3]);
   g.physicalDeclarations=[p3,p2,{...p,type:'kick',limb:'RL'}];
-  assert.deepEqual(g.physicalOrder().map(x=>x.id),[a.id,b.id,c.id]);
+  assert.deepEqual(g.physicalOrder().map(x=>x.id),[b.id,a.id,c.id]);
  }
 });
 
