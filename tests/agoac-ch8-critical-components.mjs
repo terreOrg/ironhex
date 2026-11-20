@@ -200,3 +200,31 @@ test('CAT3500D p.31: natural critical 12 in a torso rolls three slots rather tha
  assert.equal(unit.jumpLost,1);
  assert.equal(unit.engineHits,1);
 });
+
+test('CAT3500D p.33: destroyed life support wounds at high heat and not below threshold',()=>{
+ for(const [heat,expected] of [[14,0],[15,1],[25,1],[26,2]]){
+  const game=new Game({rng:()=>0.5}),unit=game.units[0];
+  game.units=[unit];game.phase='heat';
+  unit.lifeSupport=true;unit.shutdown=true;unit.sinks=0;
+  unit.heat=heat;unit.pendingHeat=0;unit.bins=[];
+  const wounds=[];
+  game.wound=(u,n)=>{assert.equal(u,unit);wounds.push(n);};
+  game.consciousness=()=>{};
+  game.heatPhase();
+  assert.equal(wounds.reduce((sum,n)=>sum+n,0),expected,'heat '+heat);
+ }
+});
+
+test('CAT3500D p.33: damaged life support inflicts underwater injury only when submerged',()=>{
+ for(const [depth,prone,expected] of [[0,false,0],[1,false,0],[1,true,1],[2,false,1]]){
+  const game=new Game({rng:()=>0.5}),unit=game.units[0];
+  game.units=[unit];game.phase='end';
+  unit.lifeSupport=true;unit.prone=prone;
+  const wounds=[];
+  game.tile=()=>({depth});
+  game.wound=(u,n)=>{assert.equal(u,unit);wounds.push(n);};
+  game.consciousness=()=>{};
+  game.endPhase();
+  assert.equal(wounds.reduce((sum,n)=>sum+n,0),expected,'depth '+depth+' prone '+prone);
+ }
+});
