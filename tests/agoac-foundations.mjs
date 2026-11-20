@@ -2111,8 +2111,9 @@ test('AGoAC pp.32,34–35: side torso destruction counts critical and remaining 
   u.crit[side]=Array(12).fill(false);u.bins=u.bins.filter(b=>b.location!==side);
   const roll=(slot)=>{const dice=[...diceFor(8),(slot+.5)/6];g.rng=()=>{assert(dice.length);return dice.shift();};return dice;};
   let dice=roll(0);g.criticalHit(u,side);assert.equal(dice.length,0);assert.equal(u.engineHits,1);
-  dice=roll(1);g.damage(u,side,u.structure[side],{internal:true});
-  assert.equal(dice.length,0);assert.equal(u.engineHits,count);assert.equal(u.structure[side],0);
+  g.rng=()=>{throw Error('no critical roll on destroyed non-ammo torso');};
+  g.damage(u,side,u.structure[side],{internal:true});
+  assert.equal(u.engineHits,count);assert.equal(u.structure[side],0);
   assert(u.crit[side].every(Boolean));assert.equal(u.dead,count===3);
   assert.equal(u.structure[side==='LT'?'LA':'RA'],0);
   assert.equal(u.pilotWounds,0);
@@ -2120,14 +2121,13 @@ test('AGoAC pp.32,34–35: side torso destruction counts critical and remaining 
   if(count===3){assert(g.onMap(u));g.removeDestroyedMechs();assert(!g.onMap(u));}
  }
 });
-test('AGoAC pp.33–34: destroyed section counts sink and jump slots marked by final critical roll',()=>{
+test('AGoAC pp.33–34: section destruction counts all sink and jump slots without a false critical roll',()=>{
  for(const type of ['sink','jump']){
   const g=fresh(),u=g.units[0],loc='LT';
   u.slots[loc]=[type,type,...Array(10).fill(null)];u.crit[loc]=Array(12).fill(false);
-  const dice=[...diceFor(8),.5/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+  g.rng=()=>{throw Error('no destroyed-section critical roll without ammunition');};
   g.damage(u,loc,u.structure[loc],{internal:true});
-  const field=type==='sink'?'sinksLost':'jumpLost';
-  assert.equal(dice.length,0);assert.equal(u[field],2);g.destroyLocation(u,loc);assert.equal(u[field],2);
+  const field=type==='sink'?'sinksLost':'jumpLost';assert.equal(u[field],2);g.destroyLocation(u,loc);assert.equal(u[field],2);
  }
 });
 test('AGoAC p.33: both sensor criticals affect weapons only and the second prevents fire',()=>{
@@ -5361,7 +5361,8 @@ test('CAT3500D p.32 and errata v8.01 p.4: first gyro hit immediately rolls its P
  assert.equal(dice.length,0);assert.equal(u.gyroHits,1);assert(!u.prone);
  const events=g.phaseRolls.map(x=>x.kind);
  assert(events[0].includes('Критические повреждения'));
- assert(events[1].includes('Гироскоп'),'gyro PSR is applied before the next hit or phase-end rolls');
+ const psrIndex=events.findIndex(k=>k.includes('Гироскоп'));
+ assert(psrIndex>0&&psrIndex===events.length-1,'gyro PSR follows slot assignment immediately');
  assert.deepEqual(u.psrs,[]);
 });
 
