@@ -773,8 +773,17 @@ export class Game extends Legacy{
   }
   for(const l of ['LL','RL']){
    const a=u.actuators[l];
-   n+=u.structure[l]===0?5:a.hip||this.isBreached(u,l)?2:
-     Number(a.upper)+Number(a.lower)+Number(a.foot);
+   if(u.structure[l]===0){n+=5;continue;}
+   if(a.hip){
+    // AGoAC errata v8.01 p.4: hip +2 suppresses same-leg actuator
+    // modifiers from PREVIOUS PHASES, not hits in the hip phase or later.
+    n+=2;
+    const hits=u.actuatorHitPhases?.[l],hipPhase=hits?.hip;
+    for(const part of ['upper','lower','foot'])
+     if(a[part]&&Number.isInteger(hipPhase)&&
+        Number.isInteger(hits?.[part])&&hits[part]>=hipPhase)n++;
+   }else if(this.isBreached(u,l))n+=2;
+   else n+=Number(a.upper)+Number(a.lower)+Number(a.foot);
   }
   return n;
  }
@@ -1626,6 +1635,12 @@ export class Game extends Legacy{
    u.actuatorHitRounds??={};
    u.actuatorHitRounds[loc]??={};
    u.actuatorHitRounds[loc][s]=this.round;
+   // Phase precision matters for hip PSR errata, while movement MP
+   // intentionally compares *turns*, not phases. Both survive snapshots.
+   u.actuatorHitPhases??={};
+   u.actuatorHitPhases[loc]??={};
+   const phaseOrdinal={initiative:0,move:1,fire:2,physical:3,heat:4,end:5}[this.phase]??0;
+   u.actuatorHitPhases[loc][s]=this.round*6+phaseOrdinal;
   }
   u.psrs.push({modifier:0,reason:'Актуатор '+loc});
  }}}}
