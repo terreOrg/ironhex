@@ -5451,3 +5451,94 @@ test('CAT3500D p.36 Step 5: ammo critical in destroyed section is resolved, not 
  assert.equal(bin.destroyed,true);
  assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
 });
+
+
+test('CAT3500D p.31: prior-phase exhausted arm criticals transfer to ipsilateral torso',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.LA=Array(12).fill('w:0');u.crit.LA=Array(12).fill(true);
+ u.slots.LT=['sink',...Array(11).fill(null)];u.crit.LT=Array(12).fill(false);
+ const before=u.sinksLost,dice=[...diceFor(8),.5/6];
+ g.rng=()=>{assert(dice.length,'critical transfer must not repeat a location roll');return dice.shift();};
+ g.criticalHit(u,'LA');
+ assert.equal(dice.length,0);assert(u.crit.LT[0]);assert.equal(u.sinksLost,before+1);
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
+});
+
+test('CAT3500D pp.31–32: same-phase exhausted critical slots do not transfer',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.LA=['w:0',...Array(11).fill(null)];u.crit.LA=Array(12).fill(false);
+ u.slots.LT=['engine',...Array(11).fill(null)];u.crit.LT=Array(12).fill(false);
+ const before=u.engineHits,dice=[...diceFor(10),.5/6];
+ g.rng=()=>{assert(dice.length,'the second inapplicable critical is lost without a transfer roll');return dice.shift();};
+ g.criticalHit(u,'LA');
+ assert.equal(dice.length,0);assert(u.crit.LA[0]);assert.equal(u.crit.LT[0],false);
+ assert.equal(u.engineHits,before);
+ assert.equal(u.critMarkedThisPhase.includes('LA'),true);
+});
+
+test('CAT3500D p.31: fully inapplicable torso/arm critical block uses one D6',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.RA=Array(12).fill(null);u.slots.RA[7]='sink';
+ u.crit.RA=Array(12).fill(false);
+ const before=u.sinksLost,dice=[...diceFor(8),(1.5)/6];
+ g.rng=()=>{assert(dice.length,'inapplicable six-slot block must never be rolled');return dice.shift();};
+ g.criticalHit(u,'RA');
+ assert.equal(dice.length,0);assert(u.crit.RA[7]);assert.equal(u.sinksLost,before+1);
+});
+
+test('CAT3500D p.31: inapplicable torso/arm slot rerolls the full pair of dice',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.slots.RA=Array(12).fill(null);u.slots.RA[0]='sink';u.slots.RA[7]='jump';
+ u.crit.RA=Array(12).fill(false);
+ const sinkBefore=u.sinksLost,jumpBefore=u.jumpLost;
+ const dice=[...diceFor(8),(3.5)/6,.5/6,.5/6,.5/6];
+ g.rng=()=>{assert(dice.length,'a used/empty slot rerolls block AND position, not merely position');return dice.shift();};
+ g.criticalHit(u,'RA');
+ assert.equal(dice.length,0);assert(u.crit.RA[0]);assert(!u.crit.RA[7]);
+ assert.equal(u.sinksLost,sinkBefore+1);assert.equal(u.jumpLost,jumpBefore);
+});
+
+test('CAT3500D pp.30–32: roll 12 on destroyed ammo-carrying leg checks three slots',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.armor.RL=0;u.structure.RL=1;
+ u.slots.RL=['ammo:0:1',...Array(5).fill(null)];u.crit.RL=Array(6).fill(false);
+ const bin={weapon:0,location:'RL',slot:0,shots:1,destroyed:false};
+ u.bins.push(bin);
+ const explosion=[];g.explode=(v,b)=>{explosion.push([v.id,b.location,b.shots]);b.shots=0;b.destroyed=true;};
+ const dice=[...diceFor(12),.5/6];
+ g.rng=()=>{assert(dice.length,'a 12 in destroyed ammo section must resolve its explosive slots');return dice.shift();};
+ g.damage(u,'RL',1,{internal:true});
+ assert.equal(dice.length,0);
+ assert.deepEqual(explosion,[[u.id,'RL',1]]);
+ assert.equal(bin.destroyed,true);assert.equal(u.structure.RL,0);
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
+});
+
+test('CAT3500D p.32: ammunition explosion uses remaining shots times missile count and inflicts two wounds',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ const w=u.weapons[0];w.damage=2;w.rack=6;
+ const bin={weapon:0,location:'LA',slot:9,shots:3,destroyed:false};
+ u.bins.push(bin);
+ let wounds=0;const applied=[];
+ g.wound=(v,n)=>{assert.equal(v,u);wounds+=n;};
+ g.damage=(v,l,n,opts)=>{applied.push([v.id,l,n,opts]);return [];};
+ g.explode(u,bin);
+ assert.deepEqual(applied,[[u.id,'LA',36,{internal:true,explosion:true}]]);
+ assert.equal(wounds,2);assert(bin.destroyed);assert.equal(bin.shots,0);
+ g.explode(u,bin);assert.equal(wounds,2);assert.equal(applied.length,1);
+});
+
+test('CAT3500D pp.32,35: ammunition explosion bypasses armor on inward transfer',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ const bin=u.bins.find(b=>b.location==='RT');assert(bin);
+ u.weapons[bin.weapon].damage=2;u.weapons[bin.weapon].rack=1;bin.shots=2;
+ u.slots.RT=Array(12).fill(null);u.crit.RT=Array(12).fill(false);
+ u.structure.RT=2;u.structure.CT=10;
+ u.armor.RT=14;u.armor.CT=18;u.rear.CT=8;
+ const before=[u.armor.RT,u.armor.CT,u.rear.CT];
+ g.rng=()=>.99;
+ g.explode(u,bin);
+ assert.equal(u.structure.RT,0);assert.equal(u.structure.CT,8);
+ assert.equal(u.armor.CT,before[1]);assert.equal(u.rear.CT,before[2]);
+ assert.equal(u.pilotWounds,2);assert(bin.destroyed);
+});
