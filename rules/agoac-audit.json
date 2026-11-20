@@ -441,7 +441,7 @@
         36
       ],
       "status": "not_audited",
-      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy."
+      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy. PR221 additionally implements official Hip errata phase chronology for 037 with distinct turn-vs-phase MP and PSR history tests; status not yet promoted."
     },
     {
       "id": "agoac-heat",
@@ -2768,7 +2768,7 @@
         33,
         34
       ],
-      "statement": "AGoAC errata v8.01: hip critical halves unmodified biped Walking MP rounding up, BEFORE same/later leg actuator reductions; second hip reduces MP to zero without immobility. Existing hip actuator damage from previous phases is ignored for MP and PSR, while hits in the same or subsequent phases accumulate as errata specifies.",
+      "statement": "Biped Hip errata v8.01: halve base Walking MP rounding UP before leg/foot actuator reductions, derive Running MP rounding UP; two hips give zero ground MP without immobility. For MOVEMENT ignore same-leg actuator MP penalties from PREVIOUS TURNS, but apply those from hip-hit turn or later. For PSRs the Hip +2 OVERRIDES same-leg actuator modifiers from PREVIOUS PHASES only; modifiers from its phase or later are cumulative. Save/restore the separate histories.",
       "status": "tested_case",
       "evidence": [
         {
@@ -2782,9 +2782,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.33 errata v8.01: hip movement permits only the rounded-up MP budget"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGOAC errata v8.01 p.4: hip PSR preserves only same/later-phase leg actuator penalties"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGOAC errata v8.01 p.4: hip critical PSR suppression does not erase other-leg damage"
         }
       ],
-      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI completed successfully; tested and squashed main trees are identical. 20.11.2026 re-audit against official AGoAC Errata v8.01 p.4 discovered previously certified 2018 rounding-down formula was superseded; status temporarily reverted to Tested Case. Updated source and tests to round upward. PSR same-phase versus previous-phase actuator timing still needs a distinct source audit before re-verification.",
+      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI completed successfully; tested and squashed main trees are identical. 20.11.2026 re-audit against official AGoAC Errata v8.01 p.4 discovered previously certified 2018 rounding-down formula was superseded; status temporarily reverted to Tested Case. Updated source and tests to round upward. PSR same-phase versus previous-phase actuator timing still needs a distinct source audit before re-verification. 20.11.2026 formal errata v8.01 p.4 PSR clause: overridden actuator penalties apply only to prior PHASES; base Walking MP has separate prior TURNS exemption. Corrected biped psrMod and stored independently round and phase acquisition stamps, including snapshot restore and old undated saves; narrow 037 still Tested Case pending exact branch checks and post-merge Sonar.",
       "audit": {
         "sourceChecked": true,
         "edgeCasesChecked": true,
