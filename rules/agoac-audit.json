@@ -375,7 +375,7 @@
         29
       ],
       "status": "tested_subset",
-      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit. #204 merged; 450/450 CI, 39/39 E2E, smoke planner succeeded. Next DFA sub-block corrects airborne LOS/stacking and movement timing; #205 still pending; final special and mixed physical resolution audit remains. #205 merged, CI 453/453, browser 39/39 and scoped smoke success. Chapter 7 errata follow-up corrects hatchet actuators, destroyed charge and DFA target and unconscious DFA pilot. Errata p.3 water location-specific damage and cover still require correction; mixed-phase ordering and final validation remain. No deployment. 20.11: source-to-code audit certifies 092 physical TN/auto miss cancellation and 094 errata water partial-cover/location-halving on main 07a856b3; 7/15 Verified, 8 Tested Case, 0 Known Missing. Two additional regression matrices in audit PR #212; final PR exact SHA CI/E2E/Smoke and merge still required."
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit. #204 merged; 450/450 CI, 39/39 E2E, smoke planner succeeded. Next DFA sub-block corrects airborne LOS/stacking and movement timing; #205 still pending; final special and mixed physical resolution audit remains. #205 merged, CI 453/453, browser 39/39 and scoped smoke success. Chapter 7 errata follow-up corrects hatchet actuators, destroyed charge and DFA target and unconscious DFA pilot. Errata p.3 water location-specific damage and cover still require correction; mixed-phase ordering and final validation remain. No deployment. 20.11: source-to-code audit certifies 092 physical TN/auto miss cancellation and 094 errata water partial-cover/location-halving on main 07a856b3; 7/15 Verified, 8 Tested Case, 0 Known Missing. Two additional regression matrices in audit PR #212; final PR exact SHA CI/E2E/Smoke and merge still required. 20.11 #213 combined source-to-code audit for existing club/physical weapon/punch implementations (CAT3500D pp.26,28) plus four new test matrices; 10/15 Verified in PR branch, 5 Tested Case; status only authoritative after exact green PR check and merge. No deployment."
     },
     {
       "id": "agoac-damage",
@@ -6366,7 +6366,7 @@
         26
       ],
       "statement": "Club sources, pickup, disappearance, eligibility, modifiers and attack resolution.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6375,9 +6375,54 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.26: blown-off limbs and side torso arm loss supply club stock once"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.26: club arm penalties are additive and never halve 1-per-5-ton damage"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.26: finding a club consumes physical action and disallows prior fire"
         }
       ],
-      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion."
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. SOURCE-TO-CODE VERIFIED 2026-11-20: Visually checked CAT3500D printed p.26 Club Attacks/Finding A Club. In engine physicalPreview('club') requires the forward firing arc, two intact shoulders and hands, no same-turn arm-weapon fire; each damaged upper/lower arm actuator adds +2 TN without reducing weight/5 damage. takeClub requires woods or exactly one available severed limb club, no shots this turn, consumes entire Physical Attack action. Tree club expires only on a successful hit; limb club is reusable, and blown limbs/side torso loss stock the map once. Cross-checked existing limb/tree and hit/miss lifecycle tests plus two new deterministic eligibility and pickup tests. No missing gameplay implementation identified. Main code-equal CI/E2E/Sonarqube strict gates passed at a0643bf5fadc4cb62c457e3c5a21654910042001; branch additional test matrix CI 476/476 on 29b1a3a337a7559c2a97c8977adcd02f6cb25ce4. New exact branch CI/Browser/Smoke and post-merge main Sonar confirmation required.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.26,28, official AGOAC errata v8.01 p.2 (reversed arms)",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "a0643bf5fadc4cb62c457e3c5a21654910042001",
+        "testedTree": "fd3b51a67eb43a31bb671a3e4d3edfaea8ce477f",
+        "mergedSha": "a0643bf5fadc4cb62c457e3c5a21654910042001",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44694640269,
+            "jobId": 136148348415,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44694640325,
+            "jobId": 136148348705,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44694640188,
+            "jobId": 136148347957,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44694640164,
+          "jobId": 136148348330,
+          "conclusion": "success",
+          "headSha": "a0643bf5fadc4cb62c457e3c5a21654910042001"
+        },
+        "review": "Visually checked CAT3500D printed p.26 Club Attacks/Finding A Club. In engine physicalPreview('club') requires the forward firing arc, two intact shoulders and hands, no same-turn arm-weapon fire; each damaged upper/lower arm actuator adds +2 TN without reducing weight/5 damage. takeClub requires woods or exactly one available severed limb club, no shots this turn, consumes entire Physical Attack action. Tree club expires only on a successful hit; limb club is reusable, and blown limbs/side torso loss stock the map once. Cross-checked existing limb/tree and hit/miss lifecycle tests plus two new deterministic eligibility and pickup tests. No missing gameplay implementation identified."
+      }
     },
     {
       "id": "agoac-097",
@@ -6493,7 +6538,7 @@
         28
       ],
       "statement": "Arm-mounted physical weapon/hatchet arc, eligibility, optional location tables and damage.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6510,9 +6555,50 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack with an arm-mounted hatchet"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.28: physical weapon damage, actuator TN and forced hit table matrix"
         }
       ],
-      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified."
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. SOURCE-TO-CODE VERIFIED 2026-11-20: Visually checked CAT3500D printed p.28 Physical Weapon Attacks and errata v8.01 p.2 Reversing Arms. Engine physicalPreview('hatchet') requires actual intact installed arm physical weapon and shoulder/hand, correct forward/own side arcs, no same-arm fired weapons or reversed arms; damage = ceil(tonnage/5). Upper/lower arm criticals add +2 each to TN, with no physical-weapon damage reduction. At same levels optional Punch/Kick table adds +4 over normal; forced different-level tables never incur optional +4. Existing UI API request validation and split target tests reviewed, new deterministic damage/actuator/forced table matrix added. No missing gameplay implementation identified. Main code-equal CI/E2E/Sonarqube strict gates passed at a0643bf5fadc4cb62c457e3c5a21654910042001; branch additional test matrix CI 476/476 on 29b1a3a337a7559c2a97c8977adcd02f6cb25ce4. New exact branch CI/Browser/Smoke and post-merge main Sonar confirmation required.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.26,28, official AGOAC errata v8.01 p.2 (reversed arms)",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "a0643bf5fadc4cb62c457e3c5a21654910042001",
+        "testedTree": "fd3b51a67eb43a31bb671a3e4d3edfaea8ce477f",
+        "mergedSha": "a0643bf5fadc4cb62c457e3c5a21654910042001",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44694640269,
+            "jobId": 136148348415,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44694640325,
+            "jobId": 136148348705,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44694640188,
+            "jobId": 136148347957,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44694640164,
+          "jobId": 136148348330,
+          "conclusion": "success",
+          "headSha": "a0643bf5fadc4cb62c457e3c5a21654910042001"
+        },
+        "review": "Visually checked CAT3500D printed p.28 Physical Weapon Attacks and errata v8.01 p.2 Reversing Arms. Engine physicalPreview('hatchet') requires actual intact installed arm physical weapon and shoulder/hand, correct forward/own side arcs, no same-arm fired weapons or reversed arms; damage = ceil(tonnage/5). Upper/lower arm criticals add +2 each to TN, with no physical-weapon damage reduction. At same levels optional Punch/Kick table adds +4 over normal; forced different-level tables never incur optional +4. Existing UI API request validation and split target tests reviewed, new deterministic damage/actuator/forced table matrix added. No missing gameplay implementation identified."
+      }
     },
     {
       "id": "agoac-100",
@@ -6521,7 +6607,7 @@
         28
       ],
       "statement": "Punch arc, independent arms and different targets, damage and actuator restrictions.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6538,9 +6624,50 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack with an arm-mounted hatchet"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.28: missing-by-design punch actuators stack TN and quarter damage at minimum one"
         }
       ],
-      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. First block-2 CI 444/445: exact 120-degree punch boundary was rejected by floating-point comparison; tolerance now matches the existing hatchet arc and all six facings are covered. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified."
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. First block-2 CI 444/445: exact 120-degree punch boundary was rejected by floating-point comparison; tolerance now matches the existing hatchet arc and all six facings are covered. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. SOURCE-TO-CODE VERIFIED 2026-11-20: Visually checked CAT3500D printed p.28 Punch Attacks and errata v8.01 p.2. Engine physicalPreview('punch') checks forward and matching left/right side arcs including all hex-facing boundaries; no intact same-arm physical weapon, no same-arm weapon fire, no reversed arms or destroyed shoulder. Punch damage ceil(weight/10), each upper/lower arm missing or damaged halves it cumulatively rounded down, minimum 1. Upper/lower actuator criticals or missing-by-design add +2 TN each; hand adds +1. 'both' declaration is atomic and may select two different targets without a secondary-target penalty; separate dice and damage choices verified. New source matrix for missing-by-design stacked actuator TN and damage, plus existing split-target and phase resolution regressions pass. No missing gameplay implementation identified. Main code-equal CI/E2E/Sonarqube strict gates passed at a0643bf5fadc4cb62c457e3c5a21654910042001; branch additional test matrix CI 476/476 on 29b1a3a337a7559c2a97c8977adcd02f6cb25ce4. New exact branch CI/Browser/Smoke and post-merge main Sonar confirmation required.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.26,28, official AGOAC errata v8.01 p.2 (reversed arms)",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "a0643bf5fadc4cb62c457e3c5a21654910042001",
+        "testedTree": "fd3b51a67eb43a31bb671a3e4d3edfaea8ce477f",
+        "mergedSha": "a0643bf5fadc4cb62c457e3c5a21654910042001",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44694640269,
+            "jobId": 136148348415,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44694640325,
+            "jobId": 136148348705,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44694640188,
+            "jobId": 136148347957,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44694640164,
+          "jobId": 136148348330,
+          "conclusion": "success",
+          "headSha": "a0643bf5fadc4cb62c457e3c5a21654910042001"
+        },
+        "review": "Visually checked CAT3500D printed p.28 Punch Attacks and errata v8.01 p.2. Engine physicalPreview('punch') checks forward and matching left/right side arcs including all hex-facing boundaries; no intact same-arm physical weapon, no same-arm weapon fire, no reversed arms or destroyed shoulder. Punch damage ceil(weight/10), each upper/lower arm missing or damaged halves it cumulatively rounded down, minimum 1. Upper/lower actuator criticals or missing-by-design add +2 TN each; hand adds +1. 'both' declaration is atomic and may select two different targets without a secondary-target penalty; separate dice and damage choices verified. New source matrix for missing-by-design stacked actuator TN and damage, plus existing split-target and phase resolution regressions pass. No missing gameplay implementation identified."
+      }
     },
     {
       "id": "agoac-101",
