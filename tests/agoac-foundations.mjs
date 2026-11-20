@@ -5542,3 +5542,44 @@ test('CAT3500D pp.32,35: ammunition explosion bypasses armor on inward transfer'
  assert.equal(u.armor.CT,before[1]);assert.equal(u.rear.CT,before[2]);
  assert.equal(u.pilotWounds,2);assert(bin.destroyed);
 });
+
+
+test('AGOAC errata v8.01 p.4: hip PSR preserves only same/later-phase leg actuator penalties',()=>{
+ const scenarios=[
+  {name:'earlier phase of same turn',events:[['upper',4,'move'],['hip',4,'fire']],psr:2,mp:2},
+  {name:'same phase before hip',events:[['upper',4,'fire'],['hip',4,'fire']],psr:3,mp:2},
+  {name:'later phase of same turn',events:[['hip',4,'move'],['upper',4,'fire']],psr:3,mp:2},
+  {name:'previous turn',events:[['upper',3,'fire'],['hip',4,'fire']],psr:2,mp:3},
+  {name:'next turn',events:[['hip',3,'fire'],['upper',4,'move']],psr:3,mp:2},
+  {name:'multiple later phases',events:[['hip',4,'move'],['lower',4,'fire'],['foot',4,'physical']],psr:4,mp:1}
+ ];
+ for(const {name,events,psr,mp} of scenarios){
+  const g=fresh(),u=g.units[0];u.walk=5;u.heat=0;
+  const slot={hip:0,upper:1,lower:2,foot:3};
+  for(const [part,round,phase] of events){
+   g.round=round;g.phase=phase;
+   const dice=[...diceFor(8),(slot[part]+.5)/6];
+   g.rng=()=>{assert(dice.length,name+': missing critical die');return dice.shift();};
+   g.criticalHit(u,'LL');assert.equal(dice.length,0,name);
+  }
+  assert.equal(g.psrMod(u),psr,name+': PSR uses phase-accurate actuator chronology');
+  assert.equal(g.mp(u,'walk'),mp,name+': movement deliberately uses turn-level chronology');
+  assert.equal(g.mp(u,'run'),Math.ceil(mp*1.5),name);
+  const snap=JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v));
+  const restored=new Game({rng:()=>.5});
+  Object.assign(restored,snap);restored.rebuildMap();
+  assert.equal(restored.psrMod(restored.unit(u.id)),psr,name+' serialized PSR');
+  assert.equal(restored.mp(restored.unit(u.id),'walk'),mp,name+' serialized MP');
+ }
+});
+
+test('AGOAC errata v8.01 p.4: hip critical PSR suppression does not erase other-leg damage',()=>{
+ const g=fresh(),u=g.units[0];u.round=5;g.round=5;g.phase='fire';
+ const dice=[...diceFor(8),.5/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+ g.criticalHit(u,'LL');assert.equal(dice.length,0);
+ u.actuators.RL.upper=true;
+ assert.equal(g.psrMod(u),3,'hip +2 and unaffected opposite-leg upper actuator +1');
+ delete u.actuatorHitPhases;
+ u.actuators.LL.lower=true;
+ assert.equal(g.psrMod(u),3,'legacy undated same-leg actuator is not invented as a new hit');
+});
