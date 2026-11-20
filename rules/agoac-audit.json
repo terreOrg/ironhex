@@ -6130,9 +6130,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.29: pushed target uses preceding ordinary physical damage for its phase-end PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.24,29: lethal charge recoil does not erase an already declared punch"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.24,29: lethal charge damage alone does not cancel another Mechs hit roll"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion. 20.11 follow-up packet: source-checked CAT3500D printed pp.24,29 and errata v8.01; previously declared physical attacks no longer disappear solely because earlier charge damage kills attacker/target without displacement; reciprocal push PSRs remain phase-end after unrelated punch damage. Three deterministic regressions added. Keep Tested Case until exact CI, Browser E2E, scoped Smoke and strict post-merge main Sonar pass."
     },
     {
       "id": "agoac-092",
@@ -6685,9 +6693,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.29: push and opposed pushes queue all PSRs until phase-end"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.29: reciprocal push PSRs include later punch damage and remain phase-end"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion. 20.11 follow-up packet: source-checked CAT3500D printed pp.24,29 and errata v8.01; previously declared physical attacks no longer disappear solely because earlier charge damage kills attacker/target without displacement; reciprocal push PSRs remain phase-end after unrelated punch damage. Three deterministic regressions added. Keep Tested Case until exact CI, Browser E2E, scoped Smoke and strict post-merge main Sonar pass."
     },
     {
       "id": "agoac-102",
@@ -6706,9 +6718,21 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.24,29: mixed pushes preserve independent two-punch roll and damage choices"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.24,29: lethal charge recoil does not erase an already declared punch"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.24,29: lethal charge damage alone does not cancel another Mechs hit roll"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.29: reciprocal push PSRs include later punch damage and remain phase-end"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion. 20.11 follow-up packet: source-checked CAT3500D printed pp.24,29 and errata v8.01; previously declared physical attacks no longer disappear solely because earlier charge damage kills attacker/target without displacement; reciprocal push PSRs remain phase-end after unrelated punch damage. Three deterministic regressions added. Keep Tested Case until exact CI, Browser E2E, scoped Smoke and strict post-merge main Sonar pass."
     }
   ]
 }

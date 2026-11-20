@@ -2136,12 +2136,13 @@ export class Game extends Legacy{
  }
  physicalAfterDisplacement(d,snapshots){
   const u=this.unit(d.id),t=this.unit(d.target),originalU=snapshots.get(d.id),originalT=snapshots.get(d.target);
-  // Ordinary attack damage has not yet been resolved. A death occurring
-  // here is an immediate displacement/fall effect (pp.30,42), not a
-  // reason to erase an attack that was already rolled.
-  if((u.dead&&!originalU.dead)||(t.dead&&!originalT.dead))return null;
-  if(!this.physicalGeometryChanged(originalU,u)&&!this.physicalGeometryChanged(originalT,t))return d;
+  // CAT3500D pp.24,29: physical attack damage never cancels a
+  // different attack already declared for the same phase. A charge or
+  // DFA can destroy its attacker or target before another Mech's roll;
+  // death alone is not a change of attack geometry.
+  // Escape is different: an off-board Mech is no longer a legal target.
   if(u.escaped||t.escaped)return null;
+  if(!this.physicalGeometryChanged(originalU,u)&&!this.physicalGeometryChanged(originalT,t))return d;
   // Reassess geometry using the state from before attacks. Ordinary damage
   // from this phase cannot remove a declared attack or increase its TN.
   const atCurrentPosition=(original,current)=>({...original,q:current.q,r:current.r,
