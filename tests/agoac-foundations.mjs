@@ -2011,16 +2011,16 @@ test('AGoAC pp.32–34: same-leg actuator hits before, during and after hip-hit 
   g.criticalHit(u,leg);assert.equal(dice.length,0);};
  g.round=1;hit('LL',1);assert.equal(g.mp(u),6);
  g.round=2;hit('LL',2);assert.equal(g.mp(u),5);
- hit('LL',0);assert.equal(g.mp(u),3);assert.equal(g.psrMod(u),2);
+ hit('LL',0);assert.equal(g.mp(u),3);assert.equal(g.psrMod(u),3); // Same-phase lower leg damage remains cumulative.
  // The lower-leg hit in round 2 remains relevant even in later rounds.
  g.round=3;assert.equal(g.mp(u),3);
- hit('LL',3);assert.equal(g.mp(u),2);assert.equal(g.psrMod(u),2);
- hit('RL',1);assert.equal(g.mp(u),1);assert.equal(g.psrMod(u),3);
+ hit('LL',3);assert.equal(g.mp(u),2);assert.equal(g.psrMod(u),4);
+ hit('RL',1);assert.equal(g.mp(u),1);assert.equal(g.psrMod(u),5);
  assert.deepEqual(u.actuatorHitRounds,{LL:{upper:1,lower:2,hip:2,foot:3},RL:{upper:3}});
  const restored=new Game({rng:()=>.5});
  Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
  restored.rebuildMap();assert.equal(restored.mp(restored.unit(u.id)),1);
- assert.equal(restored.psrMod(restored.unit(u.id)),3);
+ assert.equal(restored.psrMod(restored.unit(u.id)),5);
 });
 test('AGoAC p.33 errata v8.01: hip movement permits only the rounded-up MP budget',()=>{
  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1,0,1];
