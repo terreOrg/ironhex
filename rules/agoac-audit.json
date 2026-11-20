@@ -2520,7 +2520,7 @@
         },
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical attack against the fallen Mech"
+          "test": "AGoAC pp.29,30,42,44: a displaced target checks for a fall at phase-end after an unmade kick is cancelled"
         }
       ],
       "audit": {

@@ -1194,7 +1194,7 @@ test('AGoAC pp.30,35,44: actual sixth head wound in an attack phase preserves de
   assert.equal(g.phase,phase==='fire'?'physical':'heat');assert(!g.canAct(a));
  }
 });
-test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical attack against the fallen Mech',()=>{
+test('AGoAC pp.29,30,42,44: a displaced target checks for a fall at phase-end after an unmade kick is cancelled',()=>{
  const g=fresh(),[pusher,kicker,t,other]=g.units;
  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
  Object.assign(pusher,{q:-1,r:0,facing:0});
@@ -1204,8 +1204,15 @@ test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical at
  const push=g.physicalPreview(pusher.id,t.id,'push','LA'),kick=g.physicalPreview(kicker.id,t.id,'kick','RL');
  assert(push.legal,push.reason);assert(kick.legal,kick.reason);
  g.physicalDeclarations=[{id:pusher.id,target:t.id,type:'push',limb:'LA',...push},{id:kicker.id,target:t.id,type:'kick',limb:'RL',...kick}];
- const dice=[...diceFor(12),...diceFor(2),.5/6,...diceFor(2)];
- g.rng=()=>{assert(dice.length,'an invalidated kick should not roll');return dice.shift();};
+ // Successful push first. Any later PSR and injury rolls deliberately
+ // fail; unlike displacement, the fall itself occurs only at phase-end.
+ let draws=0,kickRolls=0;
+ g.rng=()=>draws++<2?.99:.01;
+ const realRoll=g.roll.bind(g);
+ g.roll=(name,tn)=>{
+  if(name===kicker.name+' · kick')kickRolls++;
+  return realRoll(name,tn);
+ };
  const originalWound=g.wound.bind(g);let deathObserved=false;
  g.wound=(victim,n)=>{
   originalWound(victim,n);
@@ -1215,7 +1222,7 @@ test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical at
    deathObserved=true;
   }
  };
- assert(g.nextPhase().ok);assert(deathObserved);assert.equal(dice.length,0);
+ assert(g.nextPhase().ok);assert(deathObserved);assert.equal(kickRolls,0);
  const shot=g.resolution.find(r=>r.id===kicker.id).shots[0];
  assert.equal(shot.cancelled,true);assert.equal(shot.roll,null);assert.equal(shot.damage,0);
  assert.equal(g.onMap(t),false);assert.equal(g.occupied(1,0),false);
@@ -4799,7 +4806,7 @@ test('CAT3500D pp.24,29: mixed pushes preserve independent two-punch roll and da
   if(request.kind!=='physical-order')return fallback;
   if(request.context?.scope==='attack'){
    choices.push(request.context.stage);
-   return request.context.stage==='roll'?'1':'0';
+   return '1'; // after RA,LA roll staging, damage entry 1 is LA
   }
   if(request.options.some(o=>o.attackerId===puncher.id))return String(puncher.id);
   return fallback;
