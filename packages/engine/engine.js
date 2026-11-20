@@ -2050,7 +2050,9 @@ export class Game extends Legacy{
  applyPush(u,t){
   const old={q:t.q,r:t.r};
   if(this.displace(t,u.facing)){u.q=old.q;u.r=old.r;}
-  if(!t.dead&&!t.prone)this.psr(t,0,'Толчок',true);
+  // CAT3500D p.29: a push schedules its defender's PSR for the end of
+  // the Physical Attack Phase, after all damage and its modifiers.
+  if(!t.dead&&!t.prone)this.psr(t,0,'Толчок');
  }
  resolvePush(d,opposed){
   const first=this.unit(d.id),second=this.unit(d.target),orders=opposed?[d,opposed]:[d];
@@ -2065,7 +2067,7 @@ export class Game extends Legacy{
   if(successes.length===2){
    for(const a of successes){
     const start=this.phaseRolls.length;
-    this.psr(a.t,0,'Встречный толчок',true);
+    this.psr(a.t,0,'Встречный толчок');
     a.rolls.push(...this.phaseRolls.slice(start));
    }
   }else if(successes.length===1){
@@ -2238,6 +2240,17 @@ export class Game extends Legacy{
    const handled=new Set(),attacks=[];
    while(handled.size<orders.length){
     const group=this.nextPhysicalAttacker(orders,handled);
+    // CAT3500D pp.24,29: even in a mixed push/charge/DFA phase, a
+    // controller chooses the roll order of its Mech's two punches.
+    // Displacement attacks still execute in initiative order because
+    // they can invalidate an unmade attack by moving its target.
+    if(group.length>1&&group.every(d=>!d.special&&d.type!=='push')){
+     this.orderOrdinaryPhysicalAttacks({id:group[0].id,attacks:group},'roll',d=>{
+      handled.add(d);
+      attacks.push(this.rollPhysical(d,snapshots));
+     });
+     continue;
+    }
     for(const d of group){
      if(handled.has(d))continue;
      handled.add(d);
@@ -2250,7 +2263,16 @@ export class Game extends Legacy{
      attacks.push(this.rollPhysical(d,snapshots));
     }
    }
-   for(const attack of attacks)this.resolveRolledPhysical(attack);
+   // Successful ordinary hits choose their damage order separately
+   // after all eligible hit rolls, including those in a mixed phase.
+   const staged=new Map();
+   for(const attack of attacks){
+    if(!staged.has(attack.d.id))staged.set(attack.d.id,{id:attack.d.id,attacks:[]});
+    staged.get(attack.d.id).attacks.push(attack);
+   }
+   this.orderOrdinaryPhysicalMechs([...staged.values()],'damage',g=>{
+    this.orderOrdinaryPhysicalAttacks(g,'damage',attack=>this.resolveRolledPhysical(attack));
+   });
    }
   }finally{this.deferConsciousness=false;}
   const start=this.phaseRolls.length;this.endPSR();this.afterRolls=this.phaseRolls.slice(start);

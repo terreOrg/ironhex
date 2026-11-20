@@ -652,7 +652,7 @@ test('AGoAC pp.29,42: opposite pushes resolve both rolls before either displacem
   assert.equal(dice.length,0);
  }
 });
-test('AGoAC pp.29,42: prohibited push retains positions but still requires an immediate PSR',()=>{
+test('AGoAC p.29: prohibited push retains positions and queues a phase-end PSR',()=>{
  const g=fresh(),u=g.units[0],t=g.units[2];g.phase='physical';
  for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
  Object.assign(u,{q:0,r:0,facing:0});Object.assign(t,{q:1,r:0,facing:3});
@@ -1194,7 +1194,7 @@ test('AGoAC pp.30,35,44: actual sixth head wound in an attack phase preserves de
   assert.equal(g.phase,phase==='fire'?'physical':'heat');assert(!g.canAct(a));
  }
 });
-test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical attack against the fallen Mech',()=>{
+test('AGoAC pp.29,30,42,44: push displacement permits a later kick before defender phase-end fall',()=>{
  const g=fresh(),[pusher,kicker,t,other]=g.units;
  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
  Object.assign(pusher,{q:-1,r:0,facing:0});
@@ -1204,8 +1204,20 @@ test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical at
  const push=g.physicalPreview(pusher.id,t.id,'push','LA'),kick=g.physicalPreview(kicker.id,t.id,'kick','RL');
  assert(push.legal,push.reason);assert(kick.legal,kick.reason);
  g.physicalDeclarations=[{id:pusher.id,target:t.id,type:'push',limb:'LA',...push},{id:kicker.id,target:t.id,type:'kick',limb:'RL',...kick}];
- const dice=[...diceFor(12),...diceFor(2),.5/6,...diceFor(2)];
- g.rng=()=>{assert(dice.length,'an invalidated kick should not roll');return dice.shift();};
+ // Successful push first. Any later PSR and injury rolls deliberately
+ // fail; unlike displacement, the fall itself occurs only at phase-end.
+ let draws=0,kickRolls=0;const events=[];
+ g.rng=()=>draws++<2?.99:.01;
+ const realRoll=g.roll.bind(g);
+ g.roll=(name,tn)=>{
+  if(name===kicker.name+' · kick'){kickRolls++;events.push('kick');}
+  return realRoll(name,tn);
+ };
+ const realFall=g.fall.bind(g);
+ g.fall=(victim,...args)=>{
+  if(victim===t)events.push('fall');
+  return realFall(victim,...args);
+ };
  const originalWound=g.wound.bind(g);let deathObserved=false;
  g.wound=(victim,n)=>{
   originalWound(victim,n);
@@ -1215,9 +1227,12 @@ test('AGoAC pp.30,42,44: lethal immediate fall invalidates an unmade physical at
    deathObserved=true;
   }
  };
- assert(g.nextPhase().ok);assert(deathObserved);assert.equal(dice.length,0);
+ assert(g.nextPhase().ok);assert(deathObserved);assert.equal(kickRolls,1);
+ assert(events.includes('fall')&&events.indexOf('kick')<events.indexOf('fall'),
+  'the still-legal kick must resolve before the defender checks for falling');
  const shot=g.resolution.find(r=>r.id===kicker.id).shots[0];
- assert.equal(shot.cancelled,true);assert.equal(shot.roll,null);assert.equal(shot.damage,0);
+ assert.equal(shot.cancelled,false);assert.equal(shot.roll,2);
+ assert.equal(shot.hit,false);assert.equal(shot.damage,0);
  assert.equal(g.onMap(t),false);assert.equal(g.occupied(1,0),false);
  assert.equal(g.phase,'heat');assert.equal(other.dead,false);
 });
@@ -4747,4 +4762,68 @@ test('CAT3500D p.25 and errata v8.01 p.3: charge rejects an approach without MP 
  const before=[u.q,u.r,u.spent,u.facing];
  const r=g.declareCharge(u.id,t.id,'charge','walk');
  assert(!r.ok);assert.deepEqual([u.q,u.r,u.spent,u.facing],before);assert(!u.charge);
+});
+
+ 
+test('CAT3500D p.29: push and opposed pushes queue all PSRs until phase-end',()=>{
+ for(const opposed of [false,true]){
+  const g=fresh(),u=g.units[0],t=g.units[2];g.phase='physical';
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0});Object.assign(t,{q:1,r:0,facing:3});
+  const first={id:u.id,target:t.id,type:'push',targetNumber:2};
+  const counter={id:t.id,target:u.id,type:'push',targetNumber:2};
+  g.rng=()=>.99;
+  g.resolvePush(first,opposed?counter:null);
+  assert.equal(g.phaseRolls.length,opposed?2:1,'only attack rolls during push resolution');
+  assert.deepEqual(t.psrs.map(p=>p.reason),[opposed?'Встречный толчок':'Толчок']);
+  assert.deepEqual(u.psrs.map(p=>p.reason),opposed?['Встречный толчок']:[]);
+  const before=g.phaseRolls.length;g.endPSR();
+  assert.equal(g.phaseRolls.length,before+(opposed?2:1),'PSR dice are rolled at end of phase');
+  assert.deepEqual(t.psrs,[]);assert.deepEqual(u.psrs,[]);
+ }
+});
+
+test('CAT3500D p.29: pushed target uses preceding ordinary physical damage for its phase-end PSR',()=>{
+ const {g,puncher,pusher,t}=sameSidePriorityGame();
+ g._resolutionChooser=(request,fallback)=>
+  request.kind==='physical-order'&&request.options.some(o=>o.attackerId===puncher.id)?
+   String(puncher.id):fallback;
+ const events=[],actualRoll=g.roll.bind(g);
+ g.roll=(name,tn)=>{events.push({kind:'roll',name,tn,damage:t.phaseDamage});return actualRoll(name,tn);};
+ g.hit=(victim,n)=>{if(victim===t){victim.phaseDamage+=20;events.push({kind:'damage',damage:victim.phaseDamage});}return {damage:n,hits:[]};};
+ g.rng=()=>.99;
+ const result=g.resolvePhysical();
+ assert(result.some(r=>r.id===pusher.id&&r.shots[0].hit));
+ assert(result.some(r=>r.id===puncher.id&&r.shots[0].hit));
+ const check=events.find(e=>e.kind==='roll'&&e.name===t.name+' · Толчок');
+ assert(check,'push PSR must occur at phase-end');
+ assert.equal(check.damage,20,'ordinary damage precedes the push PSR');
+ assert.equal(check.tn,t.piloting+1,'20-point damage contributes to the push PSR target number');
+ assert(events.findIndex(e=>e.kind==='damage')<events.indexOf(check));
+});
+
+test('CAT3500D pp.24,29: mixed pushes preserve independent two-punch roll and damage choices',()=>{
+ const {g,puncher,pusher,t}=sameSidePriorityGame();
+ const first=g.physicalDeclarations[1];
+ g.physicalDeclarations.push({...first,limb:'RA'});
+ const rolls=[],damage=[],choices=[];
+ const oldRoll=g.rollPhysical.bind(g),oldResolve=g.resolveRolledPhysical.bind(g);
+ g.rollPhysical=(d,snap)=>{rolls.push(d.limb);return oldRoll(d,snap);};
+ g.resolveRolledPhysical=attack=>{damage.push(attack.d.limb);return oldResolve(attack);};
+ g._resolutionChooser=(request,fallback)=>{
+  if(request.kind!=='physical-order')return fallback;
+  if(request.context?.scope==='attack'){
+   choices.push(request.context.stage);
+   return '1'; // after RA,LA roll staging, damage entry 1 is LA
+  }
+  if(request.options.some(o=>o.attackerId===puncher.id))return String(puncher.id);
+  return fallback;
+ };
+ g.rng=()=>.99;g.hit=(v,n)=>({damage:n,hits:[]});
+ const result=g.resolvePhysical();
+ assert.deepEqual(choices,['roll','damage']);
+ assert.deepEqual(rolls,['RA','LA']);
+ assert.deepEqual(damage,['LA','RA']);
+ assert.equal(result.filter(r=>r.id===puncher.id).length,2);
+ assert(result.some(r=>r.id===pusher.id&&r.shots[0].hit));
 });
