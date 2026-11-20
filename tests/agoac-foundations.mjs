@@ -2865,7 +2865,7 @@ test('AGoAC pp.6–7: ordinary physical resolution alternates grouped Mechs from
   g.physicalDeclarations=[b,d,c];
   assert.deepEqual(g.physicalOrder(),[c,b,d],'no-attack selection does not take the first resolution turn');
   const push={...a,type:'push'};g.physicalDeclarations=[b,c,push,d];
-  assert.deepEqual(g.physicalOrder(),[c,push,b,d],'preserve displacement exception scheduling');
+  assert.deepEqual(g.physicalOrder(),[c,b,push,d],'mixed displacement must retain the printed alternating declaration slots');
  }
 });
 
@@ -5023,4 +5023,119 @@ test('CAT3500D p.28: missing-by-design punch actuators stack TN and quarter dama
  u.slots.RA[7]=null;u.hatchets=u.hatchets.filter(h=>h.location!=='RA');
  u.actuators.RA.shoulder=true;
  assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').legal,false);
+});
+
+
+test('CAT3500D pp.7,24: mixed push, kick and punches alternate initiative team slots',()=>{
+ for(const winner of [0,1]){
+  const g=fresh(),losers=g.units.filter(u=>u.team!==winner),winners=g.units.filter(u=>u.team===winner);
+  g.phase='physical';g.initiativeWinner=winner;
+  const [lo0,lo1]=losers,[hi0,hi1]=winners;
+  const attack=(u,target,type='punch',limb='LA')=>({id:u.id,target:target.id,type,limb,targetNumber:2,damage:1,side:'front',table:'normal'});
+  const push=attack(lo0,hi0,'push'),punch=attack(lo1,hi1),
+   kick=attack(hi0,lo0,'kick','RL'),counter=attack(hi1,lo1);
+  // Deliberately shuffled declarations. Every slot is a whole Mech;
+  // the mere presence of a push must not reorder the whole team.
+  g.physicalDeclarations=[kick,counter,punch,push];
+  assert.deepEqual(g.physicalOrder(),[punch,kick,push,counter]);
+  const events=[];
+  g.resolvePush=(d)=>{events.push([d.id,'push']);};
+  g.rollPhysical=(d)=>{events.push([d.id,d.type]);return {u:g.unit(d.id),t:g.unit(d.target),d,roll:2,hit:false,cancelled:false,attackRoll:null};};
+  g.resolveRolledPhysical=()=>{};
+  g.endPSR=()=>{};
+  g.resolvePhysical();
+  assert.deepEqual(events,[[lo1.id,'punch'],[hi0.id,'kick'],[lo0.id,'push'],[hi1.id,'punch']]);
+ }
+});
+
+test('CAT3500D p.7: unequal mixed physical declarations preserve the 2-to-1 initiative batches',()=>{
+ for(const winner of [0,1]){
+  const g=fresh();g.phase='physical';g.initiativeWinner=winner;
+  const losing=g.units.filter(u=>u.team!==winner),winning=g.units.filter(u=>u.team===winner);
+  winning[1].dead=true;
+  const [a,b]=losing,[c]=winning;
+  const mk=(u,target,type,limb='LA')=>({id:u.id,target:target.id,type,limb,damage:1,targetNumber:2,side:'front',table:'normal'});
+  const p=mk(a,c,'push'),p2=mk(b,c,'punch'),p3=mk(c,a,'punch');
+  g.physicalDeclarations=[p3,p2,p];
+  // The larger side gets two declarations in the first pair, following
+  // the same 2:1 rule as movement and weapon declarations. The default
+  // order inside one side remains the recorded declaration order; its
+  // controller can separately choose a different order when applicable.
+  assert.deepEqual(g.physicalOrder(),[p2,p,p3]);
+  g.physicalDeclarations=[p3,p2,{...p,type:'kick',limb:'RL'}];
+  assert.deepEqual(g.physicalOrder().map(x=>x.id),[b.id,a.id,c.id]);
+ }
+});
+
+test('CAT3500D pp.24,29: a mixed phase still offers a same-side choice before a push interrupts punches',()=>{
+ const {g,puncher,pusher,t}=sameSidePriorityGame();
+ const first=g.physicalDeclarations.find(d=>d.type==='punch');
+ const second={...first,limb:'RA'};
+ g.physicalDeclarations.push(second);
+ // No opponents remain to act, so the owner may choose the order of
+ // its two fists versus the push, with both fists kept in one slot.
+ const events=[];
+ g._resolutionChooser=(request,fallback)=>{
+  if(request.kind==='physical-order'&&request.context?.scope!=='attack'&&request.options?.some(o=>o.attackerId===puncher.id)){
+   assert.equal(request.options.find(o=>o.attackerId===puncher.id).attacks.length,2);
+   return String(puncher.id);
+  }
+  return fallback;
+ };
+ g.rollPhysical=(d)=>{events.push(d.limb);return {u:g.unit(d.id),t:g.unit(d.target),d,roll:2,hit:false,cancelled:false,attackRoll:null};};
+ g.resolveRolledPhysical=()=>{};
+ g.resolvePush=(d)=>{events.push('push');};
+ g.endPSR=()=>{};
+ g.resolvePhysical();
+ assert.deepEqual(events,['LA','RA','push']);
+});
+
+
+test('CAT3500D p.24: one physical type per turn, with two separate punches as the sole exception',()=>{
+ for(const type of ['punch','kick','club','hatchet','push']){
+  const {g,u,t}=physicalBlockFixture();
+  g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+  const limb=type==='punch'?'RA':type==='kick'?'RL':type==='hatchet'?'LA':'RA';
+  const result=g.declarePhysical(u.id,t.id,type,limb);
+  assert(result.ok,type+': '+(result.error||''));
+  assert.equal(g.physicalDeclarations.length,1);
+  assert.equal(g.declarePhysical(u.id,t.id,'kick','RL').ok,false,
+   'one declared physical type ends this Mech selection');
+ }
+ const {g,u,t}=physicalBlockFixture();
+ u.slots.LA[7]=null;u.hatchets=[];
+ g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+ const both=g.declarePhysical(u.id,t.id,'punch','both');
+ assert(both.ok,both.error);
+ assert.deepEqual(g.physicalDeclarations.map(d=>d.limb),['LA','RA']);
+ assert(g.physicalDeclarations.every(d=>d.type==='punch'));
+ assert.equal(g.declarePhysical(u.id,t.id,'club','RA').ok,false);
+});
+
+test('CAT3500D p.29: push uses feet-facing, both shoulders, same level and no arm weapon fire',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const base=g.physicalPreview(u.id,t.id,'push','LA');
+ assert(base.legal,base.reason);
+ assert.equal(base.targetNumber,u.piloting-1);
+ u.twist=1;
+ assert(g.physicalPreview(u.id,t.id,'push','LA').legal,'torso twist does not change a push arc');
+ u.actuators.LA.shoulder=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'push','LA').targetNumber,base.targetNumber+2);
+ u.actuators.RA.shoulder=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'push','LA').targetNumber,base.targetNumber+4);
+ u.actuators.LA.shoulder=false;u.actuators.RA.shoulder=false;
+ u.firedLocations=['CT'];
+ assert(g.physicalPreview(u.id,t.id,'push','LA').legal);
+ u.firedLocations=['RA'];
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ u.firedLocations=[];
+ t.prone=true;
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ t.prone=false;g.tile(t.q,t.r).height=1;
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ g.tile(t.q,t.r).height=0;
+ u.facing=3;
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ u.facing=0;t.charge={type:'dfa',target:u.id};
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
 });
