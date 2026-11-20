@@ -1551,7 +1551,7 @@ export class Game extends Legacy{
    const check=this.roll('Прицельная атака · проверка локации');
    if(check>=6&&check<=8){
     this.phaseRolls.at(-1).result=locationNameForMech(u,aim)+' · '+amount+' урона';
-    return {location:aim,hits:amount>0?this.damage(u,aim,amount,{rear:side==='rear',sourceId}):[],damage:amount};
+    return {location:aim,hits:amount>0?this.damage(u,aim,amount,{rear:side==='rear',...(sourceId===null?{}:{sourceId})}):[],damage:amount};
    }
    this.phaseRolls.at(-1).result='Обычный бросок локации';
   }
@@ -1575,7 +1575,7 @@ export class Game extends Legacy{
  const applied=physical?physicalLocationDamage(u,this.tile(u.q,u.r),loc,amount):amount;
  this.phaseRolls.at(-1).result=locationNameForMech(u,loc)+(obscured(loc)?' · укрытие':` · ${applied} урона`);
  if(obscured(loc))return {location:loc,hits:[],damage:0};
- return {location:loc,hits:applied>0?this.damage(u,loc,applied,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac),sourceId}):[],damage:applied};
+ return {location:loc,hits:applied>0?this.damage(u,loc,applied,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac),...(sourceId===null?{}:{sourceId})}):[],damage:applied};
 }
  damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false,sourceId=null}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
  if(explosion&&this.hasCASEII(u,loc)){
