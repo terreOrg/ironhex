@@ -441,7 +441,7 @@
         36
       ],
       "status": "not_audited",
-      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy. PR221 additionally implements official Hip errata phase chronology for 037 with distinct turn-vs-phase MP and PSR history tests; status not yet promoted."
+      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy. PR221 additionally implements official Hip errata phase chronology for 037 with distinct turn-vs-phase MP and PSR history tests; status not yet promoted. Subsequent grouped missing critical-effects patch: immediate Biped leg destruction fall, no nested fall, next-turn facing; register 108 without early verification."
     },
     {
       "id": "agoac-heat",
@@ -7368,9 +7368,21 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.32–34: blown-off leg loses no additional armor or structure for 20+ PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.34: biped leg destruction causes immediate automatic fall without a deferred PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.34: destroyed biped leg never causes a second fall while prone or already falling"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.34: one-legged prone biped may rotate one hexside on a later turn"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 direct printed p.34 comparison: standing biped leg destruction must immediately cause automatic fall and end movement (not queue delayed lost-leg PSR), while already prone/falling cannot re-enter fall; the subsequent turn preserves a single prone hexside facing change. Engine and dist repaired and deterministic tests added. 108 remains Tested Case pending full effects matrix and exact gates."
     }
   ]
 }
