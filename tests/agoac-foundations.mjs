@@ -5139,3 +5139,96 @@ test('CAT3500D p.29: push uses feet-facing, both shoulders, same level and no ar
  u.facing=0;t.charge={type:'dfa',target:u.id};
  assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
 });
+
+
+test('CAT3500D pp.24,29: lethal charge recoil does not erase an already declared punch',()=>{
+ const g=fresh(),[charger,ally,target,puncher]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(charger,{q:0,r:0,facing:0,tonnage:65,moveMode:'run',
+  charge:{type:'charge',target:target.id,dir:0,hexes:3,targetPos:{q:1,r:0}}});
+ Object.assign(target,{q:1,r:0,facing:3});
+ Object.assign(puncher,{q:-1,r:0,facing:0});
+ ally.dead=true;g.phase='physical';g.initiativeWinner=1;g.rng=()=>.99;
+ const preview=g.physicalPreview(puncher.id,charger.id,'punch','RA');
+ assert(preview.legal,preview.reason);
+ g.physicalDeclarations=[{id:puncher.id,target:charger.id,type:'punch',limb:'RA',...preview}];
+ const damage=[];
+ g.packets=(victim,amount)=>{
+  damage.push([victim.id,amount]);
+  if(victim===charger)g.destroyMech(charger);
+  return amount;
+ };
+ const result=g.resolvePhysical();
+ const punch=result.find(r=>r.id===puncher.id)?.shots[0];
+ assert(charger.dead,'attacker destroys itself with its charge recoil');
+ assert.deepEqual([charger.q,charger.r],[0,0],'a destroyed charger cannot advance');
+ assert(punch,'the separately declared punch still resolves');
+ assert.equal(punch.cancelled,false);
+ assert.equal(punch.roll,12);
+ assert.equal(punch.hit,true);
+ assert.deepEqual(g.phaseRolls.slice(0,2).map(r=>r.kind),
+  [charger.name+' · Таран',puncher.name+' · punch']);
+ assert.deepEqual(damage.map(d=>d[0]),[target.id,charger.id]);
+});
+
+test('CAT3500D pp.24,29: lethal charge damage alone does not cancel another Mechs hit roll',()=>{
+ const g=fresh(),[charger,puncher,target,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(charger,{q:0,r:0,facing:0,tonnage:65,moveMode:'run',
+  charge:{type:'charge',target:target.id,dir:0,hexes:3,targetPos:{q:1,r:0}}});
+ Object.assign(target,{q:1,r:0,facing:3});
+ Object.assign(puncher,{q:2,r:0,facing:3});
+ other.dead=true;g.phase='physical';g.initiativeWinner=1;g.rng=()=>.99;
+ const preview=g.physicalPreview(puncher.id,target.id,'punch','RA');
+ assert(preview.legal,preview.reason);
+ g.physicalDeclarations=[{id:puncher.id,target:target.id,type:'punch',limb:'RA',...preview}];
+ g.packets=(victim,amount)=>{
+  if(victim===target)g.destroyMech(target);
+  return amount;
+ };
+ const result=g.resolvePhysical();
+ const punch=result.find(r=>r.id===puncher.id)?.shots[0];
+ assert(target.dead);
+ assert.deepEqual([target.q,target.r],[1,0],'the destroyed target remains pending at its original hex');
+ assert(punch,'a charge-killed target does not erase a previously committed roll');
+ assert.equal(punch.cancelled,false);
+ assert.equal(punch.roll,12);
+ assert.equal(punch.hit,true);
+ assert.deepEqual(g.phaseRolls.slice(0,2).map(r=>r.kind),
+  [charger.name+' · Таран',puncher.name+' · punch']);
+});
+
+test('CAT3500D p.29: reciprocal push PSRs include later punch damage and remain phase-end',()=>{
+ const g=fresh(),[pusher,puncher,target,other]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(pusher,{q:0,r:0,facing:0});
+ Object.assign(target,{q:1,r:0,facing:3});
+ Object.assign(puncher,{q:2,r:0,facing:3});
+ other.dead=true;g.phase='physical';g.initiativeWinner=1;g.rng=()=>.99;
+ const preview=g.physicalPreview(puncher.id,target.id,'punch','RA');
+ assert(preview.legal,preview.reason);
+ g.physicalDeclarations=[
+  {id:pusher.id,target:target.id,type:'push',targetNumber:2},
+  {id:target.id,target:pusher.id,type:'push',targetNumber:2},
+  {id:puncher.id,target:target.id,type:'punch',limb:'RA',...preview}
+ ];
+ const events=[],oldRoll=g.roll.bind(g);
+ g.roll=(name,tn)=>{
+  events.push({name,tn,damage:target.phaseDamage});
+  return oldRoll(name,tn);
+ };
+ g.hit=(victim,amount)=>{
+  if(victim===target){victim.phaseDamage+=20;events.push({name:'damage',damage:victim.phaseDamage});}
+  return {damage:amount,hits:[]};
+ };
+ const result=g.resolvePhysical();
+ assert.deepEqual([pusher.q,pusher.r,target.q,target.r],[0,0,1,0]);
+ assert.equal(result.filter(r=>r.shots[0].weapon==='push').length,2);
+ assert.equal(result.find(r=>r.id===puncher.id).shots[0].hit,true);
+ const pushed=events.find(e=>e.name===target.name+' · Встречный толчок');
+ assert(pushed,'both successful opposed pushes require phase-end piloting');
+ assert.equal(pushed.damage,20);
+ assert.equal(pushed.tn,target.piloting+1);
+ assert(events.findIndex(e=>e.name==='damage')<events.indexOf(pushed));
+ assert.equal(g.afterRolls.length,2,'both opposing PSRs are after attack and damage resolution');
+});
