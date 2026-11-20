@@ -5358,6 +5358,29 @@ test('CAT3500D pp.24–29: Chapter 7 closes only with fifteen source-reviewed ph
 });
 
 
+
+test('CAT3500D pp.30–36: Chapter 8 closes only with twelve source-reviewed damage requirements',()=>{
+ const r=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
+ const chapter=r.topics.find(x=>x.id==='agoac-damage');
+ const rules=r.requirements.filter(x=>x.topicId==='agoac-damage');
+ assert.equal(chapter.status,'verified');
+ assert.equal(rules.length,12,'missing, duplicate or extra Chapter 8 requirement');
+ assert.equal(chapter.audit.inventoryComplete,true);
+ assert.equal(chapter.audit.sourceChecked,true);
+ assert.equal(chapter.audit.edgeCasesChecked,true);
+ assert.deepEqual(chapter.audit.requirementIds,rules.map(x=>x.id));
+ assert(rules.every(x=>x.status==='verified'&&x.audit?.sourceChecked&&x.audit?.edgeCasesChecked&&x.evidence?.length>0));
+ assert.equal(chapter.audit.testedSha,chapter.audit.mainQualityGate.headSha);
+ assert.equal(chapter.audit.mainQualityGate.conclusion,'success');
+ assert.deepEqual(chapter.audit.checks.map(x=>x.name).sort(),['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
+ assert(chapter.audit.checks.every(x=>x.conclusion==='success'&&Number.isInteger(x.runId)));
+ const crit=r.requirements.find(x=>x.id==='agoac-108');
+ const criticalTests=readFileSync(new URL('./agoac-ch8-critical-components.mjs',import.meta.url),'utf8');
+ assert(criticalTests.split("test('").length-1>=21,'full component effects matrix must not disappear');
+ assert(crit.evidence.some(x=>x.file==='tests/agoac-ch8-critical-components.mjs'));
+ assert.equal(r.currentTopicId,'agoac-heat','cursor must point at next unverified chapter without starting it');
+});
+
 test('CAT3500D p.32 and errata v8.01 p.4: first gyro hit immediately rolls its PSR',()=>{
  const g=fresh(),u=g.units[0];g.phase='fire';u.piloting=5;
  const dice=[...diceFor(8),.5/6,3.5/6,...diceFor(12)];
@@ -5637,7 +5660,7 @@ test('CAT3500D p.34: one-legged prone biped may rotate one hexside on a later tu
 });
 
 
-test('CAT3500D pp.30–36: five certified damage groups retain sourced evidence and Chapter 8 stays open',()=>{
+test('CAT3500D pp.30–36: five core damage groups retain exact source and CI evidence after chapter closure',()=>{
  const reg=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
  const ids=['agoac-037','agoac-104','agoac-105','agoac-106','agoac-107'];
  for(const id of ids){
@@ -5647,7 +5670,7 @@ test('CAT3500D pp.30–36: five certified damage groups retain sourced evidence 
   assert(r.audit.checks.every(c=>c.conclusion==='success'),id);
   assert.equal(r.audit.mainQualityGate.conclusion,'success',id);
  }
- assert.equal(reg.topics.find(x=>x.id==='agoac-damage').status,'not_audited');
- assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'tested_case',
-  'a roll of 12 mandates head/limb blowoff and full effects remain to audit');
+ assert.equal(reg.topics.find(x=>x.id==='agoac-damage').status,'verified');
+ assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'verified',
+  'component effects and mandatory natural-12 head/limb blowoff must be audited');
 });

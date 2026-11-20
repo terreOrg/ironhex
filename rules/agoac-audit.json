@@ -11,8 +11,8 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment.",
-  "currentTopicId": "agoac-damage",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment.",
+  "currentTopicId": "agoac-heat",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -440,8 +440,56 @@
         30,
         36
       ],
-      "status": "not_audited",
-      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy. PR221 additionally implements official Hip errata phase chronology for 037 with distinct turn-vs-phase MP and PSR history tests; status not yet promoted. Subsequent grouped missing critical-effects patch: immediate Biped leg destruction fall, no nested fall, next-turn facing; register 108 without early verification. 20.11.2026 source-to-engine review batch 037/104/105/106/107 certified in PR branch; 108 remains Tested Case pending other critical component-effects review. Correction: CAT3500D printed pp.31–33 makes natural12 head/limb blowoff mandatory and NOT a controller choice. Whole chapter not_audited."
+      "status": "verified",
+      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy. PR221 additionally implements official Hip errata phase chronology for 037 with distinct turn-vs-phase MP and PSR history tests; status not yet promoted. Subsequent grouped missing critical-effects patch: immediate Biped leg destruction fall, no nested fall, next-turn facing; register 108 without early verification. 20.11.2026 source-to-engine review batch 037/104/105/106/107 certified in PR branch; 108 remains Tested Case pending other critical component-effects review. Correction: CAT3500D printed pp.31–33 makes natural12 head/limb blowoff mandatory and NOT a controller choice. Whole chapter not_audited. FINAL SOURCE INVENTORY 2026-11-20: CAT3500D Damage printed pp.30–36 source-checked against damage(), criticalHit(), destroyLocation(), explode(), heatPhase(), endPSR(), physicalPreview(), onMap() and official AGoAC errata v8.01. Twelve individually registered atomic requirement groups all source/code verified with named deterministic tests and exact four-way green main SHA cbcb9ece; chapter closure audit-only, no engine changes, no deploy, no work on Chapter 9.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "inventoryComplete": true,
+        "sourceEdition": "CAT3500D (2018) Damage pp.30–36; official AGoAC errata v8.01 pp.3–4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "cbcb9ece5cb5788e3f76b5c05eacc566d7d86a18",
+        "testedTree": "955c8aaf9dffd4b0921b809c908c3d15355906be",
+        "mergedSha": "cbcb9ece5cb5788e3f76b5c05eacc566d7d86a18",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44756577612,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44756577326,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44756577274,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44756577288,
+          "conclusion": "success",
+          "headSha": "cbcb9ece5cb5788e3f76b5c05eacc566d7d86a18"
+        },
+        "requirementIds": [
+          "agoac-037",
+          "agoac-039",
+          "agoac-040",
+          "agoac-041",
+          "agoac-042",
+          "agoac-045",
+          "agoac-103",
+          "agoac-104",
+          "agoac-105",
+          "agoac-106",
+          "agoac-107",
+          "agoac-108"
+        ],
+        "review": "Damage pp.30–36 source inventory: phase-hit resolution timing and attack order; armor/facing/internal damage, phase PSR count and inward transfer; critical 2d6 number and eligible slot selection, transfer exceptions, ammo explosions; every named critical component effect including foot/hip/upper/lower leg and arm, shoulder, hand, sensors, life support, jump jets, sinks, engine, gyro and cockpit; natural12 mandatory head/limb loss versus 3 torso slots; section destruction, loss of torso/arm, leg standing restrictions, CT/head death and phase-end removal. Original 2018 printing cross-compared with official errata v8.01 where superseded. Existing source-reviewed atomic requirements 037,039–042,045,103–108 account for the printed chapter without silent gaps. Engine implementations and all tested edge cases reviewed. Exact post-merge main cbcb9ece CI 44756577612 (success), Browser 44756577326 (success), Container Smoke 44756577274 (success), strict Sonar 44756577288 (success). Chapter closure only; Chapter 9 not started."
+      }
     },
     {
       "id": "agoac-heat",
@@ -7486,7 +7534,7 @@
         35
       ],
       "statement": "Critical results destroy equipment and impose correct actuator/engine/gyro/cockpit/heat sink/jump jet/sensor/life support effects; head or limb blown off by roll 12, side torso arm loss, CT/head destruction and delayed removal.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7515,9 +7563,98 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.34: one-legged prone biped may rotate one hexside on a later turn"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D pp.32–33: first sensor hit degrades and second prevents weapon attacks"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D pp.32–33: critical equipment losses decrement distinct heat sink and jump capacities"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.32: three distinct engine slot criticals destroy the mech"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.32 and AGoAC errata v8.01: gyro critical has immediate first PSR and second fall"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.33: cockpit critical kills pilot and schedules removal"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D pp.32–34: leg actuators have separate damage and phase history"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D pp.32–33: destroyed shoulder increases arm-weapon targeting modifier by four"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.32 and AGoAC errata v8.01: damaged hip reduces walking movement in actual MP API"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.33: destroyed life support wounds at high heat and not below threshold"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.33: damaged life support inflicts underwater injury only when submerged"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.34: left/right torso destruction also destroys corresponding arm exactly once"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D pp.34–35: head and center torso loss destroy the BattleMech"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D pp.31–33: natural critical 12 severs an intact head or limb without a player choice"
+        },
+        {
+          "file": "tests/agoac-ch8-critical-components.mjs",
+          "test": "CAT3500D p.31: natural critical 12 in a torso rolls three slots rather than severing torso"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 direct printed p.34 comparison: standing biped leg destruction must immediately cause automatic fall and end movement (not queue delayed lost-leg PSR), while already prone/falling cannot re-enter fall; the subsequent turn preserves a single prone hexside facing change. Engine and dist repaired and deterministic tests added. 108 remains Tested Case pending full effects matrix and exact gates. 20.11.2026 verified against printed CAT3500D (2018) p.31 table and pp.32–33 Arm/Leg/Head Blown Off: natural 12 against an INTACT head or limb causes MANDATORY destruction; neither player can elect three ordinary critical slots. Only torso natural12 gives three critical hits. Existing criticalHit() mandatory head/limb blowoff matches source; no chooser is required. Other critical equipment effects under 108 remain Tested Case."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 direct printed p.34 comparison: standing biped leg destruction must immediately cause automatic fall and end movement (not queue delayed lost-leg PSR), while already prone/falling cannot re-enter fall; the subsequent turn preserves a single prone hexside facing change. Engine and dist repaired and deterministic tests added. 108 remains Tested Case pending full effects matrix and exact gates. 20.11.2026 verified against printed CAT3500D (2018) p.31 table and pp.32–33 Arm/Leg/Head Blown Off: natural 12 against an INTACT head or limb causes MANDATORY destruction; neither player can elect three ordinary critical slots. Only torso natural12 gives three critical hits. Existing criticalHit() mandatory head/limb blowoff matches source; no chooser is required. Other critical equipment effects under 108 remain Tested Case. FINAL CERTIFICATION 2026-11-20: CAT3500D pp.31–35 audited line-by-line with official errata v8.01; all 21 dedicated critical-component regression tests and preexisting AGoAC foundation matrices executed in successful main CI 44756577612; Browser 44756577326, Container Smoke 44756577274, strict Sonar 44756577288 all successful on exact main cbcb9ece. All critical component and limb/cockpit/torso effects reviewed, Verified as scoped.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.30–36; official AGoAC errata v8.01 pp.3–4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "cbcb9ece5cb5788e3f76b5c05eacc566d7d86a18",
+        "testedTree": "955c8aaf9dffd4b0921b809c908c3d15355906be",
+        "mergedSha": "cbcb9ece5cb5788e3f76b5c05eacc566d7d86a18",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44756577612,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44756577326,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44756577274,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44756577288,
+          "conclusion": "success",
+          "headSha": "cbcb9ece5cb5788e3f76b5c05eacc566d7d86a18"
+        },
+        "review": "Direct source-to-code comparison: CAT3500D p.32 critical effects for ammo, blown arms, cockpit/pilot death, engine first+second +5 heat and third destroyed, foot +1 MP reduction/PSR/+1 kick, gyro errata immediate first PSR/second fall; p.33 hand (+1 punch, club/physical-weapon denied), heat sinks, hip errata turn/phase distinction, jets -1 Jump MP, automatic leg blowoff, life support (heat 15–25 one wound; 26+ two; submerged end phase one wound), lower arm/leg, sensors and shoulder modifiers; p.34 upper arm/leg, weapon/multislot disabling, all slots lost with destroyed section, mandatory torso-arm cascade and loss-of-leg fall/standing restrictions; p.35 mech death and phase-end removal; p.31 natural12: intact head/limbs mandatory loss, torso three slot crits. Reviewed actual engine criticalHit(),destroyLocation(),mp(),psrMod(),preview(),physicalPreview(),heatPhase(),endPhase(),onMap()/removeDestroyedMechs(), serialization; real gameplay API tests plus preexisting integrated 21 new Chapter8 tests and AGoAC foundations matrices passed exact main SHA with CI, Chromium, Smoke, Sonar. No new missing AGoAC-only component behavior found; advanced optional CASE II or BMM mechanics explicitly outside chapter scope."
+      }
     }
   ]
 }
