@@ -1507,9 +1507,9 @@ test('BMM p.48: biped retains hip PSR behavior after Quad critical-hit integrati
  g.criticalHit(u,'LL');
  assert.equal(u.actuators.LL.hip,true);
  assert.equal(u.psrs.at(-1).reason,'Актуатор LL');
- // AGoAC p.33: biped walking MP halves downward, unlike the old fixture.
- assert.equal(g.mp(u,'walk'),Math.floor(u.walk/2));
- assert.equal(g.mp(u,'run'),Math.ceil(Math.floor(u.walk/2)*1.5));
+ // AGoAC official errata v8.01 p.4: halve MP rounding upward, before actuator losses.
+ assert.equal(g.mp(u,'walk'),Math.ceil(u.walk/2));
+ assert.equal(g.mp(u,'run'),Math.ceil(Math.ceil(u.walk/2)*1.5));
  assert.equal(g.psrMod(u),2);
 });
 
