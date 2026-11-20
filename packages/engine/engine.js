@@ -1480,7 +1480,7 @@ export class Game extends Legacy{
  if(this.phase==='fire')for(const u of this.units){
   if(u.dead||!u.airborne||u.charge?.type!=='dfa'||u.charge.resolved)continue;
   const target=this.unit(u.charge.target);
-  if(target?.dead&&!target.escaped)this.completeDFAJump(u,u.charge.targetPos);
+  if(target?.dead&&!target.escaped)this.completeDFAJump(u,u.charge.targetPos,target);
   else if(u.unconscious){
    const tn=u.piloting+this.psrMod(u,true)+u.psrs.reduce((sum,p)=>sum+p.modifier,0)+(u.phaseDamage>=20?1:0);
    this.interruptAirborneDFA(u,tn);
@@ -2530,11 +2530,20 @@ export class Game extends Legacy{
   }
   return [];
  }
+ // CAT3500D p.26 and official errata v8.01 pp.3–4: a target destroyed
+ // earlier in this phase remains onMap until cleanup, but its wreck does
+ // not block the declared charge's entry or the converted DFA's normal
+ // landing. Every OTHER grounded occupant still blocks the destination.
+ destroyedPhysicalTargetHexFree(u,deadTarget,pos){
+  return !!pos&&!!this.tile(pos.q,pos.r)&&
+   !this.units.some(v=>v!==u&&v!==deadTarget&&this.onMap(v)&&
+    !v.airborne&&v.q===pos.q&&v.r===pos.r);
+ }
  // Errata v8.01 p.4: a DFA whose target was destroyed by weapon fire
  // completes an ordinary jump, with no DFA damage or DFA-specific PSR.
- completeDFAJump(u,pos){
+ completeDFAJump(u,pos,deadTarget=null){
   u.airborne=false;u.charge.resolved=true;
-  if(u.dead||!pos||!this.tile(pos.q,pos.r)||this.occupied(pos.q,pos.r,u.id))return;
+  if(u.dead||!this.destroyedPhysicalTargetHexFree(u,deadTarget,pos))return;
   u.q=pos.q;u.r=pos.r;
   if(u.charge.startPos)u.distanceMoved=distance(u.charge.startPos,u);
   const tile=this.tile(u.q,u.r),modifier=u.config==='Quad'&&['LA','RA','LL','RL'].filter(l=>!u.structure[l]).length===1?5:0;
@@ -2589,10 +2598,10 @@ export class Game extends Legacy{
   const t=this.unit(s.target);if(!t)return;
   const dfa=s.type==='dfa',start=this.phaseRolls.length;
   if(t.dead&&!t.escaped){
-   if(dfa)this.completeDFAJump(u,s.targetPos);
+   if(dfa)this.completeDFAJump(u,s.targetPos,t);
    else{
     s.resolved=true;
-    if(this.mobile(u)&&!u.prone&&!this.occupied(s.targetPos.q,s.targetPos.r,u.id)){
+    if(this.mobile(u)&&!u.prone&&this.destroyedPhysicalTargetHexFree(u,t,s.targetPos)){
      u.q=s.targetPos.q;u.r=s.targetPos.r;
     }
    }
