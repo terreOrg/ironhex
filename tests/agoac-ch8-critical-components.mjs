@@ -20,8 +20,12 @@ test('CAT3500D pp.32–33: first sensor hit degrades and second prevents weapon 
  positions.push(1,2);
  hit();assert.equal(unit.sensorHits,1);
  assert.equal(unit.dead,false);
+ const enemy=game.units.find(x=>x.team!==unit.team);
+ assert(enemy,'opposing mech for attack-preview integration');
+ assert.equal(game.preview(unit.id,enemy.id,0).mods.sensor,2,'first sensor hit adds +2');
  hit();assert.equal(unit.sensorHits,2);
  assert.deepEqual(unit.crit.HD.slice(0,2),[true,true]);
+ assert.equal(game.preview(unit.id,enemy.id,0).reason,'Датчики уничтожены','second sensor hit disables weapon attacks');
 });
 
 test('CAT3500D p.33: life support critical permanently enables heat and underwater injury effects',()=>{
@@ -88,4 +92,20 @@ test('CAT3500D pp.32–33: weapon critical permanently disables the affected wea
  hit();
  assert.equal(unit.weapons[0].destroyed,true);
  assert.equal(unit.crit.RA[0],true);
+});
+
+test('CAT3500D pp.32–33: critical jump jet loss reduces actual available jumping MP',()=>{
+ const {game,unit,hit}=harness('LT',['jump']);
+ const before=game.mp(unit,'jump');
+ assert(before>0,'fixture must start with functioning jump jets');
+ hit();
+ assert.equal(game.mp(unit,'jump'),before-1);
+});
+
+test('CAT3500D pp.32–33: destroyed weapon is rejected by actual fire preview',()=>{
+ const {game,unit,hit}=harness('RA',['w:0']);
+ const enemy=game.units.find(x=>x.team!==unit.team);
+ assert(enemy,'enemy exists for weapon preview');
+ hit();
+ assert.equal(game.preview(unit.id,enemy.id,0).reason,'Оружие уничтожено или затоплено');
 });
