@@ -1524,16 +1524,16 @@ export class Game extends Legacy{
   return true;
  }
  fall(u,levels=0,tn=null,forcedSide=null,extraDamage=0,origin=null){if(u.dead||u.falling)return;if(this.interruptAirborneDFA(u,tn))return;u.falling=true;u.prone=true;const d=this.d6(u.name+' · Направление падения'),side=forcedSide||(d===1?'front':d===4?'rear':d<=3?'right':'left');u.facing=wrap(u.facing-(d-1));u.lastFallSide=side;const seat=(tn??u.piloting+this.psrMod(u))+Math.max(0,levels-1);if(this.isImmobile(u)||seat>12||this.roll(u.name+' · Травма при падении',seat)<seat)this.wound(u,1);this.consciousness(u);const impacts=this.fallDamageGroups(u,levels,extraDamage,origin);this.note(`${u.name} упал: ${impacts.reduce((sum,n)=>sum+n,0)} урона.`);for(const damage of impacts)if(damage&&!u.dead)this.packets(u,damage,side);u.falling=false;}
- packets(u,amount,side='front',table='normal',physical=false,sourceId=null){
+ packets(u,amount,side='front',table='normal',physical=false){
  let total=amount,applied=0;
  while(total>0&&!u.dead){
   const n=Math.min(5,total);
-  const result=this.hit(u,n,side,table,null,false,false,physical,sourceId);
+  const result=this.hit(u,n,side,table,null,false,false,physical);
   applied+=result?.damage??n;total-=n;
  }
  return applied;
 }
- hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false,physical=false,sourceId=null){
+ hit(u,amount,side='front',table='normal',aim=null,cover=false,underwaterCover=false,physical=false){
  let loc,r,floatingTac=false;const obscured=l=>cover&&partialCoverObscures(u,l,underwaterCover);
  if(table==='punch'){
   r=this.d6('Локация · удар рукой');
@@ -1551,7 +1551,7 @@ export class Game extends Legacy{
    const check=this.roll('Прицельная атака · проверка локации');
    if(check>=6&&check<=8){
     this.phaseRolls.at(-1).result=locationNameForMech(u,aim)+' · '+amount+' урона';
-    return {location:aim,hits:amount>0?this.damage(u,aim,amount,{rear:side==='rear',...(sourceId===null?{}:{sourceId})}):[],damage:amount};
+    return {location:aim,hits:amount>0?this.damage(u,aim,amount,{rear:side==='rear'}):[],damage:amount};
    }
    this.phaseRolls.at(-1).result='Обычный бросок локации';
   }
@@ -1575,9 +1575,9 @@ export class Game extends Legacy{
  const applied=physical?physicalLocationDamage(u,this.tile(u.q,u.r),loc,amount):amount;
  this.phaseRolls.at(-1).result=locationNameForMech(u,loc)+(obscured(loc)?' · укрытие':` · ${applied} урона`);
  if(obscured(loc))return {location:loc,hits:[],damage:0};
- return {location:loc,hits:applied>0?this.damage(u,loc,applied,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac),...(sourceId===null?{}:{sourceId})}):[],damage:applied};
+ return {location:loc,hits:applied>0?this.damage(u,loc,applied,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}):[],damage:applied};
 }
- damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false,sourceId=null}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
+ damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
  if(explosion&&this.hasCASEII(u,loc)){
   // BMM 2022 p.119: only one point damages structure; remainder vents.
   const d=Math.min(1,u.structure[loc]);u.structure[loc]-=d;rem-=d;
@@ -1587,12 +1587,12 @@ export class Game extends Legacy{
   }else if(u.rear[loc]!==undefined){a=Math.min(u.rear[loc],rem);u.rear[loc]-=a;}
   u.phaseDamage+=d+a;hits.push({location:loc,armor:a,structure:d});if(a+d)this.checkDirectionalTorsoMountHit(u,loc);
   if(loc==='HD'&&d)this.wound(u,1);
-  if(d)this.criticalHit(u,loc,false,true,sourceId);
+  if(d)this.criticalHit(u,loc,false,true);
   if(!u.structure[loc])this.destroyLocation(u,loc);
   break;
  }
- const ar=rear&&u.rear[loc]!==undefined?u.rear:u.armor;const a=internal?0:Math.min(ar[loc],rem);ar[loc]-=a;rem-=a;const d=Math.min(u.structure[loc],rem);u.structure[loc]-=d;rem-=d;u.phaseDamage+=a+d;hits.push({location:loc,armor:a,structure:d});if(a+d)this.checkDirectionalTorsoMountHit(u,loc);if(loc==='HD'&&a+d)this.wound(u,1);if(d&&(u.structure[loc]||u.slots?.[loc]?.some(s=>typeof s==='string'&&s.startsWith('ammo:'))))this.criticalHit(u,loc,!u.structure[loc],false,sourceId);if(a+d)this.checkHullIntegrity(u,loc);if(!u.structure[loc]){ // CAT3500D p.34: all remaining armor in a destroyed section counts toward phase damage; blown-off limbs do not pass through this path.
-  u.phaseDamage+=(u.armor[loc]||0)+(u.rear[loc]||0);this.destroyLocation(u,loc);if(explosion&&this.hasCASE(u,loc))break;loc=transfer[loc];}else break;}if(tac&&!u.dead)this.criticalHit(u,u.structure[initial]?initial:transfer[initial]||initial,false,false,sourceId);return hits;}
+ const ar=rear&&u.rear[loc]!==undefined?u.rear:u.armor;const a=internal?0:Math.min(ar[loc],rem);ar[loc]-=a;rem-=a;const d=Math.min(u.structure[loc],rem);u.structure[loc]-=d;rem-=d;u.phaseDamage+=a+d;hits.push({location:loc,armor:a,structure:d});if(a+d)this.checkDirectionalTorsoMountHit(u,loc);if(loc==='HD'&&a+d)this.wound(u,1);if(d&&(u.structure[loc]||u.slots?.[loc]?.some(s=>typeof s==='string'&&s.startsWith('ammo:'))))this.criticalHit(u,loc,!u.structure[loc]);if(a+d)this.checkHullIntegrity(u,loc);if(!u.structure[loc]){ // CAT3500D p.34: all remaining armor in a destroyed section counts toward phase damage; blown-off limbs do not pass through this path.
+  u.phaseDamage+=(u.armor[loc]||0)+(u.rear[loc]||0);this.destroyLocation(u,loc);if(explosion&&this.hasCASE(u,loc))break;loc=transfer[loc];}else break;}if(tac&&!u.dead)this.criticalHit(u,u.structure[initial]?initial:transfer[initial]||initial,false);return hits;}
  destroyLocation(u,loc){
   if(!u.slots[loc])return;
   // A location can be destroyed recursively by side-torso loss and
@@ -1629,17 +1629,8 @@ export class Game extends Legacy{
  // External heat sources are cumulative to 15 heat points each turn (BMM p.50).
  applyExternalHeat(u,amount){const n=Number.isFinite(amount)?Math.max(0,Math.trunc(amount)):0,added=Math.min(n,Math.max(0,15-(u.externalHeat??0)));u.externalHeat=(u.externalHeat??0)+added;u.pendingHeat+=added;return added;}
  explode(u,bin){if(!bin||bin.destroyed||!bin.shots)return;const w=u.weapons[bin.weapon],amount=bin.shots*w.damage*(w.rack||1);bin.shots=0;bin.destroyed=true;this.syncAmmo(u);this.wound(u,2);this.note(`${u.name}: взрыв боезапаса, ${amount} внутреннего урона.`);this.damage(u,bin.location,amount,{internal:true,explosion:true});if(u.structure.CT===0){u.pilotWounds=6;this.destroyMech(u);}}
- criticalHit(u,loc,destroyed=false,caseIIVenting=false,sourceId=null){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)&&!destroyed){ // CAT3500D pp.31–33: attacking controller chooses blowoff OR 3 regular critical slots.
-  const attacker=sourceId===null?u:this.unit(sourceId)||u;
-  const choice=this.chooseResolutionOption('critical-roll12',attacker,
-   [{id:'blowoff'},{id:'three-critical-hits'}],'blowoff',
-   {targetId:u.id,location:loc,roll:12});
-  if(choice==='blowoff'){
-   if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)return;
-   if(['LA','RA','LL','RL'].includes(loc)&&!u.destroyedSections?.includes(loc))this.leaveLimbClub(u);
-   this.destroyLocation(u,loc);return;
-  }
- }const eligible=l=>u.slots[l].map((s,i)=>s&&s!=='case'&&s!=='case2'&&!u.crit[l][i]?i:-1).filter(i=>i>=0);let valid=eligible(loc);if(!valid.length){if(destroyed||newlyHit.includes(loc))return;while(!valid.length&&transfer[loc]&&!newlyHit.includes(loc)){loc=transfer[loc];valid=eligible(loc);}if(!valid.length)return;}for(let k=0;k<n&&!u.dead;k++){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)continue;valid=eligible(loc);if(!valid.length)break;let ix=-1,tries=0;while(!valid.includes(ix)&&tries++<60){const first=valid.some(i=>i<6),second=valid.some(i=>i>=6),block=first&&second?(this.d6('Критический слот: блок')>=4?1:0):second?1:0;ix=block*6+this.d6('Критический слот: позиция')-1;}if(!valid.includes(ix))ix=valid[0];const s=u.slots[loc][ix];if(destroyed&&!s.startsWith('ammo:'))continue; // Discard this destroyed-location critical; destruction accounts for non-ammo components.
+ criticalHit(u,loc,destroyed=false,caseIIVenting=false){if(u.dead)return;const phaseKey=`${this.round}:${this.phase}`;if(u.criticalPhaseKey!==phaseKey){u.criticalPhaseKey=phaseKey;u.critMarkedThisPhase=[];}const newlyHit=u.critMarkedThisPhase;const r=this.roll(u.name+' · Критические повреждения'),n=r<=7?0:r<=9?1:r<=11?2:3;this.phaseRolls.at(-1).result=`Критических попаданий: ${n}`;if(!n)return;if(r===12&&['HD','LA','RA','LL','RL'].includes(loc)&&!destroyed){ // CAT3500D pp.30–32,34: destroyed limbs with ammo resolve three slot rolls, not an irrelevant blow-off.
+  if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)return;if(['LA','RA','LL','RL'].includes(loc)&&!u.destroyedSections?.includes(loc))this.leaveLimbClub(u);this.destroyLocation(u,loc);return;}const eligible=l=>u.slots[l].map((s,i)=>s&&s!=='case'&&s!=='case2'&&!u.crit[l][i]?i:-1).filter(i=>i>=0);let valid=eligible(loc);if(!valid.length){if(destroyed||newlyHit.includes(loc))return;while(!valid.length&&transfer[loc]&&!newlyHit.includes(loc)){loc=transfer[loc];valid=eligible(loc);}if(!valid.length)return;}for(let k=0;k<n&&!u.dead;k++){if(caseIIVenting&&this.roll(u.name+' · CASE II критический шанс',8)>=8)continue;valid=eligible(loc);if(!valid.length)break;let ix=-1,tries=0;while(!valid.includes(ix)&&tries++<60){const first=valid.some(i=>i<6),second=valid.some(i=>i>=6),block=first&&second?(this.d6('Критический слот: блок')>=4?1:0):second?1:0;ix=block*6+this.d6('Критический слот: позиция')-1;}if(!valid.includes(ix))ix=valid[0];const s=u.slots[loc][ix];if(destroyed&&!s.startsWith('ammo:'))continue; // Discard this destroyed-location critical; destruction accounts for non-ammo components.
   u.crit[loc][ix]=true;newlyHit.push(loc);this.note(`${u.name}: ${loc}, слот ${ix+1} — ${s}.`);if(s.startsWith('ammo:'))this.explode(u,u.bins.find(b=>b.location===loc&&b.slot===ix));else if(destroyed){
   // CAT3500D p.36 Step 5: non-ammunition criticals in a newly destroyed
   // section are discarded. destroyLocation accounts for components once.
@@ -1781,7 +1772,7 @@ export class Game extends Legacy{
   const side=hit&&!s.heatMode&&!t.dead?this.weaponHitSide(t,u,s):p.side;
   for(const amount of this.fireAmounts(s,hit)){
    if(t.dead)break;
-   const out=this.hit(t,amount,side,'normal',s.aim,p.cover,p.underwaterCover,false,u.id);
+   const out=this.hit(t,amount,side,'normal',s.aim,p.cover,p.underwaterCover);
    damage+=out.damage;location=out.location;hits.push(...out.hits);
    if(side==='rear'&&['LT','CT','RT'].includes(location)&&t.dumping.length)
     for(const index of [...t.dumping])this.explode(t,t.bins[index]);
@@ -2206,7 +2197,7 @@ export class Game extends Legacy{
   const start=this.phaseRolls.length;let damage=0;
   if(hit){
    if(!t.dead){
-    const out=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover,false,true,u.id);
+    const out=this.hit(t,d.damage,d.side,d.table,null,!!d.physicalCover,false,true);
     damage=out.damage;
     if(d.type==='kick')this.psr(t,0,'Удар ногой');
    }
@@ -2661,7 +2652,7 @@ export class Game extends Legacy{
    const selfDamage=dfa?u.tonnage/5:Math.ceil(t.tonnage/10);
    // Charge and DFA use separate location rolls for each five-point
    // grouping; any submerged hit location halves only that grouping.
-   const applied=this.packets(t,damage,side,dfa&&!t.prone?'punch':'normal',true,u.id);
+   const applied=this.packets(t,damage,side,dfa&&!t.prone?'punch':'normal',true);
    if(Number.isFinite(applied))damage=applied;
    this.packets(u,selfDamage,'front',dfa?'kick':'normal',true);
    if(dfa)this.resolveDFALanding(u,t,s.dir,true,old);
