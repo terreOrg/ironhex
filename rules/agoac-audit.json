@@ -441,7 +441,7 @@
         36
       ],
       "status": "not_audited",
-      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified."
+      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited."
     },
     {
       "id": "agoac-heat",
@@ -3199,7 +3199,7 @@
         43
       ],
       "statement": "AGoAC errata v8.01: first gyro critical immediately triggers PSR at application (+3 gyro), second destroys gyro, automatic fall, +6 applies to fall cockpit PSR; higher-slot marks have no further modifier. Destroyed gyro prevents standing or leaving hex while permitting one facing step and does not alone count as immobility.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -3210,7 +3210,37 @@
           "test": "CAT3500D p.32 and errata v8.01 p.4: first gyro hit immediately rolls its PSR"
         }
       ],
-      "reviewNote": "Gyro critical and movement restriction regression; running/jumping PSR timing and seatbelt roll integration remain separate. Exact CI pending. 20.11.2026 full errata p.4 recheck: previous deferred first-gyro PSR contradicted official correction. Engine now resolves first gyro PSR immediately and second gyro automatic fall immediately, tested with deterministic 2d6 and reused test; awaiting exact CI and full source review."
+      "reviewNote": "Gyro critical and movement restriction regression; running/jumping PSR timing and seatbelt roll integration remain separate. Exact CI pending. 20.11.2026 full errata p.4 recheck: previous deferred first-gyro PSR contradicted official correction. Engine now resolves first gyro PSR immediately and second gyro automatic fall immediately, tested with deterministic 2d6 and reused test; awaiting exact CI and full source review. SOURCE-TO-CODE CERTIFIED 2026-11-20: Official AGoAC Errata v8.01 p.4 replaces first-gyro end-of-phase PSR with immediate check when hit is applied; CAT3500D p.32 base and BMM-compatible restriction verified. criticalHit now immediately calls psr after first affected Gyro slot, +3 from psrMod, and triggers fall with +6 upon second. Gyro hits cap at two even if all four slots are marked; destroyed gyro cannot stand but can face by one hexside if MP exists, not automatically immobile. Existing plus new deterministic first-hit/second-hit/facing test matrices passed exact PR219 engine SHA and browser/scope gates.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.30–32 plus official AGoAC errata v8.01 p.4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "1cf7915a79da5434314589f711dc8af74b407339",
+        "testedTree": "8c961dcc3898b53559f270dee938a5343a07957a",
+        "mergedSha": "1cf7915a79da5434314589f711dc8af74b407339",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44729779605,
+            "jobId": 136266274477,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44729779613,
+            "jobId": 136266341451,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44729779844,
+            "jobId": 136266275165,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Official AGoAC Errata v8.01 p.4 replaces first-gyro end-of-phase PSR with immediate check when hit is applied; CAT3500D p.32 base and BMM-compatible restriction verified. criticalHit now immediately calls psr after first affected Gyro slot, +3 from psrMod, and triggers fall with +6 upon second. Gyro hits cap at two even if all four slots are marked; destroyed gyro cannot stand but can face by one hexside if MP exists, not automatically immobile. Existing plus new deterministic first-hit/second-hit/facing test matrices passed exact PR219 engine SHA and browser/scope gates."
+      }
     },
     {
       "id": "agoac-046",
@@ -7117,7 +7147,7 @@
         30
       ],
       "statement": "Attack/damage resolution order: every declared weapon/physical attack hit roll is made before damage; controller orders successful attacks and damage independently; full damage and criticals for each attack packet resolve before the next, retaining declared return fire even on lethal damage.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7132,7 +7162,37 @@
           "test": "AGoAC pp.30,35,44: actual sixth head wound in an attack phase preserves declared return fire and punches until cleanup"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. SOURCE-TO-CODE CERTIFIED 2026-11-20: Direct source comparison CAT3500D printed p.30 Resolution Order and Damage Timing (plus original pp.6–7 and official errata v8.01 p.4): all attacks are declared before resolving, to-hit dice precede damage for phase, controller chooses order independently, per-hit damage and criticals resolve before the next packet, gameplay consequences cannot cancel an already declared attack. Engine rollDeclaredFire/orderFireMechs/resolveRolledFire/resolveFire and rollPhysical/resolveRolledPhysical/resolvePhysical stage hit rolls then damage and preserve lethal return declarations. Named regressions cover independent controller choices, simultaneous shots, damage-induced pilot fatality, and per-packet resolution. This certifies attack/damage timing, not the full Chapter 8 critical or transfer algorithms.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.30–32 plus official AGoAC errata v8.01 p.4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "1cf7915a79da5434314589f711dc8af74b407339",
+        "testedTree": "8c961dcc3898b53559f270dee938a5343a07957a",
+        "mergedSha": "1cf7915a79da5434314589f711dc8af74b407339",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44729779605,
+            "jobId": 136266274477,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44729779613,
+            "jobId": 136266341451,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44729779844,
+            "jobId": 136266275165,
+            "conclusion": "success"
+          }
+        ],
+        "review": "Direct source comparison CAT3500D printed p.30 Resolution Order and Damage Timing (plus original pp.6–7 and official errata v8.01 p.4): all attacks are declared before resolving, to-hit dice precede damage for phase, controller chooses order independently, per-hit damage and criticals resolve before the next packet, gameplay consequences cannot cancel an already declared attack. Engine rollDeclaredFire/orderFireMechs/resolveRolledFire/resolveFire and rollPhysical/resolveRolledPhysical/resolvePhysical stage hit rolls then damage and preserve lethal return declarations. Named regressions cover independent controller choices, simultaneous shots, damage-induced pilot fatality, and per-packet resolution. This certifies attack/damage timing, not the full Chapter 8 critical or transfer algorithms."
+      }
     },
     {
       "id": "agoac-104",
@@ -7157,9 +7217,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.23: every normal hit location and through-armor opportunity by direction"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.30,34–36: rear armor survives front damage and receives same-side transfers"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish."
     },
     {
       "id": "agoac-105",
@@ -7184,9 +7248,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.32,34–35: side torso destruction counts critical and remaining engine slots once"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.36 Step 5: ammo critical in destroyed section is resolved, not discarded"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish."
     },
     {
       "id": "agoac-106",
