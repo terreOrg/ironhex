@@ -5328,3 +5328,21 @@ test('CAT3500D p.27 errata v8.01: lethal DFA recoil does not displace surviving 
  assert.deepEqual(t.psrs,[],'no DFA hit PSR when its dead attacker cannot displace');
  assert.equal(g.resolution[0].shots[0].hit,true);
 });
+
+test('CAT3500D pp.24–29: Chapter 7 closes only with fifteen source-reviewed physical requirements',()=>{
+ const r=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
+ const t=r.topics.find(x=>x.id==='agoac-physical');
+ const rules=r.requirements.filter(x=>x.topicId===t.id);
+ assert.equal(t.status,'verified');
+ assert(t.audit.sourceChecked&&t.audit.edgeCasesChecked&&t.audit.inventoryComplete);
+ assert.equal(rules.length,15,'missing or duplicate chapter 7 requirement');
+ assert.deepEqual(t.audit.requirementIds,[...rules.map(x=>x.id)]);
+ assert(rules.every(x=>x.status==='verified'&&x.audit?.sourceChecked&&x.audit?.edgeCasesChecked));
+ assert(rules.every(x=>Array.isArray(x.evidence)&&x.evidence.length));
+ assert.equal(t.audit.testedSha,t.audit.mainQualityGate.headSha);
+ assert.equal(t.audit.mainQualityGate.conclusion,'success');
+ assert.deepEqual(t.audit.checks.map(c=>c.name).sort(),
+  ['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
+ assert(t.audit.checks.every(c=>c.conclusion==='success'));
+ assert.equal(r.currentTopicId,r.topics.find(x=>x.status!=='verified')?.id??null);
+});
