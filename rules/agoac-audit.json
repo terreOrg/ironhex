@@ -441,7 +441,7 @@
         36
       ],
       "status": "not_audited",
-      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited."
+      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified. In final audit packet after #219, 045 immediate-gyro errata and 103 attack resolution order are individually Source-to-code Verified; 104,105 add rear-facing/ammo-hit edge tests but remain Tested Case until checks. Original 039–042 keep prior narrow Verified. Full Chapter 8 remains not_audited. PR221 combined critical slots 106, ammo 107, destroyed-location 105 checks in parallel, including real engine fix for natural 12 destroyed ammo limb. Full chapter still not_audited. No Chapter 9 or deploy."
     },
     {
       "id": "agoac-heat",
@@ -7252,9 +7252,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.36 Step 5: ammo critical in destroyed section is resolved, not discarded"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.30–32: roll 12 on destroyed ammo-carrying leg checks three slots"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. Added additional deterministic source-to-code edge cases in audit PR220; retain Tested Case until exact PR checks and main Sonar finish. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion."
     },
     {
       "id": "agoac-106",
@@ -7274,9 +7278,25 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.4–5: critical table distinguishes empty reroll slots and destroyed equipment"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.31: prior-phase exhausted arm criticals transfer to ipsilateral torso"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.31–32: same-phase exhausted critical slots do not transfer"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.31: fully inapplicable torso/arm critical block uses one D6"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.31: inapplicable torso/arm slot rerolls the full pair of dice"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion."
     },
     {
       "id": "agoac-107",
@@ -7297,9 +7317,21 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.36 Step 5: destroyed ammo section rolls once but ignores non-ammo critical effects"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.30–32: roll 12 on destroyed ammo-carrying leg checks three slots"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.32: ammunition explosion uses remaining shots times missile count and inflicts two wounds"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.32,35: ammunition explosion bypasses armor on inward transfer"
         }
       ],
-      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar. 20.11.2026 paired critical-transfer/ammunition source audit from CAT3500D printed pp.30–32,34–36: new deterministic cases check previous-vs-current phase critical transfer, six-slot block selection and full-pair rerolls, destroyed-ammo-limb natural 12 exception, missile-rack explosion damage, pilot injury and armor bypass. Await exact PR CI, E2E, Smoke and main strict Sonar before Verified promotion."
     },
     {
       "id": "agoac-108",
