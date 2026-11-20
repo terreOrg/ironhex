@@ -5650,3 +5650,47 @@ test('CAT3500D pp.30–36: five certified damage groups retain sourced evidence 
  assert.equal(reg.topics.find(x=>x.id==='agoac-damage').status,'not_audited');
  assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'known_missing');
 });
+
+
+test('CAT3500D pp.31–33: attacking player may choose three critical hits instead of a natural-12 blowoff',()=>{
+ const g=fresh(),target=g.units[0],attacker=g.units[2];
+ g.phase='fire';
+ target.slots.LA=['sink','jump','w:0',...Array(9).fill(null)];
+ target.crit.LA=Array(12).fill(false);
+ target.structure.LA=12;target.armor.LA=0;
+ const origSink=target.sinksLost,origJump=target.jumpLost;
+ const dice=[...diceFor(7),...diceFor(12),.5/6,1.5/6,2.5/6];
+ let asked=0;
+ g._resolutionChooser=(req,fallback)=>{
+  asked++;
+  assert.equal(req.kind,'critical-roll12');
+  assert.equal(req.unitId,attacker.id,'attacking controller, not defender, makes the choice');
+  assert.equal(req.team,attacker.team);
+  assert.deepEqual(req.options.map(o=>o.id),['blowoff','three-critical-hits']);
+  assert.equal(req.context.targetId,target.id);
+  assert.equal(req.context.location,'LA');
+  assert.equal(fallback,'blowoff');
+  return 'three-critical-hits';
+ };
+ g.rng=()=>{assert(dice.length,'unexpected additional critical or damage dice');return dice.shift();};
+ const hit=g.hit(target,1,'front','normal','LA',false,false,false,attacker.id);
+ assert.equal(dice.length,0);
+ assert.equal(hit.location,'LA');assert.equal(asked,1);
+ assert.equal(target.structure.LA,11,'three criticals do not detach a surviving limb');
+ assert.equal(target.sinksLost,origSink+1);
+ assert.equal(target.jumpLost,origJump+1);
+ assert(target.weapons[0].destroyed);
+ assert.deepEqual(target.crit.LA.slice(0,3),[true,true,true]);
+ assert(!target.destroyedSections?.includes('LA'));
+});
+
+test('CAT3500D pp.31–33: natural-12 default still blows off a limb when no player choice is required',()=>{
+ const g=fresh(),target=g.units[0],attacker=g.units[2];
+ g.phase='fire';target.structure.LA=12;target.armor.LA=15;
+ const dice=diceFor(12);
+ g.rng=()=>{assert(dice.length,'automatic blowoff must not roll critical slots');return dice.shift();};
+ g.criticalHit(target,'LA',false,false,attacker.id);
+ assert.equal(dice.length,0);assert.equal(target.structure.LA,0);
+ assert.equal(target.armor.LA,0);assert(target.destroyedSections.includes('LA'));
+ assert(g.tile(target.q,target.r).club,'severed arm is left as a club');
+});
