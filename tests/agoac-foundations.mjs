@@ -5635,3 +5635,18 @@ test('CAT3500D p.34: one-legged prone biped may rotate one hexside on a later tu
  assert(g.rotate(u.id,1).ok,'later-turn prone facing change uses one walking MP');
  assert.equal(g.rotate(u.id,1).ok,false,'the second turn step lacks the MP');
 });
+
+
+test('CAT3500D pp.30–36: five certified damage groups retain sourced evidence and Chapter 8 stays open',()=>{
+ const reg=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
+ const ids=['agoac-037','agoac-104','agoac-105','agoac-106','agoac-107'];
+ for(const id of ids){
+  const r=reg.requirements.find(x=>x.id===id);
+  assert(r&&r.status==='verified'&&r.audit?.sourceChecked&&r.audit?.edgeCasesChecked,id);
+  assert(r.evidence.length>=4&&r.audit.checks.length===3,id);
+  assert(r.audit.checks.every(c=>c.conclusion==='success'),id);
+  assert.equal(r.audit.mainQualityGate.conclusion,'success',id);
+ }
+ assert.equal(reg.topics.find(x=>x.id==='agoac-damage').status,'not_audited');
+ assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'known_missing');
+});
