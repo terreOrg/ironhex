@@ -5420,3 +5420,34 @@ test('CAT3500D pp.30,34,36: excess arm damage transfers to same-side torso armor
  assert.equal(u.structure.LA,0);assert.equal(u.armor.LT,6);
  assert.equal(u.phaseDamage-before,5);
 });
+
+
+test('CAT3500D pp.30,34–36: rear armor survives front damage and receives same-side transfers',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.armor.LT=0;u.rear.LT=0;u.structure.LT=1;
+ u.armor.CT=9;u.rear.CT=6;u.structure.CT=10;
+ u.slots.LT=Array(12).fill(null);u.crit.LT=Array(12).fill(false);
+ const before=u.phaseDamage;
+ g.rng=()=>{throw Error('Destroyed non-ammo torso needs no critical-location roll');};
+ g.damage(u,'LT',4,{rear:true});
+ assert.equal(u.structure.LT,0);
+ assert.equal(u.armor.CT,9,'the undamaged front center torso armor is preserved');
+ assert.equal(u.rear.CT,3,'the three transferred points strike rear center torso armor');
+ assert.equal(u.phaseDamage-before,4);
+});
+
+test('CAT3500D p.36 Step 5: ammo critical in destroyed section is resolved, not discarded',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';u.armor.LT=0;u.structure.LT=1;
+ u.slots.LT=['ammo:0:2',...Array(11).fill(null)];
+ u.crit.LT=Array(12).fill(false);
+ u.bins=u.bins.filter(b=>b.location!=='LT');
+ const bin={weapon:0,location:'LT',slot:0,shots:2,destroyed:false};u.bins.push(bin);
+ const events=[],dice=[...diceFor(8),.5/6];
+ g.rng=()=>{assert(dice.length,'only critical-table and ammo-slot rolls expected');return dice.shift();};
+ g.explode=(v,b)=>{events.push([v.id,b.slot,b.shots]);b.shots=0;b.destroyed=true;};
+ g.damage(u,'LT',1,{internal:true});
+ assert.equal(dice.length,0);
+ assert.deepEqual(events,[[u.id,0,2]],'the ammunition hit still explodes before section cleanup');
+ assert.equal(bin.destroyed,true);
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
+});
