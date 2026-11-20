@@ -265,8 +265,11 @@ test('AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic
  const limbs=['LA','RA','LL','RL'];
  for(let mask=0;mask<16;mask++){
   const g=fresh(),u=g.units[0];
+  // Build a damaged fixture while prone: genuine immediate leg-loss
+  // falls must not add wounds/dice before the separate seatbelt assertion.
+  u.prone=true;
   for(let i=0;i<4;i++)if(mask&(1<<i))g.destroyLocation(u,limbs[i]);
-  u.psrs=[];u.phaseDamage=0;
+  u.prone=false;u.psrs=[];u.phaseDamage=0;
   g.rng=()=>.5;
   assert.equal(g.isImmobile(u),mask===15);
   g.fall(u,0,5);
@@ -287,6 +290,8 @@ test('AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic
 test('AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll',()=>{
  for(const prone of [false,true])for(const immediate of [false,true]){
   const g=fresh(),u=g.units[0];g.rng=()=>.5;
+  // Destruction setup happens prone to avoid an earlier automatic fall.
+  u.prone=true;
   for(const l of ['LA','RA','LL','RL'])g.destroyLocation(u,l);
   u.prone=prone;u.psrs=[];u.phaseDamage=0;
   g.psr(u,0,'AGoAC immobile check',immediate);
@@ -5403,9 +5408,11 @@ test('CAT3500D pp.32–34: blown-off leg loses no additional armor or structure 
  const g=fresh(),u=g.units[0];g.phase='fire';
  u.armor.LL=22;u.structure.LL=11;
  const before=u.phaseDamage,dice=diceFor(12);
+ // Isolate damage accounting from the separately tested automatic fall.
+ let falls=0;g.fall=v=>{assert.equal(v,u);v.prone=true;falls++;};
  g.rng=()=>{assert(dice.length);return dice.shift();};
  g.criticalHit(u,'LL');
- assert.equal(dice.length,0);assert.equal(u.structure.LL,0);
+ assert.equal(falls,1);assert.equal(dice.length,0);assert.equal(u.structure.LL,0);
  assert.equal(u.armor.LL,0);assert.equal(u.phaseDamage,before);
  assert(g.tile(u.q,u.r).club,'blown-off limb is available as a club');
 });
@@ -5505,11 +5512,14 @@ test('CAT3500D pp.30–32: roll 12 on destroyed ammo-carrying leg checks three s
  const bin={weapon:0,location:'RL',slot:0,shots:1,destroyed:false};
  u.bins.push(bin);
  const explosion=[];g.explode=(v,b)=>{explosion.push([v.id,b.location,b.shots]);b.shots=0;b.destroyed=true;};
+ // Fall is checked in its own end-to-end test; isolate critical slot RNG.
+ let falls=0;g.fall=v=>{assert.equal(v,u);v.prone=true;falls++;};
  const dice=[...diceFor(12),.5/6];
  g.rng=()=>{assert(dice.length,'a 12 in destroyed ammo section must resolve its explosive slots');return dice.shift();};
  g.damage(u,'RL',1,{internal:true});
  assert.equal(dice.length,0);
  assert.deepEqual(explosion,[[u.id,'RL',1]]);
+ assert.equal(falls,1,'newly destroyed standing leg triggers immediate fall');
  assert.equal(bin.destroyed,true);assert.equal(u.structure.RL,0);
  assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
 });
