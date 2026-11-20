@@ -4703,3 +4703,48 @@ test('CAT3500D p.25 + errata v8.01 p.3: charging receives depth-one cover modifi
  Object.assign(to,{type:'water',height:-1,depth:1,surface:0});
  assert.equal(g.specialPhysicalTN(u,t,false),normal+1);
 });
+
+ 
+test('CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack with an arm-mounted hatchet',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const punch=g.physicalPreview(u.id,t.id,'punch','RA');
+ const axe=g.physicalPreview(u.id,t.id,'hatchet','LA');
+ const kick=g.physicalPreview(u.id,t.id,'kick','RL');
+ assert(punch.legal,punch.reason);assert(axe.legal,axe.reason);assert(kick.legal,kick.reason);
+ u.flip=true;
+ assert(!g.physicalPreview(u.id,t.id,'punch','RA').legal);
+ assert(!g.physicalPreview(u.id,t.id,'hatchet','LA').legal);
+ assert(!g.physicalPreview(u.id,t.id,'punch','both').legal);
+ assert(g.physicalPreview(u.id,t.id,'kick','RL').legal);
+ g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+ assert.equal(g.declarePhysical(u.id,t.id,'punch','RA').ok,false);
+ assert.equal(g.declarePhysical(u.id,t.id,'hatchet','LA').ok,false);
+ assert.equal(g.physicalDeclarations.length,0);
+});
+
+test('CAT3500D p.25 and errata v8.01 p.3: legal charge turns to face the target and spends its MP',()=>{
+ for(const facing of [0,1,2,3,4,5]){
+  const g=fresh(),[u,a,t,b]=g.units;
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing,prone:false,spent:0,moveMode:'stand',moveStart:{q:0,r:0}});
+  Object.assign(t,{q:1,r:0,prone:false,moved:true});a.dead=b.dead=true;
+  g.phase='move';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+  const turnCost=Math.min(facing,6-facing);
+  const r=g.declareCharge(u.id,t.id,'charge','walk');
+  assert(r.ok,r.error||r.reason||JSON.stringify({facing}));
+  assert.equal(u.facing,0);assert.equal(r.turnMp,turnCost);
+  assert.equal(u.spent,turnCost);assert.equal(u.charge.dir,0);
+ }
+});
+
+test('CAT3500D p.25 and errata v8.01 p.3: charge rejects an approach without MP for final facing',()=>{
+ const g=fresh(),[u,a,t,b]=g.units;
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:3,prone:false,spent:0,moveMode:'stand'});
+ Object.assign(t,{q:1,r:0,prone:false,moved:true});a.dead=b.dead=true;
+ g.phase='move';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+ const mp=g.mp.bind(g);g.mp=(unit,mode)=>mode==='walk'?3:mp(unit,mode);
+ const before=[u.q,u.r,u.spent,u.facing];
+ const r=g.declareCharge(u.id,t.id,'charge','walk');
+ assert(!r.ok);assert.deepEqual([u.q,u.r,u.spent,u.facing],before);assert(!u.charge);
+});

@@ -6122,9 +6122,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.6–7: two ordinary punches have independent roll and damage order"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack with an arm-mounted hatchet"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified."
     },
     {
       "id": "agoac-092",
@@ -6257,9 +6261,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.26 + errata v8.01 p.3: charge packets halve independently by struck water location"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.25 and errata v8.01 p.3: legal charge turns to face the target and spends its MP"
         }
       ],
-      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted."
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified."
     },
     {
       "id": "agoac-096",
@@ -6400,9 +6408,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.20,28: hatchet actuator hits add modifiers without reducing damage and destroyed hand forbids attack"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack with an arm-mounted hatchet"
         }
       ],
-      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending."
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified."
     },
     {
       "id": "agoac-100",
@@ -6424,9 +6436,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.28: both punch arcs include exact sixty and one hundred twenty degree hexes for every facing"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack with an arm-mounted hatchet"
         }
       ],
-      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. First block-2 CI 444/445: exact 120-degree punch boundary was rejected by floating-point comparison; tolerance now matches the existing hatchet arc and all six facings are covered."
+      "reviewNote": "Chapter 7 block 2: printed pp.26,28 visually rechecked. New regression evidence pending exact CI; no Verified promotion. First block-2 CI 444/445: exact 120-degree punch boundary was rejected by floating-point comparison; tolerance now matches the existing hatchet arc and all six facings are covered. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified."
     },
     {
       "id": "agoac-101",
