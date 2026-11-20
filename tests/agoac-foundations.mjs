@@ -5590,7 +5590,7 @@ test('CAT3500D p.34: biped leg destruction causes immediate automatic fall witho
   const g=fresh(),u=g.units[0];g.phase='fire';
   u.armor[leg]=0;u.structure[leg]=1;
   u.slots[leg]=Array(6).fill(null);u.crit[leg]=Array(6).fill(false);
-  const falls=[];g.fall=(v,levels,tn)=>{
+  const falls=[];g.fall=(v,levels=0,tn=null)=>{
    assert.equal(v,u);falls.push([levels,tn,g.phase]);v.prone=true;
   };
   g.rng=()=>{throw Error('leg with no explosive slots must not make a destroyed-section crit roll');};
