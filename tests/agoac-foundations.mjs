@@ -265,8 +265,11 @@ test('AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic
  const limbs=['LA','RA','LL','RL'];
  for(let mask=0;mask<16;mask++){
   const g=fresh(),u=g.units[0];
+  // Build a damaged fixture while prone: genuine immediate leg-loss
+  // falls must not add wounds/dice before the separate seatbelt assertion.
+  u.prone=true;
   for(let i=0;i<4;i++)if(mask&(1<<i))g.destroyLocation(u,limbs[i]);
-  u.psrs=[];u.phaseDamage=0;
+  u.prone=false;u.psrs=[];u.phaseDamage=0;
   g.rng=()=>.5;
   assert.equal(g.isImmobile(u),mask===15);
   g.fall(u,0,5);
@@ -287,6 +290,8 @@ test('AGoAC pp.11,43-44: only genuine immobility makes seatbelt damage automatic
 test('AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll',()=>{
  for(const prone of [false,true])for(const immediate of [false,true]){
   const g=fresh(),u=g.units[0];g.rng=()=>.5;
+  // Destruction setup happens prone to avoid an earlier automatic fall.
+  u.prone=true;
   for(const l of ['LA','RA','LL','RL'])g.destroyLocation(u,l);
   u.prone=prone;u.psrs=[];u.phaseDamage=0;
   g.psr(u,0,'AGoAC immobile check',immediate);
@@ -5403,9 +5408,11 @@ test('CAT3500D pp.32–34: blown-off leg loses no additional armor or structure 
  const g=fresh(),u=g.units[0];g.phase='fire';
  u.armor.LL=22;u.structure.LL=11;
  const before=u.phaseDamage,dice=diceFor(12);
+ // Isolate damage accounting from the separately tested automatic fall.
+ let falls=0;g.fall=v=>{assert.equal(v,u);v.prone=true;falls++;};
  g.rng=()=>{assert(dice.length);return dice.shift();};
  g.criticalHit(u,'LL');
- assert.equal(dice.length,0);assert.equal(u.structure.LL,0);
+ assert.equal(falls,1);assert.equal(dice.length,0);assert.equal(u.structure.LL,0);
  assert.equal(u.armor.LL,0);assert.equal(u.phaseDamage,before);
  assert(g.tile(u.q,u.r).club,'blown-off limb is available as a club');
 });
@@ -5505,11 +5512,14 @@ test('CAT3500D pp.30–32: roll 12 on destroyed ammo-carrying leg checks three s
  const bin={weapon:0,location:'RL',slot:0,shots:1,destroyed:false};
  u.bins.push(bin);
  const explosion=[];g.explode=(v,b)=>{explosion.push([v.id,b.location,b.shots]);b.shots=0;b.destroyed=true;};
+ // Fall is checked in its own end-to-end test; isolate critical slot RNG.
+ let falls=0;g.fall=v=>{assert.equal(v,u);v.prone=true;falls++;};
  const dice=[...diceFor(12),.5/6];
  g.rng=()=>{assert(dice.length,'a 12 in destroyed ammo section must resolve its explosive slots');return dice.shift();};
  g.damage(u,'RL',1,{internal:true});
  assert.equal(dice.length,0);
  assert.deepEqual(explosion,[[u.id,'RL',1]]);
+ assert.equal(falls,1,'newly destroyed standing leg triggers immediate fall');
  assert.equal(bin.destroyed,true);assert.equal(u.structure.RL,0);
  assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
 });
@@ -5582,4 +5592,46 @@ test('AGOAC errata v8.01 p.4: hip critical PSR suppression does not erase other-
  delete u.actuatorHitPhases;
  u.actuators.LL.lower=true;
  assert.equal(g.psrMod(u),3,'legacy undated same-leg actuator is not invented as a new hit');
+});
+
+
+test('CAT3500D p.34: biped leg destruction causes immediate automatic fall without a deferred PSR',()=>{
+ for(const leg of ['LL','RL']){
+  const g=fresh(),u=g.units[0];g.phase='fire';
+  u.armor[leg]=0;u.structure[leg]=1;
+  u.slots[leg]=Array(6).fill(null);u.crit[leg]=Array(6).fill(false);
+  const falls=[];g.fall=(v,levels=0,tn=null)=>{
+   assert.equal(v,u);falls.push([levels,tn,g.phase]);v.prone=true;
+  };
+  g.rng=()=>{throw Error('leg with no explosive slots must not make a destroyed-section crit roll');};
+  g.damage(u,leg,1,{internal:true});
+  assert.equal(u.structure[leg],0);assert(u.prone);
+  assert.deepEqual(falls,[[0,null,'fire']],'automatic fall occurs during the damaging hit');
+  assert.equal(u.moveEndedByLegLoss,true);
+  assert(!u.psrs.some(p=>p.reason==='Потеря ноги'),'no replacement end-phase PSR');
+  g.endPSR();assert.equal(falls.length,1,'end of phase cannot repeat immediate fall');
+ }
+});
+
+test('CAT3500D p.34: destroyed biped leg never causes a second fall while prone or already falling',()=>{
+ for(const [prone,falling] of [[true,false],[false,true]]){
+  const g=fresh(),u=g.units[0];g.phase='fire';u.prone=prone;u.falling=falling;
+  g.fall=()=>{throw Error('already prone/falling mech must not fall a second time');};
+  g.destroyLocation(u,'LL');
+  assert.equal(u.moveEndedByLegLoss,true);
+  assert.equal(u.structure.LL,0);
+  assert.equal(u.prone,prone);
+ }
+});
+
+test('CAT3500D p.34: one-legged prone biped may rotate one hexside on a later turn',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=u.team;
+ g.queue=[u.team];g.actingId=null;
+ g.fall=(v)=>{assert.equal(v,u);v.prone=true;};
+ g.destroyLocation(u,'LL');
+ assert.equal(g.rotate(u.id,1).ok,false,'leg-loss movement ends for the current turn');
+ u.moveEndedByLegLoss=false;u.spent=0;u.moveMode='stand';
+ assert.equal(g.mp(u,'walk'),1);
+ assert(g.rotate(u.id,1).ok,'later-turn prone facing change uses one walking MP');
+ assert.equal(g.rotate(u.id,1).ok,false,'the second turn step lacks the MP');
 });

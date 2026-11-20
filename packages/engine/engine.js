@@ -1604,13 +1604,23 @@ export class Game extends Legacy{
   // AGoAC pp.32,34–35: destroying a section destroys its engine slots too.
   if(this.effectiveEngineHits(u)>=3)this.destroyMech(u);
   u.weapons.filter(w=>w.location===loc||w.locations?.includes(loc)).forEach(w=>w.destroyed=true);if(loc==='HD'||loc==='CT'){this.destroyMech(u);if(loc==='HD')u.pilotWounds=6;this.note(`${u.name}: ${locationNameForMech(u,loc)} уничтожен.`);}if(loc==='LT'||loc==='RT'){const arm=loc==='LT'?'LA':'RA';if(u.structure[arm]>0)this.leaveLimbClub(u);this.destroyLocation(u,arm);}
- if(u.config==='Quad'&&mechLegLocation(u,loc)){
-  // BMM p.45: a standing Quad falls immediately upon *any* leg loss,
-  // not later at the end-of-phase PSR. The moving unit may not proceed
-  // down an already-calculated path or stand again this turn.
+ if(mechLegLocation(u,loc)){
+  // CAT3500D (2018) p.34: loss of any standing biped leg causes an
+  // AUTOMATIC immediate fall and ends its movement this turn, NOT a
+  // deferred PSR. BMM p.45 requires the same on Quad leg destruction.
+  // While already falling or prone do not create a duplicate fall;
+  // next turn a one-legged prone biped may still change one hexside.
   u.moveEndedByLegLoss=true;
-  if(!u.prone&&!u.falling&&!u.dead)this.fall(u);
- }else if(['LL','RL'].includes(loc))u.psrs.push({modifier:0,reason:'Потеря ноги'});
+  if(!u.prone&&!u.falling&&!u.dead){
+   // An airborne DFA loses its pending attack when its leg is destroyed
+   // during the Weapon Attack Phase. Pass the exact accumulated fall
+   // target to DFA landing; without it the pilot-damage roll is wrong.
+   const airborneDFA=this.phase==='fire'&&u.airborne&&u.charge?.type==='dfa'&&!u.charge.resolved;
+   const tn=airborneDFA?u.piloting+this.psrMod(u,true)+
+    u.psrs.reduce((sum,p)=>sum+p.modifier,0)+(u.phaseDamage>=20?1:0):null;
+   this.fall(u,0,tn);
+  }
+ }
 }
  // CASE has an inapplicable critical slot and vents explosion overflow.
  hasCASE(u,loc){return !!u.slots?.[loc]?.includes('case')||u.techBase==='Clan'&&Object.hasOwn(u.slots||{},loc);}
