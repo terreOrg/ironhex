@@ -1611,7 +1611,15 @@ export class Game extends Legacy{
   // While already falling or prone do not create a duplicate fall;
   // next turn a one-legged prone biped may still change one hexside.
   u.moveEndedByLegLoss=true;
-  if(!u.prone&&!u.falling&&!u.dead)this.fall(u);
+  if(!u.prone&&!u.falling&&!u.dead){
+   // An airborne DFA loses its pending attack when its leg is destroyed
+   // during the Weapon Attack Phase. Pass the exact accumulated fall
+   // target to DFA landing; without it the pilot-damage roll is wrong.
+   const airborneDFA=this.phase==='fire'&&u.airborne&&u.charge?.type==='dfa'&&!u.charge.resolved;
+   const tn=airborneDFA?u.piloting+this.psrMod(u,true)+
+    u.psrs.reduce((sum,p)=>sum+p.modifier,0)+(u.phaseDamage>=20?1:0):null;
+   this.fall(u,0,tn);
+  }
  }
 }
  // CASE has an inapplicable critical slot and vents explosion overflow.
