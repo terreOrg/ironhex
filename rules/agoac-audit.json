@@ -2939,7 +2939,7 @@
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC pp.33–34: destroyed section counts sink and jump slots marked by final critical roll"
+          "test": "AGoAC pp.33–34: section destruction counts all sink and jump slots without a false critical roll"
         }
       ],
       "reviewNote": "Fixed loss accounting in final critical checks; standalone critical effects already present. Exact CI passed; squash tree matches tested tree.",
@@ -3860,7 +3860,7 @@
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC p.33: biped hip damage halves Walking MP downward and derives Running MP upward"
+          "test": "AGoAC p.33 errata v8.01: biped hip damage rounds Walking MP upward before penalties"
         },
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7205,7 +7205,7 @@
         },
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC p.4–5: critical table distinguishes empty reroll slots and destroyed equipment"
+          "test": "AGoAC pp.4–5: critical table distinguishes empty reroll slots and destroyed equipment"
         }
       ],
       "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
@@ -7251,7 +7251,7 @@
         },
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC pp.33–34: destroyed section counts sink and jump slots marked by final critical roll"
+          "test": "AGoAC pp.33–34: section destruction counts all sink and jump slots without a false critical roll"
         },
         {
           "file": "tests/agoac-foundations.mjs",
