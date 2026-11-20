@@ -1551,7 +1551,7 @@ export class Game extends Legacy{
    const check=this.roll('Прицельная атака · проверка локации');
    if(check>=6&&check<=8){
     this.phaseRolls.at(-1).result=locationNameForMech(u,aim)+' · '+amount+' урона';
-    return {location:aim,hits:amount>0?this.damage(u,aim,amount,{rear:side==='rear'}):[],damage:amount};
+    return {location:aim,hits:amount>0?this.damage(u,aim,amount,{rear:side==='rear',sourceId}):[],damage:amount};
    }
    this.phaseRolls.at(-1).result='Обычный бросок локации';
   }
