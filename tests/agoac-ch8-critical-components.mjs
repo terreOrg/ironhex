@@ -146,3 +146,31 @@ test('CAT3500D p.33: damaged life support inflicts heat injury at actual heat-ph
  game.heatPhase();
  assert.deepEqual(injuries,[1]);
 });
+
+test('CAT3500D p.34: left/right torso destruction also destroys corresponding arm exactly once',()=>{
+ for(const [torso,arm] of [['LT','LA'],['RT','RA']]){
+  const game=new Game({rng:()=>0.5}),unit=game.units[0];
+  assert(unit.structure[torso]>0&&unit.structure[arm]>0);
+  game.destroyLocation(unit,torso);
+  assert.equal(unit.structure[torso],0);
+  assert.equal(unit.structure[arm],0);
+  assert(unit.destroyedSections.includes(torso));
+  assert(unit.destroyedSections.includes(arm));
+  const lostBefore=unit.sinksLost,jumpBefore=unit.jumpLost;
+  game.destroyLocation(unit,torso);
+  assert.equal(unit.sinksLost,lostBefore,'repeat destruction must not remove equipment twice');
+  assert.equal(unit.jumpLost,jumpBefore,'repeat destruction must not remove jump jets twice');
+ }
+});
+
+test('CAT3500D pp.34–35: head and center torso loss destroy the BattleMech',()=>{
+ for(const location of ['HD','CT']){
+  const game=new Game({rng:()=>0.5}),unit=game.units[0];
+  assert.equal(unit.dead,false);
+  game.destroyLocation(unit,location);
+  assert.equal(unit.structure[location],0);
+  assert.equal(unit.dead,true);
+  assert.equal(unit.removalPending,true);
+  if(location==='HD')assert.equal(unit.pilotWounds,6);
+ }
+});
