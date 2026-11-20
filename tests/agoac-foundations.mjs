@@ -4883,3 +4883,38 @@ test('CAT3500D p.27 and errata v8.01 p.4: converted DFA cannot land in a second 
  assert.equal(u.airborne,false);assert(u.charge.resolved);
  assert.deepEqual(psrs,[]);assert(g.onMap(t));
 });
+
+ 
+test('CAT3500D pp.24–25: physical TN matrix includes type modifiers and excludes weapon-only penalties',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ u.piloting=5;u.heat=30;u.sensorHits=2;u.gyroHits=1;
+ for(const [type,limb,modifier] of [
+  ['punch','RA',0],['kick','RL',-2],['club','RA',-1],
+  ['hatchet','LA',-1],['push','RA',-1]
+ ]){
+  const p=g.physicalPreview(u.id,t.id,type,limb);
+  assert(p.legal,type+': '+p.reason);
+  assert.equal(p.targetNumber,5+modifier,type+' Piloting-based TN');
+ }
+});
+
+test('CAT3500D p.25 / errata v8.01 p.3: Depth-1 Punch table has no cover, Kick table has +1 but never masks leg damage',()=>{
+ const {g,u,t}=physicalBlockFixture(),from=g.tile(u.q,u.r),to=g.tile(t.q,t.r);
+ Object.assign(from,{type:'water',depth:1,height:-1,surface:0});
+ Object.assign(to,{type:'water',depth:1,height:-1,surface:0});
+ const fist=g.physicalPreview(u.id,t.id,'punch','RA');
+ const kick=g.physicalPreview(u.id,t.id,'kick','RL');
+ const club=g.physicalPreview(u.id,t.id,'club','RA');
+ assert(fist.legal&&kick.legal&&club.legal);
+ assert.equal(fist.table,'punch');assert.equal(fist.physicalCover,false);
+ assert.equal(kick.table,'kick');assert.equal(kick.physicalCover,false);
+ assert.equal(club.table,'normal');assert.equal(club.physicalCover,true);
+ assert.equal(kick.targetNumber,u.piloting-2+1);
+ assert.equal(club.targetNumber,u.piloting-1+1);
+ assert.equal(fist.targetNumber,u.piloting);
+ g.rng=()=>.99;g.damage=()=>[];
+ const n=9;
+ const hit=g.hit(t,n,'front','kick',null,false,false,true);
+ assert.equal(hit.damage,Math.floor(n/2));
+ assert(['RL','LL'].includes(hit.location));
+});
