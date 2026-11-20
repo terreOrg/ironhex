@@ -5230,5 +5230,11 @@ test('CAT3500D p.29: reciprocal push PSRs include later punch damage and remain 
  assert.equal(pushed.damage,20);
  assert.equal(pushed.tn,target.piloting+1);
  assert(events.findIndex(e=>e.name==='damage')<events.indexOf(pushed));
- assert.equal(g.afterRolls.length,2,'both opposing PSRs are after attack and damage resolution');
+ assert.deepEqual(g.afterRolls.map(r=>r.kind),[
+  pusher.name+' · Встречный толчок',
+  target.name+' · Встречный толчок',
+  target.name+' · 20+ урона'
+ ],'both opposed pushes and the independent 20+ damage PSR resolve after physical damage');
+ assert(g.afterRolls.every(r=>r.target===target.piloting+1 || r.target===pusher.piloting),
+  'cumulative 20+ damage modifies the target PSR threshold');
 });
