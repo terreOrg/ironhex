@@ -1991,11 +1991,11 @@ test('AGoAC p.7: selection planning terminates for legacy states without an init
  }
 });
 
-test('AGoAC p.33: biped hip damage halves Walking MP downward and derives Running MP upward',()=>{
+test('AGoAC p.33 errata v8.01: biped hip damage rounds Walking MP upward before penalties',()=>{
  for(const leg of ['LL','RL'])for(let base=0;base<=12;base++)for(const heat of [0,5,10,25]){
   const g=fresh(),u=g.units[0];u.walk=base;u.heat=heat;
   u.actuators[leg].hip=true;
-  const walk=Math.max(0,Math.floor(base/2)-Math.min(5,Math.floor(heat/5)));
+  const walk=Math.max(0,Math.ceil(base/2)-Math.min(5,Math.floor(heat/5)));
   assert.equal(g.mp(u,'walk'),walk);
   assert.equal(g.mp(u,'run'),Math.ceil(walk*1.5));
   assert.equal(g.psrMod(u),2);
@@ -2011,27 +2011,28 @@ test('AGoAC pp.32–34: same-leg actuator hits before, during and after hip-hit 
   g.criticalHit(u,leg);assert.equal(dice.length,0);};
  g.round=1;hit('LL',1);assert.equal(g.mp(u),6);
  g.round=2;hit('LL',2);assert.equal(g.mp(u),5);
- hit('LL',0);assert.equal(g.mp(u),2);assert.equal(g.psrMod(u),2);
+ hit('LL',0);assert.equal(g.mp(u),3);assert.equal(g.psrMod(u),2);
  // The lower-leg hit in round 2 remains relevant even in later rounds.
- g.round=3;assert.equal(g.mp(u),2);
- hit('LL',3);assert.equal(g.mp(u),1);assert.equal(g.psrMod(u),2);
- hit('RL',1);assert.equal(g.mp(u),0);assert.equal(g.psrMod(u),3);
+ g.round=3;assert.equal(g.mp(u),3);
+ hit('LL',3);assert.equal(g.mp(u),2);assert.equal(g.psrMod(u),2);
+ hit('RL',1);assert.equal(g.mp(u),1);assert.equal(g.psrMod(u),3);
  assert.deepEqual(u.actuatorHitRounds,{LL:{upper:1,lower:2,hip:2,foot:3},RL:{upper:3}});
  const restored=new Game({rng:()=>.5});
  Object.assign(restored,JSON.parse(JSON.stringify(g,(k,v)=>['map','rng'].includes(k)?undefined:v)));
- restored.rebuildMap();assert.equal(restored.mp(restored.unit(u.id)),0);
+ restored.rebuildMap();assert.equal(restored.mp(restored.unit(u.id)),1);
  assert.equal(restored.psrMod(restored.unit(u.id)),3);
 });
-test('AGoAC p.33: hip-limited movement cannot use the extra hex from rounding up',()=>{
+test('AGoAC p.33 errata v8.01: hip movement permits only the rounded-up MP budget',()=>{
  const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=0;g.queue=[0,1,0,1];
  Object.assign(u,{q:0,r:0,facing:0,walk:5,heat:0,moveStart:{q:0,r:0}});
  for(const t of g.tiles)Object.assign(t,{type:'plain',depth:0,height:0,surface:0});
  u.actuators.LL.hip=true;
  assert(g.reachable(u,'walk').some(p=>p.q===2&&p.r===0));
- assert(!g.reachable(u,'walk').some(p=>p.q===3&&p.r===0));
- assert(g.reachable(u,'run').some(p=>p.q===3&&p.r===0));
- assert(!g.reachable(u,'run').some(p=>p.q===4&&p.r===0));
- const before=JSON.stringify(u);assert.equal(g.move(u.id,4,0,'run').ok,false);
+ assert(g.reachable(u,'walk').some(p=>p.q===3&&p.r===0));
+ assert(!g.reachable(u,'walk').some(p=>p.q===4&&p.r===0));
+ assert(g.reachable(u,'run').some(p=>p.q===5&&p.r===0));
+ assert(!g.reachable(u,'run').some(p=>p.q===6&&p.r===0));
+ const before=JSON.stringify(u);assert.equal(g.move(u.id,6,0,'run').ok,false);
  assert.equal(JSON.stringify(u),before);
 });
 
@@ -2220,6 +2221,9 @@ test('AGoAC p.28: intact arm-mounted hatchet prevents a punch until destroyed',(
 });
 test('AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hits never raise modifier beyond six',()=>{
  const g=fresh(),u=g.units[0];g.phase='fire';u.prone=false;
+ const checks=[],falls=[];
+ g.psr=(v,mod,reason,immediate)=>{checks.push([v.id,mod,reason,immediate]);return true;};
+ g.fall=(v,levels,tn)=>{assert.equal(v,u);falls.push([levels,tn]);v.prone=true;};
  // All four gyro slots can be marked, but only two have gameplay effects.
  for(const [i,slot] of [3,4,5,6].entries()){
   const dice=[...diceFor(8),slot<6?.5/6:5.5/6,((slot%6)+.5)/6];
@@ -2227,9 +2231,10 @@ test('AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hit
   g.criticalHit(u,'CT');assert.equal(dice.length,0);assert(u.crit.CT[slot]);
   assert.equal(u.gyroHits,Math.min(i+1,2));assert.equal(g.psrMod(u),3*Math.min(i+1,2));
  }
- assert.equal(u.psrs.length,2);let fell=0;g.fall=(v,levels,tn)=>{assert.equal(v,u);assert.equal(tn,u.piloting+6);v.prone=true;fell++;};
- g.rng=()=>{throw Error('Destroyed gyro must fall without a fall-avoidance roll');};g.endPSR();
- assert.equal(fell,1);assert(u.prone);assert(!g.isImmobile(u));
+ assert.deepEqual(checks,[[u.id,0,'Гироскоп',true]],'first gyro PSR resolves immediately as corrected by errata');
+ assert.deepEqual(falls,[[0,u.piloting+6]],'second gyro hit causes immediate forced fall');
+ g.rng=()=>{throw Error('Gyro PSR must not be rolled again at the phase boundary');};g.endPSR();
+ assert.equal(falls.length,1);assert(u.prone);assert(!g.isImmobile(u));
  g.phase='move';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;u.moveMode='stand';u.spent=0;
  assert.equal(g.stand(u.id).ok,false);assert(g.rotate(u.id,1).ok);assert.equal(g.rotate(u.id,1).ok,false);
 });
@@ -5345,4 +5350,72 @@ test('CAT3500D pp.24–29: Chapter 7 closes only with fifteen source-reviewed ph
   ['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
  assert(t.audit.checks.every(c=>c.conclusion==='success'));
  assert.equal(r.currentTopicId,r.topics.find(x=>x.status!=='verified')?.id??null);
+});
+
+
+test('CAT3500D p.32 and errata v8.01 p.4: first gyro hit immediately rolls its PSR',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';u.piloting=5;
+ const dice=[...diceFor(8),.5/6,3.5/6,...diceFor(12)];
+ g.rng=()=>{assert(dice.length,'immediate gyro PSR must consume a fresh roll');return dice.shift();};
+ g.criticalHit(u,'CT');
+ assert.equal(dice.length,0);assert.equal(u.gyroHits,1);assert(!u.prone);
+ const events=g.phaseRolls.map(x=>x.kind);
+ assert(events[0].includes('Критические повреждения'));
+ assert(events[1].includes('Гироскоп'),'gyro PSR is applied before the next hit or phase-end rolls');
+ assert.deepEqual(u.psrs,[]);
+});
+
+test('CAT3500D pp.30,34,36: destroyed non-ammo section needs no crit roll and counts residual armor',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.armor.LT=0;u.rear.LT=18;u.structure.LT=2;
+ u.slots.LT=['sink',...Array(11).fill(null)];
+ u.crit.LT=Array(12).fill(false);
+ const before=u.phaseDamage;
+ g.rng=()=>{throw Error('No critical dice for destroyed non-ammunition section');};
+ g.damage(u,'LT',2,{internal:true});
+ assert.equal(u.structure.LT,0);assert.equal(u.armor.LT,0);assert.equal(u.rear.LT,0);
+ assert.equal(u.phaseDamage-before,20,'two structure plus eighteen rear armor count for 20+ PSR');
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,0);
+ g.rng=()=>.99;g.endPSR();
+ assert(g.phaseRolls.some(x=>x.kind.includes('20+ урона')));
+});
+
+test('CAT3500D p.36 Step 5: destroyed ammo section rolls once but ignores non-ammo critical effects',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.armor.LT=0;u.structure.LT=1;
+ u.slots.LT=['engine','ammo:0:2',...Array(10).fill(null)];
+ u.crit.LT=Array(12).fill(false);
+ const bin={weapon:0,location:'LT',slot:1,shots:2,destroyed:false};
+ u.bins.push(bin);
+ const initialEngine=u.engineHits;
+ const dice=[...diceFor(8),.5/6];
+ g.rng=()=>{assert(dice.length,'only one critical table check, one slot selection');return dice.shift();};
+ g.damage(u,'LT',1,{internal:true});
+ assert.equal(dice.length,0);
+ assert.equal(u.engineHits,initialEngine+1,'engine slot is lost to destruction, not to the discarded critical');
+ assert.equal(u.structure.LT,0);
+ assert.equal(bin.shots,0);assert(bin.destroyed);
+ assert.equal(g.phaseRolls.filter(x=>x.kind.includes('Критические повреждения')).length,1);
+});
+
+test('CAT3500D pp.32–34: blown-off leg loses no additional armor or structure for 20+ PSR',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.armor.LL=22;u.structure.LL=11;
+ const before=u.phaseDamage,dice=diceFor(12);
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ g.criticalHit(u,'LL');
+ assert.equal(dice.length,0);assert.equal(u.structure.LL,0);
+ assert.equal(u.armor.LL,0);assert.equal(u.phaseDamage,before);
+ assert(g.tile(u.q,u.r).club,'blown-off limb is available as a club');
+});
+
+test('CAT3500D pp.30,34,36: excess arm damage transfers to same-side torso armor',()=>{
+ const g=fresh(),u=g.units[0];g.phase='fire';
+ u.armor.LA=0;u.structure.LA=1;u.armor.LT=10;u.structure.LT=10;
+ u.slots.LA=Array(12).fill(null);u.crit.LA=Array(12).fill(false);
+ g.rng=()=>{throw Error('No critical roll when a non-ammo arm is fully destroyed');};
+ const before=u.phaseDamage;
+ g.damage(u,'LA',5);
+ assert.equal(u.structure.LA,0);assert.equal(u.armor.LT,6);
+ assert.equal(u.phaseDamage-before,5);
 });
