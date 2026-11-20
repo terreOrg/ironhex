@@ -76,7 +76,7 @@ jobs:
           node --test --test-concurrency=1 --experimental-test-coverage \
             --test-reporter=spec --test-reporter-destination=stdout \
             --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \
-            tests/agoac-foundations.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs \
+            tests/agoac-foundations.mjs tests/agoac-ch8-critical-components.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs \
             tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs \
             tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs \
             tests/auth.mjs tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs
