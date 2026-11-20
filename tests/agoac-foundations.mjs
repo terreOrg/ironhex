@@ -4633,16 +4633,21 @@ test('AGoAC pp.20,28: hatchet actuator hits add modifiers without reducing damag
 test('AGoAC p.26 errata: destroyed charge target allows standing attacker to enter without attack or PSR',()=>{
  for(const prone of [false,true]){
   const {g,u,t}=physicalBlockFixture();Object.assign(u,{prone,moveMode:'run',charge:{type:'charge',target:t.id,dir:0,hexes:2,targetPos:{q:1,r:0}}});
-  g.destroyMech(t);g.removeDestroyedMechs();g.rng=()=>{throw Error('Destroyed target must not need dice');};
+  g.destroyMech(t);assert(g.onMap(t),'wreck remains pending removal throughout Physical Phase');
+  g.rng=()=>{throw Error('Destroyed target must not need dice');};
   g.resolveSpecial(u);assert(u.charge.resolved);assert.equal(u.q,prone?0:1);assert.deepEqual(u.psrs,[]);assert.equal(g.resolution.length,0);
+  assert(g.onMap(t),'pending wreck still present until phase cleanup');
+  g.removeDestroyedMechs();assert(!g.onMap(t));
  }
 });
 test('AGoAC p.27 errata: destroyed DFA target becomes a normal landing in the target hex without DFA damage',()=>{
  const {g,u,t}=physicalBlockFixture();Object.assign(u,{airborne:true,moveMode:'jump',spent:3,pendingHeat:3,distanceMoved:2,charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:1,r:0},startPos:{q:-2,r:0}}});
- g.phase='fire';g.destroyMech(t);g.removeDestroyedMechs();g.rng=()=>{throw Error('Plain landing needs no dice');};
+ g.phase='fire';g.destroyMech(t);assert(g.onMap(t),'wreck pending during endPSR');
+ g.rng=()=>{throw Error('Plain landing needs no dice');};
  g.endPSR();
  assert(!u.airborne);assert(u.charge.resolved);assert.equal(u.q,1);assert.equal(u.distanceMoved,3);assert.equal(u.pendingHeat,3);
  assert.deepEqual(u.psrs,[]);assert.equal(g.resolution.length,0);
+ assert(g.onMap(t));g.removeDestroyedMechs();assert(!g.onMap(t));
 });
 test('AGoAC p.27 errata: unconscious airborne pilot automatically misses even without a queued PSR',()=>{
  for(const [queued,damage] of [[0,0],[2,0],[2,20]]){
@@ -4826,4 +4831,55 @@ test('CAT3500D pp.24,29: mixed pushes preserve independent two-punch roll and da
  assert.deepEqual(damage,['LA','RA']);
  assert.equal(result.filter(r=>r.id===puncher.id).length,2);
  assert(result.some(r=>r.id===pusher.id&&r.shots[0].hit));
+});
+
+ 
+test('CAT3500D p.26 and errata v8.01 p.3: destroyed charge target is no longer a collision blocker before cleanup',()=>{
+ for(const blocked of [false,true]){
+  const {g,u,t}=physicalBlockFixture(),occupant=g.units[3];
+  Object.assign(u,{moveMode:'run',charge:{type:'charge',target:t.id,dir:0,hexes:2,targetPos:{q:t.q,r:t.r}}});
+  if(blocked)Object.assign(occupant,{q:t.q,r:t.r,dead:false,deployed:true,airborne:false});
+  g.destroyMech(t);
+  assert(g.onMap(t));
+  assert.equal(g.occupied(t.q,t.r,u.id),true,'temporary wreck still occupies for ordinary attacks');
+  g.rng=()=>{throw Error('no charge hit dice after target destruction');};
+  g.resolveSpecial(u);
+  assert(u.charge.resolved);
+  assert.deepEqual([u.q,u.r],blocked?[0,0]:[1,0],
+   'destroyed target alone must never prevent the declared advance');
+  assert.deepEqual(u.psrs,[]);assert.deepEqual(g.resolution,[]);
+  assert(g.onMap(t),'wreck cleanup must stay deferred');
+ }
+});
+
+test('CAT3500D p.27 and errata v8.01 p.4: DFA converts to a normal water landing with a pending destroyed target',()=>{
+ const {g,u,t}=physicalBlockFixture(),tile=g.tile(t.q,t.r);
+ Object.assign(tile,{type:'water',height:-1,depth:1,surface:0});
+ Object.assign(u,{airborne:true,moveMode:'jump',spent:4,pendingHeat:4,distanceMoved:2,
+  charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:t.q,r:t.r},startPos:{q:-2,r:0}}});
+ g.phase='fire';g.destroyMech(t);assert(g.onMap(t));
+ const checks=[];g.psr=(v,mod,reason,immediate,fallLevels)=>{
+  checks.push([v.id,mod,reason,immediate,fallLevels]);return true;
+ };
+ g.rng=()=>{throw Error('destroyed target has no DFA hit/location rolls');};
+ g.endPSR();
+ assert.deepEqual([u.q,u.r],[1,0]);assert.equal(u.airborne,false);
+ assert.equal(u.charge.resolved,true);assert.equal(u.distanceMoved,3);
+ assert.deepEqual(checks,[[u.id,0,'Посадка в воду',true,1]],
+  'only the normal water-jump landing check may happen');
+ assert.equal(u.pendingHeat,4);assert.deepEqual(g.resolution,[]);
+ assert(g.onMap(t));
+});
+
+test('CAT3500D p.27 and errata v8.01 p.4: converted DFA cannot land in a second live occupied hex',()=>{
+ const {g,u,t}=physicalBlockFixture(),other=g.units[3];
+ Object.assign(other,{q:t.q,r:t.r,dead:false,deployed:true,airborne:false});
+ Object.assign(u,{airborne:true,moveMode:'jump',charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:t.q,r:t.r},startPos:{q:-2,r:0}}});
+ g.phase='fire';g.destroyMech(t);
+ const psrs=[];g.psr=(...args)=>{psrs.push(args);return true;};
+ g.rng=()=>{throw Error('no attack rolls');};
+ g.endPSR();
+ assert.deepEqual([u.q,u.r],[0,0]);
+ assert.equal(u.airborne,false);assert(u.charge.resolved);
+ assert.deepEqual(psrs,[]);assert(g.onMap(t));
 });
