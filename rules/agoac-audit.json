@@ -12,7 +12,7 @@
     "extensionsDeferred": true
   },
   "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment.",
-  "currentTopicId": "agoac-physical",
+  "currentTopicId": "agoac-damage",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -374,8 +374,64 @@
         24,
         29
       ],
-      "status": "tested_subset",
-      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit. #204 merged; 450/450 CI, 39/39 E2E, smoke planner succeeded. Next DFA sub-block corrects airborne LOS/stacking and movement timing; #205 still pending; final special and mixed physical resolution audit remains. #205 merged, CI 453/453, browser 39/39 and scoped smoke success. Chapter 7 errata follow-up corrects hatchet actuators, destroyed charge and DFA target and unconscious DFA pilot. Errata p.3 water location-specific damage and cover still require correction; mixed-phase ordering and final validation remain. No deployment. 20.11: source-to-code audit certifies 092 physical TN/auto miss cancellation and 094 errata water partial-cover/location-halving on main 07a856b3; 7/15 Verified, 8 Tested Case, 0 Known Missing. Two additional regression matrices in audit PR #212; final PR exact SHA CI/E2E/Smoke and merge still required. 20.11 #213 combined source-to-code audit for existing club/physical weapon/punch implementations (CAT3500D pp.26,28) plus four new test matrices; 10/15 Verified in PR branch, 5 Tested Case; status only authoritative after exact green PR check and merge. No deployment. Source-to-code gate packet #216 on post-merge #215 main 3ee761e2: groups 091 (general physical declaration/legality), 101 (Push), 102 (initiative/geometry/damage/phase-end PSRs) reviewed against CAT3500D printed pp.7,24,29 and errata; 13/15 Verified in audit branch, only 095 Charge and 097 DFA remain Tested Case. Exact green main CI 44709816756 (484/484), Browser 44709816791, scope Smoke 44709816880 and strict main Sonar 44709816926. Status requires exact audit-branch gates and merge before authoritative main update. No chapter 8 or deploy."
+      "status": "verified",
+      "reviewNote": "Chapter authorized after verified Chapter 6 closure. Printed pp.24–25 and physical weapon table cross-reference p.28 visually consulted. First block general eligibility/ordinary physical attacks. Existing kick-actuator requirement 038 verified; remaining individual attack and special displacement groups distinctly inventoried. No deployment. Block 1 #202 merged after CI 439/439, E2E 39/39, scope planner passed. Block 2 handles split-target punches, hatchet optional location tables/same-side arcs, tree and limb club lifecycle and table entries; API/engine/browser confirmation pending. Initial #203 CI 444/445; only independent fist target regression failed at the 120-degree boundary. Corrected inclusive angular comparisons and added exhaustive facing test; pending new checks. #203 exact CI 446/446 and browser 39/39, full smoke, main Sonar all passed. Verified 043,044,093,098, retaining 038. Block 3 implements comparative modifiers, charge miss choice and water/height prerequisites. DFA LOS/stacking temporary position and further edge cases remain explicit. #204 merged; 450/450 CI, 39/39 E2E, smoke planner succeeded. Next DFA sub-block corrects airborne LOS/stacking and movement timing; #205 still pending; final special and mixed physical resolution audit remains. #205 merged, CI 453/453, browser 39/39 and scoped smoke success. Chapter 7 errata follow-up corrects hatchet actuators, destroyed charge and DFA target and unconscious DFA pilot. Errata p.3 water location-specific damage and cover still require correction; mixed-phase ordering and final validation remain. No deployment. 20.11: source-to-code audit certifies 092 physical TN/auto miss cancellation and 094 errata water partial-cover/location-halving on main 07a856b3; 7/15 Verified, 8 Tested Case, 0 Known Missing. Two additional regression matrices in audit PR #212; final PR exact SHA CI/E2E/Smoke and merge still required. 20.11 #213 combined source-to-code audit for existing club/physical weapon/punch implementations (CAT3500D pp.26,28) plus four new test matrices; 10/15 Verified in PR branch, 5 Tested Case; status only authoritative after exact green PR check and merge. No deployment. Source-to-code gate packet #216 on post-merge #215 main 3ee761e2: groups 091 (general physical declaration/legality), 101 (Push), 102 (initiative/geometry/damage/phase-end PSRs) reviewed against CAT3500D printed pp.7,24,29 and errata; 13/15 Verified in audit branch, only 095 Charge and 097 DFA remain Tested Case. Exact green main CI 44709816756 (484/484), Browser 44709816791, scope Smoke 44709816880 and strict main Sonar 44709816926. Status requires exact audit-branch gates and merge before authoritative main update. No chapter 8 or deploy. FINAL Chapter 7 source inventory reviewed directly against CAT3500D (2018) printed pp.24–29 and AGoAC errata v8.01 pp.2–4: all 15/15 individually audited and Verified. Charge 095 and DFA 097 last paired rule groups pass exact #217 main CI 488/488 run 44714866935, Browser E2E 44714867001, scope Container Smoke 44714866938 and strict main Sonar 44714866908. Authoritative after exact audit PR CI/E2E/Smoke and merge; no deployment and no chapter 8 work.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.24–29; official AGoAC errata v8.01 pp.2–4",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b",
+        "testedTree": "354b137838f0293aaf5a45bfb9733912c29b6042",
+        "mergedSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44714866935,
+            "jobId": 136215552988,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44714867001,
+            "jobId": 136215552821,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44714866938,
+            "jobId": 136215552464,
+            "conclusion": "success",
+            "scope": "scope-limited; no container inputs changed"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44714866908,
+          "jobId": 136215552180,
+          "conclusion": "success",
+          "headSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b"
+        },
+        "inventoryComplete": true,
+        "requirementIds": [
+          "agoac-038",
+          "agoac-043",
+          "agoac-044",
+          "agoac-091",
+          "agoac-092",
+          "agoac-093",
+          "agoac-094",
+          "agoac-095",
+          "agoac-096",
+          "agoac-097",
+          "agoac-098",
+          "agoac-099",
+          "agoac-100",
+          "agoac-101",
+          "agoac-102"
+        ],
+        "review": "Chapter 7 Physical Attacks final direct source inventory: printed p.24 declaration, general physical modifiers, phase ordering and type exclusivity; p.25 level/prone/water cover restrictions, charge declaration and legal MP; p.26 Charge damage and location, club/Finding A Club, DFA declaration; p.27 DFA jump/LOS during Weapon Phase, comparative +3 hit TN, target/self packets, prone rear table, landing and displaced target choice, blocked terrain and fall PSRs; p.28 kick, physical weapons and punch hit tables; p.29 push and physical resolution timing. The fifteen separately registered requirements (038,043,044,091–102) collectively cover these scoped sections with named deterministic tests, code checks and official errata corrections. Earlier grouped audits #202–#217 cover individual attack types; final exact main #217 code/trees passed CI 488/488, Chromium Browser E2E, Container Smoke (scope-limited) and strict Sonar. No later source/code gaps found; neighboring Damage p.30+, Heat, PSR p.40+, Construction and Scenarios explicitly remain unaudited chapters."
+      }
     },
     {
       "id": "agoac-damage",
@@ -6391,7 +6447,7 @@
         26
       ],
       "statement": "Charge: movement declaration, legal approach, comparative modifier, normal hit packets, water, miss side and PSRs.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6432,9 +6488,59 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.26 errata v8.01: lethal Charge recoil prevents attacker advance even on hit"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.26,42: successful charge against a prohibited displacement hex still deals damage and requires PSRs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.26,42: interrupted charge approach cannot declare a phantom attack"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.25 and errata v8.01 p.3: charge rejects an approach without MP for final facing"
         }
       ],
-      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified. 20.11 paired Charge/DFA book-to-engine regression packet: added deterministic tonnage and attack/displacement matrices covering charge packet totals, destroyed charging attacker, DFA front punch/rear prone damage, opposing PSRs, and errata attacker-destruction no-displacement. Evidence pending exact branch CI/E2E/scope Smoke and new main Sonar; do not promote to Verified until review and gates."
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified. 20.11 paired Charge/DFA book-to-engine regression packet: added deterministic tonnage and attack/displacement matrices covering charge packet totals, destroyed charging attacker, DFA front punch/rear prone damage, opposing PSRs, and errata attacker-destruction no-displacement. Evidence pending exact branch CI/E2E/scope Smoke and new main Sonar; do not promote to Verified until review and gates. FINAL SOURCE-TO-RUNTIME CERTIFICATION 20.11.2026: CAT3500D (2018), printed pp.25–26, Charge Attacks/Charge Damage/Location After Charge/Falls, visually reviewed with the errata v8.01 pp.3,7. Verified against engine declareCharge, chargeTravelHexes, specialPhysicalTN, resolveSpecial, missedCharge, displace and phase-end endPSR. A standing attacker declares during Movement, requires completed enemy movement, a legal adjacent approach and real MP for final turn/target entry; no jumping, no weapon fire during Charge. TN is attacker Piloting with comparative skills, movement/immobility/woods/partial-cover as appropriate; auto-hit/miss and prohibited-hex cases follow physical rules. Target damage rounds up attacker tonnage/10 times actual qualifying traveled hexes, excluding target hex; forward/back reversal resets count. Self damage rounds up target tonnage/10. Both delivered in 5-point hit packets; per struck location underwater halving and direction tables apply. On a miss the attacker selects a permitted flanking hex or stays; on a hit the target displaces, then attacker advances only if still alive and permitted; prohibited destination and off-board exceptions follow the book. Both success PSRs are +2 and resolve after phase damage. A destroyed target allows entry without a charge attack; lethal attacker self-impact prevents advance. Existing deterministic tests exercise damage, water, comparative TN, target eligibility and facing, successful/blocked displacement, misses and errata exceptions. Immutable main 5ae50b2 / tree 354b137 checked by CI 488/488, Browser E2E, scope Container Smoke, strict post-merge Sonar, all success. Only AGoAC and official errata scope, no advanced rules.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.25–28; official AGoAC errata v8.01 pp.3–4 and p.7",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b",
+        "testedTree": "354b137838f0293aaf5a45bfb9733912c29b6042",
+        "mergedSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44714866935,
+            "jobId": 136215552988,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44714867001,
+            "jobId": 136215552821,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44714866938,
+            "jobId": 136215552464,
+            "conclusion": "success",
+            "scope": "scope-limited; no container inputs changed"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44714866908,
+          "jobId": 136215552180,
+          "conclusion": "success",
+          "headSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b"
+        },
+        "review": "CAT3500D (2018), printed pp.25–26, Charge Attacks/Charge Damage/Location After Charge/Falls, visually reviewed with the errata v8.01 pp.3,7. Verified against engine declareCharge, chargeTravelHexes, specialPhysicalTN, resolveSpecial, missedCharge, displace and phase-end endPSR. A standing attacker declares during Movement, requires completed enemy movement, a legal adjacent approach and real MP for final turn/target entry; no jumping, no weapon fire during Charge. TN is attacker Piloting with comparative skills, movement/immobility/woods/partial-cover as appropriate; auto-hit/miss and prohibited-hex cases follow physical rules. Target damage rounds up attacker tonnage/10 times actual qualifying traveled hexes, excluding target hex; forward/back reversal resets count. Self damage rounds up target tonnage/10. Both delivered in 5-point hit packets; per struck location underwater halving and direction tables apply. On a miss the attacker selects a permitted flanking hex or stays; on a hit the target displaces, then attacker advances only if still alive and permitted; prohibited destination and off-board exceptions follow the book. Both success PSRs are +2 and resolve after phase damage. A destroyed target allows entry without a charge attack; lethal attacker self-impact prevents advance. Existing deterministic tests exercise damage, water, comparative TN, target eligibility and facing, successful/blocked displacement, misses and errata exceptions."
+      }
     },
     {
       "id": "agoac-096",
@@ -6510,7 +6616,7 @@
         28
       ],
       "statement": "DFA declaration, airborne limits, comparative TN, resolution, damage, displacement and landing.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6555,9 +6661,63 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.27 errata v8.01: lethal DFA recoil does not displace surviving target"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.27–28: DFA searches legal directions by angular distance, with occupied and offboard destinations allowed"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.27–28: successful and missed DFA land in target hex; impassable surroundings determine destruction"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.27–28,40,44: weapon phase DFA PSR failure lands as an automatic miss, retaining the cause TN"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.27–28: weapon phase DFA miss waits for the target controller without repeating the failed PSR"
         }
       ],
-      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed p.27 plus official CAT3500D errata v8.01 p.4 (https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf) corrects diagram LOS 4 to 5. Temporary flight uses raised base + standing height, permits occupied approach, defers landing terrain checks and counts only traveled hexes for fire-phase TMM. Successful DFA cannot displace if attacker destroyed. Target destruction, pilot unconsciousness and landing terrain checks remain to be completed; no verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified. 20.11 paired Charge/DFA book-to-engine regression packet: added deterministic tonnage and attack/displacement matrices covering charge packet totals, destroyed charging attacker, DFA front punch/rear prone damage, opposing PSRs, and errata attacker-destruction no-displacement. Evidence pending exact branch CI/E2E/scope Smoke and new main Sonar; do not promote to Verified until review and gates."
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed p.27 plus official CAT3500D errata v8.01 p.4 (https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf) corrects diagram LOS 4 to 5. Temporary flight uses raised base + standing height, permits occupied approach, defers landing terrain checks and counts only traveled hexes for fire-phase TMM. Successful DFA cannot displace if attacker destroyed. Target destruction, pilot unconsciousness and landing terrain checks remain to be completed; no verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified. 20.11 paired Charge/DFA book-to-engine regression packet: added deterministic tonnage and attack/displacement matrices covering charge packet totals, destroyed charging attacker, DFA front punch/rear prone damage, opposing PSRs, and errata attacker-destruction no-displacement. Evidence pending exact branch CI/E2E/scope Smoke and new main Sonar; do not promote to Verified until review and gates. FINAL SOURCE-TO-RUNTIME CERTIFICATION 20.11.2026: CAT3500D (2018), printed pp.26–28, Death From Above Attacks/Weapon Attack Phase/DFA Damage to Target/DFA Damage to Attacker/Location After DFA/Falls After DFA, visually reviewed with official errata v8.01 pp.3–4,7. Verified engine declareCharge('dfa'), jumpShortestReach, losLevel, resolveFire/endPSR airborne interruption, specialPhysicalTN, resolveSpecial, dfaDisplacementOptions, resolveDFALanding, completeDFAJump and PSRs. DFA declared in Movement by eligible jumper, consumes Jumping MP to target without prematurely occupying target hex, checks target height, forbids fully submerged source/destination, reserves a single charge/DFA/push target, cannot fire weapons while making DFA and is treated as airborne for LOS/stacking. TN adds +3 Jump and comparative Piloting, excludes terrain. Weapon phase loss of consciousness or failed PSR aborts the hit; destroyed target converts to ordinary legal jump with water landing rules. Target takes ceil(attacker tonnage/10×3) in 5-point Punch location packets (rear Normal against prone target). Attacker takes tonnage/5 in Front Kick location packets. On hit, living attacker moves into former target hex and target displaces in proper direction; prohibited landing search respects closest directions and off-board choice; attacker destroyed by self-impact cannot displace. Successful attacker +4 and standing target +2 landing/displacement PSRs; miss causes 2-level rear fall, with defender choice of legal adjacent hex even if occupied. Exact tests cover airborne LOS including errata example, phase timing and pass/fail PSR, movement MP, both hit tables, destroy-target jump conversion, blocked landing, attacker-death exception and ordinary damage/fall sequencing. Immutable main 5ae50b2 / tree 354b137 checked by CI 488/488, Browser E2E, scope Container Smoke, strict post-merge Sonar, all success. Only AGoAC and official errata scope, no advanced rules.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.25–28; official AGoAC errata v8.01 pp.3–4 and p.7",
+        "verifiedOn": "2026-11-20",
+        "testedSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b",
+        "testedTree": "354b137838f0293aaf5a45bfb9733912c29b6042",
+        "mergedSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44714866935,
+            "jobId": 136215552988,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44714867001,
+            "jobId": 136215552821,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44714866938,
+            "jobId": 136215552464,
+            "conclusion": "success",
+            "scope": "scope-limited; no container inputs changed"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44714866908,
+          "jobId": 136215552180,
+          "conclusion": "success",
+          "headSha": "5ae50b295eb30a379d4a959ee5f328b6d2671d7b"
+        },
+        "review": "CAT3500D (2018), printed pp.26–28, Death From Above Attacks/Weapon Attack Phase/DFA Damage to Target/DFA Damage to Attacker/Location After DFA/Falls After DFA, visually reviewed with official errata v8.01 pp.3–4,7. Verified engine declareCharge('dfa'), jumpShortestReach, losLevel, resolveFire/endPSR airborne interruption, specialPhysicalTN, resolveSpecial, dfaDisplacementOptions, resolveDFALanding, completeDFAJump and PSRs. DFA declared in Movement by eligible jumper, consumes Jumping MP to target without prematurely occupying target hex, checks target height, forbids fully submerged source/destination, reserves a single charge/DFA/push target, cannot fire weapons while making DFA and is treated as airborne for LOS/stacking. TN adds +3 Jump and comparative Piloting, excludes terrain. Weapon phase loss of consciousness or failed PSR aborts the hit; destroyed target converts to ordinary legal jump with water landing rules. Target takes ceil(attacker tonnage/10×3) in 5-point Punch location packets (rear Normal against prone target). Attacker takes tonnage/5 in Front Kick location packets. On hit, living attacker moves into former target hex and target displaces in proper direction; prohibited landing search respects closest directions and off-board choice; attacker destroyed by self-impact cannot displace. Successful attacker +4 and standing target +2 landing/displacement PSRs; miss causes 2-level rear fall, with defender choice of legal adjacent hex even if occupied. Exact tests cover airborne LOS including errata example, phase timing and pass/fail PSR, movement MP, both hit tables, destroy-target jump conversion, blocked landing, attacker-death exception and ordinary damage/fall sequencing."
+      }
     },
     {
       "id": "agoac-098",
