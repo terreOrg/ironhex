@@ -5648,7 +5648,8 @@ test('CAT3500D pp.30–36: five certified damage groups retain sourced evidence 
   assert.equal(r.audit.mainQualityGate.conclusion,'success',id);
  }
  assert.equal(reg.topics.find(x=>x.id==='agoac-damage').status,'not_audited');
- assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'known_missing');
+ assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'tested_case',
+  'the roll-12 alternative is implemented, but full critical effects still need certification');
 });
 
 
