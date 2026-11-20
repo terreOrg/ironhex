@@ -5583,3 +5583,45 @@ test('AGOAC errata v8.01 p.4: hip critical PSR suppression does not erase other-
  u.actuators.LL.lower=true;
  assert.equal(g.psrMod(u),3,'legacy undated same-leg actuator is not invented as a new hit');
 });
+
+
+test('CAT3500D p.34: biped leg destruction causes immediate automatic fall without a deferred PSR',()=>{
+ for(const leg of ['LL','RL']){
+  const g=fresh(),u=g.units[0];g.phase='fire';
+  u.armor[leg]=0;u.structure[leg]=1;
+  u.slots[leg]=Array(6).fill(null);u.crit[leg]=Array(6).fill(false);
+  const falls=[];g.fall=(v,levels,tn)=>{
+   assert.equal(v,u);falls.push([levels,tn,g.phase]);v.prone=true;
+  };
+  g.rng=()=>{throw Error('leg with no explosive slots must not make a destroyed-section crit roll');};
+  g.damage(u,leg,1,{internal:true});
+  assert.equal(u.structure[leg],0);assert(u.prone);
+  assert.deepEqual(falls,[[0,null,'fire']],'automatic fall occurs during the damaging hit');
+  assert.equal(u.moveEndedByLegLoss,true);
+  assert(!u.psrs.some(p=>p.reason==='Потеря ноги'),'no replacement end-phase PSR');
+  g.endPSR();assert.equal(falls.length,1,'end of phase cannot repeat immediate fall');
+ }
+});
+
+test('CAT3500D p.34: destroyed biped leg never causes a second fall while prone or already falling',()=>{
+ for(const [prone,falling] of [[true,false],[false,true]]){
+  const g=fresh(),u=g.units[0];g.phase='fire';u.prone=prone;u.falling=falling;
+  g.fall=()=>{throw Error('already prone/falling mech must not fall a second time');};
+  g.destroyLocation(u,'LL');
+  assert.equal(u.moveEndedByLegLoss,true);
+  assert.equal(u.structure.LL,0);
+  assert.equal(u.prone,prone);
+ }
+});
+
+test('CAT3500D p.34: one-legged prone biped may rotate one hexside on a later turn',()=>{
+ const g=fresh(),u=g.units[0];g.phase='move';g.activeTeam=u.team;
+ g.queue=[u.team];g.actingId=null;
+ g.fall=(v)=>{assert.equal(v,u);v.prone=true;};
+ g.destroyLocation(u,'LL');
+ assert.equal(g.rotate(u.id,1).ok,false,'leg-loss movement ends for the current turn');
+ u.moveEndedByLegLoss=false;u.spent=0;u.moveMode='stand';
+ assert.equal(g.mp(u,'walk'),1);
+ assert(g.rotate(u.id,1).ok,'later-turn prone facing change uses one walking MP');
+ assert.equal(g.rotate(u.id,1).ok,false,'the second turn step lacks the MP');
+});
