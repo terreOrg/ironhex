@@ -6424,9 +6424,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.26 and errata v8.01 p.3: destroyed charge target is no longer a collision blocker before cleanup"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.25–26: Charge packet totals and post-impact displacement across tonnage and travel"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.26 errata v8.01: lethal Charge recoil prevents attacker advance even on hit"
         }
       ],
-      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified."
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Batch CAT3500D printed pp.25-26 and official errata v8.01 p.3: per-location underwater physical damage, water partial-cover hit-table/LOS-height rules and charge water modifiers implemented in engine. Exact CI, browser and Sonar checks pending; status not promoted. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified. 20.11 paired Charge/DFA book-to-engine regression packet: added deterministic tonnage and attack/displacement matrices covering charge packet totals, destroyed charging attacker, DFA front punch/rear prone damage, opposing PSRs, and errata attacker-destruction no-displacement. Evidence pending exact branch CI/E2E/scope Smoke and new main Sonar; do not promote to Verified until review and gates."
     },
     {
       "id": "agoac-096",
@@ -6539,9 +6547,17 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.27 and errata v8.01 p.4: converted DFA cannot land in a second live occupied hex"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.26–28: DFA damage groups, hit tables, displacement and phase-end PSRs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.27 errata v8.01: lethal DFA recoil does not displace surviving target"
         }
       ],
-      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed p.27 plus official CAT3500D errata v8.01 p.4 (https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf) corrects diagram LOS 4 to 5. Temporary flight uses raised base + standing height, permits occupied approach, defers landing terrain checks and counts only traveled hexes for fire-phase TMM. Successful DFA cannot displace if attacker destroyed. Target destruction, pilot unconsciousness and landing terrain checks remain to be completed; no verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified."
+      "reviewNote": "Block 3 first subset, printed pp.24–28 visually reviewed. Comparative TN, terrain/water legality, charge miss direction and damage/cancellation. Exact CI pending. DFA occupied temporary path and LOS height, final movement-cost/facing and special phase interactions need review. Printed p.27 plus official CAT3500D errata v8.01 p.4 (https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf) corrects diagram LOS 4 to 5. Temporary flight uses raised base + standing height, permits occupied approach, defers landing terrain checks and counts only traveled hexes for fire-phase TMM. Successful DFA cannot displace if attacker destroyed. Target destruction, pilot unconsciousness and landing terrain checks remain to be completed; no verified promotion. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. Printed pp.20,26–28 and CAT3500D errata v8.01 pp.3–4 checked; hatchet actuator and destroyed-target/unconscious-DFA rules corrected, exact CI pending. CAT3500D pp.26–27 / AGoAC Errata v8.01 pp.3–4: implemented entry and normal-jump conversion into former destroyed target hex before phase cleanup, without accepting any unrelated live occupant; direct endPSR/resolveSpecial regression verifies phase timing and water landing. Await exact CI/E2E and main Sonar; no premature Verified. 20.11 paired Charge/DFA book-to-engine regression packet: added deterministic tonnage and attack/displacement matrices covering charge packet totals, destroyed charging attacker, DFA front punch/rear prone damage, opposing PSRs, and errata attacker-destruction no-displacement. Evidence pending exact branch CI/E2E/scope Smoke and new main Sonar; do not promote to Verified until review and gates."
     },
     {
       "id": "agoac-098",
