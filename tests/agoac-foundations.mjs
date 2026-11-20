@@ -5660,7 +5660,7 @@ test('CAT3500D p.34: one-legged prone biped may rotate one hexside on a later tu
 });
 
 
-test('CAT3500D pp.30–36: five certified damage groups retain sourced evidence and Chapter 8 stays open',()=>{
+test('CAT3500D pp.30–36: five core damage groups retain exact source and CI evidence after chapter closure',()=>{
  const reg=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
  const ids=['agoac-037','agoac-104','agoac-105','agoac-106','agoac-107'];
  for(const id of ids){
@@ -5670,7 +5670,7 @@ test('CAT3500D pp.30–36: five certified damage groups retain sourced evidence 
   assert(r.audit.checks.every(c=>c.conclusion==='success'),id);
   assert.equal(r.audit.mainQualityGate.conclusion,'success',id);
  }
- assert.equal(reg.topics.find(x=>x.id==='agoac-damage').status,'not_audited');
- assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'tested_case',
-  'a roll of 12 mandates head/limb blowoff and full effects remain to audit');
+ assert.equal(reg.topics.find(x=>x.id==='agoac-damage').status,'verified');
+ assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'verified',
+  'component effects and mandatory natural-12 head/limb blowoff must be audited');
 });
