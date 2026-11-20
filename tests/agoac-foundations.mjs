@@ -4918,3 +4918,109 @@ test('CAT3500D p.25 / errata v8.01 p.3: Depth-1 Punch table has no cover, Kick t
  assert.equal(hit.damage,Math.floor(n/2));
  assert(['RL','LL'].includes(hit.location));
 });
+
+ 
+// Source-to-engine certification block: CAT3500D pp.26,28 (club, physical
+// weapon and punch attacks). These cross-check edge cases not covered by
+// individual implementation patches; verification is committed separately.
+test('CAT3500D p.26: club arm penalties are additive and never halve 1-per-5-ton damage',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const base=g.physicalPreview(u.id,t.id,'club','RA');
+ assert(base.legal,base.reason);
+ assert.equal(base.targetNumber,u.piloting-1);
+ assert.equal(base.damage,Math.ceil(u.tonnage/5));
+ u.actuators.LA.upper=true;
+ u.actuators.RA.lower=true;
+ const damaged=g.physicalPreview(u.id,t.id,'club','RA');
+ assert(damaged.legal,damaged.reason);
+ assert.equal(damaged.targetNumber,base.targetNumber+4);
+ assert.equal(damaged.damage,base.damage);
+ u.firedLocations=['CT'];
+ assert(g.physicalPreview(u.id,t.id,'club','RA').legal,
+  'torso-mounted fire does not disqualify a club attack');
+ u.firedLocations=['LA'];
+ assert.equal(g.physicalPreview(u.id,t.id,'club','RA').legal,false);
+ u.firedLocations=[];u.actuators.LA.shoulder=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'club','RA').legal,false);
+ u.actuators.LA.shoulder=false;u.actuators.RA.hand=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'club','RA').legal,false);
+ u.actuators.RA.hand=false;
+ t.q=-1;t.r=0;
+ assert.equal(g.physicalPreview(u.id,t.id,'club','RA').legal,false,
+  'club attacks are limited to the forward firing arc');
+});
+
+test('CAT3500D p.26: finding a club consumes physical action and disallows prior fire',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const tile=g.tile(u.q,u.r);
+ Object.assign(tile,{type:'woods',depth:0,height:0,surface:0});
+ u.club=false;u.clubKind=null;u.firedLocations=['CT'];
+ g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+ assert.equal(g.takeClub(u.id).ok,false);
+ assert.equal(u.club,false);
+ assert.equal(u.physicalDone,false);
+ u.firedLocations=[];
+ assert(g.takeClub(u.id).ok);
+ assert.equal(u.club,true);assert.equal(u.clubKind,'tree');
+ assert.equal(u.physicalDone,true);
+ assert(!g.canAct(u));
+ assert.equal(g.declarePhysical(u.id,t.id,'club','RA').ok,false,
+  'pickup cannot be combined with a club strike in the same phase');
+});
+
+test('CAT3500D p.28: physical weapon damage, actuator TN and forced hit table matrix',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const base=g.physicalPreview(u.id,t.id,'hatchet','LA');
+ assert(base.legal,base.reason);
+ assert.equal(base.damage,Math.ceil(u.tonnage/5));
+ assert.equal(base.targetNumber,u.piloting-1);
+ for(const part of ['upper','lower']){
+  u.actuators.LA[part]=true;
+  const damaged=g.physicalPreview(u.id,t.id,'hatchet','LA');
+  assert(damaged.legal,part+': '+damaged.reason);
+  assert.equal(damaged.targetNumber,base.targetNumber+2);
+  assert.equal(damaged.damage,base.damage);
+  u.actuators.LA[part]=false;
+ }
+ const called=g.physicalPreview(u.id,t.id,'hatchet','LA',{locationTable:'punch'});
+ assert(called.legal);
+ assert.equal(called.table,'punch');assert.equal(called.targetNumber,base.targetNumber+4);
+ g.tile(t.q,t.r).height=1;
+ const forced=g.physicalPreview(u.id,t.id,'hatchet','LA',{locationTable:'punch'});
+ assert(forced.legal,forced.reason);assert.equal(forced.table,'kick');
+ assert.equal(forced.targetNumber,base.targetNumber);
+ g.tile(t.q,t.r).height=0;
+ u.firedLocations=['RA'];
+ assert(g.physicalPreview(u.id,t.id,'hatchet','LA').legal,
+  'firing the opposite arm cannot forbid this hatchet');
+ u.firedLocations=['LA'];
+ assert.equal(g.physicalPreview(u.id,t.id,'hatchet','LA').legal,false);
+ u.firedLocations=[];u.actuators.LA.hand=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'hatchet','LA').legal,false);
+ u.actuators.LA.hand=false;u.actuators.LA.shoulder=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'hatchet','LA').legal,false);
+});
+
+test('CAT3500D p.28: missing-by-design punch actuators stack TN and quarter damage at minimum one',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const base=g.physicalPreview(u.id,t.id,'punch','RA');
+ assert(base.legal,base.reason);
+ assert.equal(base.targetNumber,u.piloting);
+ assert.equal(base.damage,Math.max(1,Math.ceil(u.tonnage/10)));
+ u.slots.RA[1]=null;u.slots.RA[2]=null;
+ const reduced=g.physicalPreview(u.id,t.id,'punch','RA');
+ assert(reduced.legal,reduced.reason);
+ assert.equal(reduced.targetNumber,base.targetNumber+4);
+ assert.equal(reduced.damage,Math.max(1,Math.floor(base.damage/4)));
+ u.slots.RA[3]=null;
+ assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').targetNumber,base.targetNumber+5);
+ u.slots.RA[1]='upper';u.slots.RA[2]='lower';u.slots.RA[3]='hand';
+ u.firedLocations=['RA'];
+ assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').legal,false);
+ u.firedLocations=[];
+ u.hatchets.push({location:'RA',slots:1});u.slots.RA[7]='hatchet';
+ assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').legal,false);
+ u.slots.RA[7]=null;u.hatchets=u.hatchets.filter(h=>h.location!=='RA');
+ u.actuators.RA.shoulder=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'punch','RA').legal,false);
+});
