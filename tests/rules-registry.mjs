@@ -154,3 +154,13 @@ test('Strict sequential audit cursor stops at the earliest unverified heading',(
   assert.equal(state.currentTopicId,'bmm-p005-four-legged-mech',
     'Stop at quad support: a glossary-only test must not certify the next mechanics');
 });
+
+
+test('AGoAC Chapter 8 critical effects must run in both local and CI unit suites',()=>{
+ const file='tests/agoac-ch8-critical-components.mjs';
+ assert(existsSync(resolve(root,file)),'critical component regression file must exist');
+ const pkg=JSON.parse(readFileSync(resolve(root,'package.json'),'utf8'));
+ const workflow=readFileSync(resolve(root,'.github/workflows/ci.yml'),'utf8');
+ assert(pkg.scripts['test:unit'].includes(file),'npm test:unit must execute Chapter 8 critical regression suite');
+ assert(workflow.includes(file),'GitHub CI must execute Chapter 8 critical regression suite');
+});
