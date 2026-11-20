@@ -5089,3 +5089,53 @@ test('CAT3500D pp.24,29: a mixed phase still offers a same-side choice before a 
  g.resolvePhysical();
  assert.deepEqual(events,['LA','RA','push']);
 });
+
+
+test('CAT3500D p.24: one physical type per turn, with two separate punches as the sole exception',()=>{
+ for(const type of ['punch','kick','club','hatchet','push']){
+  const {g,u,t}=physicalBlockFixture();
+  g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+  const limb=type==='punch'?'RA':type==='kick'?'RL':type==='hatchet'?'LA':'RA';
+  const result=g.declarePhysical(u.id,t.id,type,limb);
+  assert(result.ok,type+': '+(result.error||''));
+  assert.equal(g.physicalDeclarations.length,1);
+  assert.equal(g.declarePhysical(u.id,t.id,'kick','RL').ok,false,
+   'one declared physical type ends this Mech selection');
+ }
+ const {g,u,t}=physicalBlockFixture();
+ u.slots.LA[7]=null;u.hatchets=[];
+ g.phase='physical';g.queue=[u.team];g.activeTeam=u.team;g.actingId=u.id;
+ const both=g.declarePhysical(u.id,t.id,'punch','both');
+ assert(both.ok,both.error);
+ assert.deepEqual(g.physicalDeclarations.map(d=>d.limb),['LA','RA']);
+ assert(g.physicalDeclarations.every(d=>d.type==='punch'));
+ assert.equal(g.declarePhysical(u.id,t.id,'club','RA').ok,false);
+});
+
+test('CAT3500D p.29: push uses feet-facing, both shoulders, same level and no arm weapon fire',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ const base=g.physicalPreview(u.id,t.id,'push','LA');
+ assert(base.legal,base.reason);
+ assert.equal(base.targetNumber,u.piloting-1);
+ u.twist=1;
+ assert(g.physicalPreview(u.id,t.id,'push','LA').legal,'torso twist does not change a push arc');
+ u.actuators.LA.shoulder=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'push','LA').targetNumber,base.targetNumber+2);
+ u.actuators.RA.shoulder=true;
+ assert.equal(g.physicalPreview(u.id,t.id,'push','LA').targetNumber,base.targetNumber+4);
+ u.actuators.LA.shoulder=false;u.actuators.RA.shoulder=false;
+ u.firedLocations=['CT'];
+ assert(g.physicalPreview(u.id,t.id,'push','LA').legal);
+ u.firedLocations=['RA'];
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ u.firedLocations=[];
+ t.prone=true;
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ t.prone=false;g.tile(t.q,t.r).height=1;
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ g.tile(t.q,t.r).height=0;
+ u.facing=3;
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+ u.facing=0;t.charge={type:'dfa',target:u.id};
+ assert(!g.physicalPreview(u.id,t.id,'push','LA').legal);
+});
