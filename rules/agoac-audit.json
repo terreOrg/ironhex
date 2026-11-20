@@ -2424,7 +2424,7 @@
         },
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC pp.29,42: prohibited push retains positions but still requires an immediate PSR"
+          "test": "AGoAC p.29: prohibited push retains positions and queues a phase-end PSR"
         },
         {
           "file": "tests/agoac-foundations.mjs",
@@ -6126,9 +6126,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.15 and errata v8.01 p.2: flipped arms cannot punch or attack with an arm-mounted hatchet"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.29: pushed target uses preceding ordinary physical damage for its phase-end PSR"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Implemented CAT3500D p.15/p.25 and official errata v8.01 pp.2–3: explicitly forbid punch/physical weapon when arms reversed; charge must have target directly ahead and pay its final facing change in MP. Exact CI/Browser/Sonar pending; not prematurely Verified. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion."
     },
     {
       "id": "agoac-092",
@@ -6456,9 +6460,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.29,42: opposite pushes resolve both rolls before either displacement"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.29: push and opposed pushes queue all PSRs until phase-end"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion."
     },
     {
       "id": "agoac-102",
@@ -6473,9 +6481,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.7,29–30: ordinary physical attacks all roll before damage, including a destroyed attacker"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.24,29: mixed pushes preserve independent two-punch roll and damage choices"
         }
       ],
-      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter."
+      "reviewNote": "Initial Chapter 7 inventory; no verification until exact checks and complete section audit. Special charge/DFA and individual weapon rules deliberately deferred within chapter. Packet for printed CAT3500D pp.24,29: implementation defers push/opposed-push PSRs until end of Physical Attack Phase (after ordinary hit damage/20+ TN), and exposes independent roll and damage ordering of both punches even when push/charge/DFA coexist. Exact CI/E2E/Sonar and section audit still pending; no Verified promotion."
     }
   ]
 }
