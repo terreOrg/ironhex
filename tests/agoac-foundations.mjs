@@ -5074,7 +5074,7 @@ test('CAT3500D pp.24,29: a mixed phase still offers a same-side choice before a 
  // its two fists versus the push, with both fists kept in one slot.
  const events=[];
  g._resolutionChooser=(request,fallback)=>{
-  if(request.kind==='physical-order'&&request.options?.some(o=>o.attackerId===puncher.id)){
+  if(request.kind==='physical-order'&&request.context?.scope!=='attack'&&request.options?.some(o=>o.attackerId===puncher.id)){
    assert.equal(request.options.find(o=>o.attackerId===puncher.id).attacks.length,2);
    return String(puncher.id);
   }
