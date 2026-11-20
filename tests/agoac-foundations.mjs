@@ -1194,7 +1194,7 @@ test('AGoAC pp.30,35,44: actual sixth head wound in an attack phase preserves de
   assert.equal(g.phase,phase==='fire'?'physical':'heat');assert(!g.canAct(a));
  }
 });
-test('AGoAC pp.29,30,42,44: a displaced target checks for a fall at phase-end after an unmade kick is cancelled',()=>{
+test('AGoAC pp.29,30,42,44: push displacement permits a later kick before defender phase-end fall',()=>{
  const g=fresh(),[pusher,kicker,t,other]=g.units;
  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
  Object.assign(pusher,{q:-1,r:0,facing:0});
@@ -1206,12 +1206,17 @@ test('AGoAC pp.29,30,42,44: a displaced target checks for a fall at phase-end af
  g.physicalDeclarations=[{id:pusher.id,target:t.id,type:'push',limb:'LA',...push},{id:kicker.id,target:t.id,type:'kick',limb:'RL',...kick}];
  // Successful push first. Any later PSR and injury rolls deliberately
  // fail; unlike displacement, the fall itself occurs only at phase-end.
- let draws=0,kickRolls=0;
+ let draws=0,kickRolls=0;const events=[];
  g.rng=()=>draws++<2?.99:.01;
  const realRoll=g.roll.bind(g);
  g.roll=(name,tn)=>{
-  if(name===kicker.name+' · kick')kickRolls++;
+  if(name===kicker.name+' · kick'){kickRolls++;events.push('kick');}
   return realRoll(name,tn);
+ };
+ const realFall=g.fall.bind(g);
+ g.fall=(victim,...args)=>{
+  if(victim===t)events.push('fall');
+  return realFall(victim,...args);
  };
  const originalWound=g.wound.bind(g);let deathObserved=false;
  g.wound=(victim,n)=>{
@@ -1222,9 +1227,12 @@ test('AGoAC pp.29,30,42,44: a displaced target checks for a fall at phase-end af
    deathObserved=true;
   }
  };
- assert(g.nextPhase().ok);assert(deathObserved);assert.equal(kickRolls,0);
+ assert(g.nextPhase().ok);assert(deathObserved);assert.equal(kickRolls,1);
+ assert(events.includes('fall')&&events.indexOf('kick')<events.indexOf('fall'),
+  'the still-legal kick must resolve before the defender checks for falling');
  const shot=g.resolution.find(r=>r.id===kicker.id).shots[0];
- assert.equal(shot.cancelled,true);assert.equal(shot.roll,null);assert.equal(shot.damage,0);
+ assert.equal(shot.cancelled,false);assert.equal(shot.roll,2);
+ assert.equal(shot.hit,false);assert.equal(shot.damage,0);
  assert.equal(g.onMap(t),false);assert.equal(g.occupied(1,0),false);
  assert.equal(g.phase,'heat');assert.equal(other.dead,false);
 });

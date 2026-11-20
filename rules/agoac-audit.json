@@ -2520,7 +2520,7 @@
         },
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC pp.29,30,42,44: a displaced target checks for a fall at phase-end after an unmade kick is cancelled"
+          "test": "AGoAC pp.29,30,42,44: push displacement permits a later kick before defender phase-end fall"
         }
       ],
       "audit": {
