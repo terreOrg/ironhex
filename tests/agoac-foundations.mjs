@@ -5238,3 +5238,93 @@ test('CAT3500D p.29: reciprocal push PSRs include later punch damage and remain 
  assert(g.afterRolls.every(r=>r.target===target.piloting+1 || r.target===pusher.piloting),
   'cumulative 20+ damage modifies the target PSR threshold');
 });
+
+test('CAT3500D pp.25–26: Charge packet totals and post-impact displacement across tonnage and travel',()=>{
+ for(const [weight,hexes,targetWeight] of [[45,1,65],[55,3,45],[65,5,85],[100,2,20]]){
+  const {g,u,t}=physicalBlockFixture();
+  g.units[1].dead=g.units[3].dead=true;
+  Object.assign(u,{tonnage:weight,moveMode:'run',
+   charge:{type:'charge',target:t.id,dir:0,hexes,targetPos:{q:t.q,r:t.r}}});
+  t.tonnage=targetWeight;
+  const impacts=[];
+  g.packets=(unit,amount,side,table)=>{
+   impacts.push({id:unit.id,amount,side,table});return amount;
+  };
+  g.rng=()=>.99;g.resolveSpecial(u);
+  const expectedTarget=Math.ceil(weight/10*hexes),expectedSelf=Math.ceil(targetWeight/10);
+  assert.deepEqual(impacts.map(x=>[x.id,x.amount]),
+   [[t.id,expectedTarget],[u.id,expectedSelf]]);
+  assert.deepEqual(impacts.map(x=>[x.side,x.table]),[['front','normal'],['front','normal']]);
+  assert.deepEqual([u.q,u.r,t.q,t.r],[1,0,2,0]);
+  assert.equal(u.charge.resolved,true);
+  assert.equal(g.resolution[0].shots[0].hit,true);
+  assert.equal(g.resolution[0].shots[0].damage,expectedTarget);
+  assert(u.psrs.some(p=>p.modifier===2&&p.reason==='Таран'));
+  assert(t.psrs.some(p=>p.modifier===2&&p.reason==='Попадание тарана'));
+ }
+});
+
+test('CAT3500D p.26 errata v8.01: lethal Charge recoil prevents attacker advance even on hit',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ g.units[1].dead=g.units[3].dead=true;
+ Object.assign(u,{moveMode:'run',tonnage:65,
+  charge:{type:'charge',target:t.id,dir:0,hexes:4,targetPos:{q:t.q,r:t.r}}});
+ g.rng=()=>.99;
+ const packets=[];
+ g.packets=(unit,amount)=>{
+  packets.push([unit.id,amount]);
+  if(unit===u)g.destroyMech(u);
+  return amount;
+ };
+ g.resolveSpecial(u);
+ assert.deepEqual(packets,[[t.id,26],[u.id,Math.ceil(t.tonnage/10)]]);
+ assert(u.dead);assert.equal(u.charge.resolved,true);
+ assert.deepEqual([u.q,u.r],[0,0],'a destroyed charging attacker cannot enter the target hex');
+ assert.equal(g.resolution[0].shots[0].hit,true);
+});
+
+test('CAT3500D pp.26–28: DFA damage groups, hit tables, displacement and phase-end PSRs',()=>{
+ for(const [weight,targetProne,table,side] of [
+  [55,false,'punch','front'],
+  [65,true,'normal','rear']
+ ]){
+  const {g,u,t}=physicalBlockFixture();
+  g.units[1].dead=g.units[3].dead=true;
+  Object.assign(u,{tonnage:weight,airborne:true,moveMode:'jump',
+   charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:t.q,r:t.r},startPos:{q:-2,r:0}}});
+  t.prone=targetProne;
+  const impacts=[];
+  g.packets=(unit,amount,hitSide,locationTable)=>{
+   impacts.push([unit.id,amount,hitSide,locationTable]);return amount;
+  };
+  g.rng=()=>.99;g.resolveSpecial(u);
+  assert.deepEqual(impacts,[
+   [t.id,Math.ceil(weight/10*3),side,table],
+   [u.id,weight/5,'front','kick']
+  ]);
+  assert.deepEqual([u.q,u.r,t.q,t.r],[1,0,2,0]);
+  assert.equal(u.charge.resolved,true);assert(!u.airborne);
+  assert.equal(g.resolution[0].shots[0].damage,Math.ceil(weight/10*3));
+  assert(u.psrs.some(p=>p.modifier===4&&p.reason==='Посадка DFA'));
+  assert.equal(t.psrs.some(p=>p.modifier===2&&p.reason==='Попадание DFA'),!targetProne);
+ }
+});
+
+test('CAT3500D p.27 errata v8.01: lethal DFA recoil does not displace surviving target',()=>{
+ const {g,u,t}=physicalBlockFixture();
+ g.units[1].dead=g.units[3].dead=true;
+ Object.assign(u,{tonnage:55,airborne:true,moveMode:'jump',
+  charge:{type:'dfa',target:t.id,dir:0,targetPos:{q:t.q,r:t.r},startPos:{q:-2,r:0}}});
+ const impacts=[];g.rng=()=>.99;
+ g.packets=(unit,amount,side,table)=>{
+  impacts.push([unit.id,amount,side,table]);
+  if(unit===u)g.destroyMech(u);
+  return amount;
+ };
+ g.resolveSpecial(u);
+ assert.deepEqual(impacts.map(x=>[x[0],x[1]]),[[t.id,17],[u.id,11]]);
+ assert(u.dead);assert.equal(u.charge.resolved,true);assert(!u.airborne);
+ assert.deepEqual([t.q,t.r],[1,0],'target cannot be displaced by destroyed DFA attacker');
+ assert.deepEqual(t.psrs,[],'no DFA hit PSR when its dead attacker cannot displace');
+ assert.equal(g.resolution[0].shots[0].hit,true);
+});
