@@ -440,7 +440,8 @@
         30,
         36
       ],
-      "status": "not_audited"
+      "status": "not_audited",
+      "reviewNote": " 20.11.2026 first Ch.8 book-first batch: six new atomic groups 103–108 inventoried; 037 downgraded due official v8.01 hip rounding correction, 045 remains Tested Case with immediate first-gyro PSR regression; new destruction/transfer/test matrices. Scope remains chapter 8 only, no deploy, no claim of full source inventory or overall Verified."
     },
     {
       "id": "agoac-heat",
@@ -2767,12 +2768,12 @@
         33,
         34
       ],
-      "statement": "A biped hip critical halves Walking MP rounding down; recompute Running MP rounding up. Two hip criticals reduce ground MP to zero without alone causing immobility. Other same-leg actuator criticals from prior turns are ignored for movement, whereas hits in the hip-hit turn or later still apply; PSR hip modifier overrides the same-leg actuator modifiers.",
-      "status": "verified",
+      "statement": "AGoAC errata v8.01: hip critical halves unmodified biped Walking MP rounding up, BEFORE same/later leg actuator reductions; second hip reduces MP to zero without immobility. Existing hip actuator damage from previous phases is ignored for MP and PSR, while hits in the same or subsequent phases accumulate as errata specifies.",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC p.33: biped hip damage halves Walking MP downward and derives Running MP upward"
+          "test": "AGoAC p.33 errata v8.01: biped hip damage rounds Walking MP upward before penalties"
         },
         {
           "file": "tests/agoac-foundations.mjs",
@@ -2780,10 +2781,10 @@
         },
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC p.33: hip-limited movement cannot use the extra hex from rounding up"
+          "test": "AGoAC p.33 errata v8.01: hip movement permits only the rounded-up MP budget"
         }
       ],
-      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI completed successfully; tested and squashed main trees are identical.",
+      "reviewNote": "Original CAT3500D printed pp.32–34 inspected; rounding changed only for biped ground movement, timestamps recorded on actual biped leg criticals and persisted. Legacy snapshots with no per-actuator acquisition turns retain prior same-leg modifier suppression because historical timing cannot be reconstructed. Quad extensions unchanged. Narrow MP/PSR modifier requirement; movement-triggered PSR scheduling, physical attacks and timing of all other critical effects are separate. Exact CI completed successfully; tested and squashed main trees are identical. 20.11.2026 re-audit against official AGoAC Errata v8.01 p.4 discovered previously certified 2018 rounding-down formula was superseded; status temporarily reverted to Tested Case. Updated source and tests to round upward. PSR same-phase versus previous-phase actuator timing still needs a distinct source audit before re-verification.",
       "audit": {
         "sourceChecked": true,
         "edgeCasesChecked": true,
@@ -2938,7 +2939,7 @@
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC pp.33–34: destroyed section counts sink and jump slots marked by final critical roll"
+          "test": "AGoAC pp.33–34: section destruction counts all sink and jump slots without a false critical roll"
         }
       ],
       "reviewNote": "Fixed loss accounting in final critical checks; standalone critical effects already present. Exact CI passed; squash tree matches tested tree.",
@@ -3197,15 +3198,19 @@
         40,
         43
       ],
-      "statement": "First gyro hit adds three to PSRs, second adds another three and causes automatic fall; additional gyro slots may be marked without further PSR increases. Destroyed gyro prevents standing but permits a single facing change if MP allows and is not immobility.",
+      "statement": "AGoAC errata v8.01: first gyro critical immediately triggers PSR at application (+3 gyro), second destroys gyro, automatic fall, +6 applies to fall cockpit PSR; higher-slot marks have no further modifier. Destroyed gyro prevents standing or leaving hex while permitting one facing step and does not alone count as immobility.",
       "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hits never raise modifier beyond six"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.32 and errata v8.01 p.4: first gyro hit immediately rolls its PSR"
         }
       ],
-      "reviewNote": "Gyro critical and movement restriction regression; running/jumping PSR timing and seatbelt roll integration remain separate. Exact CI pending."
+      "reviewNote": "Gyro critical and movement restriction regression; running/jumping PSR timing and seatbelt roll integration remain separate. Exact CI pending. 20.11.2026 full errata p.4 recheck: previous deferred first-gyro PSR contradicted official correction. Engine now resolves first gyro PSR immediately and second gyro automatic fall immediately, tested with deterministic 2d6 and reused test; awaiting exact CI and full source review."
     },
     {
       "id": "agoac-046",
@@ -3855,7 +3860,7 @@
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC p.33: biped hip damage halves Walking MP downward and derives Running MP upward"
+          "test": "AGoAC p.33 errata v8.01: biped hip damage rounds Walking MP upward before penalties"
         },
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7104,6 +7109,160 @@
         },
         "review": "Book-to-runtime audit of CAT3500D printed pp.7,24,29: alternating movement/attack declaration slots, unequal 2:1/3:1 unit ratios, initiative loser priority when displacement conflicts, own-side owner selection, one two-fist slot with independently chosen roll and damage order, and physical hits and PSRs after attack commitments. physicalOrder uses selectionPlan for all normal and mixed phase declarations; nextPhysicalAttacker preserves same-side choice and two-punch grouping; rollPhysical/physicalAfterDisplacement use frozen declarations/snapshots, rechecking legal geometry only after actual displacement and retaining committed dice despite same-phase death; resolveOrdinaryPhysical/resolvePhysical stage ordinary hit dice before ordinary damage and preserve independent owner damage ordering; resolvePush handles opposed rolls and displacement exceptions; endPSR applies accumulated modifiers after damage and concussion. Tests directly validate independent hit direction, interleaving team slots, rolled attacks after physical-death effects, changes from displacement, reciprocal pushes and the 20+ threshold. Specialized Charge/DFA attack math and landing remain independent requirements 095/097, not claimed here."
       }
+    },
+    {
+      "id": "agoac-103",
+      "topicId": "agoac-damage",
+      "pages": [
+        30
+      ],
+      "statement": "Attack/damage resolution order: every declared weapon/physical attack hit roll is made before damage; controller orders successful attacks and damage independently; full damage and criticals for each attack packet resolve before the next, retaining declared return fire even on lethal damage.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,21,30: every weapon attack rolls and spends ammo before damage, even a destroyed shooter"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,21,30: independent controller choices for to-hit and damage order replay without rerolling"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.30,35,44: actual sixth head wound in an attack phase preserves declared return fire and punches until cleanup"
+        }
+      ],
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+    },
+    {
+      "id": "agoac-104",
+      "topicId": "agoac-damage",
+      "pages": [
+        30,
+        34,
+        35,
+        36
+      ],
+      "statement": "Damage first removes correct front/rear armor then internal structure, transfers excess from destroyed limbs to side torso to center torso, and includes remaining armor lost with an entire destroyed section for same-phase 20+ damage PSR.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.30,34,36: destroyed non-ammo section needs no crit roll and counts residual armor"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.30,34,36: excess arm damage transfers to same-side torso armor"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.23: every normal hit location and through-armor opportunity by direction"
+        }
+      ],
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+    },
+    {
+      "id": "agoac-105",
+      "topicId": "agoac-damage",
+      "pages": [
+        30,
+        31,
+        34,
+        36
+      ],
+      "statement": "Destroyed location critical flow: normal internal-structure hit checks criticals, but a location reduced to zero structure skips the roll unless it contains ammunition slots; if rolled, only ammunition criticals count; other results do not transfer.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.30,34,36: destroyed non-ammo section needs no crit roll and counts residual armor"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.36 Step 5: destroyed ammo section rolls once but ignores non-ammo critical effects"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,34–35: side torso destruction counts critical and remaining engine slots once"
+        }
+      ],
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+    },
+    {
+      "id": "agoac-106",
+      "topicId": "agoac-damage",
+      "pages": [
+        31,
+        32,
+        34
+      ],
+      "statement": "Critical slot assignment and transfer: head/leg one D6, arm/torso six-slot block then position, reroll inapplicable slots; transfer only when all eligible slots were exhausted in previous phases, never on destruction; multi-slot non-engine/gyro/sensor weapons disable on first hit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,34–35: side torso destruction counts critical and remaining engine slots once"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.4–5: critical table distinguishes empty reroll slots and destroyed equipment"
+        }
+      ],
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+    },
+    {
+      "id": "agoac-107",
+      "topicId": "agoac-damage",
+      "pages": [
+        32,
+        34,
+        35,
+        36
+      ],
+      "statement": "Ammo-bin critical explosion deals internal structure damage based on each remaining shot and missile count, causes two pilot wounds, transfers inward bypassing armor, and respects destroyed compartment flow.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.39,44: internal ammunition explosion wounds a surviving pilot twice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.36 Step 5: destroyed ammo section rolls once but ignores non-ammo critical effects"
+        }
+      ],
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
+    },
+    {
+      "id": "agoac-108",
+      "topicId": "agoac-damage",
+      "pages": [
+        32,
+        33,
+        34,
+        35
+      ],
+      "statement": "Critical results destroy equipment and impose correct actuator/engine/gyro/cockpit/heat sink/jump jet/sensor/life support effects; head or limb blown off by roll 12, side torso arm loss, CT/head destruction and delayed removal.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,37–38: engine criticals add five heat each unless shut down and third destroys"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33–34: section destruction counts all sink and jump slots without a false critical roll"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.35,44: lethal pilot or component damage leaves map presence until phase end"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.32–34: blown-off leg loses no additional armor or structure for 20+ PSR"
+        }
+      ],
+      "reviewNote": "Initial precise Chapter 8 source inventory from CAT3500D 2018 printed pp.30–36 + official AGoAC errata v8.01. Implementation in main code examined; exact branch tests and full printed edge-case audit pending. Do not promote until exact CI/E2E/Smoke and strict post-merge Sonar."
     }
   ]
 }

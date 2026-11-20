@@ -251,7 +251,7 @@ test('Sixth wound kills pilot without making a consciousness check (BMM p.58)',(
  assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Сознание')).length,0);
 });
 test('Ammo explosion bypasses armor and wounds pilot twice',()=>{const g=game(),u=g.units[0];u.bins[0].shots=1;const a=u.armor.RT;g.explode(u,u.bins[0]);assert.equal(u.structure.RT,3);assert.equal(u.armor.RT,a);assert.equal(u.pilotWounds,2);});
-test('A damaged gyro reduces stability, not base walking MP',()=>{const g=game(),u=g.units[0];u.gyroHits=1;assert.equal(g.psrMod(u),3);assert.equal(g.mp(u),5);u.actuators.LL.hip=true;assert.equal(g.mp(u),2);});
+test('A damaged gyro reduces stability, not base walking MP',()=>{const g=game(),u=g.units[0];u.gyroHits=1;assert.equal(g.psrMod(u),3);assert.equal(g.mp(u),5);u.actuators.LL.hip=true;assert.equal(g.mp(u),3);});
 test('Heat reduces walk and derived run',()=>{const g=game(),u=g.units[0];u.heat=10;assert.equal(g.mp(u),3);assert.equal(g.mp(u,'run'),5);});
 
 
