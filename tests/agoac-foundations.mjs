@@ -1420,7 +1420,8 @@ test('CAT3500D p.39: heat ammo explosion automatically selects the same-type bin
  assert.equal(resolved.bins[1].destroyed,true);
  assert.equal(resolved.bins[1].shots,0);
  assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Перегрев боезапаса')).length,1);
- assert.equal(resolved.pilotWounds,2);
+ assert.equal(resolved.dead,true,'five full ammunition shots destroy the chassis');
+ assert.equal(resolved.pilotWounds,6,'lethal ammo transfer kills the pilot after the explosion wounds');
 });
 test('AGoAC p.38: only maximum damage per shot enters the heat explosion tie',()=>{
  const g=fresh(),u=g.units[0],base=u.bins[0];
