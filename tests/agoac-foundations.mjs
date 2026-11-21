@@ -5374,7 +5374,7 @@ test('CAT3500D pp.30–36: Chapter 8 closes only with twelve source-reviewed dam
  const criticalTests=readFileSync(new URL('./agoac-ch8-critical-components.mjs',import.meta.url),'utf8');
  assert(criticalTests.split("test('").length-1>=21,'full component effects matrix must not disappear');
  assert(crit.evidence.some(x=>x.file==='tests/agoac-ch8-critical-components.mjs'));
- assert.equal(r.currentTopicId,'agoac-heat','cursor must point at next unverified chapter without starting it');
+ assert.equal(r.currentTopicId,r.topics.find(x=>x.status!=='verified')?.id??null,'cursor must point at next unverified chapter without starting it');
 });
 
 test('CAT3500D p.32 and errata v8.01 p.4: first gyro hit immediately rolls its PSR',()=>{
@@ -5790,4 +5790,39 @@ test('AGOAC errata v8.01 p.4: concurrent heat effects survive a shutdown PSR cha
  g.heatPhase();
  assert.deepEqual(events,['ammo-check','shutdown-psr','ammo-explosion','life-support-2']);
  assert.equal(u.unconscious,true);
+});
+
+
+test('CAT3500D pp.37–39: completed Heat chapter retains twelve source-reviewed rules and exact green main gates',()=>{
+ const reg=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
+ const chapter=reg.topics.find(x=>x.id==='agoac-heat');
+ const requirements=reg.requirements.filter(x=>x.topicId==='agoac-heat');
+ assert.equal(chapter.status,'verified');
+ assert.equal(chapter.audit.inventoryComplete,true);
+ assert.equal(chapter.audit.sourceChecked,true);
+ assert.equal(chapter.audit.edgeCasesChecked,true);
+ assert.equal(requirements.length,12);
+ assert.deepEqual(requirements.map(x=>x.id),Array.from({length:12},(_,i)=>'agoac-'+(i+109)));
+ assert.deepEqual(chapter.audit.requirementIds,requirements.map(x=>x.id));
+ assert(requirements.every(x=>x.status==='verified'&&x.audit?.sourceChecked&&x.audit?.edgeCasesChecked&&x.evidence?.length));
+ assert.equal(chapter.audit.testedSha,chapter.audit.mergedSha);
+ assert.equal(chapter.audit.mainQualityGate.headSha,chapter.audit.mergedSha);
+ assert.equal(chapter.audit.mainQualityGate.conclusion,'success');
+ assert.deepEqual(chapter.audit.checks.map(x=>x.name).sort(),['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
+ assert(chapter.audit.checks.every(x=>x.conclusion==='success'&&Number.isInteger(x.runId)));
+ assert.equal(reg.currentTopicId,'agoac-psr');
+ const suite=readFileSync(new URL('./agoac-foundations.mjs',import.meta.url),'utf8');
+ const required={
+  'agoac-118':['CAT3500D p.39: heat ammo explosion automatically selects the same-type bin with most shots','CAT3500D p.39: identical-shot ammo bins use RNG, never controller choice','CAT3500D pp.38–39: tied damage across types allows controller choice, but not same-type bin choice'],
+  'agoac-120':['AGOAC errata v8.01 p.4: all heat checks resolve before shutdown, ammo and life-support effects','AGOAC errata v8.01 p.4: concurrent heat effects survive a shutdown PSR changing pilot state']
+ };
+ for(const [id,names] of Object.entries(required)){
+  const entry=requirements.find(x=>x.id===id);
+  assert(entry&&entry.audit.testedSha===chapter.audit.testedSha);
+  for(const name of names){
+   assert(entry.evidence.some(x=>x.test===name),id+' missing source-linked evidence');
+   assert(suite.includes("test('"+name+"'"),id+' missing deterministic regression');
+  }
+ }
+ assert.equal(reg.topics.filter(x=>x.status==='verified').length,9);
 });

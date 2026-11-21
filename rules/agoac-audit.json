@@ -11,8 +11,8 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment.",
-  "currentTopicId": "agoac-heat",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment.",
+  "currentTopicId": "agoac-psr",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -498,8 +498,57 @@
         37,
         39
       ],
-      "status": "not_audited",
-      "reviewNote": "21.11.2026 first book-first Chapter 9 audit: printed CAT3500D pp.37–39 compared directly with engine, prior named tests and official errata v8.01. Inventoried 12 atomic groups 109–120. Seven existing groups source-to-code verified using exact green main c3f65cf7 (CI 44760040257, Browser 44760040465, Smoke 44760040230, Sonar 44760041039); three groups 111–113 get new boundary tests awaiting branch CI. Group 118 KNOWN MISSING: heatExplosionBin lets controller choose a lower-shot same-type ammo bin and does not randomly break identical-shot bins, contradicting printed p.39. Group 120 TESTED CASE: v8.01 simultaneous heat effects require interaction audit. Chapter stays not_audited. Work confined to Heat; no deploy/no Chapter 10. 21.11.2026 source-to-code plus exact PR#225 CI 535/535, Browser 44887361711 and Smoke 44887361761 green: 111,112,113 promoted Verified. Chapter remains not_audited; 118 Known Missing and 120 Tested Case."
+      "status": "verified",
+      "reviewNote": "21.11.2026 first book-first Chapter 9 audit: printed CAT3500D pp.37–39 compared directly with engine, prior named tests and official errata v8.01. Inventoried 12 atomic groups 109–120. Seven existing groups source-to-code verified using exact green main c3f65cf7 (CI 44760040257, Browser 44760040465, Smoke 44760040230, Sonar 44760041039); three groups 111–113 get new boundary tests awaiting branch CI. Group 118 KNOWN MISSING: heatExplosionBin lets controller choose a lower-shot same-type ammo bin and does not randomly break identical-shot bins, contradicting printed p.39. Group 120 TESTED CASE: v8.01 simultaneous heat effects require interaction audit. Chapter stays not_audited. Work confined to Heat; no deploy/no Chapter 10. 21.11.2026 source-to-code plus exact PR#225 CI 535/535, Browser 44887361711 and Smoke 44887361761 green: 111,112,113 promoted Verified. Chapter remains not_audited; 118 Known Missing and 120 Tested Case. FINAL 2026-11-21: all twelve registered heat requirements 109–120 source-to-code Verified; exact main 94910663 CI 44890556553 (539/539), Browser 44890556478, Smoke 44890556508 and strict Sonar 44890556458 all successful. Chapter 9 closed; no deploy.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "inventoryComplete": true,
+        "sourceEdition": "CAT3500D (2018), printed Heat pp.37–39 and official AGoAC errata v8.01",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4",
+        "testedTree": "eca63a125e08947834439f0f6dea508e7a4555b1",
+        "mergedSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44890556553,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44890556478,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44890556508,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44890556458,
+          "jobId": 136805221629,
+          "conclusion": "success",
+          "headSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4"
+        },
+        "requirementIds": [
+          "agoac-109",
+          "agoac-110",
+          "agoac-111",
+          "agoac-112",
+          "agoac-113",
+          "agoac-114",
+          "agoac-115",
+          "agoac-116",
+          "agoac-117",
+          "agoac-118",
+          "agoac-119",
+          "agoac-120"
+        ],
+        "review": "Source inventory of movement, weapon and engine heat, operational/flooded sinks and water cooling, recording/overflow, heat movement/fire modifiers, shutdown/restart/PSRs, ammo explosion thresholds/type/magazine priority/random ties, life support pilot damage, and errata simultaneous noninteracting heat effects. Actual game engine and regression matrices source-reviewed; exact main 94910663 has four-way green: CI 539/539, Browser E2E, Container Smoke, strict Sonar. No deployment and no Chapter 10 code changes."
+      }
     },
     {
       "id": "agoac-psr",
@@ -8167,14 +8216,56 @@
         39
       ],
       "statement": "When the chosen ammunition type occupies multiple critical slots, the slot with MOST remaining shots must explode; if two or more qualifying slots have equal shots, RANDOMLY select one (not the controller), while different ammo types tied on per-shot damage remain controller-selectable.",
-      "status": "known_missing",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.39: heat ammo explosion automatically selects the same-type bin with most shots"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.39: identical-shot ammo bins use RNG, never controller choice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.38–39: tied damage across types allows controller choice, but not same-type bin choice"
         }
       ],
-      "reviewNote": "Confirmed source-to-code mismatch: CAT3500D printed p.39 says select same-type slot with most shots, randomize equal-shot slots. Current heatExplosionBin() offers controller options for all bins tied on damage-per-shot, including same-type bins with 1 vs 5 shots, and permits choosing the 1-shot bin; existing test explicitly expects that incorrect choice. Needs engine fix, corrected regression and exact CI; do NOT promote. 21.11.2026 PR226 replaces obsolete controller-choice same-type test with correct automatic most-shots test; engine patch and CI still pending, not Verified."
+      "reviewNote": "Confirmed source-to-code mismatch: CAT3500D printed p.39 says select same-type slot with most shots, randomize equal-shot slots. Current heatExplosionBin() offers controller options for all bins tied on damage-per-shot, including same-type bins with 1 vs 5 shots, and permits choosing the 1-shot bin; existing test explicitly expects that incorrect choice. Needs engine fix, corrected regression and exact CI; do NOT promote. 21.11.2026 PR226 replaces obsolete controller-choice same-type test with correct automatic most-shots test; engine patch and CI still pending, not Verified. FINAL 2026-11-21: source-to-code and deterministic regressions verified against main merge 94910663; CI 539/539 (44890556553), Browser E2E 44890556478, Smoke 44890556508, strict Sonar 44890556458 all successful.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.37–39; official AGoAC errata v8.01",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4",
+        "testedTree": "eca63a125e08947834439f0f6dea508e7a4555b1",
+        "mergedSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44890556553,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44890556478,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44890556508,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44890556458,
+          "jobId": 136805221629,
+          "conclusion": "success",
+          "headSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4"
+        },
+        "review": "Source p.39: within one ammo type use most shots, break equal-shot ties randomly; distinct ammo types tied for highest per-shot damage allow owner choice. Reviewed source, engine and exact deterministic RNG/controller Game API regressions."
+      }
     },
     {
       "id": "agoac-119",
@@ -8238,14 +8329,56 @@
         39
       ],
       "statement": "Official AGoAC errata v8.01: all heat effects resolve SIMULTANEOUSLY without affecting one another, including shutdown, ammo explosion and life-support injury at the newly adjusted heat level.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGOAC errata v8.01 p.4: all heat checks resolve before shutdown, ammo and life-support effects"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGOAC errata v8.01 p.4: concurrent heat effects survive a shutdown PSR changing pilot state"
         }
       ],
-      "reviewNote": "Errata v8.01 p.4 adds simultaneous non-interacting heat effects. heatPhase() currently executes shutdown/PSR, ammo and life-support sequentially; no cross-effect regression proves same-phase snapshot isolation. Needs source-to-code test of simultaneous interactions before Verified."
+      "reviewNote": "Errata v8.01 p.4 adds simultaneous non-interacting heat effects. heatPhase() currently executes shutdown/PSR, ammo and life-support sequentially; no cross-effect regression proves same-phase snapshot isolation. Needs source-to-code test of simultaneous interactions before Verified. FINAL 2026-11-21: source-to-code and deterministic regressions verified against main merge 94910663; CI 539/539 (44890556553), Browser E2E 44890556478, Smoke 44890556508, strict Sonar 44890556458 all successful.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.37–39; official AGoAC errata v8.01",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4",
+        "testedTree": "eca63a125e08947834439f0f6dea508e7a4555b1",
+        "mergedSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44890556553,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44890556478,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44890556508,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44890556458,
+          "jobId": 136805221629,
+          "conclusion": "success",
+          "headSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4"
+        },
+        "review": "Errata v8.01 p.4: all Heat effects simultaneously without mutual interference. Engine snapshots adjusted Heat Scale and computes all checks prior to shutdown PSR, ammunition explosion and life-support wounds. Game API tests include pilot-state changes during effects."
+      }
     }
   ]
 }
