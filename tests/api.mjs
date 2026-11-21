@@ -437,3 +437,30 @@ test('AGoAC p.28 API validates different punch target and optional hatchet locat
  assert.deepEqual(validateTacticalOrder(axe),axe);
  assert.throws(()=>validateTacticalOrder({...axe,locationTable:'HD'}),AuthError);
 });
+
+
+test('AGoAC p.47 API: validated east exit wins only for the lone Trial by Fire defender',()=>{
+ const base={type:'exit',version:1,id:0,edge:3,mode:'walk'};
+ assert.deepEqual(validateTacticalOrder(base),base);
+ for(const invalid of [
+  {...base,edge:6},{...base,edge:'3'},{...base,edge:2.5},
+  {...base,mode:'jump'},{...base,mode:'minimum'},
+  {...base,id:2},{...base,override:true}
+ ])assert.throws(()=>validateTacticalOrder(invalid),AuthError);
+ const generic=new Game();
+ generic.phase='move';generic.queue=[0,1];generic.activeTeam=0;
+ Object.assign(generic.units[0],{q:6,r:0,moveMode:'stand'});
+ assert.throws(()=>runTacticalOrder(generic,base),AuthError,'exit is scenario-only');
+ const g=new Game();assert(g.configureScenario('trial-by-fire').ok);
+ g.scenario.sideRollWinner=1;
+ assert(g.chooseScenarioSide(1,'attacker').ok);
+ g.units[1].notFielded=true;g.units[1].dead=true;
+ const defender=g.units[0];Object.assign(defender,{q:6,r:0,moveMode:'stand'});
+ g.phase='move';g.queue=[0,1];g.activeTeam=0;
+ const effect=runTacticalOrder(g,base);
+ assert(effect.result.ok&&effect.result.escaped);
+ assert.equal(effect.result.winner,0);
+ assert.equal(g.winner,0);
+ assert.equal(defender.safeScenarioExit,true);
+ assert.equal(effect.ai.length,0,'no AI turns after terminal scenario victory');
+});

@@ -6184,3 +6184,105 @@ test('CAT3500D p.48: Full Moon Night jump MP pays one surcharge per hex both on 
   assert.equal(u.pendingHeat,3);
  }
 });
+
+
+const scenarioVictoryFixture=(name)=>{
+ const g=fresh();
+ assert(g.configureScenario(name).ok);
+ g.scenario.sideRollWinner=0; // Side-roll transaction is exercised separately above.
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ return g;
+};
+
+test('CAT3500D pp.46,48: crippling is leg loss, all destroyed weapons, destroyed gyro or two engine hits',()=>{
+ const g=scenarioVictoryFixture('final-exam'),u=g.units[2];
+ assert.equal(g.scenarioCrippled(u),false);
+ u.unconscious=true;u.shutdown=true;
+ u.weapons.forEach(w=>{if(w.ammo!==null)w.ammo=0;});
+ assert.equal(g.scenarioCrippled(u),false,'pilot state and empty ammo do not mean destroyed weapons');
+ u.unconscious=false;u.shutdown=false;
+ for(const [mutation,label] of [
+  [x=>x.structure.LL=0,'left leg'],
+  [x=>x.structure.RL=0,'right leg'],
+  [x=>x.gyroHits=2,'destroyed gyro'],
+  [x=>x.engineHits=2,'two engine criticals'],
+  [x=>x.weapons.forEach(w=>w.destroyed=true),'all weapons destroyed']
+ ]){
+  const v=structuredClone(u);mutation(v);
+  assert.equal(g.scenarioCrippled(v),true,label);
+ }
+ const one=structuredClone(u);one.weapons.slice(1).forEach(w=>w.destroyed=true);
+ assert.equal(g.scenarioCrippled(one),false,'one surviving weapon is enough');
+ const ignored=structuredClone(u);ignored.notFielded=true;
+ assert.equal(g.scenarioCrippled(ignored),false,'unused roster slot is not an enemy');
+});
+
+test('CAT3500D pp.46,48: Final Exam and Divide and Conquer resolve cripple victory without requiring destruction',()=>{
+ for(const scenario of ['final-exam','divide-and-conquer']){
+  const g=scenarioVictoryFixture(scenario);
+  g.units[2].engineHits=2;g.checkWin();assert.equal(g.winner,null,scenario);
+  g.units[3].engineHits=2;g.checkWin();assert.equal(g.winner,0,scenario);
+  const draw=scenarioVictoryFixture(scenario);
+  for(const u of draw.units)u.gyroHits=2;
+  draw.checkWin();assert.equal(draw.winner,'draw',scenario);
+ }
+ const normal=fresh();normal.units[2].engineHits=2;normal.units[3].engineHits=2;
+ normal.checkWin();assert.equal(normal.winner,null,'ordinary skirmish still uses destruction');
+});
+
+test('CAT3500D p.47: Trial by Fire objective requires one defender, not an arbitrary two-versus-two game',()=>{
+ const invalid=scenarioVictoryFixture('trial-by-fire');
+ invalid.destroyMech(invalid.units[2]);invalid.checkWin();
+ assert.equal(invalid.winner,null,'two defender units cannot masquerade as the printed lone BattleMaster');
+ for(const outcome of ['attacker','defender','both']){
+  const g=scenarioVictoryFixture('trial-by-fire');
+  g.units[3].notFielded=true;g.units[3].dead=true;
+  if(outcome==='attacker'||outcome==='both')g.destroyMech(g.units[2]);
+  if(outcome==='defender'||outcome==='both')
+   for(const u of g.units.filter(x=>x.team===0))g.destroyMech(u);
+  g.checkWin();
+  assert.equal(g.winner,{attacker:0,defender:1,both:'draw'}[outcome],outcome);
+ }
+});
+
+test('CAT3500D pp.46-48: voluntary exit must be a legal movement order from the correct map edge',()=>{
+ for(const scenario of ['final-exam','divide-and-conquer','trial-by-fire']){
+  const g=scenarioVictoryFixture(scenario),defender=g.units[2];
+  if(scenario==='trial-by-fire'){g.units[3].notFielded=true;g.units[3].dead=true;}
+  g.phase='move';g.queue=[1,0];g.activeTeam=1;
+  assert.equal(g.exitScenarioMap(defender.id,3,'walk').ok,false,'cannot teleport to an edge');
+  Object.assign(defender,{q:6,r:0,moveMode:'stand',spent:0});
+  assert.equal(g.exitScenarioMap(defender.id,0,'walk').ok,false,'wrong edge claim rejected');
+  const result=g.exitScenarioMap(defender.id,3,'walk');
+  assert(result.ok,scenario);assert.equal(defender.dead,true);
+  assert.equal(defender.escaped,true);
+  assert.equal(defender.safeScenarioExit,scenario==='trial-by-fire');
+  assert.equal(result.destroyed,scenario!=='trial-by-fire');
+  assert.equal(g.winner,scenario==='trial-by-fire'?1:null);
+  assert.equal(g.exitScenarioMap(defender.id,3,'walk').ok,false,'cannot exit twice');
+ }
+ const bad=scenarioVictoryFixture('trial-by-fire'),u=bad.units[2];
+ bad.units[3].notFielded=true;bad.units[3].dead=true;
+ Object.assign(u,{q:-6,r:0});
+ bad.phase='move';bad.queue=[1,0];bad.activeTeam=1;
+ assert(bad.exitScenarioMap(u.id,0,'walk').ok);
+ assert.equal(bad.winner,0,'wrong-edge defender is destroyed and attackers win');
+ const blocked=scenarioVictoryFixture('trial-by-fire'),v=blocked.units[2];
+ Object.assign(v,{q:6,r:0,spent:blocked.mp(v,'walk')});
+ blocked.phase='move';blocked.queue=[1,0];blocked.activeTeam=1;
+ assert.equal(blocked.exitScenarioMap(v.id,3,'walk').ok,false,'no movement points left');
+ const none=fresh();none.phase='move';none.queue=[0,1];none.activeTeam=0;none.units[0].q=6;none.units[0].r=0;
+ assert.equal(none.exitScenarioMap(0,3,'walk').ok,false,'ordinary battles cannot use scenario exit');
+});
+
+test('CAT3500D p.47: forced displacement east lets Trial defender escape, other edges destroy it',()=>{
+ for(const [q,dir,expected] of [[6,0,1],[-6,3,0]]){
+  const g=scenarioVictoryFixture('trial-by-fire');
+  g.units[3].notFielded=true;g.units[3].dead=true;
+  const u=g.units[2];Object.assign(u,{q,r:0});
+  assert.equal(g.displace(u,dir),true);
+  assert.equal(u.dead,true);
+  assert.equal(u.safeScenarioExit,expected===1);
+  g.checkWin();assert.equal(g.winner,expected);
+ }
+});
