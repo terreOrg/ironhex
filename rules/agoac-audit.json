@@ -7789,7 +7789,7 @@
         "verifiedOn": "2026-11-21",
         "testedSha": "17745b73ef8e8fe26fbcb54b35ec9589e01cacc5",
         "testedTree": "3081a402482184c7d89772a20a586b4fd63aac0d",
-        "mergedSha": null,
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
         "checks": [
           {
             "name": "Ironhex CI",
@@ -7807,8 +7807,13 @@
             "conclusion": "success"
           }
         ],
-        "mainQualityGate": null,
-        "review": "Confirmed printed AGoAC p.37 Water: submerged heat sinks dissipate +1 each with cap six. Verified real heatPhase Depth 0, standing Depth 1 leg-only, prone Depth 1 whole mech, standing Depth 2 full cooling and damaged/lost sink interaction. Branch CI 44887361750 (535/535) and Browser 44887361711 + scoped Smoke 44887361761 all success."
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Confirmed printed AGoAC p.37 Water: submerged heat sinks dissipate +1 each with cap six. Verified real heatPhase Depth 0, standing Depth 1 leg-only, prone Depth 1 whole mech, standing Depth 2 full cooling and damaged/lost sink interaction. Branch CI 44887361750 (535/535) and Browser 44887361711 + scoped Smoke 44887361761 all success. The IMPLEMENTATION source (no engine diff) already resides on main c3f65cf7 with exact strict Sonar 44760041039; the new edge tests passed branch 17745b73 CI 44887361750 and other gates. `mergedSha` marks the implemented engine baseline, not a merger of PR #225."
       }
     },
     {
@@ -7837,7 +7842,7 @@
         "verifiedOn": "2026-11-21",
         "testedSha": "17745b73ef8e8fe26fbcb54b35ec9589e01cacc5",
         "testedTree": "3081a402482184c7d89772a20a586b4fd63aac0d",
-        "mergedSha": null,
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
         "checks": [
           {
             "name": "Ironhex CI",
@@ -7855,8 +7860,13 @@
             "conclusion": "success"
           }
         ],
-        "mainQualityGate": null,
-        "review": "Confirmed printed AGoAC p.37 Recording Heat Build-Up, including overflow above 30 and no negative heat. Real heatPhase carries pending heat into accumulated heat, resets pending once, cools subsequent turns, clamps to zero; boundary test passed exact branch 535/535; Chromium and scoped Smoke success."
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Confirmed printed AGoAC p.37 Recording Heat Build-Up, including overflow above 30 and no negative heat. Real heatPhase carries pending heat into accumulated heat, resets pending once, cools subsequent turns, clamps to zero; boundary test passed exact branch 535/535; Chromium and scoped Smoke success. The IMPLEMENTATION source (no engine diff) already resides on main c3f65cf7 with exact strict Sonar 44760041039; the new edge tests passed branch 17745b73 CI 44887361750 and other gates. `mergedSha` marks the implemented engine baseline, not a merger of PR #225."
       }
     },
     {
@@ -7889,7 +7899,7 @@
         "verifiedOn": "2026-11-21",
         "testedSha": "17745b73ef8e8fe26fbcb54b35ec9589e01cacc5",
         "testedTree": "3081a402482184c7d89772a20a586b4fd63aac0d",
-        "mergedSha": null,
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
         "checks": [
           {
             "name": "Ironhex CI",
@@ -7907,8 +7917,13 @@
             "conclusion": "success"
           }
         ],
-        "mainQualityGate": null,
-        "review": "Confirmed printed AGoAC p.38 Movement and Weapon Attacks: step thresholds 5,10,15,20,25 noncumulative, run MP recalculated with upward rounding, jump MP unchanged; fire TN +1/+2/+3/+4 at heat 8,13,17,24. Existing physical-attack distinction and new actual Game.mp()/Game.preview() threshold tests passed exact branch gates."
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Confirmed printed AGoAC p.38 Movement and Weapon Attacks: step thresholds 5,10,15,20,25 noncumulative, run MP recalculated with upward rounding, jump MP unchanged; fire TN +1/+2/+3/+4 at heat 8,13,17,24. Existing physical-attack distinction and new actual Game.mp()/Game.preview() threshold tests passed exact branch gates. The IMPLEMENTATION source (no engine diff) already resides on main c3f65cf7 with exact strict Sonar 44760041039; the new edge tests passed branch 17745b73 CI 44887361750 and other gates. `mergedSha` marks the implemented engine baseline, not a merger of PR #225."
       }
     },
     {
