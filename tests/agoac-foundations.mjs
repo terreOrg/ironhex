@@ -6666,23 +6666,26 @@ test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER
 
 // The positions below exercise engine geometry, not a transcription of
 // the licensed p.47 diagram. A real game requires player confirmation.
+const printedFigureTiles=g=>g.scenario.picturedTerrain.counters.map(p=>{
+ const tiles=p.printedHexes.map(hex=>g.tiles.find(t=>
+  t.sheet===p.sheet&&t.printedHex===hex));
+ assert(tiles.every(Boolean),'all published source hexes are present');
+ return tiles;
+});
+const footprintFrom=cells=>cells.map(t=>({
+ q:t.q-cells[0].q,r:t.r-cells[0].r
+}));
 const prepareScenario3IllustrationForTest=g=>{
  if(!g.scenario?.picturedTerrain?.required||g.scenario.picturedTerrain.confirmed)return;
  assert.equal(g.beginPrintedScenarioPlacement().ok,false,
   'Scenario 3 must not bypass the four mandatory die-cut figures');
  assert(g.startScenarioLooseTerrain({piecesPerTeam:2,startingTeam:0}).ok);
- const positions=[
-  [0,5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-  [1,10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
-  [0,21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-  [1,26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
- ];
- for(const [team,col,row,terrainType,footprint]of positions){
-  const tile=g.tiles.find(t=>t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
-   t.r+Math.floor(g.setupMap.height/2)===row);
-  assert(tile,'fixture tile '+col+','+row);
+ const types=['depth1','sublevel1','depth2','sublevel2'];
+ const picture=printedFigureTiles(g);
+ for(let i=0;i<4;i++){
+  const [tile]=picture[i],team=i%2,terrainType=types[i];
   const placed=g.placeScenarioLooseTerrain({team,q:tile.q,r:tile.r,
-   label:terrainType,terrainType,footprint});
+   label:terrainType,terrainType,footprint:footprintFrom(picture[i])});
   assert(placed.ok,placed.error);
  }
  const confirmed=g.confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed:true});
@@ -8115,14 +8118,13 @@ test('CAT3500D p.47: illustrated four-piece source setup rejects false shapes an
  assert(g.chooseScenarioSide(0,'attacker').ok);
  prepareAgoacPrintedScenario(g,'divide-and-conquer');
  assert(g.startScenarioLooseTerrain({piecesPerTeam:2,startingTeam:0}).ok);
- const at=(col,row)=>g.tiles.find(t=>
-  t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
-  t.r+Math.floor(g.setupMap.height/2)===row);
- const first=at(5,5),second=at(10,11),third=at(21,5),fourth=at(26,11);
+ const illustrated=printedFigureTiles(g);
+ const [first,second,third,fourth]=illustrated.map(xs=>xs[0]);
  const place=(team,t,terrainType,footprint)=>g.placeScenarioLooseTerrain({
   team,q:t.q,r:t.r,label:terrainType,terrainType,footprint});
  const pair=[{q:0,r:0},{q:1,r:0}];
- const triangle=[{q:0,r:0},{q:1,r:0},{q:1,r:-1}];
+ const triangle=footprintFrom(illustrated[1]);
+ const fourthTriangle=footprintFrom(illustrated[3]);
  const snapshot=()=>JSON.stringify(g.scenario.looseTerrain)+'/'+JSON.stringify(g.tile(first.q,first.r));
  const before=snapshot();
  assert.equal(place(0,first,'depth1',[{q:0,r:0}]).ok,false,'cannot place one hex where printed pair is required');
@@ -8168,7 +8170,7 @@ test('CAT3500D p.47: illustrated four-piece source setup rejects false shapes an
  assert.deepEqual(alternate.choice,{terrainType:'depth2',orientation:4});
  assert.equal(d.length,0);
  assert(place(0,third,'depth2',[{q:0,r:0},{q:DIRS[4][0],r:DIRS[4][1]}]).ok);
- assert(place(1,fourth,'sublevel2',triangle).ok);
+ assert(place(1,fourth,'sublevel2',fourthTriangle).ok);
  assert.equal(g.scenario.looseTerrain.complete,true);
  assert.equal(g.arbitrateIllustratedTerrainDispute({
   pieceIndex:4,first:{terrainType:'sublevel1',orientation:0},
