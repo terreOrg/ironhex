@@ -6727,6 +6727,7 @@ test('CAT3500D pp.45-48: printed force comparison is order-independent and local
 test('CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1',()=>{
  const {g,place,defenders,attackers}=printedDeploymentFixture('trial-by-fire');
  assert(g.configureTrialByFireChase().ok);
+ assert.equal(g.nextPhase().ok,false,'chase cannot start without lone-defender placement');
  assert.equal(g.configureTrialByFireChase().ok,false,'no second chase setup');
  const start=g.beginPrintedScenarioPlacement();
  assert(start.ok);assert.equal(start.steps,1,'only the defender is placed before battle');
