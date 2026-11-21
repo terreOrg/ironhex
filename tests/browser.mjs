@@ -1733,7 +1733,16 @@ test('AGoAC Ch11: signed 3D room fails closed after a snapshot transport error',
     game:roomSceneFixture()
    })});
   });
+  // Reproduce a backgrounded tab deterministically, independently of
+  // Chromium's headless window focus. Room sync must still detect the 503.
+  await page.addInitScript(()=>{
+   Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});
+  });
   await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.querySelector('#status')?.
+   textContent.includes('SERVER VERIFIED / v12'),null,{timeout:60000});
+  assert.equal(await page.evaluate(()=>document.hidden),true,
+   'the signed room is intentionally hidden during the failed poll');
   await page.locator('#room-reconnect').waitFor({state:'visible',timeout:15000});
   assert(await page.locator('#next').isDisabled());
   assert.match(await page.locator('#toast').textContent(),/синхронизация потеряна/i);

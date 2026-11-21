@@ -302,7 +302,9 @@ async function joinServerBattle(){
 function startRoomPolling(){
  if(!roomMode||roomPollHandle!==null)return;
  roomPollHandle=setInterval(async()=>{
-  if(!remoteReady||busy||document.hidden||roomPollingInFlight)return;
+  // Continue authoritative sync in background tabs. Browser timer throttling
+ // already limits the load; hiding the tab must not suppress disconnect checks.
+ if(!remoteReady||busy||roomPollingInFlight)return;
   roomPollingInFlight=true;
   try{
    const response=await fetch(
