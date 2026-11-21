@@ -5674,3 +5674,59 @@ test('CAT3500D pp.30–36: five core damage groups retain exact source and CI ev
  assert.equal(reg.requirements.find(x=>x.id==='agoac-108').status,'verified',
   'component effects and mandatory natural-12 head/limb blowoff must be audited');
 });
+
+
+test('CAT3500D p.37: water cooling counts submerged leg sinks and caps additional cooling at six',()=>{
+ const scenarios=[
+  {depth:0,prone:false,lost:0,expected:20},
+  {depth:1,prone:false,lost:0,expected:18},
+  {depth:1,prone:true,lost:0,expected:14},
+  {depth:2,prone:false,lost:0,expected:14},
+  {depth:1,prone:false,lost:3,expected:21}
+ ];
+ for(const {depth,prone,lost,expected} of scenarios){
+  const g=fresh(),u=g.units[0];
+  g.units=[u];g.phase='heat';
+  u.heat=30;u.pendingHeat=0;u.sinks=10;u.sinksLost=lost;
+  u.shutdown=true;u.voluntaryShutdown=true;u.bins=[];u.prone=prone;
+  for(const loc of ['LL','RL']){
+   u.slots[loc]=u.slots[loc].map(()=>null);
+   u.crit[loc]=u.slots[loc].map(()=>false);
+   u.slots[loc][0]='sink';
+  }
+  Object.assign(g.tile(u.q,u.r),{depth,type:depth?'water':'plain',height:-depth,surface:0});
+  g.heatPhase();
+  assert.equal(u.heat,expected,'depth '+depth+' prone '+prone+' lost '+lost);
+ }
+});
+
+test('CAT3500D p.37: Heat Phase preserves overflow and never cools below zero',()=>{
+ const g=fresh(),u=g.units[0];
+ g.units=[u];g.phase='heat';
+ u.bins=[];u.sinks=3;u.sinksLost=0;
+ u.shutdown=true;u.voluntaryShutdown=true;u.heat=29;u.pendingHeat=12;
+ g.heatPhase();
+ assert.equal(u.heat,38,'heat above 30 must remain in state for future turns');
+ assert.equal(u.pendingHeat,0,'generated heat must be committed exactly once');
+ g.heatPhase();
+ assert.equal(u.heat,35,'a later Heat Phase must dissipate previous overflow');
+ u.heat=1;u.pendingHeat=0;
+ g.heatPhase();
+ assert.equal(u.heat,0,'cooling cannot reduce current heat below zero');
+});
+
+test('CAT3500D p.38: heat movement and weapon penalties activate at every printed threshold',()=>{
+ const g=fresh(),u=g.units[0],enemy=g.units.find(x=>x.team!==u.team);
+ Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand'});
+ Object.assign(enemy,{q:1,r:0});
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+ const baseWalk=g.mp(u,'walk'),baseJump=g.mp(u,'jump');
+ for(const heat of [0,4,5,7,8,9,10,12,13,14,15,16,17,19,20,23,24,25,30,45]){
+  u.heat=heat;
+  const walk=Math.max(0,baseWalk-Math.min(5,Math.floor(heat/5)));
+  assert.equal(g.mp(u,'walk'),walk,'walking at heat '+heat);
+  assert.equal(g.mp(u,'run'),Math.ceil(walk*1.5),'running at heat '+heat);
+  assert.equal(g.mp(u,'jump'),baseJump,'jump MP is unaffected at heat '+heat);
+  assert.equal(g.preview(u.id,enemy.id,0).mods.heat,[8,13,17,24].filter(h=>heat>=h).length,'weapon target modifier at heat '+heat);
+ }
+});
