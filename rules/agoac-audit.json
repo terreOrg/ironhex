@@ -9623,8 +9623,8 @@
         46
       ],
       "statement": "Scenario 1 defender deploys first on the west playing-area edge, attacker on east, alternate one Mech until all eight are present, then first initiative.",
-      "status": "tested_case",
-      "reviewNote": "Standard engine edge entry occurs during movement after an unrelated selection; no in-map alternating scenario placement. 2026-11-21 PR#238: deterministic actual in-map placement transaction with source-ordered team turns, zone and collision guards; nextPhase locked until all placed. Still NOT VERIFIED: authentic mapsheet elevations, actual record sheets and external UI/AI turn wiring are missing. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.45 deployment and official v8.01 map correction: defender west and attacker east alternate one at a time, four each, followed by first Initiative. Tested on BOTH possible attacker/defender assignments with pinned MegaMek 16x17 Desert #3 / Grassland #2 terrain and all eight construct-validated original MTF units. Wrong-side, early action, duplicate, wrong phase, and entry into eight-unit Movement are rejected/confirmed. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified.",
+      "status": "verified",
+      "reviewNote": "Standard engine edge entry occurs during movement after an unrelated selection; no in-map alternating scenario placement. 2026-11-21 PR#238: deterministic actual in-map placement transaction with source-ordered team turns, zone and collision guards; nextPhase locked until all placed. Still NOT VERIFIED: authentic mapsheet elevations, actual record sheets and external UI/AI turn wiring are missing. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.45 deployment and official v8.01 map correction: defender west and attacker east alternate one at a time, four each, followed by first Initiative. Tested on BOTH possible attacker/defender assignments with pinned MegaMek 16x17 Desert #3 / Grassland #2 terrain and all eight construct-validated original MTF units. Wrong-side, early action, duplicate, wrong phase, and entry into eight-unit Movement are rejected/confirmed. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified. VERIFIED 2026-11-21 on source+actual-engine tests merged to main 376362b2782fefffac573968e40d1515d254b930; CI 44912227276, Browser 44912227246, Smoke 44912227329 and SonarQube 44912227269 all successful. Physical artwork and authenticated scenario UI are separate chapter gaps; these statuses certify the exact stated engine rule only.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9634,7 +9634,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.45 plus errata 8.01: source-backed Final Exam alternates all 8 west/east deployments"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed scenarios pp.45–48; official AGoAC errata v8.01 corrections; source-pinned MegaMek/mm-data revision 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "testedTree": "8545c7c82ac549330514f774f31178f3f47b0fbe",
+        "mergedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44912227276,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44912227246,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44912227329,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44912227269,
+          "jobId": 136870263555,
+          "conclusion": "success",
+          "headSha": "376362b2782fefffac573968e40d1515d254b930"
+        },
+        "review": "Printed Final Exam deployment: 4 Mechs per side, defending team enters the western edge first, teams alternate one unit until all eight are placed, then first Initiative. Original v8.01 corrected Desert #3 / Grassland #2 source-map geometry and actual MTF technical definitions tested for both team assignments, wrong edges, duplicate/early actions and phase gate."
+      }
     },
     {
       "id": "agoac-143",
@@ -9643,8 +9677,8 @@
         46
       ],
       "statement": "Scenario 1 victory occurs when every opposing Mech is crippled or destroyed; crippled means leg destruction, no functional weapons, destroyed gyro or 2 engine criticals; exit destroys.",
-      "status": "tested_case",
-      "reviewNote": "Engine checks total destruction, but not scenario cripple list or exit-based win; free map-edge exit is not a scenario action. 2026-11-21 PR#234 code/test packet: scenarioCrippled explicitly evaluates leg loss, no functional mounted weapons, gyro destroyed, two engine criticals; Final Exam enemy-wide victory and offboard destruction engine hooks implemented. Named deterministic gameplay tests are in tests/agoac-foundations.mjs. TESTED CASE only: exact printed map, force list, setup and browser mission route are not present; final exact-HEAD CI/Browser/Smoke and source certification required. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.45: only complete opposing team cripple/destruction ends Final Exam. Using real source-loaded variants, every printed cripple cause (lost either leg, both gyro hits, two engine criticals, all mounted weapons lost) and negative controls (one engine/gyro hit, ammo exhaustion) is tested. Map exits destroy and immediately update objective; no early victory on partial opposing lance loss. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified.",
+      "status": "verified",
+      "reviewNote": "Engine checks total destruction, but not scenario cripple list or exit-based win; free map-edge exit is not a scenario action. 2026-11-21 PR#234 code/test packet: scenarioCrippled explicitly evaluates leg loss, no functional mounted weapons, gyro destroyed, two engine criticals; Final Exam enemy-wide victory and offboard destruction engine hooks implemented. Named deterministic gameplay tests are in tests/agoac-foundations.mjs. TESTED CASE only: exact printed map, force list, setup and browser mission route are not present; final exact-HEAD CI/Browser/Smoke and source certification required. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.45: only complete opposing team cripple/destruction ends Final Exam. Using real source-loaded variants, every printed cripple cause (lost either leg, both gyro hits, two engine criticals, all mounted weapons lost) and negative controls (one engine/gyro hit, ammo exhaustion) is tested. Map exits destroy and immediately update objective; no early victory on partial opposing lance loss. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified. VERIFIED 2026-11-21 on source+actual-engine tests merged to main 376362b2782fefffac573968e40d1515d254b930; CI 44912227276, Browser 44912227246, Smoke 44912227329 and SonarQube 44912227269 all successful. Physical artwork and authenticated scenario UI are separate chapter gaps; these statuses certify the exact stated engine rule only.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9666,7 +9700,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.47-48: source-backed Divide forced/voluntary exits count as destroyed"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed scenarios pp.45–48; official AGoAC errata v8.01 corrections; source-pinned MegaMek/mm-data revision 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "testedTree": "8545c7c82ac549330514f774f31178f3f47b0fbe",
+        "mergedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44912227276,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44912227246,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44912227329,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44912227269,
+          "jobId": 136870263555,
+          "conclusion": "success",
+          "headSha": "376362b2782fefffac573968e40d1515d254b930"
+        },
+        "review": "Final Exam printed cripple/destroy objective: one/both destroyed legs, all weapons destroyed, destroyed gyro or two engine critical hits; ammo exhaustion and lone criticals do not count. All four real opposing units must be lost before winner, exits count as destruction, source MTF record state and negative controls tested."
+      }
     },
     {
       "id": "agoac-144",
@@ -9711,8 +9779,8 @@
         47
       ],
       "statement": "Scenario 2 attacker sets up all Mechs first on Clear Level 0 hexes within six hexes of east edge; lone defender then within three of west edge, facing freely.",
-      "status": "tested_case",
-      "reviewNote": "Generic setup supports edge choice/entry but not asymmetric in-map six/three-zone placement. 2026-11-21 PR#238: deterministic actual in-map placement transaction with source-ordered team turns, zone and collision guards; nextPhase locked until all placed. Still NOT VERIFIED: authentic mapsheet elevations, actual record sheets and external UI/AI turn wiring are missing. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.47: 3 attacking variants deploy first on actual Grassland #3 Clear Level-0 cells <=6 hexes from east edge, then sole BLR-1G defender within 3 west edge on Desert #2 at any facing. Source-backed tests on zero/180-degree rotation reject opposite edge, non-clear or elevated cells, early defender, early initiative, duplicate placement, and require all four initial frontal five-point damage hits before turn one. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified.",
+      "status": "verified",
+      "reviewNote": "Generic setup supports edge choice/entry but not asymmetric in-map six/three-zone placement. 2026-11-21 PR#238: deterministic actual in-map placement transaction with source-ordered team turns, zone and collision guards; nextPhase locked until all placed. Still NOT VERIFIED: authentic mapsheet elevations, actual record sheets and external UI/AI turn wiring are missing. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.47: 3 attacking variants deploy first on actual Grassland #3 Clear Level-0 cells <=6 hexes from east edge, then sole BLR-1G defender within 3 west edge on Desert #2 at any facing. Source-backed tests on zero/180-degree rotation reject opposite edge, non-clear or elevated cells, early defender, early initiative, duplicate placement, and require all four initial frontal five-point damage hits before turn one. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified. VERIFIED 2026-11-21 on source+actual-engine tests merged to main 376362b2782fefffac573968e40d1515d254b930; CI 44912227276, Browser 44912227246, Smoke 44912227329 and SonarQube 44912227269 all successful. Physical artwork and authenticated scenario UI are separate chapter gaps; these statuses certify the exact stated engine rule only.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9722,7 +9790,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.46-47: source-backed Trial by Fire deploys 3 clear eastern attackers before BLR-1G west"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed scenarios pp.45–48; official AGoAC errata v8.01 corrections; source-pinned MegaMek/mm-data revision 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "testedTree": "8545c7c82ac549330514f774f31178f3f47b0fbe",
+        "mergedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44912227276,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44912227246,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44912227329,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44912227269,
+          "jobId": 136870263555,
+          "conclusion": "success",
+          "headSha": "376362b2782fefffac573968e40d1515d254b930"
+        },
+        "review": "Trial by Fire deployment: three real attacking Mechs on Clear Level 0 source Grassland #3 hexes within six of east edge, with unrestricted facing, then BLR-1G at western Desert #2 within three hexes; alternate printed orientations, no early defender, no illegal hex or partial pregame damage bypass."
+      }
     },
     {
       "id": "agoac-147",
@@ -9731,8 +9833,8 @@
         47
       ],
       "statement": "Scenario 2 defender wins by exiting BattleMaster via east edge or destroying every attacker; attacker wins on BattleMaster destruction.",
-      "status": "tested_case",
-      "reviewNote": "No automatic east-edge escape victory, nor condition bound to designated BattleMaster. 2026-11-21 PR#234 code/test packet: a lone defender scenario state now handles east exit and elimination of attackers versus loss of designated defender; explicit tests for attacker, defender and simultaneous elimination. TESTED CASE only: actual BLR-1G roster, pre-damage, printed map and asymmetric setup missing; no full mission interface. Exact-head checks still required. 2026-11-21 follow-up API validation regression covers forged payload rejection, no-scenario rejection, terminal winner, and no post-victory opponent actions. No status promotion. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.47: named source-loaded BLR-1G defender wins by legal east exit or elimination of all three attackers; attackers win on BattleMaster loss. Source-backed objective tests exercise all three conditions and forbid winning merely because one attacker leaves the map. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified.",
+      "status": "verified",
+      "reviewNote": "No automatic east-edge escape victory, nor condition bound to designated BattleMaster. 2026-11-21 PR#234 code/test packet: a lone defender scenario state now handles east exit and elimination of attackers versus loss of designated defender; explicit tests for attacker, defender and simultaneous elimination. TESTED CASE only: actual BLR-1G roster, pre-damage, printed map and asymmetric setup missing; no full mission interface. Exact-head checks still required. 2026-11-21 follow-up API validation regression covers forged payload rejection, no-scenario rejection, terminal winner, and no post-victory opponent actions. No status promotion. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.47: named source-loaded BLR-1G defender wins by legal east exit or elimination of all three attackers; attackers win on BattleMaster loss. Source-backed objective tests exercise all three conditions and forbid winning merely because one attacker leaves the map. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified. VERIFIED 2026-11-21 on source+actual-engine tests merged to main 376362b2782fefffac573968e40d1515d254b930; CI 44912227276, Browser 44912227246, Smoke 44912227329 and SonarQube 44912227269 all successful. Physical artwork and authenticated scenario UI are separate chapter gaps; these statuses certify the exact stated engine rule only.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9750,7 +9852,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.47: real Trial by Fire wins for BattleMaster east exit or destruction of all attackers"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed scenarios pp.45–48; official AGoAC errata v8.01 corrections; source-pinned MegaMek/mm-data revision 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "testedTree": "8545c7c82ac549330514f774f31178f3f47b0fbe",
+        "mergedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44912227276,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44912227246,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44912227329,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44912227269,
+          "jobId": 136870263555,
+          "conclusion": "success",
+          "headSha": "376362b2782fefffac573968e40d1515d254b930"
+        },
+        "review": "Trial by Fire source-backed objective: actual lone BLR-1G's east-edge legal movement exit or destruction of all three real attackers wins for defender, while BattleMaster destruction wins for attacker. One attacker exit alone does not finish the game."
+      }
     },
     {
       "id": "agoac-148",
@@ -9759,8 +9895,8 @@
         47
       ],
       "statement": "Scenario 2 defender automatically wins first-turn Initiative and may exit only the east edge; any attacking Mech that exits is destroyed.",
-      "status": "tested_case",
-      "reviewNote": "Initiative is normally rolled for both teams and no scenario-specific first-round forced winner/exit policy exists. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. Partial: first-turn forced initiative proved, but exit-edge/destruction policy not implemented. Must remain Tested Case. 21.11.2026 final check: first-turn defender automatic initiative engine portion is CI/test confirmed, but east-edge-only safe defender exit and instant destruction of offside/attacker exits are absent. Cannot mark whole requirement Verified. 2026-11-21 PR#234 adds guarded map-edge exit orders to engine + tactical API, east-only safe defender exit and attacker/wrong-edge destruction, plus forced east displacement checks. First-turn defender forced initiative was previously tested. TESTED CASE retained: scenario-specific printed map, exact BattleMaster roster and real user-facing exit control/mission launch remain to be completed, and new PR exact-head gates still required. 2026-11-21 follow-up API validation regression covers forged payload rejection, no-scenario rejection, terminal winner, and no post-victory opponent actions. No status promotion. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.47: real BLR-1G gets unconditional first-turn Initiative and only east-edge escape is safe; west edge destroys the defender, and even a legal edge exit destroys an attacker. Source-backed actual map + MTF tests assert winning team and continuation after an attacker exit; unauthenticated generic exit commands remain outside the engine-only rule certification. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified.",
+      "status": "verified",
+      "reviewNote": "Initiative is normally rolled for both teams and no scenario-specific first-round forced winner/exit policy exists. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. Partial: first-turn forced initiative proved, but exit-edge/destruction policy not implemented. Must remain Tested Case. 21.11.2026 final check: first-turn defender automatic initiative engine portion is CI/test confirmed, but east-edge-only safe defender exit and instant destruction of offside/attacker exits are absent. Cannot mark whole requirement Verified. 2026-11-21 PR#234 adds guarded map-edge exit orders to engine + tactical API, east-only safe defender exit and attacker/wrong-edge destruction, plus forced east displacement checks. First-turn defender forced initiative was previously tested. TESTED CASE retained: scenario-specific printed map, exact BattleMaster roster and real user-facing exit control/mission launch remain to be completed, and new PR exact-head gates still required. 2026-11-21 follow-up API validation regression covers forged payload rejection, no-scenario rejection, terminal winner, and no post-victory opponent actions. No status promotion. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.47: real BLR-1G gets unconditional first-turn Initiative and only east-edge escape is safe; west edge destroys the defender, and even a legal edge exit destroys an attacker. Source-backed actual map + MTF tests assert winning team and continuation after an attacker exit; unauthenticated generic exit commands remain outside the engine-only rule certification. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified. VERIFIED 2026-11-21 on source+actual-engine tests merged to main 376362b2782fefffac573968e40d1515d254b930; CI 44912227276, Browser 44912227246, Smoke 44912227329 and SonarQube 44912227269 all successful. Physical artwork and authenticated scenario UI are separate chapter gaps; these statuses certify the exact stated engine rule only.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9786,7 +9922,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.46-47: source-backed Trial by Fire deploys 3 clear eastern attackers before BLR-1G west"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed scenarios pp.45–48; official AGoAC errata v8.01 corrections; source-pinned MegaMek/mm-data revision 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "testedTree": "8545c7c82ac549330514f774f31178f3f47b0fbe",
+        "mergedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44912227276,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44912227246,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44912227329,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44912227269,
+          "jobId": 136870263555,
+          "conclusion": "success",
+          "headSha": "376362b2782fefffac573968e40d1515d254b930"
+        },
+        "review": "Trial by Fire first-turn defender automatic Initiative and true source map edge exit policies: the defending BattleMaster may safely leave to the east only, other exits destroy it; every attacker exit destroys that attacker. Both a legal movement-order exit and loss/victory aftermath tested."
+      }
     },
     {
       "id": "agoac-149",
@@ -9851,8 +10021,8 @@
         48
       ],
       "statement": "Scenario 3 victory requires all enemy BattleMechs crippled or destroyed; leaving playing area destroys the Mech, using the printed cripple definition.",
-      "status": "tested_case",
-      "reviewNote": "Generic end-of-battle destruction is implemented, but mission crippling and authorized exit handling are absent. 2026-11-21 PR#234 code/test packet: Divide and Conquer enemy-wide cripple victory and forced/voluntary map exit counted as destruction; named tests compare against non-scenario outcome. TESTED CASE only: printed six-per-side roster, corrected map, two-lance placement and scenario orchestration remain missing; exact-head gates and source certification required. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.48: source-backed 10-unit Divide and Conquer (6 defending, 4 attacking) only finishes after every opposing unit is crippled or destroyed. Printed cripple definition tested on authentic MTF structures/slots; movement-phase legal map exit destroys instead of providing an escape win. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified.",
+      "status": "verified",
+      "reviewNote": "Generic end-of-battle destruction is implemented, but mission crippling and authorized exit handling are absent. 2026-11-21 PR#234 code/test packet: Divide and Conquer enemy-wide cripple victory and forced/voluntary map exit counted as destruction; named tests compare against non-scenario outcome. TESTED CASE only: printed six-per-side roster, corrected map, two-lance placement and scenario orchestration remain missing; exact-head gates and source certification required. AUDIT CANDIDATE — cannot promote until exact-HEAD CI / Browser E2E / full Container Smoke and post-merge main SonarQube, with a separate complete SHA/check-backed audit record: Source-book CAT3500D p.48: source-backed 10-unit Divide and Conquer (6 defending, 4 attacking) only finishes after every opposing unit is crippled or destroyed. Printed cripple definition tested on authentic MTF structures/slots; movement-phase legal map exit destroys instead of providing an escape win. Scope: AGoAC Chapter 11 *engine* rules only. Authenticated scenario selection and graphical print artwork are separate integration gaps, not silently certified. VERIFIED 2026-11-21 on source+actual-engine tests merged to main 376362b2782fefffac573968e40d1515d254b930; CI 44912227276, Browser 44912227246, Smoke 44912227329 and SonarQube 44912227269 all successful. Physical artwork and authenticated scenario UI are separate chapter gaps; these statuses certify the exact stated engine rule only.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9870,7 +10040,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.47-48: source-backed Divide forced/voluntary exits count as destroyed"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed scenarios pp.45–48; official AGoAC errata v8.01 corrections; source-pinned MegaMek/mm-data revision 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "testedTree": "8545c7c82ac549330514f774f31178f3f47b0fbe",
+        "mergedSha": "376362b2782fefffac573968e40d1515d254b930",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44912227276,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44912227246,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44912227329,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44912227269,
+          "jobId": 136870263555,
+          "conclusion": "success",
+          "headSha": "376362b2782fefffac573968e40d1515d254b930"
+        },
+        "review": "Divide and Conquer exact 6 defender / 4 attacker source-roster victory by entire opposing team crippled or dead; partial losses do not win. Scenario map exits destroy the exiting Mech. Tests exercise the original MTF structures, criticals, slots and active Movement exit order."
+      }
     },
     {
       "id": "agoac-153",
