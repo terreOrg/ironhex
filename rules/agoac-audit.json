@@ -9838,8 +9838,14 @@
         48
       ],
       "statement": "MechWarrior Cards attach to no more than one Mech per side, have equal cost on opposing sides, and use floor(D6/2) when the players cannot agree on cost.",
-      "status": "known_missing",
-      "reviewNote": "Pilot data/skills are configurable, but physical MechWarrior Card limits, cost and fallback roll are absent."
+      "status": "tested_case",
+      "reviewNote": "Pilot data/skills are configurable, but physical MechWarrior Card limits, cost and fallback roll are absent. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: card-cost disagreement uses exactly one D6 and floor(D6/2)"
+        }
+      ]
     },
     {
       "id": "agoac-156",
@@ -9848,8 +9854,14 @@
         48
       ],
       "statement": "Card-specified Piloting and Gunnery replace the scenario pilot skills; the opposing side receives an equivalent skill improvement to preserve balance.",
-      "status": "known_missing",
-      "reviewNote": "Generic custom pilot skill assignment exists; no card-aware mirrored balance adjustment or scenario pilot replacement."
+      "status": "tested_case",
+      "reviewNote": "Generic custom pilot skill assignment exists; no card-aware mirrored balance adjustment or scenario pilot replacement. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: equal-cost MechWarrior Cards replace pilot values and mirror improvement to opponent"
+        }
+      ]
     },
     {
       "id": "agoac-157",
@@ -10103,8 +10115,14 @@
         48
       ],
       "statement": "Optional loose terrain pieces require equal counts per player, with D6-based alternate starting side if no agreement, adding exactly one piece at a time.",
-      "status": "known_missing",
-      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection."
+      "status": "tested_case",
+      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: optional terrain requires equal pieces, alternate one each and 3 empty hexes between"
+        }
+      ]
     },
     {
       "id": "agoac-163",
@@ -10113,8 +10131,14 @@
         48
       ],
       "statement": "Loose terrain pieces must be placed at least two hexes away from the mapsheet edge and separated by three empty hexes from other pieces.",
-      "status": "known_missing",
-      "reviewNote": "No terrain-piece placement constraints or equal placement workflow."
+      "status": "tested_case",
+      "reviewNote": "No terrain-piece placement constraints or equal placement workflow. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: each 16x17 mapsheet has its own two-hex exclusion zone"
+        }
+      ]
     },
     {
       "id": "agoac-164",

@@ -562,6 +562,125 @@ export class Game extends Legacy{
   this.note('Trial by Fire: BattleMaster получил четыре предварительных попадания по 5 урона.');
   return {ok:true,hits:structuredClone(this.scenario.preDamageHits),rolls:[...this.phaseRolls]};
  }
+
+ // CAT3500D p.48: only one MechWarrior Card on each team, equal cost,
+ // optionally selected by floor(D6/2), and mirrored pilot improvement.
+ configureScenarioCards({cards=[],mirrors=[],agreedCost=null}={}){
+  if(!this.scenarioSetupOpen()||!this.scenario||!Number.isInteger(this.scenario.attackerTeam)||
+   this.scenario.cardSetup)return fail('MechWarrior Cards доступны только до боя');
+  if(!Array.isArray(cards)||cards.length!==2||!Array.isArray(mirrors)||mirrors.length!==2)
+   return fail('По одной карточке каждой стороне и по одному ответному бонусу');
+  const byTeam=new Map();
+  for(const c of cards){
+   if(!c||![0,1].includes(c.team)||byTeam.has(c.team)||!Number.isInteger(c.unitId)||
+    !Number.isInteger(c.cost)||c.cost<0||c.cost>3||
+    typeof c.cardId!=='string'||!c.cardId.trim()||c.cardId.length>80||
+    !Number.isInteger(c.gunnery)||c.gunnery<0||c.gunnery>8||
+    !Number.isInteger(c.piloting)||c.piloting<0||c.piloting>8)
+    return fail('Некорректная карточка либо больше одной карточки на сторону');
+   const unit=this.unit(c.unitId);
+   if(!unit||unit.dead||unit.notFielded||unit.team!==c.team)
+    return fail('Карточка указывается для живого дружественного меха');
+   byTeam.set(c.team,{card:c,unit});
+  }
+  if(byTeam.size!==2||byTeam.get(0).card.cost!==byTeam.get(1).card.cost)
+   return fail('Обе карточки обязаны иметь одинаковую стоимость');
+  const cost=byTeam.get(0).card.cost;
+  if(agreedCost!==null&&(!Number.isInteger(agreedCost)||agreedCost!==cost))
+   return fail('Согласованная цена должна совпадать со стоимостью карточек');
+  const beneficiaries=new Map();
+  for(const m of mirrors){
+   if(!m||![0,1].includes(m.sourceTeam)||beneficiaries.has(m.sourceTeam)||
+    !Number.isInteger(m.unitId))return fail('Некорректный ответный бонус');
+   const u=this.unit(m.unitId);
+   if(!u||u.dead||u.notFielded||u.team===m.sourceTeam||
+    byTeam.get(u.team)?.card.unitId===m.unitId)
+    return fail('Ответный бонус направляется другому пилоту противоположной команды');
+   beneficiaries.set(m.sourceTeam,u);
+  }
+  if(beneficiaries.size!==2)return fail('Нужен ответный пилот каждой карточке');
+  const deltas=new Map();
+  for(const [team,{card,unit}] of byTeam){
+   const delta={gunnery:Math.max(0,unit.gunnery-card.gunnery),
+    piloting:Math.max(0,unit.piloting-card.piloting)};
+   const mirror=beneficiaries.get(team);
+   if(mirror.gunnery<delta.gunnery||mirror.piloting<delta.piloting)
+    return fail('Недостаточно навыка для равного встречного бонуса');
+   deltas.set(team,delta);
+  }
+  if(agreedCost!==null&&this.scenario.cardCostRoll)
+   return fail('Цена уже выбрана жребием; нельзя заменить её соглашением');
+  let die=null,chosenCost=agreedCost;
+  if(agreedCost===null){
+   // Once players fall back to a D6 the result is binding. Retrying
+   // with a different card cannot reroll an inconvenient cost.
+   if(!this.scenario.cardCostRoll){
+    const rolled=this.d6('Цена карточек: D6');
+    this.scenario.cardCostRoll={die:rolled,cost:Math.floor(rolled/2)};
+   }
+   die=this.scenario.cardCostRoll.die;
+   chosenCost=this.scenario.cardCostRoll.cost;
+  }
+  if(chosenCost!==cost)return {ok:false,
+   error:'Стоимость карточек не совпала с результатом D6',die,chosenCost};
+  // Validate before committing: a bad second card never mutates first.
+  for(const {card,unit} of byTeam.values()){
+   unit.gunnery=card.gunnery;unit.piloting=card.piloting;
+   unit.scenarioCard={id:card.cardId.trim(),cost};
+  }
+  const bonuses=[];
+  for(const [team,unit] of beneficiaries){
+   const delta=deltas.get(team);
+   unit.gunnery-=delta.gunnery;unit.piloting-=delta.piloting;
+   bonuses.push({sourceTeam:team,unitId:unit.id,...delta});
+  }
+  this.scenario.cardSetup={cards:cards.map(c=>({...c,cardId:c.cardId.trim()})),
+   bonuses,cost,die};
+  return {ok:true,cost,die,bonuses:structuredClone(bonuses)};
+ }
+ // CAT3500D p.48: equal terrain pieces per side, D6 starter,
+ // strict one-at-a-time alternation, per-sheet boundary constraints.
+ startScenarioLooseTerrain({piecesPerTeam,startingTeam=null}={}){
+  if(!this.scenarioSetupOpen()||!this.scenario||
+   !Number.isInteger(this.scenario.defenderTeam)||this.scenario.looseTerrain||
+   this.setupMap?.id!=='sheets'||!Number.isInteger(piecesPerTeam)||
+   piecesPerTeam<1||piecesPerTeam>30||
+   startingTeam!==null&&![0,1].includes(startingTeam))
+   return fail('Укажите прямоугольные листы и равное число элементов для каждой стороны');
+  const roll=startingTeam===null?this.d6('Дополнительная местность: первый игрок'):null;
+  const firstTeam=startingTeam===null?(roll-1)%2:startingTeam;
+  this.scenario.looseTerrain={piecesPerTeam,firstTeam,nextTeam:firstTeam,
+   roll,pieces:[],complete:false,visualAssetsLoaded:false};
+  return {ok:true,firstTeam,roll,required:piecesPerTeam*2};
+ }
+ // Terrain piece must be more than 2 hexes away from EACH individual
+ // 16x17 map-sheet edge, including the seam between two sheets.
+ looseTerrainZoneAllowed(q,r){
+  if(this.setupMap?.id!=='sheets')return false;
+  const t=this.tile(q,r);if(!t)return false;
+  const col=t.q+Math.floor(t.r/2)+Math.floor(this.setupMap.width/2);
+  const row=t.r+Math.floor(this.setupMap.height/2);
+  const lc=((col%16)+16)%16,lr=((row%17)+17)%17;
+  return lc>=3&&lc<=12&&lr>=3&&lr<=13;
+ }
+ placeScenarioLooseTerrain({team,q,r,label}={}){
+  const setup=this.scenario?.looseTerrain;
+  if(!this.scenarioSetupOpen()||!setup||setup.complete||
+   ![0,1].includes(team)||team!==setup.nextTeam||
+   !Number.isInteger(q)||!Number.isInteger(r)||
+   typeof label!=='string'||!label.trim()||label.length>80||
+   !this.looseTerrainZoneAllowed(q,r))
+   return fail('Элемент нельзя поместить на этом ходу или рядом с краем листа');
+  if(setup.pieces.some(p=>distance(p,{q,r})<4))
+   return fail('Между элементами необходимо три пустых гекса');
+  if(setup.pieces.filter(p=>p.team===team).length>=setup.piecesPerTeam)
+   return fail('Превышена равная квота элементов');
+  setup.pieces.push({team,q,r,label:label.trim()});
+  setup.complete=setup.pieces.length===setup.piecesPerTeam*2;
+  setup.nextTeam=setup.complete?null:1-team;
+  return {ok:true,complete:setup.complete,nextTeam:setup.nextTeam,
+   placed:setup.pieces.length,remaining:setup.piecesPerTeam*2-setup.pieces.length};
+ }
  // CAT3500D p.7 permits victory conditions agreed before play.
  // This digital preset is optional: draw when a negotiated turn limit ends.
  configureVictoryTerms({roundLimit,condition,approvals=[]}={}){
