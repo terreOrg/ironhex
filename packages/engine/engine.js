@@ -635,6 +635,72 @@ export class Game extends Legacy{
   state.decided={round:this.round,phase:this.phase,controller,unitId};
   return {ok:true,controller,unitId,reused:false,rolls:this.phaseRolls.slice(startingRoll)};
  }
+
+ // CAT3500D pp.46–48: printed scenarios set units on the board BEFORE
+ // initiative, not by ordinary offboard entry in the Movement Phase.
+ // This is intentionally a geometry/turn-order engine, not an importer
+ // of the missing physical mapsheets or exact BattleMech record sheets.
+ beginPrintedScenarioPlacement(){
+  if(!this.scenarioSetupOpen()||!this.scenario||
+   this.scenario.placement||this.setupMap?.id!=='sheets'||
+   this.setupMap.layout!=='horizontal'||this.setupMap.width!==32||
+   this.setupMap.height!==17||![0,1].includes(this.scenario.defenderTeam))
+   return fail('Нужны выбранные стороны сценария и две горизонтальные карты');
+  const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario.id];
+  if(!manifest)return fail('Неизвестный сценарий');
+  const actual=this.units.filter(u=>!u.dead&&!u.notFielded);
+  const encode=u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??''].join('|');
+  for(const team of [0,1]){
+   const wanted=team===this.scenario.defenderTeam?manifest.defender:manifest.attacker;
+   const ours=actual.filter(u=>u.team===team);
+   if(wanted.length!==ours.length||
+    wanted.map(encode).sort().join(';')!==ours.map(encode).sort().join(';'))
+    return fail('До развёртывания нужен точный опубликованный список пилотов и вариантов мехов');
+  }
+  const defender=this.scenario.defenderTeam,attacker=this.scenario.attackerTeam;
+  const repeat=(team,count,lance=null)=>Array.from({length:count},()=>({team,lance}));
+  const steps=this.scenario.id==='final-exam'?
+   Array.from({length:4},()=>[{team:defender,lance:null},{team:attacker,lance:null}]).flat():
+   this.scenario.id==='trial-by-fire'?
+   [...repeat(attacker,3),...repeat(defender,1)]:
+   [...repeat(defender,3,'command'),...repeat(defender,3,'recon'),
+    ...repeat(attacker,4,'printed-row-unavailable')];
+  this.scenario.placement={
+   steps,placed:[],complete:false,
+   exactMapImplemented:false,recordSheetsImported:false
+  };
+  for(const u of actual)u.deployed=false;
+  return {ok:true,steps:steps.length,next:structuredClone(steps[0]),
+   exactMapImplemented:false,recordSheetsImported:false};
+ }
+ placePrintedScenarioMech(id,q,r,facing=0){
+  const state=this.scenario?.placement,unit=this.unit(id);
+  if(!state||state.complete||!this.scenarioSetupOpen()||
+   !unit||unit.dead||unit.notFielded||unit.deployed!==false||
+   !Number.isInteger(q)||!Number.isInteger(r)||
+   !Number.isInteger(facing)||facing<0||facing>5)
+   return fail('Размещение меха недоступно');
+  const step=state.steps[state.placed.length];
+  if(!step||step.team!==unit.team||
+   step.lance!==null&&step.lance!==unit.lance&&
+   step.lance!=='printed-row-unavailable')
+   return fail('Другая сторона или лэнс должен размещаться первым');
+  // The printed 1510–1517 mapsheet row has not been converted into
+  // authoritative digital coordinates. Never silently accept a guess.
+  if(step.lance==='printed-row-unavailable')
+   return fail('Для атаки Divide and Conquer нужна подлинная строка 1510–1517 карты');
+  if(!this.scenarioZoneAllowed(unit.team,q,r,{lance:step.lance,facing}))
+   return fail('Гекс вне опубликованной зоны размещения');
+  if(state.placed.some(p=>p.q===q&&p.r===r))
+   return fail('Один гекс не может содержать два размещённых меха');
+  unit.q=q;unit.r=r;unit.facing=facing;unit.deployed=true;
+  unit.moveStart={q,r};
+  state.placed.push({id,team:unit.team,q,r,facing,lance:step.lance});
+  state.complete=state.placed.length===state.steps.length;
+  return {ok:true,complete:state.complete,
+   placed:state.placed.length,remaining:state.steps.length-state.placed.length,
+   next:state.complete?null:structuredClone(state.steps[state.placed.length])};
+ }
  // CAT3500D p.48: only one MechWarrior Card on each team, equal cost,
  // optionally selected by floor(D6/2), and mirrored pilot improvement.
  configureScenarioCards({cards=[],mirrors=[],agreedCost=null}={}){
@@ -939,6 +1005,7 @@ export class Game extends Legacy{
  // consent for custom designs. Stable slot IDs keep the existing local
  // renderer's four model instances; empty secondary slots are not fielded.
  configureSetupForces({slots,extra=[],custom=null,approvals=[]}={}){
+  if(this.scenario?.placement)return fail('Состав нельзя изменить после начала размещения сценария');
   if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
    this.setupForces!==null||this.queue.length||this.units.some(u=>u.moved||u.fired||u.physicalDone))
    return fail('Состав можно выбрать только перед боем');
@@ -989,6 +1056,7 @@ export class Game extends Legacy{
   return {ok:true};
  }
  startStandardDeployment(){
+  if(this.scenario?.placement)return fail('Сценарное размещение нельзя заменить стандартным');
   if(this.deployment!==null||this.round!==1||this.phase!=='initiative'||this.queue.length||
    this.units.some(u=>u.moved||u.fired||u.physicalDone))return fail('Развёртывание возможно только перед боем');
   this.deployment={winner:null,edges:null};this.phase='setup';this.phaseRolls=[];
@@ -2910,7 +2978,7 @@ export class Game extends Legacy{
    return {ok:true,pending:true};
   }
  }
- nextPhase(){if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))return fail('Сначала бросьте кубики и выберите сторону сценария');this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
+ nextPhase(){if(this.scenario?.placement&&!this.scenario.placement.complete&&this.phase==='initiative')return fail('Сначала разместите всех мехов по условиям сценария');if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))return fail('Сначала бросьте кубики и выберите сторону сценария');this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
  this.endPSR();this.afterRolls=[...this.phaseRolls];this.removeDestroyedMechs();this.checkWin();if(this.winner===null){this.phase='fire';this.buildQueue();}}else if(this.phase==='fire'){this.resolveFire();this.checkWin();if(this.winner===null){this.phase='physical';this.buildQueue();}}else if(this.phase==='physical'){this.resolvePhysical();this.checkWin();this.activeTeam=null;if(this.winner===null)this.phase='heat';}else if(this.phase==='heat'){this.heatPhase();this.checkWin();if(this.winner===null)this.phase='end';}else{this.endPhase();this.checkWin({stalemate:true});if(this.winner===null)this.phase='initiative';}if(this.winner===null)this.note(`Раунд ${this.round}: ${PHASES[this.phase]}.`);else{this.activeTeam=null;this.actingId=null;}return {ok:true};}
  aiMove(id){const u=this.unit(id);if(!this.canAct(u))return fail('Не очередь ИИ');if(u.deployed===false){const choices=this.deploymentOptions(u);const best=choices.sort((a,b)=>Number(a.mode==='minimum')-Number(b.mode==='minimum')||distance(a,{q:0,r:0})-distance(b,{q:0,r:0})||a.cost-b.cost)[0];if(!best)return {...fail('Нет допустимого входа: требуется изменить условия сценария'),code:'deployment_blocked'};const result=this.enterDeployment(u,best.q,best.r,best.mode);if(result.ok&&!result.ended)this.hold(id);return result;}if(this.isImmobile(u))return this.hold(id);if(u.prone){const s=this.stand(id);if(!s.ok||u.prone)return this.hold(id);}const options=['walk','run',...(this.mp(u,'jump')?['jump']:[])].flatMap(m=>this.reachable(u,m).map(p=>({...p,mode:m})));let best=null,score=-Infinity;const enemies=this.units.filter(t=>t.team!==u.team&&!t.dead&&t.deployed!==false);for(const p of options){const old={q:u.q,r:u.r,facing:u.facing};u.q=p.q;u.r=p.r;u.facing=p.facing;let value=-Infinity;for(const t of enemies){let v=u.weapons.reduce((n,w,i)=>n+this.preview(id,t.id,i).chance*(w.rack?w.rack*.6*w.damage:w.damage)/100,0)-Math.abs(distance(u,t)-5)*.5;if(p.mode==='jump')v-=1;value=Math.max(value,v);}Object.assign(u,old);if(value>score){score=value;best=p;}}const r=best?this.move(id,best.q,best.r,best.mode):{ok:true};this.hold(id);return r;}
  planAiFire(u){
