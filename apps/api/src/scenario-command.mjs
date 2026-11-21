@@ -66,6 +66,23 @@ function authoritativeGame(game){
   game.scenario.recordSheetsImported===true,
   'printed_scenario_not_ready');
 }
+// The side that must resolve LOS, displacement or damage choices is
+// named by the engine's pending-choice metadata, NOT by the HTTP caller.
+// A choice about a destroyed or incapacitated unit still belongs to
+// that signed user's lance; do not apply "canAct" to resolution ownership.
+export function canResolveScenarioPendingChoice(game,role){
+ const choice=game?.pendingChoice,unit=game?.unit(choice?.unitId);
+ if(!choice||!unit||!ROLES.includes(role)||
+  ![0,1].includes(choice.team)||unit.team!==choice.team||
+  !Number.isInteger(choice.unitId))return false;
+ if(role==='attacker')return unit.team===game.scenario?.attackerTeam;
+ if(unit.team!==game.scenario?.defenderTeam||
+  !['command','recon'].includes(unit.lance))return false;
+ const ruling=game.scenario?.sharedLances?.decided;
+ const winner=ruling?.round===game.round&&ruling.phase===game.phase?
+  ruling.controller:null;
+ return winner?role===winner:unit.lance===role;
+}
 export function canControlScenarioUnit(game,role,id){
  if(!ROLES.includes(role)||!game?.scenario||!natural(id,31))return false;
  const u=game.unit(id);
@@ -131,6 +148,8 @@ export function runScenarioRoomCommand(game,authenticatedRole,rawAction){
  check(proposal.command===null&&proposal.recon===null,
   'scenario_dispute_pending');
  if(action.type==='next'){
+  if(game.pendingChoice)check(canResolveScenarioPendingChoice(game,authenticatedRole),
+   'scenario_resolution_not_owned',403);
   check(!game.queue.length||game.pendingChoice,
    'phase_pending_orders');
   // The two defending players alternate who rolls initiative for their
