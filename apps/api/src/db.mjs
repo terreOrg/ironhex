@@ -85,7 +85,11 @@ const schema = [
   "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS market_owned BOOLEAN NOT NULL DEFAULT true",
   "CREATE TABLE IF NOT EXISTS commander_equipment (commander_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, equipment_type TEXT NOT NULL, quantity INTEGER NOT NULL CHECK(quantity >= 0 AND quantity <= 100000), PRIMARY KEY(commander_id,equipment_type))",
    "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS ammo_state JSONB NOT NULL DEFAULT '{}'::jsonb",
-  "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS critical_damage JSONB NOT NULL DEFAULT '{}'::jsonb"
+  "ALTER TABLE hangar_mechs ADD COLUMN IF NOT EXISTS critical_damage JSONB NOT NULL DEFAULT '{}'::jsonb",
+  "CREATE TABLE IF NOT EXISTS agoac_scenario_rooms (id UUID PRIMARY KEY DEFAULT gen_random_uuid(), created_by UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, scenario_id TEXT NOT NULL DEFAULT 'divide-and-conquer' CHECK (scenario_id='divide-and-conquer'), attacker_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, command_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, recon_id UUID NOT NULL REFERENCES commanders(id) ON DELETE CASCADE, accepted_attacker BOOLEAN NOT NULL DEFAULT false, accepted_command BOOLEAN NOT NULL DEFAULT false, accepted_recon BOOLEAN NOT NULL DEFAULT false, status TEXT NOT NULL DEFAULT 'inviting' CHECK (status IN ('inviting','ready','active','finished','cancelled')), version INTEGER NOT NULL DEFAULT 0 CHECK(version>=0), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), CHECK(attacker_id<>command_id AND attacker_id<>recon_id AND command_id<>recon_id), CHECK(created_by IN (attacker_id,command_id,recon_id)))",
+  "CREATE INDEX IF NOT EXISTS agoac_rooms_attacker_idx ON agoac_scenario_rooms(attacker_id,created_at DESC)",
+  "CREATE INDEX IF NOT EXISTS agoac_rooms_command_idx ON agoac_scenario_rooms(command_id,created_at DESC)",
+  "CREATE INDEX IF NOT EXISTS agoac_rooms_recon_idx ON agoac_scenario_rooms(recon_id,created_at DESC)"
 
 ];
 

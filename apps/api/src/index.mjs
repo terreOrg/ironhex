@@ -3,6 +3,7 @@ import { createAuthStore } from './auth.mjs';
 import { createHangarStore } from './hangar.mjs';
 import { createPilotStore } from './pilots.mjs';
 import { createOperationStore } from './operations.mjs';
+import { createScenarioRoomStore } from './scenario-rooms.mjs';
 import { createEconomyStore } from './economy.mjs';
 import { createBrevoMailer } from './mail.mjs';
 import { createAccountFlows } from './account-flows.mjs';
@@ -27,6 +28,7 @@ const server = createHttpServer({
   hangarStore: createHangarStore(pool),
   pilotStore: createPilotStore(pool),
   operationStore: createOperationStore(pool),
+  scenarioRoomStore: createScenarioRoomStore(pool),
   economyStore: createEconomyStore(pool),
   publicOrigin: process.env.IRONHEX_PUBLIC_ORIGIN || null,
   secureCookies: process.env.IRONHEX_AUTH_COOKIE_SECURE === 'true'
