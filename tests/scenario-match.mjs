@@ -77,7 +77,7 @@ test('AGoAC Ch11 errata v8.01: persisted scenario 3 cannot restore obsolete or t
 });
 
 test('AGoAC Ch11: logged-in attacker and designated defenders place four source counters',()=>{
- const {game}=begin();
+ const {game,rng}=begin();
  blocked(()=>applyScenarioRoomSetup(game,'attacker',{type:'place-mech',
   id:0,q:0,r:0,facing:0}),'scenario_deployment_not_ready');
  const positions=[
@@ -117,6 +117,19 @@ test('AGoAC Ch11: logged-in attacker and designated defenders place four source 
  assert.equal(game.scenario.placement.complete,false);
  blocked(()=>applyScenarioRoomOrder(game,'attacker',{type:'hold',id:0}),
   'printed_scenario_not_ready');
+ const persisted=captureScenarioRoomGame(game,rng);
+ assert.equal(restoreScenarioRoomGame(persisted).game.scenario.picturedTerrain.confirmed,true);
+ const corrupted=mutate=>{
+  const bad=structuredClone(persisted);
+  mutate(bad.game);
+  blocked(()=>restoreScenarioRoomGame(bad),'scenario_source_terrain_mismatch');
+ };
+ corrupted(g=>{g.scenario.looseTerrain.pieces[0].hexes[0].q++;});
+ corrupted(g=>{g.scenario.looseTerrain.pieces[0].terrainType='sublevel1';});
+ corrupted(g=>{g.scenario.picturedTerrain.approvals.recon=false;});
+ corrupted(g=>{g.scenario.picturedTerrain.pieces.pop();});
+ corrupted(g=>{g.tiles.find(t=>t.overlayTerrain).overlayTerrain=null;});
+ corrupted(g=>{g.scenario.looseTerrain.pieces[1].hexes.reverse();});
 });
 test('AGoAC Ch11: restored signed room commands reject unready or cross-role battles',()=>{
  const runtime=begin(true);

@@ -288,6 +288,10 @@ function renderSetup(body,room,game){
    'и поворот треугольников с диаграммой печатной книги, стр. 47. '+
    'Эта подпись означает ручную проверку, а не автоматическую сертификацию координат.'));
   frame.append(printedTerrainDiagram(game));
+  const figureLink=E('a','hub-fullscreen-link','ОТКРЫТЬ ОРИГИНАЛЬНУЮ СХЕМУ · СТР. 47');
+  figureLink.href='https://battletech.com/wp-content/uploads/2025/07/BattleTech-A-Game-of-Armored-Combat-Rulebook-1st-SLDF-Print.pdf';
+  figureLink.target='_blank';figureLink.rel='noopener noreferrer';
+  frame.append(figureLink);
   frame.append(E('p','',Object.entries(signed).map(([r,v])=>r+': '+(v?'сверено':'ожидание')).join(' · ')));
   if(!signed[room.yourRole])frame.append(button('ЛИЧНО СВЕРИЛ СО СХЕМОЙ',
    ()=>execute(()=>sendAction(room,'setup',{type:'confirm-figure'}))));
@@ -329,6 +333,19 @@ function renderSetup(body,room,game){
  form.append(label('Мех',mechs),label('Гекс',tiles),label('Курс',facing));
  const submit=E('button','op-primary','РАЗМЕСТИТЬ МЕХ');submit.type='submit';
  submit.disabled=!units.length||!coords.length;form.append(submit);frame.append(form);
+ const deploymentMap=E('div');frame.append(deploymentMap);
+ const drawDeployment=()=>{
+  deploymentMap.replaceChildren(printedTerrainDiagram(game,{
+   choices:coords,chosen:tiles.value,onPick:key=>{
+    tiles.value=key;drawDeployment();
+   }
+  }));
+ };
+ tiles.onchange=drawDeployment;
+ drawDeployment();
+ frame.append(E('p','',
+  'Цветные гексы показывают допустимую область этой роли. '+
+  'Окончательное размещение проверяется сервером.'));
  wireSubmit(form,async data=>{
   const [q,r]=data.elements.hex.value.split(',').map(Number);
   await sendAction(room,'setup',{type:'place-mech',
