@@ -9867,8 +9867,11 @@
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER phase",
-          "notes": "Per-phase arbitration remains separately tested"
+          "test": "CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER phase"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: shared defender Initiative alternates by turn, not by tie reroll"
         }
       ]
     },
