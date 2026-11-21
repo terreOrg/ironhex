@@ -11,6 +11,7 @@ import { createBrowserCoverage } from './browser-coverage.mjs';
 import { Game as TestBattleGame } from '../packages/engine/engine.js';
 import {prepareAgoacPrintedScenario} from '../apps/api/src/agoac-scenario-setup.mjs';
 import { runTacticalOrder } from '../apps/api/src/server-combat.mjs';
+import {runScenarioRoomCommand} from '../apps/api/src/scenario-command.mjs';
 
 const dist = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
 const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8',
@@ -1797,4 +1798,130 @@ test('AGoAC Ch11: failed signed 3D command locks stale actions until reconnect',
   await page.locator('#next').evaluate(el=>el.click());
   assert.equal(commands,1,'locked client cannot send another stale mutation');
  });
+});
+
+
+test('AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitration and signed moves',{timeout:180000},async()=>{
+ // Three separate Chromium contexts never share a session cookie. The
+ // intercepted endpoints use the real signed-role tactical command handler
+ // against ONE authoritative source-map game. PostgreSQL auth is covered
+ // separately by scenario-match and container-smoke integration tests.
+ const game=new TestBattleGame({rng:(()=>{
+  const rolls=[.94,.94,.05,.05];let n=0;
+  return ()=>rolls[n++%rolls.length];
+ })()});
+ Object.assign(game,structuredClone(roomSceneFixture()));game.rebuildMap();
+ game.rng=(()=>{
+  const dice=[.94,.94,.05,.05];let n=0;return ()=>dice[n++%dice.length];
+ })();
+ game.phase='move';game.activeTeam=game.scenario.defenderTeam;
+ game.queue=[game.scenario.defenderTeam,game.scenario.attackerTeam,game.scenario.defenderTeam];
+ game.actingId=null;
+ game.scenario.sharedLances.decided=null;
+ game.scenario.sharedLances.pendingServerDispute=null;
+ const command=game.units.find(u=>u.lance==='command'&&u.team===game.scenario.defenderTeam);
+ const recon=game.units.find(u=>u.lance==='recon'&&u.team===game.scenario.defenderTeam);
+ const attacker=game.units.find(u=>u.team===game.scenario.attackerTeam);
+ assert(command&&recon&&attacker);
+ let version=23,accepted=[];
+ const contexts=[],pages={};
+ const errors=[];
+ const roles=['attacker','command','recon'];
+ const state=()=>JSON.parse(JSON.stringify(game,
+  (key,value)=>['map','rng','_resolutionReplay'].includes(key)?undefined:value));
+ const reply=(route,status,body)=>route.fulfill({status,contentType:'application/json',
+  body:JSON.stringify(body)});
+ try{
+  for(const [i,role]of roles.entries()){
+   const context=await browser.newContext({viewport:{width:1280,height:830}});
+   contexts.push(context);
+   await context.addCookies([{
+    name:'ironhex_session',value:'abcdef'.charAt(i).repeat(64),
+    url:baseURL+'/api/',httpOnly:true,sameSite:'Strict'
+   }]);
+   const page=await context.newPage();pages[role]=page;
+   page.on('pageerror',err=>errors.push(role+': '+err.message));
+   await page.addInitScript(()=>{
+    const original=HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext=function(kind,...args){
+     if(String(kind).toLowerCase().includes('webgl'))return null;
+     return original.call(this,kind,...args);
+    };
+   });
+   await page.route('**/api/v1/scenario-rooms/'+browserScenarioRoomId+'/*',async route=>{
+    const req=route.request(),endpoint=new URL(req.url()).pathname;
+    const item=()=>({id:browserScenarioRoomId,yourRole:role,status:'active',version});
+    if(endpoint.endsWith('/snapshot'))
+     return reply(route,200,{item:item(),game:state()});
+    if(endpoint.endsWith('/command')){
+     const payload=req.postDataJSON();
+     assert.deepEqual(Object.keys(payload).sort(),['action','version']);
+     if(payload.version!==version)
+      return reply(route,409,{error:'stale_scenario_version'});
+     try{
+      const effect=runScenarioRoomCommand(game,role,payload.action);
+      assert(effect.ok);accepted.push({role,version,type:payload.action.type,
+       id:payload.action.id});
+      version++;
+      return reply(route,200,{item:item(),game:state(),effect});
+     }catch(e){
+      return reply(route,e.status||403,{error:e.code||'illegal_scenario_command'});
+     }
+    }
+    return reply(route,404,{error:'not_found'});
+   });
+   await page.goto(baseURL+'/index.html?battle=1&room='+browserScenarioRoomId,
+    {waitUntil:'domcontentloaded'});
+   await loaded(page);
+   await page.waitForFunction(()=>document.querySelector('#toast')?.textContent
+    .includes('СЕТЕВОЙ СЦЕНАРИЙ'),null,{timeout:30000});
+  }
+  assert.equal(await pages.command.locator('#selected h2').textContent(),
+   command.name.toUpperCase(),'command seat initially selects own actionable Mech');
+  assert.equal(await pages.recon.locator('#selected h2').textContent(),
+   recon.name.toUpperCase(),'recon seat initially selects its own actionable Mech');
+  assert(await pages.command.locator('#hold').isEnabled());
+  assert(await pages.recon.locator('#hold').isEnabled());
+  assert(await pages.attacker.locator('#hold').isDisabled(),
+   'attacker cannot submit a Mech move during defender phase');
+  await pages.command.locator('#room-dispute-unit').selectOption(String(command.id));
+  await pages.command.locator('#room-dispute-send').click();
+  await pages.command.locator('#room-dispute-withdraw').waitFor({state:'visible'});
+  assert.deepEqual(accepted.map(x=>x.role),['command']);
+  await pages.recon.reload({waitUntil:'domcontentloaded'});
+  await loaded(pages.recon);
+  await pages.recon.locator('#room-dispute-unit').selectOption(String(recon.id));
+  await pages.recon.locator('#room-dispute-send').click();
+  await pages.recon.waitForFunction(()=>document.querySelector('#room-dispute')===null,
+   null,{timeout:30000});
+  assert.equal(game.scenario.sharedLances.decided.controller,'command');
+  assert.deepEqual(accepted.map(x=>x.role),['command','recon']);
+  await pages.command.reload({waitUntil:'domcontentloaded'});
+  await loaded(pages.command);
+  await pages.recon.reload({waitUntil:'domcontentloaded'});
+  await loaded(pages.recon);
+  await pages.command.locator('[data-unit="'+recon.id+'"]').click();
+  assert(await pages.command.locator('#hold').isEnabled(),
+   '2D6 winner can order either defending lance for the rest of the phase');
+  assert(await pages.recon.locator('#hold').isDisabled(),
+   '2D6 loser cannot order either defending lance after arbitration');
+  await pages.command.locator('#hold').click();
+  await pages.command.waitForFunction(()=>document.querySelector('#status')?.
+   textContent.includes('v25'),null,{timeout:30000});
+  assert.equal(game.activeTeam,game.scenario.attackerTeam);
+  await pages.attacker.reload({waitUntil:'domcontentloaded'});
+  await loaded(pages.attacker);
+  assert.equal(await pages.attacker.locator('#selected h2').textContent(),
+   attacker.name.toUpperCase(),'attacker seat now selects its own Mech');
+  assert(await pages.attacker.locator('#hold').isEnabled());
+  await pages.attacker.locator('#hold').click();
+  await pages.attacker.waitForFunction(()=>document.querySelector('#status')?.
+   textContent.includes('v26'),null,{timeout:30000});
+  assert.deepEqual(accepted.map(x=>x.role),['command','recon','command','attacker']);
+  assert.equal(game.activeTeam,game.scenario.defenderTeam);
+  assert.equal(game.scenario.sharedLances.decided.controller,'command');
+  assert.deepEqual(errors,[],'all three separate browser contexts must be error free');
+ }finally{
+  await Promise.all(contexts.map(context=>context.close()));
+ }
 });
