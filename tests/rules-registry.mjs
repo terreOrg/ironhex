@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {listUnitTestFiles} from '../scripts/unit-test-paths.mjs';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const registry=JSON.parse(readFileSync(resolve(root,'rules/battlemech-manual.json'),'utf8'));
@@ -156,11 +157,17 @@ test('Strict sequential audit cursor stops at the earliest unverified heading',(
 });
 
 
-test('AGoAC Chapter 8 critical effects must run in both local and CI unit suites',()=>{
+test('AGoAC Chapter 8 critical effects must run in local, CI and SonarQube unit suites',()=>{
  const file='tests/agoac-ch8-critical-components.mjs';
  assert(existsSync(resolve(root,file)),'critical component regression file must exist');
  const pkg=JSON.parse(readFileSync(resolve(root,'package.json'),'utf8'));
- const workflow=readFileSync(resolve(root,'.github/workflows/ci.yml'),'utf8');
  assert(pkg.scripts['test:unit'].includes(file),'npm test:unit must execute Chapter 8 critical regression suite');
- assert(workflow.includes(file),'GitHub CI must execute Chapter 8 critical regression suite');
+ assert(listUnitTestFiles().includes(file),'shared source manifest includes Chapter 8 regressions');
+ for(const path of ['.github/workflows/ci.yml','.github/workflows/sonarqube.yml']){
+  const workflow=readFileSync(resolve(root,path),'utf8');
+  assert(workflow.includes('unit_list=$(node scripts/unit-test-paths.mjs)'),
+   path+' must resolve canonical unit manifest that includes Chapter 8');
+  assert(workflow.includes('"${unit_files[@]}"'),
+   path+' must pass the complete manifest into the Node test runner');
+ }
 });
