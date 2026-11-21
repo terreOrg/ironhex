@@ -12,7 +12,7 @@
   "scripts": {
     "build:web": "node scripts/build-web.mjs",
     "check:generated": "node scripts/build-web.mjs --check",
-    "test:unit": "node --test tests/agoac-foundations.mjs tests/agoac-ch8-critical-components.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs tests/scenario-rooms.mjs tests/scenario-command.mjs tests/scenario-match.mjs tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/tactical-operations.mjs tests/market.mjs tests/rules-registry.mjs tests/terrain-level-labels.mjs",
+    "test:unit": "node --test tests/agoac-foundations.mjs tests/agoac-ch8-critical-components.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs tests/scenario-rooms.mjs tests/scenario-command.mjs tests/scenario-match.mjs tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/tactical-operations.mjs tests/market.mjs tests/rules-registry.mjs tests/terrain-level-labels.mjs tests/auth.mjs tests/deploy-gate.mjs tests/ci-test-manifest.mjs",
     "rules:coverage": "node scripts/rules-coverage.mjs"
   }
 }

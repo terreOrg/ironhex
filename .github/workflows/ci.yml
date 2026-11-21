@@ -73,13 +73,12 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p coverage
+          unit_list=$(node scripts/unit-test-paths.mjs)
+          mapfile -t unit_files <<< "$unit_list"
           node --test --test-concurrency=1 --experimental-test-coverage \
             --test-reporter=spec --test-reporter-destination=stdout \
             --test-reporter=lcov --test-reporter-destination=coverage/lcov.info \
-            tests/agoac-foundations.mjs tests/agoac-ch8-critical-components.mjs tests/bmm-foundations.mjs tests/quad-quirks-validation.mjs \
-            tests/combat.mjs tests/construction.mjs tests/fire-arcs.mjs tests/api.mjs \
-            tests/economy.mjs tests/components.mjs tests/rulebook.mjs tests/market.mjs \
-            tests/auth.mjs tests/deploy-gate.mjs tests/tactical-operations.mjs tests/rules-registry.mjs
+            "${unit_files[@]}"
           test -s coverage/lcov.info
           node scripts/normalize-sonar-coverage.mjs coverage/lcov.info
       - name: Upload unit LCOV report
