@@ -1059,7 +1059,7 @@
         },
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC p.38: controller selects tied hottest ammo bin without repeating the failed heat roll"
+          "test": "CAT3500D p.39: heat ammo explosion automatically selects the same-type bin with most shots"
         },
         {
           "file": "tests/agoac-foundations.mjs",
@@ -8171,10 +8171,10 @@
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
-          "test": "AGoAC p.38: controller selects tied hottest ammo bin without repeating the failed heat roll"
+          "test": "CAT3500D p.39: heat ammo explosion automatically selects the same-type bin with most shots"
         }
       ],
-      "reviewNote": "Confirmed source-to-code mismatch: CAT3500D printed p.39 says select same-type slot with most shots, randomize equal-shot slots. Current heatExplosionBin() offers controller options for all bins tied on damage-per-shot, including same-type bins with 1 vs 5 shots, and permits choosing the 1-shot bin; existing test explicitly expects that incorrect choice. Needs engine fix, corrected regression and exact CI; do NOT promote."
+      "reviewNote": "Confirmed source-to-code mismatch: CAT3500D printed p.39 says select same-type slot with most shots, randomize equal-shot slots. Current heatExplosionBin() offers controller options for all bins tied on damage-per-shot, including same-type bins with 1 vs 5 shots, and permits choosing the 1-shot bin; existing test explicitly expects that incorrect choice. Needs engine fix, corrected regression and exact CI; do NOT promote. 21.11.2026 PR226 replaces obsolete controller-choice same-type test with correct automatic most-shots test; engine patch and CI still pending, not Verified."
     },
     {
       "id": "agoac-119",

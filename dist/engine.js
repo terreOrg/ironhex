@@ -2316,17 +2316,64 @@ export class Game extends Legacy{
  // AGoAC p.38: choose by damage per shot, not the total stored
  // ammunition. The owning controller breaks a tie between full bins.
  heatExplosionBin(u,bins){
+  // CAT3500D pp.38–39: choose the most damaging ammunition TYPE first.
+  // Within a type the slot with the most shots MUST explode; equal-shot
+  // slots are selected randomly, never by the controlling player.
   const damage=b=>{const w=u.weapons[b.weapon];return w.damage*(w.rack||1);};
   const highest=Math.max(...bins.map(damage));
-  const tied=bins.filter(b=>damage(b)===highest);
-  const fallback=[...tied].sort((a,b)=>b.shots-a.shots)[0];
-  const options=tied.map(b=>({id:String(u.bins.indexOf(b)),location:b.location,
-   slot:b.slot+1,weaponName:u.weapons[b.weapon].name,shots:b.shots,damagePerShot:highest}));
-  const pick=this.chooseResolutionOption('heat-ammo-bin',u,options,String(u.bins.indexOf(fallback)),
+  const byType=new Map();
+  for(const b of bins.filter(b=>damage(b)===highest)){
+   const w=u.weapons[b.weapon],type=String(w.ammoType??w.name);
+   if(!byType.has(type))byType.set(type,[]);
+   byType.get(type).push(b);
+  }
+  const groups=[...byType.entries()].map(([ammoType,slots])=>{
+   const maxShots=Math.max(...slots.map(b=>b.shots));
+   const finalists=slots.filter(b=>b.shots===maxShots);
+   const first=finalists[0];
+   return {ammoType,finalists,option:{id:String(u.bins.indexOf(first)),
+    location:first.location,slot:first.slot+1,weaponName:u.weapons[first.weapon].name,
+    shots:maxShots,damagePerShot:highest}};
+  });
+  const options=groups.map(g=>g.option);
+  const chosen=this.chooseResolutionOption('heat-ammo-bin',u,options,options[0].id,
    {heat:u.heat,roll:{total:this.phaseRolls.at(-1)?.total,target:this.phaseRolls.at(-1)?.target}});
-  return u.bins[Number(pick)];
+  const finalists=(groups.find(g=>g.option.id===chosen)||groups[0]).finalists;
+  if(finalists.length===1)return finalists[0];
+  const index=Math.min(finalists.length-1,Math.floor(this.rng()*finalists.length));
+  this.phaseRolls.push({kind:u.name+' · Случайный магазин боезапаса',
+   dice:[],total:index+1,target:null,result:'Магазин '+(index+1)+' из '+finalists.length});
+  return finalists[index];
  }
- heatPhase(){this.phaseRolls=[];for(const u of this.units){if(u.dead)continue;const t=this.tile(u.q,u.r),sinks=Math.max(0,u.sinks-u.sinksLost-this.floodedSlots(u,'sink')),sub=t.depth>=(u.prone?1:2),legSinks=Object.keys(u.slots).filter(l=>mechLegLocation(u,l)).reduce((n,l)=>n+u.slots[l].filter((s,i)=>s==='sink'&&!u.crit[l][i]&&!this.isBreached(u,l)).length,0),cool=sinks+Math.min(6,sub?sinks:t.depth?legSinks:0),was=u.shutdown;u.heat=Math.max(0,u.heat+u.pendingHeat+(was?0:this.effectiveEngineHits(u)*5)-cool);u.pendingHeat=0;u.externalHeat=0;const tn=shut(u.heat);if(u.voluntaryShutdown){u.shutdown=true;}else{u.shutdown=this.heatRequiresShutdown(u,tn,was);if(!was&&u.shutdown)this.psr(u,3,'Отключение реактора',true,0,true);}if(u.heat>=19){const bins=u.bins.filter(b=>b.shots&&!b.destroyed);if(bins.length){const at=u.heat>=28?8:u.heat>=23?6:4;if(this.roll(u.name+' · Перегрев боезапаса',at)<at){this.explode(u,this.heatExplosionBin(u,bins));}}}if(u.lifeSupport&&u.heat>=15)this.wound(u,u.heat>=26?2:1);this.consciousness(u);}this.endPSR();this.removeDestroyedMechs();}
+ heatPhase(){
+  this.phaseRolls=[];
+  for(const u of this.units){
+   if(u.dead)continue;
+   const t=this.tile(u.q,u.r),sinks=Math.max(0,u.sinks-u.sinksLost-this.floodedSlots(u,'sink'));
+   const sub=t.depth>=(u.prone?1:2);
+   const legSinks=Object.keys(u.slots).filter(l=>mechLegLocation(u,l))
+    .reduce((n,l)=>n+u.slots[l].filter((s,i)=>s==='sink'&&!u.crit[l][i]&&!this.isBreached(u,l)).length,0);
+   const cool=sinks+Math.min(6,sub?sinks:t.depth?legSinks:0),was=u.shutdown;
+   u.heat=Math.max(0,u.heat+u.pendingHeat+(was?0:this.effectiveEngineHits(u)*5)-cool);
+   u.pendingHeat=0;u.externalHeat=0;
+   // Official AGoAC errata v8.01 p.4: evaluate ALL heat effects from the
+   // adjusted heat before applying any. A shutdown PSR or ammo blast must
+   // not cancel another heat effect that was already due this phase.
+   const tn=shut(u.heat),voluntary=u.voluntaryShutdown;
+   const shutdown=voluntary||this.heatRequiresShutdown(u,tn,was);
+   const eligibleBins=u.heat>=19?u.bins.filter(b=>b.shots&&!b.destroyed):[];
+   const ammoTN=u.heat>=28?8:u.heat>=23?6:4;
+   const explodingBin=eligibleBins.length&&this.roll(u.name+' · Перегрев боезапаса',ammoTN)<ammoTN
+    ?this.heatExplosionBin(u,eligibleBins):null;
+   const lifeWounds=u.lifeSupport&&u.heat>=15?(u.heat>=26?2:1):0;
+   u.shutdown=shutdown;
+   if(!was&&shutdown&&!voluntary)this.psr(u,3,'Отключение реактора',true,0,true);
+   if(explodingBin)this.explode(u,explodingBin);
+   if(lifeWounds)this.wound(u,lifeWounds);
+   this.consciousness(u);
+  }
+  this.endPSR();this.removeDestroyedMechs();
+ }
  endPhase(){this.phaseRolls=[];for(const u of this.units){if(u.dead)continue;if(u.lifeSupport&&this.tile(u.q,u.r).depth>=(u.prone?1:2))this.wound(u,1);this.consciousness(u);if(u.dead)continue;if(u.unconscious&&u.wasUnconscious&&this.roll(u.name+' · Пробуждение',conscious[u.pilotWounds])>=conscious[u.pilotWounds]){
    u.unconscious=false;
    // The pilot was unavailable at the pre-resolution End Phase UI.
