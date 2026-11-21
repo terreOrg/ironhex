@@ -41,4 +41,19 @@ jobs:
               period:c.periodIndex
             }));
           }
+          const issueUrl=new URL('/api/issues/search?componentKeys=ironhex&resolved=false&ps=100',host);
+          const issueResponse=await fetch(issueUrl,{
+            headers:{Authorization:'Basic '+Buffer.from(token+':').toString('base64')}
+          });
+          if(!issueResponse.ok)throw Error('Sonar issues API HTTP '+issueResponse.status);
+          const problems=await issueResponse.json();
+          console.log('UNRESOLVED ISSUES:',problems.total);
+          for(const issue of problems.issues??[]){
+            console.log('ISSUE '+JSON.stringify({
+              key:issue.key,rule:issue.rule,message:issue.message,
+              component:issue.component,line:issue.line,
+              severity:issue.severity,type:issue.type,
+              impacts:issue.impacts
+            }));
+          }
           JS
