@@ -772,3 +772,39 @@ color:#1d3223;font-weight:800;font-size:14px;padding:14px;cursor:pointer}
 
 /* Shared toggle in headquarters and constructor. */
 .hub-root mech-toggle{--toggle-width:31px;flex-shrink:0}.hub-root .op-select-mech mech-toggle{--toggle-width:34px}.hub-root .economy-toggle mech-toggle{--toggle-width:28px}.hub-root label:has(mech-toggle){cursor:default}
+
+/* The commander's hub shares the same battle-worn armor, not the paper record sheet. */
+.hub-root{
+ background-image:
+ radial-gradient(ellipse 90px 14px at 14% 2%,#746d5e80,transparent 75%),
+ repeating-linear-gradient(178deg,transparent 0 28px,#dde3d407 29px,transparent 30px 55px),
+ radial-gradient(ellipse at 30% 8%,#36433d,#0c1214 75%);
+}
+.hub-top,.hub-footer{border-color:#788073}
+.hub-mech,.hub-root .op-intro,.hub-root .op-create-form,.hub-root .op-current,.hub-root .op-history{
+ background-image:
+ radial-gradient(ellipse 18px 5px at 3% 1%,#9ca392 0 20%,transparent 55%),
+ radial-gradient(ellipse 22px 5px at 98% 100%,#98806b 0 18%,transparent 55%),
+ repeating-linear-gradient(176deg,transparent 0 25px,#ffffff08 26px,transparent 27px 47px),
+ linear-gradient(135deg,#3b4643,#202c2b 23%,#151f1e 85%,#333d3a);
+ border-color:#737f72;
+ box-shadow:inset 0 1px #c4c9b533,0 3px 10px #0007;
+}
+.hub-root button,.hub-root a.hub-primary,.hub-root .hub-profile button,.hub-root .hub-mech-actions a{
+ border-color:#889083;
+ background-image:
+ radial-gradient(ellipse 17px 4px at 4% 0,#92988b 0 18%,transparent 52%),
+ repeating-linear-gradient(176deg,transparent 0 19px,#ffffff09 20px,transparent 21px 36px),
+ linear-gradient(#596460,#303b38 50%,#1c2826);
+ color:#e7edda;
+ box-shadow:inset 0 1px #ced2c13b,0 2px 4px #0007;
+}
+.hub-root button:focus-visible,.hub-root a:focus-visible{outline:2px solid #ffd187;outline-offset:3px}
+.auth-dialog:not(.recorddialog){
+ background-image:
+ radial-gradient(ellipse 32px 7px at 4% 1%,#a6a8956b 0 28%,transparent 58%),
+ repeating-linear-gradient(177deg,transparent 0 29px,#ffffff0a 30px,transparent 31px 55px),
+ linear-gradient(125deg,#414a47,#263331 25%,#131d1d 87%,#333b39);
+ border-color:#8c9484;
+ box-shadow:inset 0 0 0 3px #101817,0 20px 80px #000e;
+}
