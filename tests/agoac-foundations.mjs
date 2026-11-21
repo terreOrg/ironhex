@@ -6080,3 +6080,107 @@ test('CAT3500D p.48: Strong Gale adds one to Piloting Skill Roll modifiers',()=>
   assert.equal(g.psrMod(u,true),baseline+1);
  }
 });
+
+
+test('CAT3500D p.45: both players roll 2D6 and winner chooses attacker or defender exactly once',()=>{
+ for(const winner of [0,1])for(const role of ['attacker','defender'])for(const reroll of [false,true]){
+  const g=fresh();assert(g.configureScenario('divide-and-conquer').ok);
+  assert.equal(g.nextPhase().ok,false,'unresolved sides block Initiative');
+  const dice=reroll?[...diceFor(7),...diceFor(7)]:[];
+  dice.push(...diceFor(winner===0?12:2),...diceFor(winner===0?2:12));
+  g.rng=()=>{assert(dice.length,'unexpected side roll');return dice.shift();};
+  const decision=g.rollScenarioSides();
+  assert(decision.ok);assert.equal(decision.winner,winner);
+  assert.equal(decision.rolls.length,reroll?4:2);
+  assert.equal(dice.length,0);
+  assert.equal(g.rollScenarioSides().ok,false,'selection roll cannot repeat');
+  assert.equal(g.chooseScenarioSide(1-winner,role).ok,false,'loser cannot choose');
+  assert.equal(g.chooseScenarioSide(winner,'invalid').ok,false);
+  const result=g.chooseScenarioSide(winner,role);assert(result.ok);
+  assert.equal(result.attackerTeam,role==='attacker'?winner:1-winner);
+  assert.equal(result.defenderTeam,1-result.attackerTeam);
+  assert.equal(g.chooseScenarioSide(winner,role).ok,false,'role cannot change');
+  assert.equal(g.configureScenario('trial-by-fire').ok,false,'scenario cannot change');
+ }
+ const g=fresh();
+ assert.equal(g.configureScenario('other').ok,false);
+ assert.equal(g.rollScenarioSides().ok,false);
+ assert.equal(g.chooseScenarioSide(0,'attacker').ok,false);
+});
+
+test('CAT3500D p.47: Trial by Fire defender wins first-turn Initiative without dice',()=>{
+ for(const defender of [0,1]){
+  const g=fresh();assert(g.configureScenario('trial-by-fire').ok);
+  const sides=[...diceFor(defender===0?12:2),...diceFor(defender===0?2:12)];
+  g.rng=()=>{assert(sides.length);return sides.shift();};
+  assert.equal(g.rollScenarioSides().winner,defender);
+  assert(g.chooseScenarioSide(defender,'defender').ok);
+  g.rng=()=>{throw Error('First-turn Initiative must not use dice');};
+  assert(g.nextPhase().ok);assert.equal(g.initiativeWinner,defender);
+  assert.deepEqual(g.phaseRolls,[]);
+  assert.equal(g.activeTeam,1-defender,'initiative loser declares first');
+  g.round=2;g.phase='initiative';g.queue=[];g.activeTeam=null;
+  const turn=[...diceFor(defender===0?2:12),...diceFor(defender===0?12:2)];
+  g.rng=()=>{assert(turn.length);return turn.shift();};
+  assert(g.nextPhase().ok);assert.equal(g.initiativeWinner,1-defender);
+  assert.equal(g.phaseRolls.length,2);assert.equal(turn.length,0);
+ }
+});
+
+test('CAT3500D p.48: Divide and Conquer defender suffers -2 initiative for every roll and reroll',()=>{
+ for(const defender of [0,1])for(const lateTurn of [false,true]){
+  const g=fresh();assert(g.configureScenario('divide-and-conquer').ok);
+  const sides=[...diceFor(defender===0?12:2),...diceFor(defender===0?2:12)];
+  g.rng=()=>sides.shift();
+  assert.equal(g.rollScenarioSides().winner,defender);
+  assert(g.chooseScenarioSide(defender,'defender').ok);
+  g.round=lateTurn?5:1;
+  const raw=defender===0?[8,6]:[6,8];
+  const dice=[...diceFor(raw[0]),...diceFor(raw[1]),
+   ...diceFor(defender===0?12:2),...diceFor(defender===0?2:12)];
+  g.rng=()=>{assert(dice.length,'unexpected Initiative roll');return dice.shift();};
+  g.initiative();
+  assert.equal(g.phaseRolls.length,4,'tie after modifier requires reroll');
+  assert.deepEqual(g.phaseRolls.map(r=>r.scenarioModifier),
+   defender===0?[-2,0,-2,0]:[0,-2,0,-2]);
+  assert.deepEqual(g.phaseRolls.slice(0,2).map(r=>r.adjustedTotal),
+   [raw[0]-(defender===0?2:0),raw[1]-(defender===1?2:0)]);
+  assert.equal(g.phaseRolls[0].adjustedTotal,g.phaseRolls[1].adjustedTotal);
+  assert.equal(g.initiativeWinner,defender);
+  assert.equal(g.activeTeam,1-defender);
+  assert.equal(dice.length,0);
+ }
+ const ordinary=fresh();const dice=[...diceFor(8),...diceFor(6)];
+ ordinary.rng=()=>dice.shift();ordinary.initiative();
+ assert.equal(ordinary.initiativeWinner,0);
+ assert.equal(ordinary.phaseRolls[0].scenarioModifier,undefined);
+});
+
+test('CAT3500D p.48: Full Moon Night jump MP pays one surcharge per hex both on map and entry',()=>{
+ for(const night of [false,true]){
+  const g=fresh(),u=g.units[0];
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
+  Object.assign(u,{q:0,r:0,facing:0,jump:5,jumpLost:0,moveStart:{q:0,r:0},proneAtStart:false});
+  g.phase='move';g.queue=[0,1];g.activeTeam=0;g.weather.night=night;
+  const routes=g.reachable(u,'jump'),cost=night?4:2;
+  assert(routes.some(p=>p.q===2&&p.r===0&&p.cost===cost),'two-hex jump MP');
+  assert.equal(routes.some(p=>p.q===3&&p.r===0),!night);
+  assert(routes.every(p=>p.cost<=5));
+  assert(g.move(u.id,2,0,'jump').ok);
+  assert.equal(u.spent,cost);
+  assert.equal(u.pendingHeat,3,'night MP costs do not increase jump heat');
+  assert.equal(u.distanceMoved,2,'TMM uses travelled hexes');
+ }
+ for(const night of [false,true]){
+  const g=standardSetupGame(0),u=g.units.find(x=>g.canAct(x));
+  u.jump=5;u.jumpLost=0;u.proneAtStart=false;g.weather.night=night;
+  const routes=g.reachable(u,'jump'),step=night?2:1;
+  const candidate=routes.find(p=>p.cost===2*step);
+  assert(candidate,'a two-hex first-board-entry jump must be reachable');
+  assert.equal(routes.some(p=>p.cost===3*step),!night,'first full hex costs MP');
+  assert(g.move(u.id,candidate.q,candidate.r,'jump').ok);
+  assert.equal(u.spent,2*step);
+  assert.equal(u.distanceMoved,2);
+  assert.equal(u.pendingHeat,3);
+ }
+});
