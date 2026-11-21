@@ -186,8 +186,16 @@ function applyServerState(state){
     // Original printed maps have 544 hexes and 7/10 units rather than
     // the legacy four-unit demo. Rebuild actual scene geometry and models.
     buildTerrain();buildArcMeshes();reconcileModelRecords();
-    selected=game.units.some(u=>u.id===previous&&!u.dead&&!u.notFielded)?
-      previous:(active.find(u=>roomControls(u))?.id??active[0].id);
+    // After an authenticated three-seat snapshot, prefer an actionable
+    // BattleMech actually owned by this seat. The initial demo selection is
+    // ID 0 (usually attacker) and must not strand either defender on a
+    // non-actionable enemy card when their turn begins.
+    const previousUnit=game.unit(previous);
+    const readyOwned=active.find(u=>game.canAct(u)&&roomControls(u));
+    selected=readyOwned&&(!previousUnit||!game.canAct(previousUnit)||
+      !roomControls(previousUnit))?readyOwned.id:
+      previousUnit&&!previousUnit.dead&&!previousUnit.notFielded?previous:
+      active.find(u=>roomControls(u))?.id??active[0].id;
     mode=game.unit(selected).moveMode==='stand'?'walk':game.unit(selected).moveMode;
     picked=new Set(game.unit(selected).weapons.map((_,i)=>i));
     target=null;weaponTargets={};weaponBins={};weaponSpotters={};
@@ -294,7 +302,9 @@ async function joinServerBattle(){
 function startRoomPolling(){
  if(!roomMode||roomPollHandle!==null)return;
  roomPollHandle=setInterval(async()=>{
-  if(!remoteReady||busy||document.hidden||roomPollingInFlight)return;
+  // Continue authoritative sync in background tabs. Browser timer throttling
+ // already limits the load; hiding the tab must not suppress disconnect checks.
+ if(!remoteReady||busy||roomPollingInFlight)return;
   roomPollingInFlight=true;
   try{
    const response=await fetch(
