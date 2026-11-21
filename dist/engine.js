@@ -9,6 +9,8 @@ export const AGOAC_MAP_PRESETS=Object.freeze([
  Object.freeze({id:'woodland',name:'Лесной рубеж'}),
  Object.freeze({id:'river',name:'Речная долина'})
 ]);
+// CAT3500D pp.45–48: printed AGoAC scenario rule modes.
+export const AGOAC_SCENARIOS=Object.freeze(['final-exam','trial-by-fire','divide-and-conquer']);
 export const AGOAC_SCALE=Object.freeze({hexMeters:30,levelMeters:6,turnSeconds:10,standingMechLevels:2});
 export const rangeMeters=(a,b)=>distance(a,b)*AGOAC_SCALE.hexMeters;
 export const elapsedBattleSeconds=round=>Math.max(0,round-1)*AGOAC_SCALE.turnSeconds;
@@ -175,7 +177,7 @@ export function defaultMechWarriorSkills(techBase='Inner Sphere'){
  return techBase==='Clan'?{gunnery:3,piloting:4}:{gunnery:4,piloting:5};
 }
 export class Game extends Legacy{
- reset(){super.reset();this.victoryTerms=null;this.victoryAdjudicated=false;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false,underwaterFire:false};
+ reset(){super.reset();this.scenario=null;this.victoryTerms=null;this.victoryAdjudicated=false;this.deployment=null;this.setupForces=null;this.setupMap=null;this.pendingChoice=null;this._resolutionReplay=null;this.phase='initiative';this.queue=[];this.selectionBatch=null;this.activeTeam=null;this.actingId=null;this.deferConsciousness=false;this.declarations=[];this.physicalDeclarations=[];this.phaseRolls=[];this.resolution=[];this.afterRolls=[];this.weather={night:false,gale:false};this.tacticalOptions={standingStill:false,evading:false,floatingCriticals:false,underwaterFire:false};
  for(const t of this.tiles){t.depth=0;t.surface=t.height;if(t.q===0&&t.r>0&&t.r<4){t.type='water';t.depth=t.r===2?2:1;t.height=-t.depth;t.surface=0;}else if(t.q===1&&t.r===-2)t.type='rubble';else if(t.q===-1&&t.r===-2)t.type='rough';}
  this.rebuildMap();
  this.units.forEach((u,i)=>{const defaults=defaultMechWarriorSkills(u.techBase);u.gunnery=defaults.gunnery;u.piloting=defaults.piloting;Object.keys(LOCATIONS).forEach((l,j)=>u.armor[l]=armor[i][j]);u.maxArmor={...u.armor};u.rear={CT:rears[i][0],LT:rears[i][1],RT:rears[i][2]};u.maxRear={...u.rear};Object.assign(u,{pilotWounds:0,unconscious:false,wasUnconscious:false,prone:false,proneAtStart:false,engineHits:0,gyroHits:0,sensorHits:0,lifeSupport:false,psrs:[],consciousChecks:0,phaseDamage:0,externalHeat:0,breached:[],skidded:false,skidDirection:null,lastMovementDirection:null,tmmTravel:null,tmmReversalOffset:0,skidCollisionPending:null,spent:0,twist:0,flip:false,physicalDone:false,charge:null,club:false,sinksLost:0,jumpLost:0,dumping:[],dumpNext:[],shutdownNext:false,voluntaryShutdown:false,moveStart:{q:u.q,r:u.r},firedLocations:[],startProne:false,standAttempts:0});u.actuators={LA:{shoulder:false,upper:false,lower:false,hand:false},RA:{shoulder:false,upper:false,lower:false,hand:false},LL:{hip:false,upper:false,lower:false,foot:false},RL:{hip:false,upper:false,lower:false,foot:false}};
@@ -391,6 +393,42 @@ export class Game extends Legacy{
    return arms.some(l=>!physicalArmActuators(u,l).shoulder&&
     Math.abs(angle)<=120.00001&&(l==='LA'?angle>=-60.00001:angle<=60.00001));
   });
+ }
+ // CAT3500D p.45: side selection is a separate 2D6 contest before battle.
+ scenarioSetupOpen(){
+  return this.round===1&&this.phase==='initiative'&&this.winner===null&&
+   this.deployment===null&&!this.pendingChoice&&!this.queue.length&&
+   this.units.every(u=>!u.moved&&!u.fired&&!u.physicalDone);
+ }
+ configureScenario(id){
+  if(!this.scenarioSetupOpen()||this.scenario||!AGOAC_SCENARIOS.includes(id))
+   return fail('Сценарий выбирается один раз до начала боя');
+  this.scenario={id,sideRollWinner:null,sideRolls:null,attackerTeam:null,defenderTeam:null};
+  return {ok:true,id};
+ }
+ rollScenarioSides(){
+  if(!this.scenarioSetupOpen()||!this.scenario||this.scenario.sideRollWinner!==null)
+   return fail('Выбор сторон недоступен или уже состоялся');
+  this.phaseRolls=[];let green,red,tries=0;
+  do{
+   green=this.roll('Сценарий: выбор сторон, зелёные');
+   red=this.roll('Сценарий: выбор сторон, красные');
+  }while(green===red&&++tries<10000);
+  if(green===red)throw Error('Генератор выдаёт только ничьи при выборе сторон');
+  const winner=green>red?0:1;
+  this.scenario.sideRollWinner=winner;
+  this.scenario.sideRolls=[...this.phaseRolls];
+  return {ok:true,winner,green,red,rolls:[...this.phaseRolls]};
+ }
+ chooseScenarioSide(team,role){
+  if(!this.scenarioSetupOpen()||!this.scenario||
+   this.scenario.sideRollWinner!==team||
+   this.scenario.attackerTeam!==null||
+   !['attacker','defender'].includes(role))
+   return fail('Только победитель броска выбирает сторону один раз');
+  const attackerTeam=role==='attacker'?team:1-team;
+  Object.assign(this.scenario,{attackerTeam,defenderTeam:1-attackerTeam});
+  return {ok:true,attackerTeam,defenderTeam:1-attackerTeam};
  }
  // CAT3500D p.7 permits victory conditions agreed before play.
  // This digital preset is optional: draw when a negotiated turn limit ends.
@@ -636,7 +674,8 @@ export class Game extends Legacy{
   // is prohibited by a lost leg (p.11); the step still counts as running.
   if(mode==='minimum'&&this.mp(u,'walk')<1)return [];
   const max=mode==='minimum'?Math.max(1,this.mp(u,'run')):this.mp(u,mode);
-  if(max<1)return [];
+  const jumpCost=this.weather.night?2:1,jumpHexes=Math.floor(max/jumpCost);
+  if(max<1||mode==='jump'&&jumpHexes<1)return [];
   const edge=this.deployment.edges[u.team],d=DIRS[edge],routes=new Map();
   const add=(tile,cost,from,transit=null)=>{
    if(this.occupied(tile.q,tile.r,u.id))return;
@@ -679,8 +718,8 @@ export class Game extends Legacy{
    const queue=[{tile:first,cost:1}],seen=new Set([key(first.q,first.r)]);
    for(let i=0;i<queue.length;i++){
     const {tile,cost}=queue[i];
-    if(!(tile.building?.cf>0))add(tile,cost,from);
-    if(cost>=max)continue;
+    if(!(tile.building?.cf>0))add(tile,cost*jumpCost,from);
+    if(cost>=jumpHexes)continue;
     for(const [dq,dr] of DIRS){
      const next=this.tile(tile.q+dq,tile.r+dr);
      if(!next||next.height>ceiling||distance(from,next)!==cost+1)continue;
@@ -725,10 +764,11 @@ export class Game extends Legacy{
   }
   if(minimum)mode='run';
   Object.assign(u,{q,r,deployed:true,facing:options.facing??route.facing,moveStart:{...from},
-   moveMode:mode,spent:route.cost,distanceMoved:mode==='jump'?route.cost:1,lastMovementDirection:route.facing,tmmTravel:mode==='jump'?null:'forward',tmmReversalOffset:0});
+   moveMode:mode,spent:route.cost,distanceMoved:mode==='jump'?route.cost/jumpCost:1,lastMovementDirection:route.facing,tmmTravel:mode==='jump'?null:'forward',tmmReversalOffset:0});
   const tile=this.tile(q,r);
   if(mode==='jump'){
-   u.pendingHeat+=Math.max(3,route.cost);
+   // Jump heat uses hexes traversed, not the extra moonlight MP cost.
+   u.pendingHeat+=Math.max(3,route.cost/jumpCost);
    const modifier=u.config==='Quad'&&['LA','RA','LL','RL'].filter(l=>!u.structure[l]).length===1?5:0;
    this.checkExistingHullBreaches(u);
    if(!u.dead&&tile.depth)this.psr(u,modifier,'Посадка в воду',true,tile.depth);
@@ -749,11 +789,37 @@ export class Game extends Legacy{
   const candidates=this.units.filter(u=>this.canAct(u));
   return (this.phase==='move'?candidates.find(u=>u.deployed!==false||this.deploymentOptions(u).length):null)||candidates[0];
  }
- initiative(){this.phaseRolls=[];let a,b,tries=0;do{a=this.roll('Инициатива: зелёные');b=this.roll('Инициатива: красные');}while(a===b&&++tries<10000);if(a===b)throw Error('Генератор выдаёт только ничьи инициативы');this.initiativeWinner=a>b?0:1;
+ initiative(){
+  if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))
+   throw Error('Стороны сценария должны быть определены до инициативы');
+  this.phaseRolls=[];let a,b,tries=0;
+  if(this.scenario?.id==='trial-by-fire'&&this.round===1){
+   // CAT3500D p.47: defender always wins first-turn initiative; no roll.
+   this.initiativeWinner=this.scenario.defenderTeam;
+  }else{
+   // CAT3500D p.48: the defender of Divide and Conquer subtracts
+   // two on every Initiative roll, including ties and later turns.
+   const penalized=this.scenario?.id==='divide-and-conquer'?this.scenario.defenderTeam:null;
+   do{
+    const green=this.roll('Инициатива: зелёные');
+    const red=this.roll('Инициатива: красные');
+    a=green-(penalized===0?2:0);b=red-(penalized===1?2:0);
+    if(penalized!==null){
+     Object.assign(this.phaseRolls.at(-2),{scenarioModifier:penalized===0?-2:0,adjustedTotal:a});
+     Object.assign(this.phaseRolls.at(-1),{scenarioModifier:penalized===1?-2:0,adjustedTotal:b});
+    }
+   }while(a===b&&++tries<10000);
+   if(a===b)throw Error('Генератор выдаёт только ничьи инициативы');
+   this.initiativeWinner=a>b?0:1;
+  }
   // AGoAC pp.7,44: only a pilot already unconscious at Initiative
   // may attempt recovery in this turn's End Phase.
   for(const u of this.units){u.wasUnconscious=!!u.unconscious;u.chargeTargetAtInitiative=!!(u.shutdown||u.unconscious);}
-  this.phase='move';this.buildQueue();this.note(`Инициатива ${a}:${b}. ${this.initiativeWinner?'Красные':'Зелёные'} действуют вторыми.`);}
+  this.phase='move';this.buildQueue();
+  this.note(this.scenario?.id==='trial-by-fire'&&this.round===1?
+   'Trial by Fire: защитник автоматически выигрывает инициативу первого хода.':
+   `Инициатива ${a}:${b}. ${this.initiativeWinner?'Красные':'Зелёные'} действуют вторыми.`);
+ }
  psrMod(u,fallAvoidance=false){
   let n=Math.min(2,u.gyroHits)*3+(this.weather.gale?1:0);
   if(u.config==='Quad'){
@@ -870,7 +936,7 @@ export class Game extends Legacy{
     buildingDamage:cfBefore-building.cf};
  }
 
- reachable(u,mode='walk'){u=this.unit(u);if(u?.deployed===false)return this.deploymentEntryRoutes(u,mode);if(!['walk','run','jump','evade'].includes(mode))return [];if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];if(max<1)return [];const legal=this.jumpShortestReach(u,max);return this.tiles.filter(t=>!(t.building?.cf>0)&&!this.occupied(t.q,t.r,u.id)&&legal.has(key(t.q,t.r))).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t)),facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
+ reachable(u,mode='walk'){u=this.unit(u);if(u?.deployed===false)return this.deploymentEntryRoutes(u,mode);if(!['walk','run','jump','evade'].includes(mode))return [];if(this.phase!=='move'||!this.canAct(u)||this.isImmobile(u)||u.prone||u.moveEndedByLegLoss)return [];if(u.moveMode!=='stand'&&u.moveMode!==mode)return [];if(['run','evade'].includes(mode)&&(u.config==='Quad'?['LA','RA','LL','RL'].filter(l=>u.structure[l]===0).length>=2:u.structure.LL===0||u.structure.RL===0))return [];if(mode==='evade'&&(!this.tacticalOptions?.evading||(u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL']).some(l=>u.actuators[l].hip||this.isBreached(u,l))))return [];if((u.dumping.length||u.dumpNext.length)&&['run','jump','evade'].includes(mode))return [];const max=this.mp(u,mode)-u.spent;if(max<0)return [];if(mode==='jump'){if(u.spent||u.proneAtStart||this.tile(u.q,u.r).depth>=2)return [];if(max<1)return [];const jumpCost=this.weather.night?2:1,jumpHexes=Math.floor(max/jumpCost);if(jumpHexes<1)return [];const legal=this.jumpShortestReach(u,jumpHexes);return this.tiles.filter(t=>!(t.building?.cf>0)&&!this.occupied(t.q,t.r,u.id)&&legal.has(key(t.q,t.r))).map(t=>({q:t.q,r:t.r,cost:Math.max(1,distance(u,t))*jumpCost,facing:u.facing,path:[{q:t.q,r:t.r,facing:u.facing}]}));}
  const lateralShifts=quadLateralDirections(u,mode);
  const actions=['left','right','forward','back',...lateralShifts.map(s=>s.action)];
  const start={q:u.q,r:u.r,facing:u.facing,cost:0,path:[]},states=new Map([[`${u.q},${u.r},${u.facing}`,start]]),ends=new Map([[key(u.q,u.r),start]]),open=[start];while(open.length){open.sort((a,b)=>a.cost-b.cost);const p=open.shift();for(const action of actions){let q=p.q,r=p.r,f=p.facing,c=1;const shift=lateralShifts.find(s=>s.action===action);if(action==='left'||action==='right')f=wrap(f+(action==='left'?1:-1));else{const backward=action==='back'||shift?.backward;if(backward&&mode!=='walk')continue;const d=DIRS[wrap(f+(shift?shift.offset:backward?3:0))];q+=d[0];r+=d[1];const t=this.tile(q,r),old=this.tile(p.q,p.r);if(!t)continue;const occ=this.units.find(x=>this.onMap(x)&&x.id!==u.id&&x.q===q&&x.r===r);if(occ&&(occ.team!==u.team||occ.dead))continue;const dh=t.height-old.height;if(Math.abs(dh)>2||backward&&dh!==0||['run','evade'].includes(mode)&&t.depth)continue;c=this.terrainCost(t,old)+Math.abs(dh)+(shift?1:0);}const cost=p.cost+c,k=`${q},${r},${f}`;if(cost>max||states.has(k)&&states.get(k).cost<=cost)continue;const v={q,r,facing:f,cost,path:[...p.path,{q,r,facing:f,cost:c,...(shift?{lateral:shift.backward?'backward':'forward'}:{})}]};states.set(k,v);open.push(v);if(!this.occupied(q,r,u.id)){
@@ -1058,7 +1124,8 @@ export class Game extends Legacy{
   dst={q,r,facing:u.facing,cost,
     path:[{q,r,facing:u.facing,cost,lateral:shift.backward?'backward':'forward'}]};
  }
- if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.facing=options.facing??u.facing;u.spent=dst.cost;u.pendingHeat+=Math.max(3,dst.cost);path.push({q,r});// BMM p.45: losing the first Quad leg adds +5 to the landing
+ if(!dst)return fail('Недоступный путь или очередь другого отряда');this.phaseRolls=[];this.actingId=id;const from={q:u.q,r:u.r},path=[];u.moveMode=mode;if(mode==='jump'){u.q=q;u.r=r;u.facing=options.facing??u.facing;u.spent=dst.cost;// CAT3500D p.48: night increases jump MP without extra heat per hex.
+ u.pendingHeat+=Math.max(3,distance(from,{q,r}));path.push({q,r});// BMM p.45: losing the first Quad leg adds +5 to the landing
  // PSR even though this damage does not itself add +5 to normal
  // Quad PSR modifiers. Two lost legs already contribute +5 via
  // psrMod (the one-legged biped equivalent), so do not double count.
@@ -2476,7 +2543,7 @@ export class Game extends Legacy{
    return {ok:true,pending:true};
   }
  }
- nextPhase(){if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
+ nextPhase(){if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))return fail('Сначала бросьте кубики и выберите сторону сценария');this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
  this.endPSR();this.afterRolls=[...this.phaseRolls];this.removeDestroyedMechs();this.checkWin();if(this.winner===null){this.phase='fire';this.buildQueue();}}else if(this.phase==='fire'){this.resolveFire();this.checkWin();if(this.winner===null){this.phase='physical';this.buildQueue();}}else if(this.phase==='physical'){this.resolvePhysical();this.checkWin();this.activeTeam=null;if(this.winner===null)this.phase='heat';}else if(this.phase==='heat'){this.heatPhase();this.checkWin();if(this.winner===null)this.phase='end';}else{this.endPhase();this.checkWin({stalemate:true});if(this.winner===null)this.phase='initiative';}if(this.winner===null)this.note(`Раунд ${this.round}: ${PHASES[this.phase]}.`);else{this.activeTeam=null;this.actingId=null;}return {ok:true};}
  aiMove(id){const u=this.unit(id);if(!this.canAct(u))return fail('Не очередь ИИ');if(u.deployed===false){const choices=this.deploymentOptions(u);const best=choices.sort((a,b)=>Number(a.mode==='minimum')-Number(b.mode==='minimum')||distance(a,{q:0,r:0})-distance(b,{q:0,r:0})||a.cost-b.cost)[0];if(!best)return {...fail('Нет допустимого входа: требуется изменить условия сценария'),code:'deployment_blocked'};const result=this.enterDeployment(u,best.q,best.r,best.mode);if(result.ok&&!result.ended)this.hold(id);return result;}if(this.isImmobile(u))return this.hold(id);if(u.prone){const s=this.stand(id);if(!s.ok||u.prone)return this.hold(id);}const options=['walk','run',...(this.mp(u,'jump')?['jump']:[])].flatMap(m=>this.reachable(u,m).map(p=>({...p,mode:m})));let best=null,score=-Infinity;const enemies=this.units.filter(t=>t.team!==u.team&&!t.dead&&t.deployed!==false);for(const p of options){const old={q:u.q,r:u.r,facing:u.facing};u.q=p.q;u.r=p.r;u.facing=p.facing;let value=-Infinity;for(const t of enemies){let v=u.weapons.reduce((n,w,i)=>n+this.preview(id,t.id,i).chance*(w.rack?w.rack*.6*w.damage:w.damage)/100,0)-Math.abs(distance(u,t)-5)*.5;if(p.mode==='jump')v-=1;value=Math.max(value,v);}Object.assign(u,old);if(value>score){score=value;best=p;}}const r=best?this.move(id,best.q,best.r,best.mode):{ok:true};this.hold(id);return r;}
  planAiFire(u){
