@@ -532,7 +532,7 @@ export class Game extends Legacy{
     if(defenders.length===1&&attackers.length){
      const defender=defenders[0],attackersDestroyed=attackers.every(u=>u.dead);
      if(defender.dead)
-      result=defender.safeScenarioExit&&!attackersDestroyed?scenario.defenderTeam:
+      result=defender.safeScenarioExit?scenario.defenderTeam:
        attackersDestroyed?'draw':scenario.attackerTeam;
      else if(attackersDestroyed)result=scenario.defenderTeam;
     }
