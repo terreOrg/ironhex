@@ -46,7 +46,7 @@ function publicRoom(row,viewer){
  const role=scenarioRoleForUser(row,viewer);
  if(!role)throw new AuthError(404,'scenario_room_not_found');
  return {id:row.id,scenarioId:'divide-and-conquer',status:row.status,version:row.version,
-  yourRole:role,
+  yourRole:role,isHost:row.created_by===viewer,
   roles:Object.fromEntries(ROLES.map(k=>[k,{
    handle:row[k+'_handle'],accepted:row[FLAG[k]]===true
   }])),createdAt:row.created_at};

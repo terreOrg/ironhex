@@ -16,6 +16,7 @@ const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; char
   '.css':'text/css; charset=utf-8', '.glb':'model/gltf-binary' };
 let server, browser, baseURL;
 const browserPilots=[];
+const browserScenarioRooms=[];
 const browserCoverage=await createBrowserCoverage();
 
 function serve(req,res) {
@@ -53,6 +54,22 @@ function serve(req,res) {
       return authenticated?reply(200,{balance:150000,stock:{},catalog:[],repairs:[],
         ledger:[],contracts:[{id:'patrol',name:'Приграничный патруль',victory:32000}]}) :
         reply(401,{error:'unauthorized'});
+    if(req.method==='GET'&&urlPath==='/api/v1/scenario-rooms')
+      return authenticated?reply(200,{items:browserScenarioRooms}):
+        reply(401,{error:'unauthorized'});
+    if(req.method==='POST'&&urlPath==='/api/v1/scenario-rooms'){
+      req.resume();
+      if(!authenticated)return reply(401,{error:'unauthorized'});
+      const item={id:'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
+       scenarioId:'divide-and-conquer',status:'inviting',version:0,
+       yourRole:'attacker',isHost:true,roles:{
+        attacker:{handle:'testcommander',accepted:true},
+        command:{handle:'command_test',accepted:false},
+        recon:{handle:'recon_test',accepted:false}
+       }};
+      browserScenarioRooms.push(item);
+      return reply(201,{item});
+    }
     if (req.method === 'GET' && urlPath === '/api/v1/hangar')
       return authenticated ? reply(200,{items:[]}) : reply(401,{error:'unauthorized'});
     if (req.method === 'POST' && ['/api/v1/auth/login','/api/v1/auth/register'].includes(urlPath)) {
@@ -1544,5 +1561,26 @@ test('AGoAC p.22 browser: defender selects rear hit direction after reconnect',{
   await page.waitForFunction(()=>document.querySelector('#phase')?.textContent==='ФИЗИЧЕСКИЕ АТАКИ');
   assert.equal(draws,4);assert.equal(version,3);assert.equal(referee.pendingChoice,null);
   assert.equal(referee.unit(t.id).rear.CT,rear-1);assert.equal(referee.unit(t.id).armor.CT,front);
+ });
+});
+
+test('AGoAC Chapter 11: authenticated hub opens three-player lobby and creates signed invitations',
+ {timeout:120000},async()=>{
+ await withPage('scenario-lobby',{hub:true},async page=>{
+  await page.locator('#hub-scenarios-button').click();
+  await page.locator('#hub-scenarios-panel').waitFor({state:'visible'});
+  assert.equal(await page.locator('#hub-work-title').textContent(),'Сценарии');
+  await page.locator('#scenario-room-create input[name=attacker]').fill('TestCommander');
+  await page.locator('#scenario-room-create input[name=command]').fill('command_test');
+  await page.locator('#scenario-room-create input[name=recon]').fill('recon_test');
+  await page.locator('#scenario-room-create button[type=submit]').click();
+  await page.locator('#scenario-room-list button').first().waitFor({state:'visible'});
+  assert.match(await page.locator('#scenario-room-list').textContent(),/divide-and-conquer/);
+  await page.locator('#scenario-room-list button').first().click();
+  await page.locator('#scenario-room-details').getByText('testcommander',{exact:false}).waitFor();
+  assert.match(await page.locator('#scenario-room-details').textContent(),/command_test/);
+  assert.match(await page.locator('#scenario-room-details').textContent(),/recon_test/);
+  await page.locator('#hub-home-button').click();
+  assert.equal(await page.locator('#hub-scenarios-panel').isVisible(),false);
  });
 });

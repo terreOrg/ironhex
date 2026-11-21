@@ -1,6 +1,7 @@
 import {installPilotUI,crewPicker} from './pilot-ui.js';
 import {installOperationUI,refreshOperations} from './operation-ui.js';
 import {installEconomyUI,refreshEconomy} from './economy-ui.js';
+import {installScenarioRoomUI,refreshScenarioRooms} from './scenario-room-ui.js';
 // Main menu and hangar are only initialized after authentication.
 let root, onBattle, onProfile;
 const E=(tag,cls,txt)=>{
@@ -24,6 +25,7 @@ function create() {
   initializeWorkspace();
   installOperationUI(root);
   installEconomyUI(root,refresh);
+  installScenarioRoomUI(root,()=>openSection('scenarios'));
   root.querySelector('#hub-battle').onclick=()=>openSection('battle');
   window.addEventListener('ironhex:open-3d-operation',event=>{
     const id=event.detail?.id;
@@ -144,6 +146,8 @@ const SECTION_INFO={
     detail:'Проверка массы, брони, вооружения и критических слотов.'},
   pilots:{code:'PERSONNEL / 04',title:'Личный состав',
     detail:'Удостоверения, позывные, квалификация и послужной список.'},
+  scenarios:{code:'AGOAC CHAPTER 11 / 07',title:'Сценарии',
+    detail:'Серверный вариант Divide and Conquer для трёх командиров.'},
   campaigns:{code:'SERVER OPERATIONS / 05',title:'Боевые операции',
     detail:'Подготовка отряда, серверная симуляция, сохранение раундов и рапорты.'},
   market:{code:'LOGISTICS / 06',title:'Рынок',
@@ -254,15 +258,15 @@ export function openSection(section,{src}={}){
   root.querySelector('.hub-intro').hidden=active;
   const workarea=root.querySelector('#hub-workarea');
   workarea.hidden=!active;
-  const panels=['hangar','roster','battle','mechlab','campaigns','market'];
+  const panels=['hangar','roster','battle','mechlab','campaigns','market','scenarios'];
   for(const name of panels) {
     const target=name==='roster'?'hub-roster':'hub-'+name+(name==='hangar'?'':'-panel');
     const panel=root.querySelector('#'+target);
     if(panel)panel.hidden=(name==='roster'?'pilots':name)!==section;
   }
   const activeButtons=['hub-battle','hub-hangar-button','hub-mechlab-button',
-    'hub-pilots-button','hub-campaigns-button','hub-market-button'];
-  const sections=['battle','hangar','mechlab','pilots','campaigns','market'];
+    'hub-pilots-button','hub-campaigns-button','hub-market-button','hub-scenarios-button'];
+  const sections=['battle','hangar','mechlab','pilots','campaigns','market','scenarios'];
   for(let i=0;i<activeButtons.length;i++){
     const node=root.querySelector('#'+activeButtons[i]);
     if(!node)continue;
@@ -278,6 +282,7 @@ export function openSection(section,{src}={}){
     root.querySelector('#hub-work-description').textContent=info.detail;
     if(section==='campaigns')void refreshOperations();
     if(section==='market')void refreshEconomy();
+    if(section==='scenarios')void refreshScenarioRooms();
     if(section==='battle'||section==='mechlab'){
       const iframe=root.querySelector('#hub-'+section+'-frame');
       const address=src||(section==='battle'?'index.html?battle=1':'mechlab.html');
