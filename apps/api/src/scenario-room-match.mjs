@@ -25,7 +25,7 @@ const safeJson=x=>JSON.parse(JSON.stringify(x,(key,value)=>
 // printing. This invariant also protects persisted, independently restored
 // three-account sessions from accidentally loading the obsolete mapsheet.
 const scenario3Sheets=Object.freeze(['Desert #2','Grassland #3']);
-function assertScenario3SourceMap(game){
+export function assertScenario3SourceMap(game){
  if(game?.scenario?.id!=='divide-and-conquer'||game.setupMap==null)return;
  const map=game.setupMap,sheets=map.sheets;
  check(map.id==='sheets'&&map.printedScenario==='divide-and-conquer'&&
