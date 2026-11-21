@@ -239,3 +239,128 @@ test('AGoAC Ch11: HTTP match start, snapshot and orders reject cross-site and un
   assert.equal(calls.length,4);
  }finally{await new Promise(resolve=>server.close(resolve));}
 });
+
+test('AGoAC Ch11: all three signed roles persist full original and shortened turns through phases',()=>{
+ for(const shortened of [false,true]){
+  let runtime=begin(shortened);
+  const snapshot=()=>{
+   const saved=captureScenarioRoomGame(runtime.game,runtime.rng);
+   assert(!Object.hasOwn(publicScenarioRoomGame(saved),'rngState'),
+    'server-side dice seed never appears in public snapshot');
+   runtime=restoreScenarioRoomGame(saved);
+   const replay=captureScenarioRoomGame(runtime.game,runtime.rng);
+   assert.deepEqual(replay,saved,'restoring one authenticated transaction is lossless');
+  };
+  const setup=(role,action)=>{
+   const result=applyScenarioRoomSetup(runtime.game,role,action);
+   assert(result.ok);snapshot();return result;
+  };
+  const order=(role,action)=>{
+   const result=applyScenarioRoomOrder(runtime.game,role,action);
+   assert(result.ok);snapshot();return result;
+  };
+  const tile=(col,row)=>runtime.game.tiles.find(t=>
+   t.q+Math.floor(t.r/2)+Math.floor(runtime.game.setupMap.width/2)===col&&
+   t.r+Math.floor(runtime.game.setupMap.height/2)===row);
+  const pieces=[
+   [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
+   [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
+   [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
+   [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
+  ];
+  for(const [index,[col,row,terrainType,footprint]]of pieces.entries()){
+   const hex=tile(col,row);assert(hex);
+   const team=runtime.game.scenario.looseTerrain.nextTeam;
+   const role=team===runtime.game.scenario.attackerTeam?
+    'attacker':index<2?'command':'recon';
+   setup(role,{type:'place-terrain',q:hex.q,r:hex.r,terrainType,footprint});
+  }
+  assert(runtime.game.scenario.looseTerrain.complete);
+  for(const role of ['command','attacker','recon'])
+   setup(role,{type:'confirm-figure'});
+  assert(runtime.game.scenario.picturedTerrain.confirmed);
+  const count=shortened?7:10;
+  const defenders=shortened?4:6;
+  let command=0,recon=0,attacker=0;
+  while(!runtime.game.scenario.placement.complete){
+   const g=runtime.game,step=g.scenario.placement.steps[
+    g.scenario.placement.placed.length];
+   assert(step,'scenario must have a next printed unit');
+   const role=step.team===g.scenario.attackerTeam?'attacker':step.lance;
+   const unit=g.units.find(u=>u.team===step.team&&!u.deployed&&
+    !u.notFielded&&(role==='attacker'||u.lance===step.lance));
+   assert(unit,'printed unit for the signed seat '+role);
+   let hex;
+   if(role==='command')hex=tile(command++,0);
+   else if(role==='recon')hex=tile(31-recon++,16);
+   else{
+    if(!g.scenario.placement.attackerRow)
+     setup('attacker',{type:'choose-row',side:'east'});
+    const row=runtime.game.divideAndConquerPrintedRow('east');
+    hex=row[attacker++];
+   }
+   assert(hex,'printed deployment hex must exist');
+   setup(role,{type:'place-mech',id:unit.id,q:hex.q,r:hex.r,facing:0});
+  }
+  assert.equal(runtime.game.units.filter(u=>!u.notFielded).length,count);
+  assert.equal(runtime.game.scenario.placement.placed.length,count);
+  assert.equal(runtime.game.phase,'initiative');
+  blocked(()=>applyScenarioRoomOrder(runtime.game,'recon',{type:'next'}),
+   'wrong_initiative_controller');
+  order('command',{type:'next'});
+  assert.equal(runtime.game.phase,'move');
+  assert.equal(runtime.game.queue.length,count);
+  let dispute=null;
+  for(const phase of ['move','fire','physical']){
+   assert.equal(runtime.game.phase,phase);
+   let turns=0;
+   while(runtime.game.queue.length){
+    const g=runtime.game;
+    if(phase==='move'&&!dispute&&g.activeTeam===g.scenario.defenderTeam){
+     const c=g.units.find(u=>u.lance==='command'&&g.canAct(u));
+     const r=g.units.find(u=>u.lance==='recon'&&g.canAct(u));
+     assert(c&&r,'both signed defender lances must be selectable');
+     const first=order('command',{type:'propose-dispute',id:c.id});
+     assert(first.pending);
+     blocked(()=>applyScenarioRoomOrder(runtime.game,'attacker',
+      {type:'hold',id:g.units.find(u=>u.team===g.scenario.attackerTeam).id}),
+      'scenario_dispute_pending');
+     const decided=order('recon',{type:'propose-dispute',id:r.id});
+     assert.equal(decided.pending,false);
+     assert(['command','recon'].includes(decided.controller));
+     assert(decided.rolls.length>=2,'shared-defender conflict uses real 2D6');
+     dispute=decided.controller;
+    }
+    const current=runtime.game;
+    const unit=current.units.find(u=>current.canAct(u)&&!u.notFielded);
+    assert(unit,'active team must have a legal BattleMech');
+    const role=unit.team===current.scenario.attackerTeam?'attacker':
+     phase==='move'?dispute:unit.lance;
+    if(unit.team===current.scenario.defenderTeam&&phase==='move'){
+     const other=dispute==='command'?'recon':'command';
+     blocked(()=>applyScenarioRoomOrder(current,other,{type:'hold',id:unit.id}),
+      'scenario_lance_not_owned');
+    }
+    order(role,{type:'hold',id:unit.id});
+    turns++;
+    assert(turns<=count,'each phase must terminate without repeating an activation');
+   }
+   assert.equal(turns,count,phase+' processed the original printed force exactly once');
+   order('attacker',{type:'next'});
+  }
+  assert.equal(runtime.game.phase,'heat');
+  order('command',{type:'next'});
+  assert.equal(runtime.game.phase,'end');
+  order('attacker',{type:'next'});
+  assert.equal(runtime.game.phase,'initiative');
+  assert.equal(runtime.game.round,2);
+  assert.equal(runtime.game.scenario.sharedLances.decided.phase,'move');
+  assert.equal(runtime.game.scenario.sharedLances.decided.round,1,
+   '2D6 winner cannot claim authority in the new round');
+  const second=order('recon',{type:'next'});
+  assert.equal(second.round,2,'signed server returns the authoritative new round');
+  assert.equal(runtime.game.phase,'move');
+  assert.equal(runtime.game.scenario.sharedLances.initiativeController,'recon',
+   'initiative control alternates to other defending player on round two');
+ }
+});
