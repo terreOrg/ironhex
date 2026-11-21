@@ -228,7 +228,7 @@ test('AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain 
    if(i===0){
     await page.locator('#scenario-terrain-dispute').click();
     await page.locator('#pictured-dispute-type0').selectOption('depth1');
-    await page.locator('#pictured-dispute-type1').selectOption('sublevel1');
+    await page.locator('#pictured-dispute-type1').selectOption('depth2');
     await page.locator('#pictured-dispute-roll').click();
     await page.locator('#scenario-terrain-place').waitFor({state:'visible'});
     assert.equal(await page.locator('#scenario-terrain-type').isDisabled(),true,
