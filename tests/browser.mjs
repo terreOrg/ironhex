@@ -1668,3 +1668,74 @@ test('Cockpit worn-steel surfaces remain legible, decorative and mobile-safe',
   assert(await page.locator('#next').isVisible());
  });
 });
+
+
+test('AGoAC Ch11: signed 3D defender can submit and withdraw server 2D6 proposal',
+ {timeout:120000},async()=>{
+ await withPage('room-dispute-3d',{path:'/index.html?battle=1&room='+browserScenarioRoomId},async page=>{
+  const snapshot=JSON.parse(JSON.stringify(roomSceneFixture()));
+  const command=snapshot.units.find(u=>u.team===snapshot.scenario.defenderTeam&&u.lance==='command');
+  assert(command,'printed command lance member must exist');
+  snapshot.phase='move';snapshot.activeTeam=snapshot.scenario.defenderTeam;
+  snapshot.actingId=null;snapshot.queue=[command.id];
+  snapshot.scenario.sharedLances.pendingServerDispute=null;
+  let version=19,postCount=0;
+  await page.route('**/api/v1/scenario-rooms/'+browserScenarioRoomId+'/*',async route=>{
+   const request=route.request();
+   if(request.url().endsWith('/snapshot')){
+    return route.fulfill({status:200,contentType:'application/json',
+     body:JSON.stringify({item:{id:browserScenarioRoomId,yourRole:'command',status:'active',version},game:snapshot})});
+   }
+   if(request.url().endsWith('/command')){
+    const payload=request.postDataJSON();
+    assert.equal(payload.version,version);
+    assert.deepEqual(Object.keys(payload).sort(),['action','version']);
+    assert(['propose-dispute','withdraw-dispute'].includes(payload.action.type));
+    if(payload.action.type==='propose-dispute'){
+     assert.equal(payload.action.id,command.id);
+     snapshot.scenario.sharedLances.pendingServerDispute={
+      round:snapshot.round,phase:snapshot.phase,command:command.id,recon:null};
+    }else{
+     assert.equal(snapshot.scenario.sharedLances.pendingServerDispute.command,command.id);
+     snapshot.scenario.sharedLances.pendingServerDispute=null;
+    }
+    postCount++;version++;
+    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+     item:{id:browserScenarioRoomId,yourRole:'command',status:'active',version},
+     game:snapshot,effect:{ok:true}
+    })});
+   }
+   return route.fulfill({status:404,body:'{}'});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#room-dispute-send').waitFor({state:'visible'});
+  assert.equal(await page.locator('#room-dispute-unit option').count()>0,true);
+  await page.locator('#room-dispute-unit').selectOption(String(command.id));
+  await page.locator('#room-dispute-send').click();
+  await page.locator('#room-dispute-withdraw').waitFor({state:'visible'});
+  await page.locator('#room-dispute-withdraw').click();
+  await page.locator('#room-dispute-send').waitFor({state:'visible'});
+  assert.equal(postCount,2);
+ });
+});
+
+test('AGoAC Ch11: signed 3D room fails closed after a snapshot transport error',
+ {timeout:120000},async()=>{
+ await withPage('room-network-lock',{path:'/index.html?battle=1&room='+browserScenarioRoomId},async page=>{
+  let polls=0;
+  await page.route('**/api/v1/scenario-rooms/'+browserScenarioRoomId+'/snapshot',async route=>{
+   polls++;
+   if(polls>1)return route.fulfill({status:503,contentType:'application/json',
+    body:JSON.stringify({error:'backend_unavailable'})});
+   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+    item:{id:browserScenarioRoomId,yourRole:'attacker',status:'active',version:12},
+    game:roomSceneFixture()
+   })});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#room-reconnect').waitFor({state:'visible',timeout:15000});
+  assert(await page.locator('#next').isDisabled());
+  assert.match(await page.locator('#toast').textContent(),/синхронизация потеряна/i);
+  assert(polls>=2);
+ });
+});

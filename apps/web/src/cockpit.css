@@ -126,3 +126,9 @@ body>footer{background-image:var(--iron-grain),linear-gradient(#333c3b,#192123);
  #battle::before{opacity:.28}
  .unitcard{background-size:auto}
 }
+/* Authenticated three-player AGoAC dispute controls use the worn control-panel finish. */
+#room-dispute{margin:12px 0;padding:12px;border-left:3px solid #c69b64}
+#room-dispute select{margin:8px 0;min-height:44px}
+#room-dispute button{width:100%;margin:7px 0;min-height:44px}
+#room-choice-wait{border-left:3px solid #c69b64;background:#151f1c;padding:12px;color:#e2dfd0}
+#room-reconnect{border-left:4px solid #c98e58!important;min-height:48px}

@@ -15,7 +15,7 @@ const scenarioRoomId=requestParams.get('room');
 const roomMode=scenarioRoomId!==null;
 const remoteMode=operationId!==null||roomMode;
 let remoteVersion=0,remoteReady=false,remoteFinished=false;
-let remoteRole=null,roomPollHandle=null,roomSceneInitialized=false;
+let remoteRole=null,roomPollHandle=null,roomPollingInFlight=false,roomSceneInitialized=false;
 let selected=0,target=null,mode='walk',busy=remoteMode,hotseat=false,team=0,angle=Math.PI/4,zoom=12,reach=[],picked=new Set(),records=new Map(),effects=[];
 let sharedDefenderController='command';
 const scene=new THREE.Scene();scene.background=new THREE.Color('#28362d');scene.fog=new THREE.Fog('#28362d',30,65);
@@ -168,6 +168,18 @@ function reportAccess(){
   };
   panel.append(button);
 }
+function freezeRoomConnection(reason){
+ // An unverified or unavailable server snapshot must not leave an interactive stale turn.
+ remoteReady=false;busy=true;
+ renderUI();
+ toast('СЕТЕВОЙ СЦЕНАРИЙ: синхронизация потеряна ('+reason+'). Переподключитесь.');
+ if($('#room-reconnect'))return;
+ const retry=document.createElement('button');
+ retry.id='room-reconnect';retry.type='button';
+ retry.textContent='ПЕРЕПОДКЛЮЧИТЬСЯ К СЦЕНАРИЮ';
+ retry.onclick=()=>void joinServerBattle();
+ $('#actions').append(retry);
+}
 async function joinServerBattle(){
   if(!remoteMode)return;
   busy=true;
@@ -204,6 +216,7 @@ async function joinServerBattle(){
         'СЕРВЕРНЫЙ БОЙ: приказы проверяются и сохраняются на сервере.');
     }
   }catch(e){
+    if(roomMode){freezeRoomConnection(e.message);return;}
     busy=true;remoteReady=false;renderUI();
     toast('Нет связи с серверным боем: '+e.message);
     const button=document.createElement('button');
@@ -215,26 +228,34 @@ async function joinServerBattle(){
 // All three browsers poll the versioned server snapshot; there is no
 // client-side simulated opponent and no sharing of secret dice state.
 function startRoomPolling(){
-  if(!roomMode||roomPollHandle!==null)return;
-  roomPollHandle=setInterval(async()=>{
-    if(!remoteReady||busy||document.hidden)return;
-    try{
-      const response=await fetch(
-        '/api/v1/scenario-rooms/'+encodeURIComponent(scenarioRoomId)+'/snapshot',
-        {credentials:'same-origin',cache:'no-store'});
-      if(!response.ok)return;
-      const body=await response.json();
-      if(body.item?.version===remoteVersion||!body.game)return;
-      busy=true;
-      remoteVersion=body.item.version;
-      remoteFinished=body.item.status==='finished';
-      applyServerState(body.game);
-      chooseActive();syncModels();
-      busy=remoteFinished;renderUI();
-      toast('Сервер: ход другого игрока получен, версия '+remoteVersion+'.');
-    }catch(error){console.warn('Room synchronization failed',error?.message||'error');}
-    finally{if(remoteReady&&!remoteFinished)busy=false;}
-  },3500);
+ if(!roomMode||roomPollHandle!==null)return;
+ roomPollHandle=setInterval(async()=>{
+  if(!remoteReady||busy||document.hidden||roomPollingInFlight)return;
+  roomPollingInFlight=true;
+  try{
+   const response=await fetch(
+    '/api/v1/scenario-rooms/'+encodeURIComponent(scenarioRoomId)+'/snapshot',
+    {credentials:'same-origin',cache:'no-store'});
+   if(!response.ok)throw Error('HTTP '+response.status);
+   const body=await response.json();
+   if(!body.item||body.item.yourRole!==remoteRole||
+    !Number.isSafeInteger(body.item.version)||!body.game)
+    throw Error('invalid_signed_room_snapshot');
+   // Never overwrite a newer acknowledged local command with a stale poll response.
+   if(busy||body.item.version<=remoteVersion)return;
+   busy=true;
+   remoteFinished=body.item.status==='finished';
+   applyServerState(body.game);
+   remoteVersion=body.item.version;
+   chooseActive();syncModels();
+   busy=remoteFinished;renderUI();
+   toast('Сервер: получена версия '+remoteVersion+'.');
+  }catch(error){
+   freezeRoomConnection(error?.message||'network_error');
+  }finally{
+   roomPollingInFlight=false;
+  }
+ },3500);
 }
 async function serverCommand(order){
   if(!remoteMode)return;
@@ -308,6 +329,27 @@ async function serverCommand(order){
   }
 }
 
+function roomCanResolvePendingChoice(choice){
+ if(!roomMode)return true;
+ const unit=Number.isInteger(choice?.unitId)?game.unit(choice.unitId):null;
+ if(!unit||![0,1].includes(choice.team)||unit.team!==choice.team)return false;
+ if(remoteRole==='attacker')return unit.team===game.scenario?.attackerTeam;
+ if(unit.team!==game.scenario?.defenderTeam||
+  !['command','recon'].includes(unit.lance))return false;
+ const ruling=game.scenario?.sharedLances?.decided;
+ const winner=ruling?.round===game.round&&ruling.phase===game.phase?
+  ruling.controller:null;
+ return winner?remoteRole===winner:unit.lance===remoteRole;
+}
+function roomCanAdvance(){
+ if(!roomMode)return true;
+ if(!remoteReady||remoteFinished||game.pendingChoice)return false;
+ if(game.phase!=='initiative')return true;
+ const first=game.scenario?.sharedLances?.firstInitiativeController;
+ if(!['command','recon'].includes(first))return false;
+ const designated=game.round%2===1?first:first==='command'?'recon':'command';
+ return remoteRole===designated;
+}
 function roomControls(u){
  if(!roomMode||!u||u.dead||u.notFielded||u.deployed===false||
   u.team!==game.activeTeam)return false;
@@ -363,6 +405,51 @@ function syncModels(){
 }
 function refreshHighlights(){updateArcs();reach=(!busy&&game.phase==='move'&&owned(game.units[selected]))?game.reachable(selected,mode):[];const keys=new Set(reach.map(t=>t.q+','+t.r));for(const t of game.tiles){if(!t.mesh)continue;t.mesh.material.color.copy(t.original);t.mesh.material.emissive.setHex(keys.has(t.q+','+t.r)?0x254111:0);t.mesh.material.emissiveIntensity=.55;}const u=game.units[selected];selection.visible=game.onMap(u)&&!u.dead;selection.position.copy(world(u.q,u.r));selection.position.y=groundY(u.q,u.r)+.04;const t=game.fireTarget(target);targetRing.visible=!!t&&!t.dead;if(targetRing.visible){targetRing.position.copy(world(t.q,t.r));targetRing.position.y=groundY(t.q,t.r)+.05;}}
 function card(u){const ap=sum(u.armor)+sum(u.rear),max=sum(u.maxArmor)+sum(u.maxRear);return `<button class="unitcard ${u.team?'enemy':''} ${u.id===selected?'active':''} ${u.dead?'dead':''}" data-unit="${u.id}"><strong>${u.name.toUpperCase()}</strong><span class="badge">${u.tonnage} T</span><small>${u.variant} / ${u.dead?'УНИЧТОЖЕН':u.deployed===false?'ЗА ПРЕДЕЛАМИ ПОЛЯ':u.unconscious?'ПИЛОТ БЕЗ СОЗНАНИЯ':u.shutdown?'ОТКЛЮЧЕН':u.prone?'ЛЕЖИТ':game.canAct(u)?'ВАША ОЧЕРЕДЬ':game.done(u)?'ПРИКАЗ ПРИНЯТ':'ОЖИДАНИЕ'}</small><div class="bar"><span style="width:${ap/max*100}%"></span></div><div class="cardmeta"><span>БРОНЯ ${ap}/${max}</span><span>НАГРЕВ ${u.heat}°</span></div></button>`;}
+function renderRoomDispute(panel){
+ if(!roomMode||!remoteReady||busy||
+  !['command','recon'].includes(remoteRole)||
+  !['move','fire'].includes(game.phase)||
+  game.activeTeam!==game.scenario?.defenderTeam||
+  game.pendingChoice||game.winner!==null)return;
+ const state=game.scenario?.sharedLances;
+ if(!state||state.decided?.round===game.round&&
+  state.decided?.phase===game.phase)return;
+ const proposal=state.pendingServerDispute?.round===game.round&&
+  state.pendingServerDispute?.phase===game.phase?
+  state.pendingServerDispute:null;
+ const mine=proposal?.[remoteRole];
+ const section=document.createElement('section');section.id='room-dispute';
+ section.className='advanced';
+ const title=document.createElement('div');title.className='controltitle';
+ title.textContent='СПОР ЗАЩИТНИКОВ · 2D6';section.append(title);
+ const hint=document.createElement('p');hint.className='hint';
+ hint.textContent='Выберите мех своего лэнса. После предложения второго защитника сервер выполнит 2D6. Победитель распоряжается обоими лэнсами до конца этой фазы.';
+ section.append(hint);
+ if(mine!==null&&mine!==undefined){
+  const status=document.createElement('p');status.className='hint';
+  status.textContent='Ваш выбор отправлен. Ожидается второй защитник.';section.append(status);
+  const withdraw=document.createElement('button');withdraw.type='button';
+  withdraw.id='room-dispute-withdraw';withdraw.textContent='ОТОЗВАТЬ ПРЕДЛОЖЕНИЕ';
+  withdraw.onclick=()=>void serverCommand({type:'withdraw-dispute'});
+  section.append(withdraw);
+ }else{
+  const candidates=game.units.filter(u=>u.lance===remoteRole&&
+   u.team===game.scenario.defenderTeam&&u.deployed!==false&&
+   !u.notFielded&&game.canAct(u));
+  const picker=document.createElement('select');picker.id='room-dispute-unit';
+  for(const u of candidates){
+   const option=document.createElement('option');option.value=String(u.id);
+   option.textContent=u.name+' · '+u.variant;picker.append(option);
+  }
+  section.append(picker);
+  const submit=document.createElement('button');submit.id='room-dispute-send';
+  submit.type='button';submit.textContent='ПРЕДЛОЖИТЬ МЕХ · 2D6';
+  submit.disabled=!candidates.length;
+  submit.onclick=()=>void serverCommand({type:'propose-dispute',id:Number(picker.value)});
+  section.append(submit);
+ }
+ panel.append(section);
+}
 function renderUI(){refreshMapLabel();tacticalSettings();const u=game.units[selected],acting=game.canAct(u)&&owned(u)&&!busy;team=hotseat?(game.activeTeam??0):0;
 $('#allies').innerHTML=game.units.filter(u=>u.team===0&&!u.notFielded).map(card).join('');$('#enemies').innerHTML=game.units.filter(u=>u.team===1&&!u.notFielded).map(card).join('');for(const [id,t] of [['#allies',0],['#enemies',1]])$(id).previousElementSibling.querySelector('span').textContent=String(game.units.filter(u=>u.team===t&&!u.notFielded).length).padStart(2,'0');document.querySelectorAll('[data-unit]').forEach(b=>b.onclick=()=>selectUnit(+b.dataset.unit));
 $('#round').textContent=`РАУНД ${String(game.round).padStart(2,'0')}`;$('#round').title=`Завершённое игровое время: ${elapsedBattleSeconds(game.round)} с · ${AGOAC_SCALE.turnSeconds} с/ход`;
@@ -456,7 +543,16 @@ if(!remoteMode&&hotseat&&game.victoryTerms?.condition){
   button.onclick=showVictoryAdjudication;a.append(button);
  }
 }
-$('#night').disabled=$('#gale').disabled=game.round!==1||game.phase!=='initiative'||remoteMode&&!remoteReady;if(acting&&u.deployed!==false)advancedControls(u,a);if(game.pendingChoice)renderResolutionChoice(a,game.pendingChoice);$('#next').disabled=busy||game.winner!==null||game.queue.length>0||!!game.pendingChoice||remoteMode&&!remoteReady;$('#next').textContent=busy?'ВЫПОЛНЕНИЕ ПРИКАЗА…':game.phase==='setup'?'БРОСИТЬ РАЗВЁРТЫВАНИЕ':game.phase==='initiative'?'БРОСИТЬ ИНИЦИАТИВУ':game.phase==='fire'?'РАЗРЕШИТЬ СТРЕЛЬБУ':game.phase==='physical'?'РАЗРЕШИТЬ БЛИЖНИЙ БОЙ':game.phase==='heat'?'РАССЧИТАТЬ НАГРЕВ':game.phase==='end'?'ЗАВЕРШИТЬ ХОД':'К СТРЕЛЬБЕ →';$('#log').innerHTML=game.log.slice(-18).reverse().map(s=>`<p>${s}</p>`).join('');$('#status').textContent=`${PHASES[game.phase]} / ${game.activeTeam===null?'Все приказы приняты':game.activeTeam?'Красный отряд':'Зелёный отряд'}`;if(remoteMode)$('#status').textContent+=remoteReady?' · SERVER VERIFIED / v'+remoteVersion:' · ПОДКЛЮЧЕНИЕ К СЕРВЕРУ';refreshHighlights();if(!busy)syncModels();if(game.winner!==null)toast(game.winner==='draw'?'НИЧЬЯ':`ПОБЕДА: ${game.winner?'КРАСНЫЙ':'ЗЕЛЁНЫЙ'} ОТРЯД`);
+$('#night').disabled=$('#gale').disabled=game.round!==1||game.phase!=='initiative'||remoteMode&&!remoteReady;if(acting&&u.deployed!==false&&!roomMode)advancedControls(u,a);if(roomMode){
+ for(const id of ['#turnleft','#turnright','#stance']){
+  const control=$(id);if(control){control.disabled=true;control.title='Команда ещё не подключена к сетевому сценарию';}
+ }
+ for(const control of document.querySelectorAll('[data-twist]')){
+  control.disabled=true;control.title='Команда ещё не подключена к сетевому сценарию';
+ }
+}
+renderRoomDispute(a);
+if(game.pendingChoice)renderResolutionChoice(a,game.pendingChoice);$('#next').disabled=busy||game.winner!==null||game.queue.length>0||!!game.pendingChoice||remoteMode&&!remoteReady||roomMode&&!roomCanAdvance();$('#next').textContent=busy?'ВЫПОЛНЕНИЕ ПРИКАЗА…':game.phase==='setup'?'БРОСИТЬ РАЗВЁРТЫВАНИЕ':game.phase==='initiative'?'БРОСИТЬ ИНИЦИАТИВУ':game.phase==='fire'?'РАЗРЕШИТЬ СТРЕЛЬБУ':game.phase==='physical'?'РАЗРЕШИТЬ БЛИЖНИЙ БОЙ':game.phase==='heat'?'РАССЧИТАТЬ НАГРЕВ':game.phase==='end'?'ЗАВЕРШИТЬ ХОД':'К СТРЕЛЬБЕ →';$('#log').innerHTML=game.log.slice(-18).reverse().map(s=>`<p>${s}</p>`).join('');$('#status').textContent=`${PHASES[game.phase]} / ${game.activeTeam===null?'Все приказы приняты':game.activeTeam?'Красный отряд':'Зелёный отряд'}`;if(remoteMode)$('#status').textContent+=remoteReady?' · SERVER VERIFIED / v'+remoteVersion:' · ПОДКЛЮЧЕНИЕ К СЕРВЕРУ';refreshHighlights();if(!busy)syncModels();if(game.winner!==null)toast(game.winner==='draw'?'НИЧЬЯ':`ПОБЕДА: ${game.winner?'КРАСНЫЙ':'ЗЕЛЁНЫЙ'} ОТРЯД`);
 }
 // AGoAC p.12: select landing orientation before resolving the landing PSR.
 function appendJumpFacing(panel,facing){
@@ -517,6 +613,13 @@ function renderHitDirectionChoice(panel,choice){
 }
 function renderResolutionChoice(panel,choice){
  panel.replaceChildren();
+ if(roomMode&&!roomCanResolvePendingChoice(choice)){
+  const message=document.createElement('p');message.className='hint';
+  message.id='room-choice-wait';
+  message.textContent='Ожидается решение другого участника. Доступ определяется владельцем меха и текущим спором 2D6.';
+  panel.append(message);
+  return;
+ }
  if(choice.kind==='hit-direction'){renderHitDirectionChoice(panel,choice);return;}
  if(choice.kind==='physical-impossible'){
   const title=document.createElement('div');title.className='controltitle';title.textContent='НЕВОЗМОЖНАЯ ФИЗИЧЕСКАЯ АТАКА';
