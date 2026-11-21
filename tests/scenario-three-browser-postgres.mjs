@@ -105,6 +105,23 @@ try{
   assert.equal(result.item.version,version,'server version must advance once');
   return result;
  };
+ // A click dispatches the browser event; the authenticated PostgreSQL
+ // transaction may still be in flight. Poll for an exactly-one-step
+ // committed room version before issuing the next signed action.
+ const awaitBrowserCommit=async(role,label)=>{
+  const previous=version;
+  for(let attempt=0;attempt<100;attempt++){
+   const room=await get(role,route+'/snapshot');
+   if(room.item.version>previous){
+    assert.equal(room.item.version,previous+1,
+     label+' must commit exactly one server action');
+    version=room.item.version;
+    return;
+   }
+   await new Promise(resolve=>setTimeout(resolve,100));
+  }
+  throw Error(label+': no committed browser action after v'+previous);
+ };
  const initial=await snapshot();
  assert.deepEqual(initial.setupMap.sheets.map(s=>s.name),
   ['Desert #2','Grassland #3']);
@@ -175,7 +192,7 @@ try{
  await pages[initiative].locator('#next').click();
  await pages[initiative].waitForFunction(()=>document.querySelector('#phase')?.
   textContent.includes('ДВИЖЕНИЕ'),null,{timeout:30000});
- version=(await get('attacker',route+'/snapshot')).item.version;
+ await awaitBrowserCommit(initiative,'initial Initiative');
  let dispute=false,rolesUsed=new Set(),cycles=0;
  while(!dispute&&cycles++<4){
   const g=await snapshot();
@@ -183,7 +200,7 @@ try{
    await pages.attacker.reload({waitUntil:'domcontentloaded'});await ready('attacker');
    await pages.attacker.locator('#hold').click();
    rolesUsed.add('attacker');
-   version=(await get('attacker',route+'/snapshot')).item.version;
+   await awaitBrowserCommit('attacker','attacker move before dispute');
    continue;
   }
   for(const role of ['command','recon']){
@@ -191,7 +208,7 @@ try{
    const button=pages[role].locator('#room-dispute-send');
    await button.waitFor({state:'visible',timeout:30000});
    await button.click();rolesUsed.add(role);
-   version=(await get(role,route+'/snapshot')).item.version;
+   await awaitBrowserCommit(role,'2D6 '+role+' proposal');
   }
   const decided=(await snapshot()).scenario.sharedLances.decided;
   assert(['command','recon'].includes(decided.controller));
@@ -217,7 +234,7 @@ try{
   await ready('attacker');
   await pages.attacker.locator('#hold').click();
   rolesUsed.add('attacker');
-  version=(await get('attacker',route+'/snapshot')).item.version;
+  await awaitBrowserCommit('attacker','attacker move after dispute');
  }
  assert.equal(rolesUsed.size,3,'every real browser sent an authenticated order');
  // Complete the same persisted round, not a separate mocked Game.
