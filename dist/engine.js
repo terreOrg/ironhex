@@ -539,7 +539,9 @@ export class Game extends Legacy{
   const minCol=Math.min(...this.tiles.map(col)),maxCol=Math.max(...this.tiles.map(col));
   const minRow=Math.min(...this.tiles.map(t=>t.r)),maxRow=Math.max(...this.tiles.map(t=>t.r));
   const west=col(tile)-minCol,east=maxCol-col(tile);
-  const south=tile.r-minRow,north=maxRow-tile.r;
+  // Source mapsheets run row 01 at the NORTH (minimum axial r),
+  // row 17 at the SOUTH (maximum axial r), also after 180° rotation.
+  const north=tile.r-minRow,south=maxRow-tile.r;
   const defender=team===this.scenario.defenderTeam;
   if(this.scenario.id==='final-exam')return defender?west===0:east===0;
   if(this.scenario.id==='trial-by-fire'){

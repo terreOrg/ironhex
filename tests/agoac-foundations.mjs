@@ -7146,6 +7146,81 @@ test('CAT3500D pp.46-48: source BattleMaster gets four pregame 5-point hits with
  assert.equal(g.initiativeWinner,g.scenario.defenderTeam);
 });
 
+
+test('CAT3500D p.48 errata v8.01: source sheet north is row 01; command NW and recon SE setup must not flip',()=>{
+ for(const rotations of [[0,0],[3,3],[3,0],[0,3]]){
+  for(const role of ['attacker','defender']){
+   const g=fresh();
+   assert(g.configureScenario('divide-and-conquer').ok);
+   g.scenario.sideRollWinner=0;
+   assert(g.chooseScenarioSide(0,role).ok);
+   assert(g.configurePrintedScenarioMap({rotations}).ok);
+   const can=(lance,col,row)=>{
+    const t=atSheetCoord(g,col,row);assert(t);
+    return g.scenarioZoneAllowed(g.scenario.defenderTeam,t.q,t.r,{lance,facing:0});
+   };
+   assert(can('command',0,0),'command NW corner: '+rotations+' '+role);
+   assert(can('command',6,6),'command inclusive north+west six-hex boundary');
+   assert.equal(can('command',0,16),false,'command must NOT enter south-west instead of north-west');
+   assert.equal(can('command',6,7),false,'command must NOT cross northern six-hex band');
+   assert.equal(can('command',7,6),false,'command must NOT cross western six-hex band');
+   assert(can('recon',31,16),'recon SE corner: '+rotations+' '+role);
+   assert(can('recon',25,10),'recon inclusive south+east six-hex boundary');
+   assert.equal(can('recon',31,0),false,'recon must NOT enter north-east instead of south-east');
+   assert.equal(can('recon',25,9),false,'recon must NOT cross southern six-hex band');
+   assert.equal(can('recon',24,10),false,'recon must NOT cross eastern six-hex band');
+   assert.equal(can('unexpected',0,0),false,'only source-defined defender lance names qualify');
+  }
+ }
+});
+
+test('CAT3500D p.48 errata: real 6+4 and shortened 4+3 defenders obey NW/SE physical deployment',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ for(const variation of [null,'shortened']){
+  const g=fresh();
+  assert(g.configureScenario('divide-and-conquer').ok);
+  g.scenario.sideRollWinner=0;
+  assert(g.chooseScenarioSide(0,'defender').ok);
+  if(variation)assert(g.configurePrintedScenarioVariation(variation).ok);
+  prepareAgoacPrintedScenario(g,'divide-and-conquer',{rotations:[3,0]});
+  assert(g.beginPrintedScenarioPlacement().ok);
+  const steps=g.scenario.placement.steps;
+  const commandCount=steps.filter(s=>s.lance==='command').length;
+  const reconCount=steps.filter(s=>s.lance==='recon').length;
+  assert.equal(commandCount,variation?2:3);
+  assert.equal(reconCount,variation?2:3);
+  const wrongCommand=atSheetCoord(g,0,16),wrongRecon=atSheetCoord(g,31,0);
+  const command=g.units.find(u=>u.lance==='command');
+  assert.equal(g.placePrintedScenarioMech(command.id,wrongCommand.q,wrongCommand.r).ok,false,
+   'wrong south-west zone cannot be accepted in actual deployment');
+  const rightCommand=atSheetCoord(g,0,0);
+  assert(g.placePrintedScenarioMech(command.id,rightCommand.q,rightCommand.r).ok);
+  for(let i=1;i<commandCount;i++){
+   const unit=g.units.find(u=>u.lance==='command'&&!u.deployed);
+   const target=atSheetCoord(g,i,0);
+   assert(g.placePrintedScenarioMech(unit.id,target.q,target.r).ok);
+  }
+  const recon=g.units.find(u=>u.lance==='recon');
+  assert.equal(g.placePrintedScenarioMech(recon.id,wrongRecon.q,wrongRecon.r).ok,false,
+   'wrong north-east zone cannot be accepted in actual deployment');
+  const rightRecon=atSheetCoord(g,31,16);
+  assert(g.placePrintedScenarioMech(recon.id,rightRecon.q,rightRecon.r).ok);
+  for(let i=1;i<reconCount;i++){
+   const unit=g.units.find(u=>u.lance==='recon'&&!u.deployed);
+   const target=atSheetCoord(g,31-i,16);
+   assert(g.placePrintedScenarioMech(unit.id,target.q,target.r).ok);
+  }
+  assert.equal(g.scenario.placement.placed.length,commandCount+reconCount);
+  assert(g.chooseDivideAndConquerAttackerRow('west').ok);
+  const row=g.divideAndConquerPrintedRow('west');
+  for(let i=0;i<(variation?3:4);i++){
+   const unit=g.units.find(u=>u.team===g.scenario.attackerTeam&&!u.deployed);
+   assert(g.placePrintedScenarioMech(unit.id,row[i].q,row[i].r).ok);
+  }
+  assert(g.scenario.placement.complete,'full source roster deployed after correct corners');
+ }
+});
+
 test('CAT3500D p.48: source-backed Divide and Conquer completes corrected defender-first ten-Mech setup',async()=>{
  const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
  const g=fresh();
