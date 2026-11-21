@@ -8,13 +8,27 @@ const check=(condition,code='illegal_scenario_command',status=409)=>{
  if(!condition)throw new AuthError(status,code);
 };
 const natural=(value,max)=>Number.isInteger(value)&&value>=0&&value<=max;
+const hexTarget=value=>typeof value==='string'&&/^hex:-?\d{1,2},-?\d{1,2}$/.test(value)&&
+ value.slice(4).split(',').every(n=>Number(n)>=-35&&Number(n)<=35);
+const validTarget=value=>natural(value,31)||hexTarget(value);
 function validated(action){
  check(action&&typeof action==='object'&&!Array.isArray(action),undefined,422);
  const fields={
   hold:['id'],
-  move:['id','q','r','mode'],
+  move:['id','q','r','mode','facing'],
+  rotate:['id','delta','mode'],
+  stand:['id','facing','mode','minimum'],
+  drop:['id','mode'],
+  minimum:['id'],
+  charge:['id','target','attack','mode'],
+  twist:['id','twist'],
+  flip:['id','enabled'],
+  brace:['id','limb'],
+  dump:['id','bin'],
+  shutdown:['id'],
+  club:['id'],
   fire:['id','shots','primaryTarget'],
-  physical:['id','target','attack','limb'],
+  physical:['id','target','attack','limb','rightTarget','locationTable'],
   next:['choice'],
   'propose-dispute':['id'],
   'withdraw-dispute':[]
@@ -22,29 +36,57 @@ function validated(action){
  check(Object.hasOwn(fields,action.type)&&
   Object.keys(action).every(k=>k==='type'||fields[action.type].includes(k)),
   'invalid_scenario_command',422);
- if(['hold','move','fire','physical','propose-dispute'].includes(action.type))
+ if(['hold','move','rotate','stand','drop','minimum','charge','twist',
+  'flip','brace','dump','shutdown','club','fire','physical',
+  'propose-dispute'].includes(action.type))
   check(natural(action.id,31),'invalid_scenario_command',422);
  if(action.type==='move')check(
   Number.isInteger(action.q)&&action.q>=-35&&action.q<=35&&
   Number.isInteger(action.r)&&action.r>=-35&&action.r<=35&&
-  ['walk','run','jump','evade','minimum'].includes(action.mode),
+  ['walk','run','jump','evade','minimum'].includes(action.mode)&&
+  (action.facing===undefined||natural(action.facing,5)),
+  'invalid_scenario_command',422);
+ if(action.type==='rotate')check(
+  Number.isInteger(action.delta)&&action.delta!==0&&
+  Math.abs(action.delta)<=3&&['walk','run','evade'].includes(action.mode),
+  'invalid_scenario_command',422);
+ if(action.type==='stand')check(
+  natural(action.facing,5)&&['walk','run'].includes(action.mode)&&
+  typeof action.minimum==='boolean','invalid_scenario_command',422);
+ if(action.type==='drop')check(
+  ['walk','run'].includes(action.mode),'invalid_scenario_command',422);
+ if(action.type==='charge')check(
+  natural(action.target,31)&&['charge','dfa'].includes(action.attack)&&
+  ['walk','run'].includes(action.mode),'invalid_scenario_command',422);
+ if(action.type==='twist')check(
+  Number.isInteger(action.twist)&&Math.abs(action.twist)<=2,
+  'invalid_scenario_command',422);
+ if(action.type==='flip')check(typeof action.enabled==='boolean',
+  'invalid_scenario_command',422);
+ if(action.type==='brace')check(['LA','RA'].includes(action.limb),
+  'invalid_scenario_command',422);
+ if(action.type==='dump')check(natural(action.bin,79),
   'invalid_scenario_command',422);
  if(action.type==='fire'){
   check(Array.isArray(action.shots)&&action.shots.length<=32&&
    action.shots.every(s=>s&&typeof s==='object'&&!Array.isArray(s)&&
     Object.keys(s).every(k=>['index','target','aim','bin','heatMode','spotter'].includes(k))&&
-    natural(s.index,31)&&natural(s.target,31)&&
+    natural(s.index,31)&&validTarget(s.target)&&
     (s.aim===undefined||s.aim===null||
       ['HD','CT','LT','RT','LA','RA','LL','RL'].includes(s.aim))&&
     (s.bin===undefined||s.bin===null||natural(s.bin,79))&&
     (s.spotter===undefined||s.spotter===null||natural(s.spotter,31))&&
     (s.heatMode===undefined||typeof s.heatMode==='boolean'))&&
-   (action.primaryTarget===undefined||natural(action.primaryTarget,31)),
+   (action.primaryTarget===undefined||validTarget(action.primaryTarget)),
    'invalid_scenario_command',422);
  }
  if(action.type==='physical')check(
   natural(action.target,31)&&['kick','punch','push','club','hatchet'].includes(action.attack)&&
-  ['LA','RA','LL','RL','both'].includes(action.limb),
+  ['LA','RA','LL','RL','both'].includes(action.limb)&&
+  (action.rightTarget===undefined||
+   action.attack==='punch'&&action.limb==='both'&&natural(action.rightTarget,31))&&
+  (action.locationTable===undefined||
+   action.attack==='hatchet'&&['normal','punch','kick'].includes(action.locationTable)),
   'invalid_scenario_command',422);
  if(action.type==='next'&&action.choice!==undefined)check(
   action.choice&&typeof action.choice==='object'&&!Array.isArray(action.choice)&&
@@ -166,7 +208,7 @@ export function runScenarioRoomCommand(game,authenticatedRole,rawAction){
    result:structuredClone(result)};
  }
  const unit=game.unit(action.id);
- check(game.canAct(unit),'not_your_turn');
+ if(action.type!=='shutdown')check(game.canAct(unit),'not_your_turn');
  check(canControlScenarioUnit(game,authenticatedRole,action.id),
   'scenario_lance_not_owned',403);
  check(!game.pendingChoice,'resolution_choice_pending');
@@ -174,11 +216,31 @@ export function runScenarioRoomCommand(game,authenticatedRole,rawAction){
  if(action.type==='hold')result=game.hold(action.id);
  else if(action.type==='move')
   result=game.moveWithChoices(action.id,action.q,action.r,action.mode,
-   {humanTeams:[0,1]});
+   {facing:action.facing,humanTeams:[0,1]});
+ else if(action.type==='rotate')
+  result=game.rotate(action.id,action.delta,{mode:action.mode});
+ else if(action.type==='stand')
+  result=game.stand(action.id,action.facing,
+   {mode:action.mode,minimum:action.minimum});
+ else if(action.type==='drop')
+  result=game.drop(action.id,{mode:action.mode});
+ else if(action.type==='minimum')
+  result=game.minimumMove(action.id);
+ else if(action.type==='charge')
+  result=game.chargeWithChoices(action.id,action.target,action.attack,
+   {mode:action.mode,humanTeams:[0,1]});
+ else if(action.type==='twist')result=game.twist(action.id,action.twist);
+ else if(action.type==='flip')result=game.flipArms(action.id,action.enabled);
+ else if(action.type==='brace')result=game.setBrace(action.id,action.limb);
+ else if(action.type==='dump')result=game.orderDump(action.id,action.bin);
+ else if(action.type==='shutdown')result=game.orderShutdown(action.id);
+ else if(action.type==='club')result=game.takeClub(action.id);
  else if(action.type==='fire')
   result=game.declareFireWithLosChoices(action.id,action.shots,
    action.primaryTarget??null,{humanTeams:[0,1]});
- else result=game.declarePhysical(action.id,action.target,action.attack,action.limb);
+ else result=game.declarePhysical(action.id,action.target,action.attack,
+  action.limb,{...(action.rightTarget===undefined?{}:{rightTarget:action.rightTarget}),
+   ...(action.locationTable===undefined?{}:{locationTable:action.locationTable})});
  check(result?.ok,'illegal_tactical_order',422);
  return {ok:true,phase:game.phase,round:game.round,
   result:structuredClone(result)};
