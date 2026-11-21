@@ -6011,3 +6011,72 @@ test('CAT3500D pp.40–44: completed Piloting chapter keeps 19 source-reviewed r
   'CAT3500D p.44: struck target random legal displacement and forbidden-hex destruction'
  ])assert(suite.includes("test('"+title+"'"),title);
 });
+
+
+test('CAT3500D p.48: Full Moon Night adds one movement point per ground-entered hex',()=>{
+ const g=fresh(),from=g.tile(0,0),to=g.tile(1,0);
+ for(const [type,depth] of [['plain',0],['woods',0],['heavy',0],['rough',0],['rubble',0],['water',1],['water',2]]){
+  Object.assign(from,{type:'plain',height:0,depth:0,surface:0,roadEdges:[]});
+  Object.assign(to,{type,depth,height:-depth,surface:0,roadEdges:[]});
+  g.weather.night=false;const ordinary=g.terrainCost(to,from);
+  g.weather.night=true;
+  assert.equal(g.terrainCost(to,from),ordinary+1,type+': one additional MP');
+ }
+ Object.assign(from,{type:'plain',roadEdges:[0],height:0,depth:0});
+ Object.assign(to,{type:'woods',roadEdges:[3],height:0,depth:0});
+ g.weather.night=false;assert.equal(g.terrainCost(to,from),1);
+ g.weather.night=true;assert.equal(g.terrainCost(to,from),2);
+});
+
+test('CAT3500D p.48: Full Moon Night weapon penalty decreases at 20-point target heat thresholds',()=>{
+ const g=fresh(),u=g.units[1],target=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand',heat:0});
+ Object.assign(target,{q:2,r:0,facing:3,moveMode:'stand'});
+ for(const heat of [0,1,19,20,21,39,40,41,60]){
+  target.heat=heat;g.weather.night=false;
+  const physicalBaseline=g.specialPhysicalTN(u,target,false);
+  const baseline=g.preview(u.id,target.id,1);assert(baseline.legal);
+  g.weather.night=true;
+  const moon=g.preview(u.id,target.id,1);
+  const modifier=Math.max(0,2-Math.floor(heat/20));
+  assert(moon.legal);
+  assert.equal(moon.mods.night,modifier,'heat '+heat);
+  assert.equal(moon.targetNumber-baseline.targetNumber,modifier,'heat '+heat);
+  assert.equal(g.specialPhysicalTN(u,target,false),physicalBaseline,
+   'night penalties must never affect physical attacks');
+ }
+});
+
+test('CAT3500D p.48: Strong Gale modifies missiles and ballistic weapons but not energy fire',()=>{
+ const g=fresh(),u=g.units[1],target=g.units[2];
+ for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ Object.assign(u,{q:0,r:0,facing:0,moveMode:'stand'});
+ Object.assign(target,{q:2,r:0,facing:3,moveMode:'stand'});
+ for(const [index,kind,modifier] of [[0,'AC/5',1],[1,'Medium Laser',0],[2,'SRM 6',2]]){
+  assert.equal(u.weapons[index].name,kind);
+  g.weather.gale=false;const baseline=g.preview(u.id,target.id,index);assert(baseline.legal,kind);
+  g.weather.gale=true;const gale=g.preview(u.id,target.id,index);assert(gale.legal,kind);
+  assert.equal(gale.mods.wind,modifier,kind);
+  assert.equal(gale.targetNumber-baseline.targetNumber,modifier,kind);
+ }
+ const machineGun=g.units[3].weapons.find(w=>w.name==='Machine Gun A');
+ assert(machineGun,'Default Thunderbolt must expose a machine gun');
+ u.weapons[1]={...machineGun,location:'RA'};
+ g.weather.gale=false;const calmMG=g.preview(u.id,target.id,1);
+ g.weather.gale=true;const windyMG=g.preview(u.id,target.id,1);
+ assert(calmMG.legal&&windyMG.legal);
+ assert.equal(windyMG.mods.wind,1);
+ assert.equal(windyMG.targetNumber-calmMG.targetNumber,1);
+});
+
+test('CAT3500D p.48: Strong Gale adds one to Piloting Skill Roll modifiers',()=>{
+ const g=fresh(),u=g.units[1];
+ for(const gyroHits of [0,1,2])for(const actuatorDamage of [false,true]){
+  u.gyroHits=gyroHits;u.actuators.LL.lower=actuatorDamage;
+  g.weather.gale=false;const baseline=g.psrMod(u);
+  g.weather.gale=true;assert.equal(g.psrMod(u),baseline+1,
+   'gyro '+gyroHits+' lower actuator '+actuatorDamage);
+  assert.equal(g.psrMod(u,true),baseline+1);
+ }
+});
