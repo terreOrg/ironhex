@@ -790,6 +790,8 @@ export class Game extends Legacy{
    return fail('Нужны выбранные стороны сценария и две исходные карты');
   const manifest=this.printedScenarioRoster();
   if(!manifest)return fail('Неизвестный сценарий');
+  if(this.scenario.picturedTerrain?.required&&!this.scenario.picturedTerrain.confirmed)
+   return fail('Сначала разместите четыре обязательных фигурных элемента со схемы страницы 47');
   const actual=this.units.filter(u=>!u.dead&&!u.notFielded&&!u.scenarioArrivalRound);
   const encode=u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??''].join('|');
   const sortedRoster=units=>units.map(encode).sort((a,b)=>a.localeCompare(b)).join(';');
@@ -985,7 +987,8 @@ export class Game extends Legacy{
    this.scenario.placement||![0,1].includes(team)||team!==setup.nextTeam||
    !Number.isInteger(q)||!Number.isInteger(r)||
    typeof label!=='string'||!label.trim()||label.length>80||
-   terrainType!==null&&!['woods','heavy','rough','rubble'].includes(terrainType)||
+   terrainType!==null&&!['woods','heavy','rough','rubble',
+    'level1','level2','depth1','depth2'].includes(terrainType)||
    !Array.isArray(footprint)||!footprint.length||footprint.length>32||
    !footprint.every(h=>h&&Number.isInteger(h.q)&&Number.isInteger(h.r)&&
     Math.abs(h.q)<=15&&Math.abs(h.r)<=16)||
@@ -1025,13 +1028,50 @@ export class Game extends Legacy{
   if(terrainType!==null)for(const hex of hexes){
    const t=this.tile(hex.q,hex.r);
    t.baseTerrainType??=t.type;
-   t.type=terrainType;
+   t.baseTerrainHeight??=t.height;
+   t.baseTerrainDepth??=t.depth;
+   t.baseTerrainSurface??=t.surface;
+   if(terrainType.startsWith('level')){
+    const level=Number(terrainType.slice(5));
+    t.type='plain';t.depth=0;t.height=level;t.surface=level;
+   }else if(terrainType.startsWith('depth')){
+    const depth=Number(terrainType.slice(5));
+    t.type='water';t.depth=depth;t.height=-depth;t.surface=0;
+   }else t.type=terrainType;
    t.overlayTerrain={label:label.trim(),terrainType,team};
   }
   setup.complete=setup.pieces.length===setup.piecesPerTeam*2;
   setup.nextTeam=setup.complete?null:1-team;
   return {ok:true,complete:setup.complete,nextTeam:setup.nextTeam,
    placed:setup.pieces.length,remaining:setup.piecesPerTeam*2-setup.pieces.length};
+ }
+ // CAT3500D p.47 and 40th Anniversary clarification: two triangular
+ // three-hex punch-outs and two connected two-hex punch-outs, one of each
+ // on each mapsheet. Source diagram fixes their LOCATIONS and triangular
+ // orientation; players select the face of each counter and orientation
+ // of the two-hex pieces. Exact printed hexes must be transcribed by
+ // the player because no licensed figure texture is shipped.
+ confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed=false}={}){
+  const pictured=this.scenario?.picturedTerrain;
+  const loose=this.scenario?.looseTerrain;
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
+   !pictured?.required||pictured.confirmed||!loose?.complete||
+   !sourceDiagramReviewed||loose.pieces?.length!==4||
+   !loose.pieces.every(p=>p.terrainType&&p.hexes?.length>=2&&
+    p.hexes?.length<=3&&p.hexes.every(h=>this.tile(h.q,h.r)?.overlayTerrain)))
+   return fail('Сверьте четыре исходных контурных элемента со схемой сценария 3, стр. 47');
+  for(const sheet of [0,1]){
+   const pieces=loose.pieces.filter(p=>this.tile(p.q,p.r)?.sheet===sheet);
+   if(pieces.length!==2||pieces.filter(p=>p.hexes.length===2).length!==1||
+    pieces.filter(p=>p.hexes.length===3).length!==1||
+    pieces.some(p=>p.hexes.length===3&&
+     p.hexes.some((h,i)=>p.hexes.some((v,j)=>i!==j&&distance(h,v)!==1))))
+    return fail('На каждом листе нужен один двойной и один треугольный контур');
+  }
+  pictured.confirmed=true;
+  pictured.pieces=loose.pieces.map(p=>({team:p.team,label:p.label,
+   terrainType:p.terrainType,hexes:p.hexes.map(h=>({...h}))}));
+  return {ok:true,pieces:4,exactSourceCoordinatesConfirmedByPlayer:true};
  }
  // CAT3500D p.7 permits victory conditions agreed before play.
  // This digital preset is optional: draw when a negotiated turn limit ends.
@@ -1256,6 +1296,11 @@ export class Game extends Legacy{
    sheets:named.map(m=>({id:'clear',rotation:m.rotation,name:m.name,side:m.side}))};
   this.scenario.printedSetupRequired=true;
   this.scenario.sourceTerrainLoaded=true;
+  // CAT3500D p.47 requires FOUR pictured punch-out counters in
+  // Divide and Conquer. The mapsheet MTF terrain alone is insufficient.
+  // User must transcribe the physical diagram; never invent locations.
+  if(this.scenario.id==='divide-and-conquer')
+   this.scenario.picturedTerrain={required:true,confirmed:false,sourcePage:47};
   return {ok:true,tiles:this.tiles.length,sheets:structuredClone(named),
    sourceRevision:AGOAC_BOARD_SOURCE.revision,artworkImported:false};
  }
