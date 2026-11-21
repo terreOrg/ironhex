@@ -7,6 +7,15 @@ import {newScenarioRoomGame,captureScenarioRoomGame,restoreScenarioRoomGame,
 
 const blocked=(fn,code)=>assert.throws(fn,
  err=>err instanceof AuthError&&err.code===code);
+const figurePiece=(game,index)=>{
+ const spec=game.scenario.picturedTerrain.counters[index];
+ const tiles=spec.printedHexes.map(hex=>game.tiles.find(t=>
+  t.sheet===spec.sheet&&t.printedHex===hex));
+ assert(tiles.every(Boolean),'all source cells must exist');
+ const [origin]=tiles;
+ return {q:origin.q,r:origin.r,
+  footprint:tiles.map(t=>({q:t.q-origin.q,r:t.r-origin.r}))};
+};
 function begin(shortened=false){
  const runtime=newScenarioRoomGame({shortened});
  const win=runtime.game.scenario.sideRollWinner;
@@ -80,18 +89,10 @@ test('AGoAC Ch11: logged-in attacker and designated defenders place four source 
  const {game,rng}=begin();
  blocked(()=>applyScenarioRoomSetup(game,'attacker',{type:'place-mech',
   id:0,q:0,r:0,facing:0}),'scenario_deployment_not_ready');
- const positions=[
-  [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-  [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
-  [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-  [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
- ];
- for(let i=0;i<positions.length;i++){
-  const [col,row,terrainType,footprint]=positions[i];
-  const tile=game.tiles.find(t=>
-   t.q+Math.floor(t.r/2)+Math.floor(game.setupMap.width/2)===col&&
-   t.r+Math.floor(game.setupMap.height/2)===row);
-  assert(tile);
+ const types=['depth1','sublevel1','depth2','sublevel2'];
+ for(let i=0;i<types.length;i++){
+  const tile=figurePiece(game,i);
+  const terrainType=types[i],footprint=tile.footprint;
   const team=game.scenario.looseTerrain.nextTeam;
   const role=team===game.scenario.attackerTeam?'attacker':i<2?'command':'recon';
   const order={type:'place-terrain',q:tile.q,r:tile.r,terrainType,footprint};
@@ -299,17 +300,10 @@ test('AGoAC Ch11: all three signed roles persist full original and shortened tur
    const result=applyScenarioRoomOrder(runtime.game,role,action);
    assert(result.ok);snapshot();return result;
   };
-  const tile=(col,row)=>runtime.game.tiles.find(t=>
-   t.q+Math.floor(t.r/2)+Math.floor(runtime.game.setupMap.width/2)===col&&
-   t.r+Math.floor(runtime.game.setupMap.height/2)===row);
-  const pieces=[
-   [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-   [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
-   [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-   [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
-  ];
-  for(const [index,[col,row,terrainType,footprint]]of pieces.entries()){
-   const hex=tile(col,row);assert(hex);
+  const types=['depth1','sublevel1','depth2','sublevel2'];
+  for(let index=0;index<types.length;index++){
+   const hex=figurePiece(runtime.game,index);
+   const terrainType=types[index],footprint=hex.footprint;
    const team=runtime.game.scenario.looseTerrain.nextTeam;
    const role=team===runtime.game.scenario.attackerTeam?
     'attacker':index<2?'command':'recon';
