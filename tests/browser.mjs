@@ -1760,7 +1760,7 @@ test('AGoAC Ch11: failed signed 3D command locks stale actions until reconnect',
   assert.match(await page.locator('#toast').textContent(),/синхронизация потеряна/i);
   assert.equal(await page.locator('#room-reconnect').count(),1,
    'renderUI must not discard the explicit reconnect control');
-  await page.locator('#next').click({force:true});
+  await page.locator('#next').evaluate(el=>el.click());
   assert.equal(commands,1,'locked client cannot send another stale mutation');
  });
 });
