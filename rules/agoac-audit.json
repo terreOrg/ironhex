@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment.",
   "currentTopicId": "agoac-heat",
   "topics": [
     {
@@ -498,7 +498,8 @@
         37,
         39
       ],
-      "status": "not_audited"
+      "status": "not_audited",
+      "reviewNote": "21.11.2026 first book-first Chapter 9 audit: printed CAT3500D pp.37–39 compared directly with engine, prior named tests and official errata v8.01. Inventoried 12 atomic groups 109–120. Seven existing groups source-to-code verified using exact green main c3f65cf7 (CI 44760040257, Browser 44760040465, Smoke 44760040230, Sonar 44760041039); three groups 111–113 get new boundary tests awaiting branch CI. Group 118 KNOWN MISSING: heatExplosionBin lets controller choose a lower-shot same-type ammo bin and does not randomly break identical-shot bins, contradicting printed p.39. Group 120 TESTED CASE: v8.01 simultaneous heat effects require interaction audit. Chapter stays not_audited. Work confined to Heat; no deploy/no Chapter 10."
     },
     {
       "id": "agoac-psr",
@@ -7655,6 +7656,497 @@
         },
         "review": "Direct source-to-code comparison: CAT3500D p.32 critical effects for ammo, blown arms, cockpit/pilot death, engine first+second +5 heat and third destroyed, foot +1 MP reduction/PSR/+1 kick, gyro errata immediate first PSR/second fall; p.33 hand (+1 punch, club/physical-weapon denied), heat sinks, hip errata turn/phase distinction, jets -1 Jump MP, automatic leg blowoff, life support (heat 15–25 one wound; 26+ two; submerged end phase one wound), lower arm/leg, sensors and shoulder modifiers; p.34 upper arm/leg, weapon/multislot disabling, all slots lost with destroyed section, mandatory torso-arm cascade and loss-of-leg fall/standing restrictions; p.35 mech death and phase-end removal; p.31 natural12: intact head/limbs mandatory loss, torso three slot crits. Reviewed actual engine criticalHit(),destroyLocation(),mp(),psrMod(),preview(),physicalPreview(),heatPhase(),endPhase(),onMap()/removeDestroyedMechs(), serialization; real gameplay API tests plus preexisting integrated 21 new Chapter8 tests and AGoAC foundations matrices passed exact main SHA with CI, Chromium, Smoke, Sonar. No new missing AGoAC-only component behavior found; advanced optional CASE II or BMM mechanics explicitly outside chapter scope."
       }
+    },
+    {
+      "id": "agoac-109",
+      "topicId": "agoac-heat",
+      "pages": [
+        37
+      ],
+      "statement": "Walking adds +1 heat per turn, running +2, jumping equals spent Jump MP with minimum three, and each stand attempt adds +1 independently of ground-mode heat.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: zero-distance ground movement commits mode and generates heat exactly once"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: jump allowance and minimum heat at each reachable distance"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: repeated standing attempts each consume two MP and one heat until budget exhausted"
+        }
+      ],
+      "reviewNote": "Source p.37 movement heat matched hold(), move()/jump and standing attempts; existing deterministic fixtures cover zero-distance and repeated attempts; main exact four-check gate green.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–39; official AGoAC errata v8.01 pp.4–5",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "testedTree": "e2bef94842d51c764c1345b299201b6c6506471c",
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44760040257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44760040465,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44760040230,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Source p.37 movement heat matched hold(), move()/jump and standing attempts; existing deterministic fixtures cover zero-distance and repeated attempts; main exact four-check gate green."
+      }
+    },
+    {
+      "id": "agoac-110",
+      "topicId": "agoac-heat",
+      "pages": [
+        37
+      ],
+      "statement": "Each declared weapon contributes its weapon-table heat even if the shooter is later destroyed; surviving engine criticals add +5/+10 each Heat Phase except while reactor is shut down.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Declared shot survives destruction of shooter"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,37–38: engine criticals add five heat each unless shut down and third destroys"
+        }
+      ],
+      "reviewNote": "Source p.37 weapon and engine heat checked against declareFire/resolveFire and heatPhase; corresponding committed gameplay tests cover preserved declared shot and running engine heat.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–39; official AGoAC errata v8.01 pp.4–5",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "testedTree": "e2bef94842d51c764c1345b299201b6c6506471c",
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44760040257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44760040465,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44760040230,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Source p.37 weapon and engine heat checked against declareFire/resolveFire and heatPhase; corresponding committed gameplay tests cover preserved declared shot and running engine heat."
+      }
+    },
+    {
+      "id": "agoac-111",
+      "topicId": "agoac-heat",
+      "pages": [
+        37
+      ],
+      "statement": "Operational heat sinks remove one heat each; submerged heat sinks cool one extra each up to six additional heat per turn; Depth 1 standing submerges leg sinks and Depth 2+ or prone in water submerges all; lost and flooded sinks do not cool.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.37: water cooling counts submerged leg sinks and caps additional cooling at six"
+        }
+      ],
+      "reviewNote": "Engine heatPhase uses sinksLost/floodedSlots, checks leg slot submergence and caps extra water cooling at 6. New depth/prone/loss boundary matrix committed in heat-audit branch, exact CI not yet recorded; do not promote before execution."
+    },
+    {
+      "id": "agoac-112",
+      "topicId": "agoac-heat",
+      "pages": [
+        37
+      ],
+      "statement": "Heat Phase applies turn-generated heat minus current cooling to previous accumulated heat, clamps at zero, retains overflow beyond 30 across turns, and updates effects after adjustment.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.37: Heat Phase preserves overflow and never cools below zero"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.5,37-38: all heat scale levels mark effects and preserve current overflow"
+        }
+      ],
+      "reviewNote": "Source p.37 heat recording/overflow; heatPhase and recordSheet retain unbounded state. New two-phase overflow and floor regression awaits exact CI."
+    },
+    {
+      "id": "agoac-113",
+      "topicId": "agoac-heat",
+      "pages": [
+        38
+      ],
+      "statement": "At heat 5/10/15/20/25 Walking MP loses 1/2/3/4/5 (non-cumulative), Running MP recalculates rounding up, Jump MP is unchanged; at heat 8/13/17/24 weapon TN is +1/+2/+3/+4 without affecting physical attacks.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.38: heat movement and weapon penalties activate at every printed threshold"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Heat reduces walk and derived run"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.16–20: direct GATOR composes damage heat movement terrain and minimum range"
+        }
+      ],
+      "reviewNote": "Source p.38 Heat Data table and text; mp() subtracts floor(heat/5) cap 5, preview() counts 8,13,17,24. Full threshold matrix new in audit branch awaits exact CI."
+    },
+    {
+      "id": "agoac-114",
+      "topicId": "agoac-heat",
+      "pages": [
+        38
+      ],
+      "statement": "At heat 14/18/22/26 a conscious pilot makes one highest-threshold avoid-shutdown roll (4/6/8/10); heat >=30 forces shutdown; unconscious pilots cannot override. Only involuntary shutdown immediately triggers PSR +3.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: unconscious pilots cannot override thermal shutdown and auto restart below 14"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Failed initial heat shutdown PSR causes fall and automatic pilot injury (BMM pp.52,54)"
+        }
+      ],
+      "reviewNote": "Source p.38, official errata v8.01 p.4 involuntary-only PSR checked against heatRequiresShutdown(), heatPhase() and psr(); exhaustive threshold and PSR regressions exist and passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–39; official AGoAC errata v8.01 pp.4–5",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "testedTree": "e2bef94842d51c764c1345b299201b6c6506471c",
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44760040257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44760040465,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44760040230,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Source p.38, official errata v8.01 p.4 involuntary-only PSR checked against heatRequiresShutdown(), heatPhase() and psr(); exhaustive threshold and PSR regressions exist and passed."
+      }
+    },
+    {
+      "id": "agoac-115",
+      "topicId": "agoac-heat",
+      "pages": [
+        38
+      ],
+      "statement": "An involuntarily shut-down BattleMech remains shut down through a full turn, cools normally, attempts one restart in subsequent Heat Phases against highest current threshold, and restarts automatically below 14 even if unconscious; engine heat ceases while off.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: unconscious pilots cannot override thermal shutdown and auto restart below 14"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Cold shutdown reactor restarts"
+        }
+      ],
+      "reviewNote": "Source p.38 checked against heatRequiresShutdown(u,tn,was), heatPhase and shutdown flag. Separate automatic below-14 and conscious restart thresholds covered.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–39; official AGoAC errata v8.01 pp.4–5",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "testedTree": "e2bef94842d51c764c1345b299201b6c6506471c",
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44760040257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44760040465,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44760040230,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Source p.38 checked against heatRequiresShutdown(u,tn,was), heatPhase and shutdown flag. Separate automatic below-14 and conscious restart thresholds covered."
+      }
+    },
+    {
+      "id": "agoac-116",
+      "topicId": "agoac-heat",
+      "pages": [
+        38
+      ],
+      "statement": "Voluntary shutdown occurs in End Phase without mandatory shutdown PSR, persists through later Heat Phases, and voluntary restart is ordered only in a subsequent End Phase after required heat avoid-checks (no restart at 30+); unconscious pilot cannot issue the order.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,38: optional reactor orders can be made and cancelled during End Phase"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,38,44: an unavailable pilot cannot execute a previously queued reactor command"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Voluntary shutdown persists across Heat Phase and restarts only when ordered at End Phase"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Voluntary reactor restart is forbidden at heat 30+ (BMM p.52)"
+        }
+      ],
+      "reviewNote": "Source p.38 and errata involuntary-only wording matched endPhase(), shutdownNext and voluntaryShutdown; existing tests cover ordering, cancellations and pilot availability.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–39; official AGoAC errata v8.01 pp.4–5",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "testedTree": "e2bef94842d51c764c1345b299201b6c6506471c",
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44760040257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44760040465,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44760040230,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Source p.38 and errata involuntary-only wording matched endPhase(), shutdownNext and voluntaryShutdown; existing tests cover ordering, cancellations and pilot availability."
+      }
+    },
+    {
+      "id": "agoac-117",
+      "topicId": "agoac-heat",
+      "pages": [
+        38,
+        39
+      ],
+      "statement": "At heat 19–22/23–27/28+, roll 2D6 once to avoid ammunition explosion at 4+/6+/8+; only live ammunition eligible, select the highest per-shot Damage Value (type tie is controller-selectable), and apply explosion damage and two pilot wounds.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammo explosion avoidance uses the highest heat threshold reached (BMM p.52)"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: only maximum damage per shot enters the heat explosion tie"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Ammo explosion bypasses armor and wounds pilot twice"
+        }
+      ],
+      "reviewNote": "Source pp.38–39 threshold and damage-per-shot ranking matched heatPhase()/heatExplosionBin()/explode. Does NOT certify resolving multiple bins of same ammo type, separately registered known-missing 118.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–39; official AGoAC errata v8.01 pp.4–5",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "testedTree": "e2bef94842d51c764c1345b299201b6c6506471c",
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44760040257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44760040465,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44760040230,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Source pp.38–39 threshold and damage-per-shot ranking matched heatPhase()/heatExplosionBin()/explode. Does NOT certify resolving multiple bins of same ammo type, separately registered known-missing 118."
+      }
+    },
+    {
+      "id": "agoac-118",
+      "topicId": "agoac-heat",
+      "pages": [
+        38,
+        39
+      ],
+      "statement": "When the chosen ammunition type occupies multiple critical slots, the slot with MOST remaining shots must explode; if two or more qualifying slots have equal shots, RANDOMLY select one (not the controller), while different ammo types tied on per-shot damage remain controller-selectable.",
+      "status": "known_missing",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: controller selects tied hottest ammo bin without repeating the failed heat roll"
+        }
+      ],
+      "reviewNote": "Confirmed source-to-code mismatch: CAT3500D printed p.39 says select same-type slot with most shots, randomize equal-shot slots. Current heatExplosionBin() offers controller options for all bins tied on damage-per-shot, including same-type bins with 1 vs 5 shots, and permits choosing the 1-shot bin; existing test explicitly expects that incorrect choice. Needs engine fix, corrected regression and exact CI; do NOT promote."
+    },
+    {
+      "id": "agoac-119",
+      "topicId": "agoac-heat",
+      "pages": [
+        39
+      ],
+      "statement": "Damaged life support inflicts one pilot wound after Heat Phase at heat 15–25 or two at 26+; no extra effect from second life-support critical and injury depends on adjusted heat, not raw pending heat.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33,39,44: damaged life support heat wounds at exact thresholds"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33,39: second life support critical marks its slot without stacking wounds"
+        }
+      ],
+      "reviewNote": "Source p.39 and life-support cross-reference p.33 checked against lifeSupport flag, heatPhase and wound(); threshold matrix and second-critical tests present.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–39; official AGoAC errata v8.01 pp.4–5",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "testedTree": "e2bef94842d51c764c1345b299201b6c6506471c",
+        "mergedSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44760040257,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44760040465,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44760040230,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44760041039,
+          "conclusion": "success",
+          "headSha": "c3f65cf7b4636e2b8f304449a49e8b4be774e73c"
+        },
+        "review": "Source p.39 and life-support cross-reference p.33 checked against lifeSupport flag, heatPhase and wound(); threshold matrix and second-critical tests present."
+      }
+    },
+    {
+      "id": "agoac-120",
+      "topicId": "agoac-heat",
+      "pages": [
+        37,
+        38,
+        39
+      ],
+      "statement": "Official AGoAC errata v8.01: all heat effects resolve SIMULTANEOUSLY without affecting one another, including shutdown, ammo explosion and life-support injury at the newly adjusted heat level.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.38: conscious pilot rolls only the highest thermal threshold and never at 30 or more"
+        }
+      ],
+      "reviewNote": "Errata v8.01 p.4 adds simultaneous non-interacting heat effects. heatPhase() currently executes shutdown/PSR, ammo and life-support sequentially; no cross-effect regression proves same-phase snapshot isolation. Needs source-to-code test of simultaneous interactions before Verified."
     }
   ]
 }
