@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12.",
   "currentTopicId": "agoac-scenarios",
   "topics": [
     {
@@ -622,8 +622,42 @@
         45,
         48
       ],
-      "status": "not_audited",
-      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios."
+      "status": "known_missing",
+      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": false,
+        "inventoryComplete": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.45–48; official AGoAC errata v8.01, printed scenarios 1/3 map and scenario 3 deployment",
+        "requirementIds": [
+          "agoac-140",
+          "agoac-141",
+          "agoac-142",
+          "agoac-143",
+          "agoac-144",
+          "agoac-145",
+          "agoac-146",
+          "agoac-147",
+          "agoac-148",
+          "agoac-149",
+          "agoac-150",
+          "agoac-151",
+          "agoac-152",
+          "agoac-153",
+          "agoac-154",
+          "agoac-155",
+          "agoac-156",
+          "agoac-157",
+          "agoac-158",
+          "agoac-159",
+          "agoac-160",
+          "agoac-161",
+          "agoac-162",
+          "agoac-163",
+          "agoac-164"
+        ],
+        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending."
+      }
     },
     {
       "id": "agoac-construction",
@@ -9512,6 +9546,280 @@
         },
         "review": "p.44 recovery timing checked against endPhase wasUnconscious gate, injury consciousness counters, tests for first eligible recovery and failure/preserved choice."
       }
+    },
+    {
+      "id": "agoac-140",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        45
+      ],
+      "statement": "Both players roll 2D6 to choose attacker/defender; the higher total chooses sides.",
+      "status": "known_missing",
+      "reviewNote": "Standard battle deployment rolls for a choice of entry-edge, not scenario attacker/defender role; there is no two-player scenario-side choice transaction."
+    },
+    {
+      "id": "agoac-141",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        45
+      ],
+      "statement": "Scenario 1 Final Exam uses Desert #3 + Grassland #2 in the pictured arrangement (v8.01 correction), four precise chassis/variants and 4/5 pilots per side.",
+      "status": "known_missing",
+      "reviewNote": "Digital board presets are not printed sheets; no keyed Final Exam roster, assignment or map."
+    },
+    {
+      "id": "agoac-142",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        46
+      ],
+      "statement": "Scenario 1 defender deploys first on the west playing-area edge, attacker on east, alternate one Mech until all eight are present, then first initiative.",
+      "status": "known_missing",
+      "reviewNote": "Standard engine edge entry occurs during movement after an unrelated selection; no in-map alternating scenario placement."
+    },
+    {
+      "id": "agoac-143",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        46
+      ],
+      "statement": "Scenario 1 victory occurs when every opposing Mech is crippled or destroyed; crippled means leg destruction, no functional weapons, destroyed gyro or 2 engine criticals; exit destroys.",
+      "status": "known_missing",
+      "reviewNote": "Engine checks total destruction, but not scenario cripple list or exit-based win; free map-edge exit is not a scenario action."
+    },
+    {
+      "id": "agoac-144",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        46
+      ],
+      "statement": "Scenario 1 suggested variants permit alternative four-Mech force rosters and rotated/reshaped two-map terrain while preserving other scenario rules.",
+      "status": "known_missing",
+      "reviewNote": "Generic roster/map layout selection exists but no Final Exam preset, approved printed roster variation or scenario continuity."
+    },
+    {
+      "id": "agoac-145",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        46
+      ],
+      "statement": "Scenario 2 Trial by Fire uses Desert #2 + Grassland #3, exact lone BLR-1G and three attackers with printed 4/5,5/5,5/6 pilots, plus four random front 5-point pre-damage hits excluding heads and criticals.",
+      "status": "known_missing",
+      "reviewNote": "No Trial by Fire preset; server operations preserve prior damage but do not perform specified four pre-battle randomized hits."
+    },
+    {
+      "id": "agoac-146",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        47
+      ],
+      "statement": "Scenario 2 attacker sets up all Mechs first on Clear Level 0 hexes within six hexes of east edge; lone defender then within three of west edge, facing freely.",
+      "status": "known_missing",
+      "reviewNote": "Generic setup supports edge choice/entry but not asymmetric in-map six/three-zone placement."
+    },
+    {
+      "id": "agoac-147",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        47
+      ],
+      "statement": "Scenario 2 defender wins by exiting BattleMaster via east edge or destroying every attacker; attacker wins on BattleMaster destruction.",
+      "status": "known_missing",
+      "reviewNote": "No automatic east-edge escape victory, nor condition bound to designated BattleMaster."
+    },
+    {
+      "id": "agoac-148",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        47
+      ],
+      "statement": "Scenario 2 defender automatically wins first-turn Initiative and may exit only the east edge; any attacking Mech that exits is destroyed.",
+      "status": "known_missing",
+      "reviewNote": "Initiative is normally rolled for both teams and no scenario-specific first-round forced winner/exit policy exists."
+    },
+    {
+      "id": "agoac-149",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        47
+      ],
+      "statement": "Scenario 2 chase variant starts the defender alone, grants one full movement turn, then has attackers enter from west during Movement on Turn 2 with first complete hex counted.",
+      "status": "known_missing",
+      "reviewNote": "No delayed turn-two attacker reinforcement and no chase-variant activation."
+    },
+    {
+      "id": "agoac-150",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        47
+      ],
+      "statement": "Scenario 3 Divide and Conquer uses Desert #2 + Grassland #3 with specified terrain (v8.01 correction), six defending and six attacking printed BattleMechs and individual pilot skills.",
+      "status": "known_missing",
+      "reviewNote": "Engine supports 6+6 generic teams but no Divide and Conquer named roster, corrected mapsheets, or pre-positioned terrain."
+    },
+    {
+      "id": "agoac-151",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Scenario 3 attacker first places the command/recon force in specified south-west/north-east entry rows, defender then sets up command within 6 of north and west edges, recon within 6 of south and east edges (v8.01).",
+      "status": "known_missing",
+      "reviewNote": "No corrected two-lance deployment rectangles/ordered setup; standard symmetric entry rules are not equivalent."
+    },
+    {
+      "id": "agoac-152",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Scenario 3 victory requires all enemy BattleMechs crippled or destroyed; leaving playing area destroys the Mech, using the printed cripple definition.",
+      "status": "known_missing",
+      "reviewNote": "Generic end-of-battle destruction is implemented, but mission crippling and authorized exit handling are absent."
+    },
+    {
+      "id": "agoac-153",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Scenario 3 defending force subtracts 2 from every Initiative roll, including rerolls and all turns.",
+      "status": "known_missing",
+      "reviewNote": "Game.initiative rolls unmodified 2D6 for both sides, no side-specific scenario modifier."
+    },
+    {
+      "id": "agoac-154",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Scenario 3 shorter-force variation and three-player shared defender-lance control include independent alternation and 2D6 tie arbitration for each disputed phase.",
+      "status": "known_missing",
+      "reviewNote": "No scenario alternate force roster or shared two-person control with 2D6 dispute arbitration."
+    },
+    {
+      "id": "agoac-155",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "MechWarrior Cards attach to no more than one Mech per side, have equal cost on opposing sides, and use floor(D6/2) when the players cannot agree on cost.",
+      "status": "known_missing",
+      "reviewNote": "Pilot data/skills are configurable, but physical MechWarrior Card limits, cost and fallback roll are absent."
+    },
+    {
+      "id": "agoac-156",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Card-specified Piloting and Gunnery replace the scenario pilot skills; the opposing side receives an equivalent skill improvement to preserve balance.",
+      "status": "known_missing",
+      "reviewNote": "Generic custom pilot skill assignment exists; no card-aware mirrored balance adjustment or scenario pilot replacement."
+    },
+    {
+      "id": "agoac-157",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Full Moon Night charges one extra MP per ground-entered hex including ordinary and difficult terrain, roads and water.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: Full Moon Night adds one movement point per ground-entered hex"
+        }
+      ],
+      "reviewNote": "Game.terrainCost applies +1 to all ground entry types; deterministic ground-cost boundary test added, but full night mode still has an unresolved jumping movement path."
+    },
+    {
+      "id": "agoac-158",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Full Moon Night also has to be checked for jump movement and offboard first-hex entry costs under the printed universal +1 MP per hex rule.",
+      "status": "known_missing",
+      "reviewNote": "Game.reachable(mode='jump') uses jumpShortestReach(distance) and does not apply weather.night; printed modifier explicitly says per hex without a jump exception. Needs source clarification and implementation before Verified."
+    },
+    {
+      "id": "agoac-159",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Full Moon Night gives +2 to weapon Target Numbers (not physical attacks), reduced by 1 for each full 20 heat points on the target, minimum 0.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: Full Moon Night weapon penalty decreases at 20-point target heat thresholds"
+        }
+      ],
+      "reviewNote": "Game.preview mods.night uses exactly max(0,2-floor(target.heat/20)); new deterministic heat-threshold and physical separation tests."
+    },
+    {
+      "id": "agoac-160",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Strong Gale applies +2 Target Number modifier to missile attacks, +1 to autocannon and machine-gun attacks, and no such gale modifier to energy attacks.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: Strong Gale modifies missiles and ballistic weapons but not energy fire"
+        }
+      ],
+      "reviewNote": "Game.preview mods.wind uses rack/magazine classification; deterministic missile/AC/laser matrix added."
+    },
+    {
+      "id": "agoac-161",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Strong Gale applies +1 to all Piloting Skill Rolls, stacking with actuator and gyro damage modifiers.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: Strong Gale adds one to Piloting Skill Roll modifiers"
+        }
+      ],
+      "reviewNote": "Game.psrMod adds gale +1 before all other modifiers; deterministic intact/gyro/actuator matrix added."
+    },
+    {
+      "id": "agoac-162",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Optional loose terrain pieces require equal counts per player, with D6-based alternate starting side if no agreement, adding exactly one piece at a time.",
+      "status": "known_missing",
+      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection."
+    },
+    {
+      "id": "agoac-163",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Loose terrain pieces must be placed at least two hexes away from the mapsheet edge and separated by three empty hexes from other pieces.",
+      "status": "known_missing",
+      "reviewNote": "No terrain-piece placement constraints or equal placement workflow."
+    },
+    {
+      "id": "agoac-164",
+      "topicId": "agoac-scenarios",
+      "pages": [
+        48
+      ],
+      "statement": "Linked campaign play can transfer surviving Mechs with persistent damage from Scenario 1 into Scenario 3 as west-edge reinforcements in the Movement Phase of Turn 5.",
+      "status": "known_missing",
+      "reviewNote": "Economy operations persist damage and ammunition but there is no AGoAC scenario linking, survivor transfer or turn-five reinforcements."
     }
   ]
 }
