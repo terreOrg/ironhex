@@ -1,6 +1,5 @@
 // AGoAC Chapter 11 only: signed three-player server scenario rooms.
-// The 3D cockpit still needs a separate remote-room adapter; this panel
-// provides the real authenticated lobby, source setup and tactical controls.
+// Authentic API lobby and preparation; completed setup opens the signed 3D cockpit.
 const $=(node,selector)=>node.querySelector(selector);
 const E=(tag,cls,text)=>{
  const node=document.createElement(tag);
@@ -96,6 +95,110 @@ function tileList(tiles){
   (t.printedSheet||'Лист '+(t.sheet+1))+' / '+(t.printedHex||'')+
   ' · ('+t.q+', '+t.r+')']);
 }
+
+const S='http://www.w3.org/2000/svg';
+const axialDistance=(a,b)=>Math.max(Math.abs(a.q-b.q),
+ Math.abs(a.r-b.r),Math.abs(a.q+a.r-b.q-b.r));
+// Preview filters are only a convenience: PostgreSQL / Game remains
+// authoritative and must revalidate the full footprint and turn owner.
+function legalTerrainOrigins(game,sheet,footprint){
+ if(!Array.isArray(footprint)||![2,3].includes(footprint.length)||
+  !footprint.some(x=>x.q===0&&x.r===0)||
+  !footprint.every(x=>Number.isInteger(x.q)&&Number.isInteger(x.r))||
+  new Set(footprint.map(x=>x.q+','+x.r)).size!==footprint.length)return [];
+ if(footprint.length===3&&footprint.some((p,i)=>footprint.some((q,j)=>
+  i!==j&&axialDistance(p,q)!==1)))return [];
+ const byHex=new Map(game.tiles.map(x=>[x.q+','+x.r,x]));
+ const occupied=(game.scenario?.looseTerrain?.pieces||[])
+  .flatMap(piece=>piece.hexes||[]);
+ return terrainCandidates(game,sheet).filter(origin=>footprint.every(offset=>{
+  const q=origin.q+offset.q,r=origin.r+offset.r,tile=byHex.get(q+','+r);
+  if(!tile||tile.sheet!==sheet||tile.depth>0||tile.bridge||
+   tile.overlayTerrain!=null)return false;
+  const col=q+Math.floor(r/2)+Math.floor(game.setupMap.width/2);
+  const row=r+Math.floor(game.setupMap.height/2);
+  const localCol=((col%16)+16)%16,localRow=((row%17)+17)%17;
+  return localCol>=3&&localCol<=12&&localRow>=3&&localRow<=13&&
+   occupied.every(previous=>axialDistance({q,r},previous)>=4);
+ }));
+}
+function printedTerrainDiagram(game,{choices=[],chosen=null,onPick=null}={}){
+ const wrap=E('div','scenario-terrain-map');
+ wrap.id='scenario-terrain-map';
+ wrap.append(E('p','',
+  'Цифровая схема 32×17: запад — Desert #2; восток — Grassland #3. '+
+  'Для сверки с книжной иллюстрацией, не её воспроизведение.'));
+ const svg=document.createElementNS(S,'svg');
+ svg.setAttribute('viewBox','0 0 605 290');
+ svg.setAttribute('role','group');
+ svg.setAttribute('aria-label','Схема 544 гексов и размещённых элементов');
+ svg.style.width='100%';svg.style.height='auto';svg.style.maxWidth='750px';
+ const picks=new Set(choices.map(v=>v.q+','+v.r));
+ const applied=new Map();
+ (game.scenario?.looseTerrain?.pieces||[]).forEach((piece,i)=>
+  (piece.hexes||[]).forEach(hex=>applied.set(hex.q+','+hex.r,{
+   index:i,kind:piece.terrainType})));
+ const make=(tag,attrs={},value)=>{
+  const node=document.createElementNS(S,tag);
+  for(const [key,val]of Object.entries(attrs))node.setAttribute(key,String(val));
+  if(value!==undefined)node.textContent=String(value);
+  return node;
+ };
+ for(const tile of game.tiles||[]){
+  const col=tile.q+Math.floor(tile.r/2)+Math.floor(game.setupMap.width/2);
+  const row=tile.r+Math.floor(game.setupMap.height/2);
+  if(col<0||col>=32||row<0||row>=17)continue;
+  const cx=18+17.32*(col+((tile.r%2+2)%2)/2),cy=18+15*row;
+  const key=tile.q+','+tile.r,piece=applied.get(key);
+  const eligible=picks.has(key);
+  const chosenTile=key===chosen;
+  const fill=piece?
+   (String(piece.kind).startsWith('depth')?'#277a95':'#a85b4b'):
+   chosenTile?'#ffe18b':eligible?'#9fa674':
+   tile.depth>0?'#477d89':tile.height>0?'#788b65':'#485e4d';
+  const points=Array.from({length:6},(_,i)=>{
+   const angle=(i*60-90)*Math.PI/180;
+   return (cx+9.7*Math.cos(angle)).toFixed(2)+','+
+    (cy+9.7*Math.sin(angle)).toFixed(2);
+  }).join(' ');
+  const poly=make('polygon',{points,fill,stroke:
+   chosenTile?'#fff6c9':piece?'#ecd7b3':'#202e2a',
+   'stroke-width':chosenTile?'2.2':'.75',
+   'data-hex':key,'data-sheet':tile.sheet});
+  const title=make('title',{},(tile.printedSheet||'')+' '+
+   (tile.printedHex||'')+' · '+key+
+   (piece?' · элемент '+(piece.index+1)+' '+piece.kind:''));
+  poly.append(title);
+  if(eligible&&onPick){
+   poly.setAttribute('data-choice',key);
+   poly.setAttribute('tabindex','0');
+   poly.setAttribute('role','button');
+   poly.setAttribute('aria-label','Выбрать гекс '+key);
+   poly.style.cursor='pointer';
+   poly.addEventListener('click',()=>onPick(key));
+   poly.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){
+     event.preventDefault();onPick(key);
+    }
+   });
+  }
+  svg.append(poly);
+ }
+ svg.append(make('line',{x1:18+17.32*16,y1:5,
+  x2:18+17.32*16,y2:280,stroke:'#f3d49b','stroke-width':2,
+  'stroke-dasharray':'5 4'}));
+ wrap.append(svg);
+ const legend=E('p','',
+  'Синий — вода (Depth); красный — сухое понижение (Sublevel); '+
+  'оливковый — допустимое начало элемента; жёлтый — выбранный гекс.');
+ wrap.append(legend);
+ const pieces=game.scenario?.looseTerrain?.pieces||[];
+ if(pieces.length)wrap.append(E('p','',
+  'Размещено '+pieces.length+'/4: '+pieces.map((piece,i)=>
+   (i+1)+'. '+piece.terrainType+' ['+
+   (piece.hexes||[]).map(h=>h.q+','+h.r).join(' · ')+']').join(' | ')));
+ return wrap;
+}
 function wireSubmit(box,handler){
  const form=box.tagName==='FORM'?box:box.querySelector('form');
  if(form)form.onsubmit=e=>{e.preventDefault();void execute(()=>handler(form));};
@@ -124,7 +227,7 @@ function renderSetup(body,room,game){
   if(room.yourRole!==required){
    frame.append(E('p','','Ожидается размещение игроком '+required+'.'));return;
   }
-  const form=E('form','op-form'),t=select(tileList(terrainCandidates(game,sheet)));
+  const form=E('form','op-form'),t=select([]);
   t.name='hex';
   const type=select(pair?[
    ['depth1','Вода, глубина 1'],['depth2','Вода, глубина 2']]:
@@ -137,6 +240,34 @@ function renderSetup(body,room,game){
   if(!pair)form.append(label('Три смещения треугольника по печатной схеме',shape));
   const submit=E('button','op-primary','ПОСТАВИТЬ ЭЛЕМЕНТ');submit.type='submit';
   form.append(submit);frame.append(form);
+  const preview=E('div');frame.append(preview);
+  const footprint=()=>{
+   if(pair){
+    const [q,r]=DIRS[Number(orientation.value)]||[];
+    return Number.isInteger(q)?[{q:0,r:0},{q,r}]:[];
+   }
+   const values=shape.value.split(';').map(v=>v.trim());
+   if(values.length!==3||values.some(v=>!/^[-]?\d+\s*,\s*[-]?\d+$/.test(v)))return [];
+   return values.map(v=>{
+    const [q,r]=v.split(',').map(Number);return {q,r};
+   });
+  };
+  const redraw=()=>{
+   const valid=legalTerrainOrigins(game,sheet,footprint()),prior=t.value;
+   t.replaceChildren(...tileList(valid).map(([value,text])=>new Option(text,value)));
+   if(valid.some(v=>v.q+','+v.r===prior))t.value=prior;
+   const selected=t.value||null;
+   submit.disabled=!valid.length;
+   preview.replaceChildren(printedTerrainDiagram(game,{
+    choices:valid,chosen:selected,onPick:key=>{
+     t.value=key;redraw();
+    }
+   }));
+  };
+  orientation.onchange=redraw;
+  shape.oninput=redraw;
+  t.onchange=redraw;
+  redraw();
   wireSubmit(form,async data=>{
    const [q,r]=data.elements.hex.value.split(',').map(Number);
    const footprint=pair?[{q:0,r:0},
@@ -156,6 +287,7 @@ function renderSetup(body,room,game){
    'Четыре обязательных элемента поставлены. Сверьте КАЖДЫЙ их гекс '+
    'и поворот треугольников с диаграммой печатной книги, стр. 47. '+
    'Эта подпись означает ручную проверку, а не автоматическую сертификацию координат.'));
+  frame.append(printedTerrainDiagram(game));
   frame.append(E('p','',Object.entries(signed).map(([r,v])=>r+': '+(v?'сверено':'ожидание')).join(' · ')));
   if(!signed[room.yourRole])frame.append(button('ЛИЧНО СВЕРИЛ СО СХЕМОЙ',
    ()=>execute(()=>sendAction(room,'setup',{type:'confirm-figure'}))));
@@ -329,7 +461,7 @@ async function renderRoomDetails(room,host){
  if(room.status==='active'&&!game.scenario?.placement?.complete)renderSetup(host,room,game);
  else renderBattle(host,room,game);
  frame.append(E('p','',
-  'Это серверный режим с проверкой аккаунтов. Подключение к изометрической 3D-сцене остаётся отдельной задачей.'));
+  'Серверная комната: приказы, фазы и решения 2D6 проверяются и сохраняются в PostgreSQL.'));
 }
 export function installScenarioRoomUI(hub,openSection){
  root=hub;

@@ -1619,6 +1619,70 @@ test('AGoAC Chapter 11: authenticated hub opens three-player lobby and creates s
  });
 });
 
+test('AGoAC Ch11: signed Scenario 3 terrain setup offers interactive 544-hex source preview',
+ {timeout:120000},async()=>{
+ const g=new TestBattleGame();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert(g.configureSharedDefenderLances({
+  commandController:'signed-command',reconController:'signed-recon'}).ok);
+ prepareAgoacPrintedScenario(g,'divide-and-conquer');
+ assert(g.startScenarioLooseTerrain({piecesPerTeam:2,startingTeam:0}).ok);
+ const id='dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+ const item={id,scenarioId:'divide-and-conquer',status:'active',
+  version:4,yourRole:'attacker',isHost:true,roles:{
+   attacker:{handle:'TestCommander',accepted:true},
+   command:{handle:'CommandSeat',accepted:true},
+   recon:{handle:'ReconSeat',accepted:true}
+  }};
+ const state=()=>JSON.parse(JSON.stringify(g,(key,value)=>
+  key==='map'||key==='rng'?undefined:value));
+ await withPage('chapter11-hex-picker',{hub:true},async page=>{
+  await page.route('**/api/v1/scenario-rooms',route=>route.fulfill({
+   status:200,contentType:'application/json',body:JSON.stringify({items:[item]})}));
+  await page.route('**/api/v1/scenario-rooms/'+id+'/snapshot',route=>route.fulfill({
+   status:200,contentType:'application/json',
+   body:JSON.stringify({item,game:state()})}));
+  await page.locator('#hub-scenarios-button').click();
+  await page.locator('#scenario-room-list button').first().click();
+  const diagram=page.locator('#scenario-terrain-map');
+  await diagram.waitFor({state:'visible'});
+  assert.match(await diagram.textContent(),/Desert #2; восток — Grassland #3/);
+  assert.equal(await diagram.locator('svg polygon').count(),544);
+  const options=page.locator('#scenario-room-details select[name=hex] option');
+  assert(await options.count()>10,'legally eligible water origins available');
+  const origin=diagram.locator('polygon[data-choice]').first();
+  const picked=await origin.getAttribute('data-choice');
+  assert.match(picked,/^-?\d+,-?\d+$/);
+  await origin.click();
+  assert.equal(await page.locator('#scenario-room-details select[name=hex]').inputValue(),
+   picked,'map selection updates the command form');
+  const [q,r]=picked.split(',').map(Number);
+  const placed=g.placeScenarioLooseTerrain({team:0,q,r,
+   label:'depth1',terrainType:'depth1',footprint:[{q:0,r:0},{q:1,r:0}]});
+  assert(placed.ok,'browser-eligible terrain origin is accepted by real rules engine: '+placed.error);
+  item.version++;
+  // A participant sees all placed hexes from the authoritative snapshot.
+  item.yourRole='command';
+  await page.locator('#scenario-room-refresh').click();
+  // The previous SVG remains visible while the asynchronous snapshot GET
+  // is pending; wait for the new persisted version, not old DOM visibility.
+  await page.waitForFunction(()=>document.querySelector('#scenario-terrain-map')?.
+   textContent.includes('Размещено 1/4'),null,{timeout:15000});
+  assert.match(await diagram.textContent(),/Размещено 1\/4/);
+  assert.equal(await diagram.locator('polygon[fill="#277a95"]').count(),2);
+  assert(await diagram.locator('polygon[data-choice]').count()>0,
+   'the signed command seat can now choose the triangular element');
+  const shape=page.locator('#scenario-room-details input[name=offsets]');
+  const submit=page.locator('#scenario-room-details button[type=submit]').last();
+  await shape.fill('0,0;1,0;1,1');
+  assert(await submit.isDisabled(),'invalid triangle cannot be submitted');
+  await shape.fill('0,0;1,0;1,-1');
+  assert(await submit.isEnabled(),'valid triangular footprint has legal origins');
+ });
+});
+
 test('AGoAC Chapter 11: 3D cockpit connects to signed source 10-Mech room and original 32x17 map',
  {timeout:120000},async()=>{
  await withPage('scenario-room-3d',{
