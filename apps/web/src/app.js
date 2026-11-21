@@ -806,7 +806,7 @@ function showIllustratedTerrainDispute(pieceIndex){
  const pictured=game.scenario?.picturedTerrain,setup=game.scenario?.looseTerrain;
  if(!pictured?.required||!setup||setup.pieces.length!==pieceIndex)return;
  const isPair=pieceIndex%2===0;
- const faceOptions='<option value="level1">Высота 1</option><option value="level2">Высота 2</option>'+
+ const faceOptions='<option value="sublevel1">Субуровень −1</option><option value="sublevel2">Субуровень −2</option>'+
   '<option value="depth1">Глубина 1</option><option value="depth2">Глубина 2</option>';
  const dirOptions=DIRS.map(([q,r],i)=>'<option value="'+i+'">'+
   (i*60)+'° ('+q+','+r+')</option>').join('');
@@ -819,7 +819,7 @@ function showIllustratedTerrainDispute(pieceIndex){
     dirOptions+'</select></label>':'')).join('')+
   '<button class="primary" id="pictured-dispute-roll">РАЗРЕШИТЬ СПОР · 2D6</button>');
  $('#pictured-dispute-type0').value='depth1';
- $('#pictured-dispute-type1').value='level1';
+ $('#pictured-dispute-type1').value='sublevel1';
  $('#pictured-dispute-roll').onclick=()=>{
   const proposal=team=>({
    terrainType:$('#pictured-dispute-type'+team).value,
@@ -845,7 +845,7 @@ function showPrintedPlacementStep(){
    '. Дистанция между отдельными элементами — три пустых гекса, от края каждого листа — более двух.</p>'+   (pictured?'<p>Сверьте контур и координаты с напечатанной схемой, стр. 47. '+   '<a href="https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d%2Bbattletech%2Ba%2Bgame%2Bof%2Barmored%2Bcombat%2Brulebook.pdf#page=49" target="_blank" rel="noopener noreferrer">Схема в книге</a>. '+   'По одному двойному и треугольному контуру на каждом листе.</p>':'')+
    '<label>Тип элемента<select id="scenario-terrain-type">'+
    '<option value="woods">Лёгкий лес</option><option value="heavy">Густой лес</option>'+
-   '<option value="rough">Пересечённая местность</option><option value="rubble">Обломки</option>'+   '<option value="level1">Высота 1</option><option value="level2">Высота 2</option>'+   '<option value="depth1">Вода, глубина 1</option><option value="depth2">Вода, глубина 2</option></select></label>'+
+   '<option value="rough">Пересечённая местность</option><option value="rubble">Обломки</option>'+   '<option value="level1">Высота +1</option><option value="level2">Высота +2</option>'+   '<option value="sublevel1">Субуровень −1</option><option value="sublevel2">Субуровень −2</option>'+   '<option value="depth1">Вода, глубина 1</option><option value="depth2">Вода, глубина 2</option></select></label>'+
    '<label>Размер<select id="scenario-terrain-shape">'+
    '<option value="1">Один гекс</option><option value="2">Два соседних гекса</option>'+
    '<option value="custom">Контур реального элемента — свои смещения</option></select></label>'+
@@ -862,7 +862,7 @@ function showPrintedPlacementStep(){
   scenarioHexOptions($('#scenario-terrain-hex'),game.tiles.filter(t=>
    game.looseTerrainZoneAllowed(t.q,t.r)&&(!pictured||t.sheet===Math.floor(pieceIndex/2))));
   if(pictured){
-   const allowed=new Set(['level1','level2','depth1','depth2']);
+   const allowed=new Set(['sublevel1','sublevel2','depth1','depth2']);
    for(const option of [...$('#scenario-terrain-type').options])
     if(!allowed.has(option.value))option.remove();
    const ruling=scenario.picturedTerrain.disputes?.[pieceIndex]?.choice;
