@@ -5980,7 +5980,8 @@ test('CAT3500D pp.37–39: completed Heat chapter retains twelve source-reviewed
    assert(suite.includes("test('"+name+"'"),id+' missing deterministic regression');
   }
  }
- assert.equal(reg.topics.filter(x=>x.status==='verified').length,9);
+ assert(reg.topics.slice(0,9).every(x=>x.status==='verified'),
+  'The first nine chapters through Heat must remain source-verified');
 });
 
 test('CAT3500D pp.40–44: completed Piloting chapter keeps 19 source-reviewed rules and exact main quality gates',()=>{
