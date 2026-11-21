@@ -1909,6 +1909,14 @@ test('AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitr
   await loaded(pages.command);
   await pages.recon.reload({waitUntil:'domcontentloaded'});
   await loaded(pages.recon);
+  for(const seat of [pages.command,pages.recon]){
+   const result=seat.locator('#room-dispute-result');
+   await result.waitFor({state:'visible'});
+   assert.match(await result.textContent(),/Победил командный лэнс/);
+   assert.match(await result.textContent(),/до конца фазы движения/);
+   assert.equal(await seat.locator('#room-dispute-send').count(),0,
+    'a settled dispute cannot be submitted again in this phase');
+  }
   await pages.command.locator('[data-unit="'+recon.id+'"]').click();
   assert(await pages.command.locator('#hold').isEnabled(),
    '2D6 winner can order either defending lance for the rest of the phase');
@@ -1920,6 +1928,11 @@ test('AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitr
   assert.equal(game.activeTeam,game.scenario.attackerTeam);
   await pages.attacker.reload({waitUntil:'domcontentloaded'});
   await loaded(pages.attacker);
+  const attackerRuling=pages.attacker.locator('#room-dispute-result');
+  await attackerRuling.waitFor({state:'visible'});
+  assert.match(await attackerRuling.textContent(),/Победил командный лэнс/,
+   'an attacking seat sees the authoritative defender ruling after its turn starts');
+  assert.equal(await pages.attacker.locator('#room-dispute-send').count(),0);
   assert.equal(await pages.attacker.locator('#selected h2').textContent(),
    attacker.name.toUpperCase(),'attacker seat now selects its own Mech');
   assert(await pages.attacker.locator('#hold').isEnabled());
