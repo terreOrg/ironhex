@@ -7132,3 +7132,230 @@ test('CAT3500D p.48: Awesome AWS-8Q source MTF retains lower arm actuator but om
  assert(invalid.errors.length>0,'cannot silently accept heat sink overlapping a hand actuator');
 });
 
+
+
+// Source-certification packet I: original CAT3500D pp.45-48 plus official
+// v8.01 errata, with all active map and Mech records loaded from pinned
+// MegaMek/mm-data, NOT synthetic demo sheets or stock four-unit fixtures.
+const chapter11SourceGame=async(id,attackerTeam=0,rotations=[0,0])=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario(id).ok);
+ g.scenario.sideRollWinner=attackerTeam;
+ assert(g.chooseScenarioSide(attackerTeam,'attacker').ok);
+ const loaded=prepareAgoacPrintedScenario(g,id,{rotations});
+ assert.equal(loaded.map.tiles,544);
+ assert.equal(g.setupMap.printedScenario,id);
+ assert(g.tiles.every(t=>t.printedHex&&t.printedSheet&&t.sourceTerrain!==undefined));
+ assert(g.units.every(u=>u.recordSource==='MegaMek/mm-data'&&
+  u.recordSourceRevision===g.setupMap.sourceRevision&&u.weapons.length));
+ return g;
+};
+const chapter11SourceColumn=(g,t)=>t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2);
+const chapter11SourceDeployAll=g=>{
+ const start=g.beginPrintedScenarioPlacement();
+ assert(start.ok);
+ let attempts=0;
+ while(!g.scenario.placement.complete){
+  assert(++attempts<=12,'deployment must finish after the full printed roster');
+  const state=g.scenario.placement;
+  if(g.scenario.id==='divide-and-conquer'&&state.placed.length===6)
+   assert(g.chooseDivideAndConquerAttackerRow('east').ok);
+  const stage=state.steps[state.placed.length];
+  const unit=g.units.find(u=>u.team===stage.team&&!u.deployed&&
+   (stage.lance===null||stage.lance==='printed-row'||u.lance===stage.lance));
+  assert(unit,'a real printed unit exists for this placement');
+  const options=stage.lance==='printed-row'?
+   state.attackerRow.hexes:g.tiles;
+  const position=options.find(t=>
+   g.scenarioZoneAllowed(stage.team,t.q,t.r,{lance:stage.lance,facing:0})&&
+   !state.placed.some(p=>p.q===t.q&&p.r===t.r));
+  assert(position,'a real legal source hex exists for every printed step');
+  assert(g.placePrintedScenarioMech(unit.id,position.q,position.r,0).ok);
+ }
+ assert.equal(g.scenario.placement.placed.length,g.units.length);
+ return g;
+};
+
+test('CAT3500D p.45 plus errata 8.01: source-backed Final Exam alternates all 8 west/east deployments',async()=>{
+ for(const attackerTeam of [0,1]){
+  const g=await chapter11SourceGame('final-exam',attackerTeam);
+  assert.deepEqual(g.setupMap.sheets.map(s=>s.name),['Desert #3','Grassland #2']);
+  const defender=g.units.filter(u=>u.team===1-attackerTeam);
+  const attacker=g.units.filter(u=>u.team===attackerTeam);
+  assert.equal(defender.length,4);assert.equal(attacker.length,4);
+  assert(g.beginPrintedScenarioPlacement().ok);
+  assert.equal(g.scenario.placement.exactMapImplemented,true);
+  assert.equal(g.scenario.placement.recordSheetsImported,true);
+  assert.equal(g.nextPhase().ok,false,'no first initiative until eight placements');
+  const west=g.tiles.filter(t=>chapter11SourceColumn(g,t)===0);
+  const east=g.tiles.filter(t=>chapter11SourceColumn(g,t)===31);
+  assert.equal(west.length,17);assert.equal(east.length,17);
+  assert.equal(g.placePrintedScenarioMech(attacker[0].id,east[0].q,east[0].r).ok,false,
+   'attacker cannot pre-empt first defender');
+  for(let i=0;i<4;i++){
+   assert.equal(g.placePrintedScenarioMech(defender[i].id,east[i].q,east[i].r).ok,false,
+    'defender cannot enter from east');
+   assert(g.placePrintedScenarioMech(defender[i].id,west[i].q,west[i].r,i).ok);
+   assert.equal(g.placePrintedScenarioMech(attacker[i].id,west[i].q,west[i].r).ok,false,
+    'attacker cannot use west/occupied hex');
+   assert(g.placePrintedScenarioMech(attacker[i].id,east[i].q,east[i].r,5-i).ok);
+  }
+  assert(g.scenario.placement.complete);
+  assert.deepEqual(g.scenario.placement.placed.map(p=>p.team),
+   [1-attackerTeam,attackerTeam,1-attackerTeam,attackerTeam,
+    1-attackerTeam,attackerTeam,1-attackerTeam,attackerTeam]);
+  assert.equal(g.placePrintedScenarioMech(defender[0].id,west[9].q,west[9].r).ok,false,
+   'no additional deployment after setup');
+  const roll=[...diceFor(12),...diceFor(2)];
+  g.rng=()=>{assert(roll.length);return roll.shift();};
+  assert(g.nextPhase().ok);
+  assert.equal(g.phase,'move');
+  assert.equal(g.queue.length,8,'all eight true MTF units enter first movement phase');
+  assert.equal(roll.length,0);
+ }
+});
+
+test('CAT3500D pp.46-47: source-backed Trial by Fire deploys 3 clear eastern attackers before BLR-1G west',async()=>{
+ for(const rotations of [[0,0],[3,0]]){
+  const g=await chapter11SourceGame('trial-by-fire',0,rotations);
+  assert.deepEqual(g.setupMap.sheets.map(s=>s.name),['Desert #2','Grassland #3']);
+  const attacker=g.units.filter(u=>u.team===0),defender=g.units.find(u=>u.team===1);
+  assert.equal(attacker.length,3);assert.equal(defender.variant,'BLR-1G');
+  assert.equal(defender.tonnage,85);
+  assert(g.beginPrintedScenarioPlacement().ok);
+  assert.equal(g.placePrintedScenarioMech(defender.id,0,0).ok,false,'defender must wait');
+  assert.equal(g.nextPhase().ok,false);
+  const east=g.tiles.filter(t=>chapter11SourceColumn(g,t)>=25);
+  assert(east.some(t=>!g.scenarioZoneAllowed(0,t.q,t.r)),
+   'not all eastern source terrain is level-0 Clear');
+  const legal=east.filter(t=>g.scenarioZoneAllowed(0,t.q,t.r));
+  assert(legal.length>=3,'three real level-0 Clear hexes exist');
+  assert(legal.every(t=>t.type==='plain'&&t.height===0&&t.depth===0));
+  for(let i=0;i<3;i++){
+   assert.equal(g.placePrintedScenarioMech(attacker[i].id,0,0).ok,false,
+    'an attacker cannot use the defending edge');
+   assert(g.placePrintedScenarioMech(attacker[i].id,legal[i].q,legal[i].r,i+1).ok);
+  }
+  assert.equal(g.nextPhase().ok,false,'defender still to deploy');
+  const western=g.tiles.filter(t=>chapter11SourceColumn(g,t)===3);
+  assert.equal(western.length,17);
+  const far=g.tiles.find(t=>chapter11SourceColumn(g,t)===4);
+  assert.equal(g.placePrintedScenarioMech(defender.id,far.q,far.r).ok,false,
+   'west edge distance limit is enforced');
+  const target=western.find(t=>!g.scenario.placement.placed.some(p=>p.q===t.q&&p.r===t.r));
+  assert(g.placePrintedScenarioMech(defender.id,target.q,target.r,5).ok,'defender facing unrestricted');
+  assert(g.scenario.placement.complete);
+  assert.deepEqual(g.scenario.placement.placed.map(p=>p.team),[0,0,0,1]);
+  assert.equal(g.nextPhase().ok,false,'four mandatory front pre-hits must resolve');
+  g.rng=()=>.5;
+  const pre=g.applyTrialByFirePreDamage(defender.id);
+  assert(pre.ok);assert.equal(pre.hits.length,4);
+  assert(pre.hits.every(h=>h.damage===5&&h.location!=='HD'&&h.side==='front'));
+  assert(g.nextPhase().ok);
+  assert.equal(g.initiativeWinner,1,'defender wins turn 1 without initiative contest');
+  assert.equal(g.phase,'move');
+  assert.equal(g.queue.length,4);
+ }
+});
+
+test('CAT3500D pp.45,47-48: real Final Exam and Divide win only after ALL enemy Mechs are crippled',async()=>{
+ for(const id of ['final-exam','divide-and-conquer']){
+  const g=await chapter11SourceGame(id);
+  chapter11SourceDeployAll(g);
+  const attacker=g.units.filter(u=>u.team===g.scenario.attackerTeam);
+  assert([4].includes(attacker.length));
+  const defender=g.units.filter(u=>u.team===g.scenario.defenderTeam);
+  assert.equal(defender.length,id==='final-exam'?4:6);
+  const unit=attacker[0],original=structuredClone(unit);
+  const damaged={...original,engineHits:1,gyroHits:1,
+   weapons:original.weapons.map(w=>({...w,ammo:w.ammo===null?null:0}))};
+  assert.equal(g.scenarioCrippled(damaged),false,
+   'no ammo or one engine/gyro critical alone is not defined as crippled');
+  for(const condition of [
+   u=>{u.structure.LL=0;},
+   u=>{u.structure.RL=0;},
+   u=>{u.gyroHits=2;},
+   u=>{u.engineHits=2;},
+   u=>{for(const w of u.weapons)w.destroyed=true;}
+  ]){
+   const sample=structuredClone(original);
+   condition(sample);
+   assert(g.scenarioCrippled(sample),'all five source cripple cases are recognized');
+  }
+  for(let i=0;i<attacker.length-1;i++)attacker[i].structure.LL=0;
+  g.checkWin();
+  assert.equal(g.winner,null,'one combat-capable enemy prevents early victory');
+  const last=attacker.at(-1);
+  for(const w of last.weapons)w.destroyed=true;
+  g.checkWin();
+  assert.equal(g.winner,g.scenario.defenderTeam,'only full enemy cripple ends encounter');
+  assert.equal(g.activeTeam,null);
+  assert(defender.some(u=>!g.scenarioCrippled(u)));
+ }
+});
+
+test('CAT3500D pp.47-48: source-backed Divide forced/voluntary exits count as destroyed',async()=>{
+ const g=await chapter11SourceGame('divide-and-conquer');
+ chapter11SourceDeployAll(g);
+ const attacking=g.units.filter(u=>u.team===g.scenario.attackerTeam);
+ const defending=g.units.filter(u=>u.team===g.scenario.defenderTeam);
+ attacking.slice(0,-1).forEach(u=>{u.engineHits=2;});
+ g.checkWin();assert.equal(g.winner,null);
+ const remaining=attacking.at(-1);
+ // Exiting the printed area destroys a Mech instead of allowing re-entry;
+ // use a legal edge and the actual Movement-phase order.
+ const roll=[...diceFor(12),...diceFor(2)];
+ g.rng=()=>roll.shift()??.5;
+ assert(g.nextPhase().ok);
+ assert.equal(g.phase,'move');
+ g.activeTeam=remaining.team;g.actingId=null;remaining.moveMode='stand';
+ const edge=g.deploymentEdgeTiles(3).find(t=>!g.occupied(t.q,t.r,remaining.id));
+ assert(edge);
+ remaining.q=edge.q;remaining.r=edge.r;remaining.spent=0;remaining.moved=false;
+ const result=g.exitScenarioMap(remaining.id,3,'walk');
+ assert(result.ok);assert(result.destroyed);assert.equal(result.escaped,false);
+ assert(remaining.dead);assert(remaining.escaped);
+ assert.equal(g.winner,g.scenario.defenderTeam);
+ assert(defending.some(u=>!u.dead));
+});
+
+test('CAT3500D p.47: real Trial by Fire wins for BattleMaster east exit or destruction of all attackers',async()=>{
+ for(const cause of ['east-exit','west-exit','all-attackers','destroy-battlemaster','attacker-exit']){
+  const g=await chapter11SourceGame('trial-by-fire');
+  chapter11SourceDeployAll(g);
+  const master=g.units.find(u=>u.team===g.scenario.defenderTeam);
+  const attackers=g.units.filter(u=>u.team===g.scenario.attackerTeam);
+  g.rng=()=>.5;assert(g.applyTrialByFirePreDamage(master.id).ok);
+  if(cause==='all-attackers'){
+   for(const a of attackers)a.dead=true;
+   g.checkWin();assert.equal(g.winner,master.team);
+   continue;
+  }
+  if(cause==='destroy-battlemaster'){
+   master.dead=true;g.checkWin();assert.equal(g.winner,g.scenario.attackerTeam);
+   continue;
+  }
+  const dice=[...diceFor(12),...diceFor(2)];
+  g.rng=()=>dice.shift()??.5;
+  assert(g.nextPhase().ok);
+  assert.equal(g.initiativeWinner,master.team,'first round Initiative defender auto-wins');
+  const unit=cause==='attacker-exit'?attackers[0]:master;
+  g.phase='move';g.activeTeam=unit.team;g.actingId=null;
+  unit.moved=false;unit.spent=0;unit.moveMode='stand';
+  const edgeId=cause==='west-exit'||cause==='attacker-exit'?0:3;
+  const target=g.deploymentEdgeTiles(edgeId).find(t=>!g.occupied(t.q,t.r,unit.id));
+  assert(target);
+  unit.q=target.q;unit.r=target.r;
+  const result=g.exitScenarioMap(unit.id,edgeId);
+  assert(result.ok,'actual edge order executed from real map');
+  if(cause==='east-exit'){
+   assert(result.escaped);assert(!result.destroyed);assert.equal(g.winner,master.team);
+  }else if(cause==='west-exit'){
+   assert(!result.escaped);assert(result.destroyed);assert.equal(g.winner,g.scenario.attackerTeam);
+  }else{
+   assert(!result.escaped);assert(result.destroyed);
+   assert.equal(g.winner,null,'one attacker exit does not end battle while two remain');
+  }
+ }
+});
