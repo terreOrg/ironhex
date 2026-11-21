@@ -9613,8 +9613,14 @@
         46
       ],
       "statement": "Scenario 1 defender deploys first on the west playing-area edge, attacker on east, alternate one Mech until all eight are present, then first initiative.",
-      "status": "known_missing",
-      "reviewNote": "Standard engine edge entry occurs during movement after an unrelated selection; no in-map alternating scenario placement."
+      "status": "tested_case",
+      "reviewNote": "Standard engine edge entry occurs during movement after an unrelated selection; no in-map alternating scenario placement. 2026-11-21 PR#238: deterministic actual in-map placement transaction with source-ordered team turns, zone and collision guards; nextPhase locked until all placed. Still NOT VERIFIED: authentic mapsheet elevations, actual record sheets and external UI/AI turn wiring are missing.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.46-47: Final Exam alternates west defenders and east attackers before initiative"
+        }
+      ]
     },
     {
       "id": "agoac-143",
@@ -9673,8 +9679,14 @@
         47
       ],
       "statement": "Scenario 2 attacker sets up all Mechs first on Clear Level 0 hexes within six hexes of east edge; lone defender then within three of west edge, facing freely.",
-      "status": "known_missing",
-      "reviewNote": "Generic setup supports edge choice/entry but not asymmetric in-map six/three-zone placement."
+      "status": "tested_case",
+      "reviewNote": "Generic setup supports edge choice/entry but not asymmetric in-map six/three-zone placement. 2026-11-21 PR#238: deterministic actual in-map placement transaction with source-ordered team turns, zone and collision guards; nextPhase locked until all placed. Still NOT VERIFIED: authentic mapsheet elevations, actual record sheets and external UI/AI turn wiring are missing.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.47: Trial by Fire attacker-first clear/level-zero setup and defender-after deployment"
+        }
+      ]
     },
     {
       "id": "agoac-147",
@@ -9756,7 +9768,7 @@
       ],
       "statement": "Scenario 3 defender places command lance first within 6 hexes of north and west edges and recon lance within 6 hexes of south and east edges (errata v8.01), then attacker chooses the printed northeast east-sheet or southwest west-sheet deployment row numbered 1510–1517.",
       "status": "known_missing",
-      "reviewNote": "No corrected two-lance deployment rectangles/ordered setup; standard symmetric entry rules are not equivalent. 21.11.2026 source correction: earlier inventory reversed deployment order; official errata v8.01 requires defender FIRST. Still Known Missing."
+      "reviewNote": "No corrected two-lance deployment rectangles/ordered setup; standard symmetric entry rules are not equivalent. 21.11.2026 source correction: earlier inventory reversed deployment order; official errata v8.01 requires defender FIRST. Still Known Missing. 2026-11-21 PR#238: command first then recon defender-lance stages implemented/tested, attacker remains explicitly blocked until the printed 1510-1517 mapsheet coordinate row is faithfully imported. Remains Known Missing."
     },
     {
       "id": "agoac-152",
