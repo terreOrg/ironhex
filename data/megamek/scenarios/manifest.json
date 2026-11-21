@@ -1,0 +1,67 @@
+{
+  "sourceRepository": "https://github.com/MegaMek/mm-data",
+  "sourceRevision": "5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+  "licenseId": "CC-BY-NC-SA-4.0",
+  "records": [
+    {
+      "variant": "CPLT-C1",
+      "file": "CPLT-C1.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Catapult CPLT-C1.mtf"
+    },
+    {
+      "variant": "LCT-1V",
+      "file": "LCT-1V.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Locust LCT-1V.mtf"
+    },
+    {
+      "variant": "COM-2D",
+      "file": "COM-2D.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Commando COM-2D.mtf"
+    },
+    {
+      "variant": "SHD-2H",
+      "file": "SHD-2H.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Shadow Hawk SHD-2H.mtf"
+    },
+    {
+      "variant": "BLR-1G",
+      "file": "BLR-1G.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/BattleMaster BLR-1G.mtf"
+    },
+    {
+      "variant": "WVR-6M",
+      "file": "WVR-6M.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Wolverine WVR-6M.mtf"
+    },
+    {
+      "variant": "COM-3A",
+      "file": "COM-3A.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Commando COM-3A.mtf"
+    },
+    {
+      "variant": "CPLT-K2",
+      "file": "CPLT-K2.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Catapult CPLT-K2.mtf"
+    },
+    {
+      "variant": "TDR-5S",
+      "file": "TDR-5S.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Thunderbolt TDR-5S.mtf"
+    },
+    {
+      "variant": "AWS-8Q",
+      "file": "AWS-8Q.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Awesome AWS-8Q.mtf"
+    },
+    {
+      "variant": "TDR-5SE",
+      "file": "TDR-5SE.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Thunderbolt TDR-5SE.mtf"
+    },
+    {
+      "variant": "GRF-1N",
+      "file": "GRF-1N.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Griffin GRF-1N.mtf"
+    }
+  ]
+}

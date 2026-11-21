@@ -1,5 +1,6 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
 import {construct} from './construction.js';
+import {AGOAC_BOARD_SOURCE,buildAgoacSheet} from './agoac-boards.js';
 export {LOCATIONS,DIRS,distance};
 // AGoAC pp.3–4: logical game scale; visual model dimensions remain illustrative.
 // Digital battlefield presets, not reproductions of the printed mapsheets.
@@ -769,7 +770,8 @@ export class Game extends Legacy{
     ...repeat(attacker,4,'printed-row')];
   this.scenario.placement={
    steps,placed:[],complete:false,attackerRow:null,
-   exactMapImplemented:false,recordSheetsImported:false
+   exactMapImplemented:this.scenario.sourceTerrainLoaded===true,
+   recordSheetsImported:this.scenario.recordSheetsImported===true
   };
   for(const u of actual){
    u.deployed=false;
@@ -779,7 +781,8 @@ export class Game extends Legacy{
    }
   }
   return {ok:true,steps:steps.length,next:structuredClone(steps[0]),
-   exactMapImplemented:false,recordSheetsImported:false};
+   exactMapImplemented:this.scenario.sourceTerrainLoaded===true,
+   recordSheetsImported:this.scenario.recordSheetsImported===true};
  }
  placePrintedScenarioMech(id,q,r,facing=0){
   const state=this.scenario?.placement,unit=this.unit(id);
@@ -1106,12 +1109,93 @@ export class Game extends Legacy{
   }
   return {ok:true};
  }
+ // CAT3500D pp.45–48: the four named AGoAC boards, in their printed
+ // left-to-right arrangement. Unlike generic synthetic presets, every
+ // elevation, water/rough/woods hex and physical label comes from the
+ // pinned source board files. No printed artwork is embedded.
+ configurePrintedScenarioMap({rotations=[0,0]}={}){
+  if(!this.scenarioSetupOpen()||!this.scenario||
+   ![0,1].includes(this.scenario.defenderTeam)||this.setupMap||
+   this.setupForces||this.scenario.placement||
+   !Array.isArray(rotations)||rotations.length!==2||
+   rotations.some(n=>![0,3].includes(n)))
+   return fail('Сначала выберите сценарий, стороны и допустимый поворот обеих карт');
+  const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario.id];
+  if(!manifest)return fail('Неизвестный сценарий AGoAC');
+  const named=manifest.sheets.map((sheet,i)=>({
+   name:sheet.name,side:sheet.side,rotation:rotations[i]}));
+  const preset=this.configureRectangularSheets('horizontal',[
+   {id:'clear',rotation:rotations[0]},{id:'clear',rotation:rotations[1]}]);
+  if(!preset.ok)return preset;
+  this.tiles=named.flatMap((m,i)=>buildAgoacSheet(m.name,{sheet:i,rotation:m.rotation}));
+  this.rebuildMap();
+  this.setupMap={...this.setupMap,printedScenario:this.scenario.id,
+   sourceRevision:AGOAC_BOARD_SOURCE.revision,
+   sourceLicense:AGOAC_BOARD_SOURCE.license,
+   artworkImported:false,stackedBridgePhysicsImplemented:false,
+   sheets:named.map(m=>({id:'clear',rotation:m.rotation,name:m.name,side:m.side}))};
+  this.scenario.printedSetupRequired=true;
+  this.scenario.sourceTerrainLoaded=true;
+  return {ok:true,tiles:this.tiles.length,sheets:structuredClone(named),
+   sourceRevision:AGOAC_BOARD_SOURCE.revision,artworkImported:false};
+ }
+ // The true MTF technical designs must be supplied by the pinned-data
+ // server importer. Construct each design using the combat engine's own
+ // equipment/critical/armor validator and then attach printed pilot skills.
+ // Fail atomically: no fake stock-demo chassis are substituted.
+ configurePrintedScenarioForces({designs}={}){
+  const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario?.id];
+  if(!this.scenarioSetupOpen()||!manifest||
+   this.setupMap?.printedScenario!==this.scenario.id||
+   this.setupForces||this.scenario.placement||
+   !designs||typeof designs!=='object'||Array.isArray(designs))
+   return fail('Нужны исходные записи мехов и точная карта выбранного сценария');
+  const roster=[...manifest.attacker.map(u=>({...u,team:this.scenario.attackerTeam})),
+   ...manifest.defender.map(u=>({...u,team:this.scenario.defenderTeam}))];
+  const available=new Set(roster.map(u=>u.variant));
+  if(Object.keys(designs).length!==available.size||
+   Object.keys(designs).some(v=>!available.has(v)))
+   return fail('Нужны технические записи всех вариантов из печатного состава');
+  const bases=structuredClone(this.units),next=[],reserved=new Set();
+  for(const [i,source] of roster.entries()){
+   const design=designs[source.variant];
+   if(!design||typeof design.name!=='string'||
+    !design.name.endsWith(' '+source.variant))
+    return fail('Название записи не совпадает с точным вариантом из AGoAC');
+   let built;
+   try{built=construct(design);}catch{return fail('Не удалось разобрать исходную запись меха');}
+   if(!built.unit||built.errors.length||built.remaining<-.001)
+    return fail('Технический проект не проходит проверку конструктора');
+   const candidates=this.tiles.filter(t=>!t.depth&&!t.bridge&&!reserved.has(t.q+','+t.r));
+   const tile=candidates[0];
+   if(!tile)return fail('Недостаточно доступных гексов для состава сценария');
+   reserved.add(tile.q+','+tile.r);
+   const template=bases[source.team*2];
+   if(!template)return fail('Отсутствует базовый шаблон боевого состояния');
+   const unit={...structuredClone(template),...structuredClone(built.unit),
+    id:i,team:source.team,pilot:source.pilot,pilotName:source.pilot,
+    variant:source.variant,gunnery:source.gunnery,piloting:source.piloting,
+    lance:source.lance??null,q:tile.q,r:tile.r,
+    facing:source.team?3:0,deployed:false,notFielded:false,dead:false,
+    heat:0,pendingHeat:0,moveStart:{q:tile.q,r:tile.r},
+    recordSource:'MegaMek/mm-data',recordSourceRevision:AGOAC_BOARD_SOURCE.revision};
+   unit.weapons.forEach(w=>{w.destroyed=false;w.rear??=false;});
+   next.push(unit);
+  }
+  this.units=next;
+  this.setupForces={type:'agoac-printed-records',scenario:this.scenario.id,
+   variants:[...available],sourceRevision:AGOAC_BOARD_SOURCE.revision};
+  this.scenario.recordSheetsImported=true;
+  return {ok:true,units:next.length,variants:[...available],
+   sourceRevision:AGOAC_BOARD_SOURCE.revision};
+ }
  deploymentEdgeIds(){return this.setupMap?.id==='sheets'?[0,2,3,5]:[0,1,2,3,4,5];}
  // AGoAC p.6: choose forces before deployment, with unanimous
  // consent for custom designs. Stable slot IDs keep the existing local
  // renderer's four model instances; empty secondary slots are not fielded.
  configureSetupForces({slots,extra=[],custom=null,approvals=[]}={}){
-  if(this.scenario?.placement)return fail('Состав нельзя изменить после начала размещения сценария');
+  if(this.scenario?.printedSetupRequired||this.scenario?.placement)
+   return fail('Состав нельзя заменить после выбора исходных записей сценария');
   if(this.round!==1||this.phase!=='initiative'||this.deployment!==null||
    this.setupForces!==null||this.queue.length||this.units.some(u=>u.moved||u.fired||u.physicalDone))
    return fail('Состав можно выбрать только перед боем');
@@ -1162,7 +1246,8 @@ export class Game extends Legacy{
   return {ok:true};
  }
  startStandardDeployment(){
-  if(this.scenario?.placement)return fail('Сценарное размещение нельзя заменить стандартным');
+  if(this.scenario?.printedSetupRequired||this.scenario?.placement)
+   return fail('Сценарное размещение нельзя заменить стандартным');
   if(this.deployment!==null||this.round!==1||this.phase!=='initiative'||this.queue.length||
    this.units.some(u=>u.moved||u.fired||u.physicalDone))return fail('Развёртывание возможно только перед боем');
   this.deployment={winner:null,edges:null};this.phase='setup';this.phaseRolls=[];
@@ -3103,7 +3188,7 @@ export class Game extends Legacy{
    return {ok:true,pending:true};
   }
  }
- nextPhase(){if(this.scenario?.chase&&this.round===1&&this.phase==='initiative'&&!this.scenario.placement)return fail('Сначала разместите единственного защитника погони');if(this.scenario?.placement&&!this.scenario.placement.complete&&this.phase==='initiative')return fail('Сначала разместите всех мехов по условиям сценария');if(this.scenario?.placement?.complete&&this.scenario.id==='trial-by-fire'&&this.phase==='initiative'&&!this.scenario.preDamageApplied)return fail('Сначала нанесите четыре предварительных попадания BattleMaster');if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false&&!this.scenarioReserveWaiting(u)))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))return fail('Сначала бросьте кубики и выберите сторону сценария');this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
+ nextPhase(){if(this.scenario?.printedSetupRequired&&!this.scenario?.placement?.complete&&this.phase==='initiative')return fail('Сначала расставьте все мехи по печатному сценарию');if(this.scenario?.chase&&this.round===1&&this.phase==='initiative'&&!this.scenario.placement)return fail('Сначала разместите единственного защитника погони');if(this.scenario?.placement&&!this.scenario.placement.complete&&this.phase==='initiative')return fail('Сначала разместите всех мехов по условиям сценария');if(this.scenario?.placement?.complete&&this.scenario.id==='trial-by-fire'&&this.phase==='initiative'&&!this.scenario.preDamageApplied)return fail('Сначала нанесите четыре предварительных попадания BattleMaster');if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false&&!this.scenarioReserveWaiting(u)))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))return fail('Сначала бросьте кубики и выберите сторону сценария');this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
  this.endPSR();this.afterRolls=[...this.phaseRolls];this.removeDestroyedMechs();this.checkWin();if(this.winner===null){this.phase='fire';this.buildQueue();}}else if(this.phase==='fire'){this.resolveFire();this.checkWin();if(this.winner===null){this.phase='physical';this.buildQueue();}}else if(this.phase==='physical'){this.resolvePhysical();this.checkWin();this.activeTeam=null;if(this.winner===null)this.phase='heat';}else if(this.phase==='heat'){this.heatPhase();this.checkWin();if(this.winner===null)this.phase='end';}else{this.endPhase();this.checkWin({stalemate:true});if(this.winner===null)this.phase='initiative';}if(this.winner===null)this.note(`Раунд ${this.round}: ${PHASES[this.phase]}.`);else{this.activeTeam=null;this.actingId=null;}return {ok:true};}
  aiMove(id){const u=this.unit(id);if(!this.canAct(u))return fail('Не очередь ИИ');if(u.deployed===false){const choices=this.deploymentOptions(u);const best=choices.sort((a,b)=>Number(a.mode==='minimum')-Number(b.mode==='minimum')||distance(a,{q:0,r:0})-distance(b,{q:0,r:0})||a.cost-b.cost)[0];if(!best)return {...fail('Нет допустимого входа: требуется изменить условия сценария'),code:'deployment_blocked'};const result=this.enterDeployment(u,best.q,best.r,best.mode);if(result.ok&&!result.ended)this.hold(id);return result;}if(this.isImmobile(u))return this.hold(id);if(u.prone){const s=this.stand(id);if(!s.ok||u.prone)return this.hold(id);}const options=['walk','run',...(this.mp(u,'jump')?['jump']:[])].flatMap(m=>this.reachable(u,m).map(p=>({...p,mode:m})));let best=null,score=-Infinity;const enemies=this.units.filter(t=>t.team!==u.team&&!t.dead&&t.deployed!==false);for(const p of options){const old={q:u.q,r:u.r,facing:u.facing};u.q=p.q;u.r=p.r;u.facing=p.facing;let value=-Infinity;for(const t of enemies){let v=u.weapons.reduce((n,w,i)=>n+this.preview(id,t.id,i).chance*(w.rack?w.rack*.6*w.damage:w.damage)/100,0)-Math.abs(distance(u,t)-5)*.5;if(p.mode==='jump')v-=1;value=Math.max(value,v);}Object.assign(u,old);if(value>score){score=value;best=p;}}const r=best?this.move(id,best.q,best.r,best.mode):{ok:true};this.hold(id);return r;}
  planAiFire(u){

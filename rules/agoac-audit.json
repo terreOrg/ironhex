@@ -9603,8 +9603,18 @@
         45
       ],
       "statement": "Scenario 1 Final Exam uses Desert #3 + Grassland #2 in the pictured arrangement (v8.01 correction), four precise chassis/variants and 4/5 pilots per side.",
-      "status": "known_missing",
-      "reviewNote": "Digital board presets are not printed sheets; no keyed Final Exam roster, assignment or map."
+      "status": "tested_case",
+      "reviewNote": "2026-11-21 source-data package: source-native Desert #3 + Grassland #2 (16x17 each, 544 terrain hexes) from MegaMek/mm-data pinned revision 5ee1b15 and all 4 source MTF variants imported using combat construct(), with eight exact printed pilot assignments (4 per side) and initial setup lock. Regression checks elevation, water/woodland, exact roster and no demo fallbacks. TESTED CASE only: original full-color map textures, exact commercial record-sheet graphics, independent printed-to-digital terrain validation and scenario-launch UI remain unverified.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.45-48: three source-backed scenarios load true maps and Mech records, not demo units"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.45-48: pinned MegaMek MTF data construct all printed AGoAC technical designs"
+        }
+      ]
     },
     {
       "id": "agoac-142",
@@ -9669,8 +9679,18 @@
         46
       ],
       "statement": "Scenario 2 Trial by Fire uses Desert #2 + Grassland #3, exact lone BLR-1G and three attackers with printed 4/5,5/5,5/6 pilots, plus four random front 5-point pre-damage hits excluding heads and criticals.",
-      "status": "known_missing",
-      "reviewNote": "No Trial by Fire preset; server operations preserve prior damage but do not perform specified four pre-battle randomized hits."
+      "status": "tested_case",
+      "reviewNote": "2026-11-21 source-data package: Desert #2 + Grassland #3 from pinned MegaMek mm-data, real BLR-1G and WVR-6M/LCT-1V/COM-3A MTF technical definitions, exact published pilot/skill manifest, printed pregame four 5-point FRONT hits with head reroll, critical suppression and first-turn initiative. Source-backed end-to-end regression covers true BattleMaster model, placement, pre-damage and phase transition. TESTED CASE only: printed full-color map art, MTF-to-commercial record-sheet equivalence and complete scenario user interface remain unaudited.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.45-48: three source-backed scenarios load true maps and Mech records, not demo units"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.46-48: source BattleMaster gets four pregame 5-point hits without head/crit"
+        }
+      ]
     },
     {
       "id": "agoac-146",
@@ -9763,8 +9783,18 @@
         47
       ],
       "statement": "Scenario 3 Divide and Conquer uses Desert #2 + Grassland #3 with specified terrain (v8.01 correction), six defending and FOUR attacking printed BattleMechs and individual pilot skills.",
-      "status": "known_missing",
-      "reviewNote": "Engine supports 6+4 on the printed roster but no Divide and Conquer named roster, corrected mapsheets, or pre-positioned terrain. 2026-11-21 source correction: original CAT3500D printed p.47 specifies FOUR attackers, not six. Earlier roster carried over Adjani and Lucas from Trial by Fire incorrectly; PR#237 removes these duplicate units in both engine exports and assertions. Printed map art and authentic records still missing."
+      "status": "tested_case",
+      "reviewNote": "2026-11-21 source-data package: source-native Desert #2 + Grassland #3 terrain from pinned MegaMek mm-data, six defender and exactly FOUR attacker MTF chassis records with source-correct pilot skills. Construct validated all ten technical units; end-to-end setup tests exercise command/recon placement, source maps, selected printed attacker hexes and ten-unit initiative. TESTED CASE only: independent physical-map visual proof, original printed record-sheet artwork and multiplayer scenario UI remain open.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.45-48: three source-backed scenarios load true maps and Mech records, not demo units"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: source-backed Divide and Conquer completes corrected defender-first ten-Mech setup"
+        }
+      ]
     },
     {
       "id": "agoac-151",

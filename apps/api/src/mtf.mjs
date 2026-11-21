@@ -84,10 +84,14 @@ export function importMtf(raw,{sourcePath='unknown'}={}){
     rawSlots[loc]=rows.slice(0,cap);
   }
   const equipment=[],pendingAmmo=[];
-  const removeActuators=[];
+  const removeActuators=[],removeHandActuators=[];
   for(const [loc,rows] of Object.entries(rawSlots)){
-    if(['LA','RA'].includes(loc)&&rows[2]!=='Lower Arm Actuator'&&rows[3]!=='Hand Actuator')
-      removeActuators.push(loc);
+    if(['LA','RA'].includes(loc)){
+      if(rows[2]!=='Lower Arm Actuator'){
+        if(rows[3]==='Hand Actuator')bad('hand_without_lower_'+loc);
+        removeActuators.push(loc);
+      }else if(rows[3]!=='Hand Actuator')removeHandActuators.push(loc);
+    }
     for(let i=0;i<rows.length;){
       const slot=i+1,label=rows[i],type=normalizeWeapon(label);
       if(label==='Jump Jet'){equipment.push({type:'jump',location:loc,slot});i++;continue;}
@@ -127,6 +131,7 @@ export function importMtf(raw,{sourcePath='unknown'}={}){
     bad('weapons_manifest');
   const config={name,config:chassisConfig,tonnage,walk,jump,sinks,armor,rear,equipment};
   if(removeActuators.length)config.removeActuators=removeActuators;
+  if(removeHandActuators.length)config.removeHandActuators=removeHandActuators;
   const built=construct(config);
   if(built.errors.length||!built.unit||built.remaining<-.001)
     bad('construction_'+built.errors.join('|'));
