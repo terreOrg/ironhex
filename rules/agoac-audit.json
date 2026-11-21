@@ -9647,8 +9647,14 @@
         46
       ],
       "statement": "Scenario 1 suggested variants permit alternative four-Mech force rosters and rotated/reshaped two-map terrain while preserving other scenario rules.",
-      "status": "known_missing",
-      "reviewNote": "Generic roster/map layout selection exists but no Final Exam preset, approved printed roster variation or scenario continuity."
+      "status": "tested_case",
+      "reviewNote": "Generic roster/map layout selection exists but no Final Exam preset, approved printed roster variation or scenario continuity. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.46,48: exact alternative Final Exam chassis and shortened 6-defender vs 4-attacker scenario"
+        }
+      ]
     },
     {
       "id": "agoac-145",
@@ -9738,9 +9744,9 @@
       "pages": [
         47
       ],
-      "statement": "Scenario 3 Divide and Conquer uses Desert #2 + Grassland #3 with specified terrain (v8.01 correction), six defending and six attacking printed BattleMechs and individual pilot skills.",
+      "statement": "Scenario 3 Divide and Conquer uses Desert #2 + Grassland #3 with specified terrain (v8.01 correction), six defending and FOUR attacking printed BattleMechs and individual pilot skills.",
       "status": "known_missing",
-      "reviewNote": "Engine supports 6+6 generic teams but no Divide and Conquer named roster, corrected mapsheets, or pre-positioned terrain."
+      "reviewNote": "Engine supports 6+4 on the printed roster but no Divide and Conquer named roster, corrected mapsheets, or pre-positioned terrain. 2026-11-21 source correction: original CAT3500D printed p.47 specifies FOUR attackers, not six. Earlier roster carried over Adjani and Lucas from Trial by Fire incorrectly; PR#237 removes these duplicate units in both engine exports and assertions. Printed map art and authentic records still missing."
     },
     {
       "id": "agoac-151",
@@ -9828,8 +9834,14 @@
         48
       ],
       "statement": "Scenario 3 shorter-force variation and three-player shared defender-lance control include independent alternation and 2D6 tie arbitration for each disputed phase.",
-      "status": "known_missing",
-      "reviewNote": "No scenario alternate force roster or shared two-person control with 2D6 dispute arbitration."
+      "status": "tested_case",
+      "reviewNote": "No scenario alternate force roster or shared two-person control with 2D6 dispute arbitration. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER phase"
+        }
+      ]
     },
     {
       "id": "agoac-155",

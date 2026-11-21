@@ -50,10 +50,30 @@ export const AGOAC_PRINTED_SCENARIOS=Object.freeze({
   [printedMech('Seymore','AWS-8Q',3,3),
    printedMech('Marks','TDR-5SE',5,4),
    printedMech('Kanazawa','WVR-6M',4,3),
-   printedMech("O'Rourke",'GRF-1N',4,3),
-   printedMech('Adjani','LCT-1V',6,5),
-   printedMech('Lucas','COM-3A',6,5)]
+   printedMech("O'Rourke",'GRF-1N',4,3)]
  )
+});
+
+// CAT3500D pp.46,48: print-specified scenario variations, not generic units.
+// Alternate force list is only a source manifest until exact chassis imported.
+const freezeList=xs=>Object.freeze(xs);
+const divide=AGOAC_PRINTED_SCENARIOS['divide-and-conquer'];
+export const AGOAC_SCENARIO_VARIATIONS=Object.freeze({
+ 'final-exam':Object.freeze({
+  alternateForces:Object.freeze({
+   defender:freezeList(['TDR-5S','GRF-1N','LCT-1E','COM-2D']),
+   attacker:freezeList(['TDR-5SE','WVR-6R','LCT-1V','COM-3A'])
+  }),
+  terrainVariations:freezeList(['turn-sheets-180','join-short-sides','substitute-terrain'])
+ }),
+ 'divide-and-conquer':Object.freeze({
+  shortened:Object.freeze({
+   defender:freezeList(divide.defender.filter(u=>!['SHD-2H','LCT-1V'].includes(u.variant))),
+   attacker:freezeList(divide.attacker.filter(u=>u.variant!=='TDR-5SE')),
+   removed:Object.freeze({defender:freezeList(['SHD-2H','LCT-1V']),attacker:freezeList(['TDR-5SE'])})
+  }),
+  sharedDefenderLances:freezeList(['command','recon'])
+ })
 });
 export const AGOAC_SCALE=Object.freeze({hexMeters:30,levelMeters:6,turnSeconds:10,standingMechLevels:2});
 export const rangeMeters=(a,b)=>distance(a,b)*AGOAC_SCALE.hexMeters;
@@ -563,6 +583,58 @@ export class Game extends Legacy{
   return {ok:true,hits:structuredClone(this.scenario.preDamageHits),rolls:[...this.phaseRolls]};
  }
 
+ // CAT3500D p.48: two real defending players control distinct lances.
+ // The roll arbitrates the *rest of the current phase*, not a single
+ // unit and not the next phase. This returns the decision for the UI to
+ // enforce; authenticated multi-player command routing remains separate.
+ configureSharedDefenderLances({commandController,reconController}={}){
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
+   ![0,1].includes(this.scenario?.defenderTeam)||this.scenario.sharedLances||
+   typeof commandController!=='string'||!commandController.trim()||
+   commandController.length>80||typeof reconController!=='string'||
+   !reconController.trim()||reconController.length>80||
+   commandController===reconController)
+   return fail('Нужно назначить двух разных игроков командирами разных лэнсов до игры');
+  this.scenario.sharedLances={
+   commandController:commandController.trim(),
+   reconController:reconController.trim(),
+   decided:null,serverAuthorizationImplemented:false
+  };
+  return {ok:true,commandController:commandController.trim(),reconController:reconController.trim()};
+ }
+ // The source only permits settling a disagreement about who moves or
+ // declares fire. Do not silently turn this into control of attacker,
+ // physical attacks, heat or a different round.
+ arbitrateSharedDefenderChoice({commandChoice,reconChoice}={}){
+  const state=this.scenario?.sharedLances;
+  if(!state||this.scenario?.id!=='divide-and-conquer'||
+   !['move','fire'].includes(this.phase)||!Number.isInteger(this.round)||
+   !Number.isInteger(commandChoice)||!Number.isInteger(reconChoice)||
+   commandChoice===reconChoice)return fail('Арбитраж доступен при споре о мехе в движении или стрельбе');
+  const valid=(id,lance)=>{
+   const u=this.unit(id);
+   return !!u&&!u.dead&&!u.notFielded&&u.team===this.scenario.defenderTeam&&
+    u.lance===lance;
+  };
+  if(!valid(commandChoice,'command')||!valid(reconChoice,'recon'))
+   return fail('Каждый игрок предлагает мех только своего лэнса защитников');
+  const prev=state.decided;
+  if(prev?.round===this.round&&prev?.phase===this.phase)
+   return {ok:true,controller:prev.controller,
+    unitId:prev.controller==='command'?commandChoice:reconChoice,
+    rolls:[],reused:true};
+  const startingRoll=this.phaseRolls.length;
+  let a,b,n=0;
+  do{
+   a=this.roll('Арбитраж: командный лэнс (2D6)');
+   b=this.roll('Арбитраж: разведывательный лэнс (2D6)');
+  }while(a===b&&++n<10000);
+  if(a===b)throw Error('Арбитраж D6: последовательные ничьи');
+  const controller=a>b?'command':'recon';
+  const unitId=controller==='command'?commandChoice:reconChoice;
+  state.decided={round:this.round,phase:this.phase,controller,unitId};
+  return {ok:true,controller,unitId,reused:false,rolls:this.phaseRolls.slice(startingRoll)};
+ }
  // CAT3500D p.48: only one MechWarrior Card on each team, equal cost,
  // optionally selected by floor(D6/2), and mirrored pilot improvement.
  configureScenarioCards({cards=[],mirrors=[],agreedCost=null}={}){
