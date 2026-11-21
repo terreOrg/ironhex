@@ -6673,9 +6673,9 @@ const prepareScenario3IllustrationForTest=g=>{
  assert(g.startScenarioLooseTerrain({piecesPerTeam:2,startingTeam:0}).ok);
  const positions=[
   [0,5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-  [1,10,11,'level1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
+  [1,10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
   [0,21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-  [1,26,11,'level2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
+  [1,26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
  ];
  for(const [team,col,row,terrainType,footprint]of positions){
   const tile=g.tiles.find(t=>t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
@@ -7264,8 +7264,8 @@ test('CAT3500D p.47: printed Scenario 3 mandates four diagram counters with real
  assert(g.beginPrintedScenarioPlacement().ok);
  assert.equal(g.scenario.picturedTerrain.pieces.length,4);
  assert.equal(g.scenario.picturedTerrain.sourcePage,47);
- assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='level1'&&t.height===1));
- assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='level2'&&t.height===2));
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='sublevel1'&&t.height===-1&&t.surface===-1&&t.depth===0));
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='sublevel2'&&t.height===-2&&t.surface===-2&&t.depth===0));
  assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='depth1'&&t.depth===1));
  assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='depth2'&&t.depth===2));
 });
@@ -8115,34 +8115,34 @@ test('CAT3500D p.47: illustrated four-piece source setup rejects false shapes an
  g.rng=()=>{assert(tiedDice.length);return tiedDice.shift();};
  const firstRuling=g.arbitrateIllustratedTerrainDispute({
   pieceIndex:0,first:{terrainType:'depth1',orientation:0},
-  second:{terrainType:'level1',orientation:4}});
+  second:{terrainType:'sublevel1',orientation:4}});
  assert(firstRuling.ok);assert.equal(firstRuling.winner,0);
  assert.equal(firstRuling.retries,1);assert.equal(firstRuling.rolls.length,4);
  assert.deepEqual(firstRuling.choice,{terrainType:'depth1',orientation:0});
  assert.equal(tiedDice.length,0);
  assert.equal(g.arbitrateIllustratedTerrainDispute({
-  pieceIndex:0,first:{terrainType:'level1',orientation:3},
+  pieceIndex:0,first:{terrainType:'sublevel1',orientation:3},
   second:{terrainType:'depth1',orientation:0}}).ok,false,'cannot reroll decided face');
- assert.equal(place(0,first,'level1',pair).ok,false,'2D6 winner face is binding');
+ assert.equal(place(0,first,'sublevel1',pair).ok,false,'2D6 winner face is binding');
  assert.equal(place(0,first,'depth1',[{q:0,r:0},{q:-1,r:1}]).ok,false,
   '2D6 winner pair orientation is binding');
  assert(place(0,first,'depth1',pair).ok);
- assert.equal(place(1,second,'level1',[{q:0,r:0},{q:1,r:0},{q:2,r:0}]).ok,false,
+ assert.equal(place(1,second,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:2,r:0}]).ok,false,
   'three hexes must form source triangular geometry');
- assert(place(1,second,'level1',triangle).ok);
+ assert(place(1,second,'sublevel1',triangle).ok);
  let d=[...diceFor(2),...diceFor(12)];
  g.rng=()=>{assert(d.length);return d.shift();};
  const alternate=g.arbitrateIllustratedTerrainDispute({
-  pieceIndex:2,first:{terrainType:'level1',orientation:0},
+  pieceIndex:2,first:{terrainType:'sublevel1',orientation:0},
   second:{terrainType:'depth2',orientation:4}});
  assert(alternate.ok);assert.equal(alternate.winner,1);
  assert.deepEqual(alternate.choice,{terrainType:'depth2',orientation:4});
  assert.equal(d.length,0);
  assert(place(0,third,'depth2',[{q:0,r:0},{q:DIRS[4][0],r:DIRS[4][1]}]).ok);
- assert(place(1,fourth,'level2',triangle).ok);
+ assert(place(1,fourth,'sublevel2',triangle).ok);
  assert.equal(g.scenario.looseTerrain.complete,true);
  assert.equal(g.arbitrateIllustratedTerrainDispute({
-  pieceIndex:4,first:{terrainType:'level1',orientation:0},
+  pieceIndex:4,first:{terrainType:'sublevel1',orientation:0},
   second:{terrainType:'depth1',orientation:1}}).ok,false,'no arbitration after completed terrain');
  assert(g.confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed:true}).ok);
  assert(g.beginPrintedScenarioPlacement().ok);
