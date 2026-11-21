@@ -737,6 +737,7 @@ export class Game extends Legacy{
   if(!route)return fail('Недопустимый вход с назначенной стороны');
   this.phaseRolls=[];this.actingId=u.id;
   const from=route.entryFrom,minimum=mode==='minimum';
+  const jumpCost=this.weather.night?2:1;
   if(route.transit){
    // Transit starts at the virtual edge. Resolve the first hex's
    // checks immediately, before any subsequent movement.
