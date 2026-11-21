@@ -10457,14 +10457,6 @@
           "test": "AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitration and signed moves"
         },
         {
-          "file": "tests/scenario-three-browser-postgres.mjs",
-          "test": "AGoAC Chapter 11 REAL three-browser + PostgreSQL shortened setup, 2D6, complete round and round two: PASS"
-        },
-        {
-          "file": "tests/scenario-rooms-integration.mjs",
-          "test": "AGoAC Ch11: real PostgreSQL and three-session full/shortened room lifecycle passed"
-        },
-        {
           "file": "tests/browser.mjs",
           "test": "AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitration and signed moves"
         }
@@ -10501,7 +10493,7 @@
           "conclusion": "success",
           "headSha": "2f2d0a4eaacc274a8782cce6ebd20ea170ad3494"
         },
-        "review": "Original CAT3500D p.48 shared-defender variation is independently enforced by signed attacker/command/recon accounts. The full 10-Mech and shortened 7-Mech source rosters, command/recon Initiative alternation and both defender proposals with 2D6 tie rerolls have unit and authenticated PostgreSQL evidence. The real independent Chromium seat test passed on PR #277 exact head 406b365b308efe4bf1ffc7807769b0ca76040205 (Browser E2E 44960439403, job 137017837449) and full main four-way CI/quality passed on 2f2d0a4eaacc274a8782cce6ebd20ea170ad3494. Printed artwork piece coordinates are deliberately outside this atomic 3-player control rule and stay unverified under 150/151."
+        "review": "Original CAT3500D p.48 shared-defender variation is independently enforced by signed attacker/command/recon accounts. The full 10-Mech and shortened 7-Mech source rosters, command/recon Initiative alternation and both defender proposals with 2D6 tie rerolls have unit and authenticated PostgreSQL evidence. The real independent Chromium seat test passed on PR #277 exact head 406b365b308efe4bf1ffc7807769b0ca76040205 (Browser E2E 44960439403, job 137017837449) and full main four-way CI/quality passed on 2f2d0a4eaacc274a8782cce6ebd20ea170ad3494. Printed artwork piece coordinates are deliberately outside this atomic 3-player control rule and stay unverified under 150/151. Integration scripts (outside Node test suite) are independently certified by explicit passing log in GitHub job 137017837449 and smoke 44960790471, rather than being mislabeled as named test() declarations."
       }
     },
     {
