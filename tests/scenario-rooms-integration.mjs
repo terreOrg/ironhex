@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {createPool} from '../apps/api/src/db.mjs';
+import {restoreScenarioRoomGame} from '../apps/api/src/scenario-room-match.mjs';
 const base='http://127.0.0.1:3000',suffix=randomBytes(5).toString('hex');
 const pool=createPool(),password='Ch11-PG-Integration-2026!';
 async function req(path,{method='GET',body,cookie,origin=true}={}){
@@ -107,6 +108,142 @@ try{
    [id,JSON.stringify(saved)]);
   checked(await req(route+'/snapshot',{cookie:attacker.cookie}),200,
    tag+' valid map restored');
+  // Complete one REAL signed PostgreSQL round (both printed roster variants).
+  // Action selection inspects a read-only restored server snapshot; every
+  // mutation and 2D6 draw still occurs through the authenticated HTTP API.
+  let version=4;
+  const source=async()=>{
+   const rows=await pool.query('SELECT battle_state FROM agoac_scenario_rooms WHERE id=$1',[id]);
+   assert.equal(rows.rows.length,1);
+   return restoreScenarioRoomGame(rows.rows[0].battle_state).game;
+  };
+  const signed=async(role,endpoint,action)=>{
+   const result=checked(await req(route+'/'+endpoint,{method:'POST',
+    cookie:accounts[role].cookie,body:{version,action}}),200,
+    tag+' '+role+' '+action.type);
+   version++;
+   assert.equal(result.item.version,version,'each authoritative request advances one version');
+   assert(!JSON.stringify(result).includes('rngState'),'PRNG seed stays server-private');
+   return result;
+  };
+  const tile=(game,col,row)=>game.tiles.find(t=>
+   t.q+Math.floor(t.r/2)+Math.floor(game.setupMap.width/2)===col&&
+   t.r+Math.floor(game.setupMap.height/2)===row);
+  const pieces=[
+   [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
+   [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
+   [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
+   [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
+  ];
+  for(const [index,[col,row,terrainType,footprint]]of pieces.entries()){
+   const g=await source(),hex=tile(g,col,row);
+   assert(hex,'source hex for published piece geometry');
+   const role=g.scenario.looseTerrain.nextTeam===g.scenario.attackerTeam?
+    'attacker':index<2?'command':'recon';
+   await signed(role,'setup',{type:'place-terrain',
+    q:hex.q,r:hex.r,terrainType,footprint});
+  }
+  assert.equal((await source()).scenario.looseTerrain.complete,true);
+  for(const role of ['command','attacker','recon'])
+   await signed(role,'setup',{type:'confirm-figure'});
+  assert.equal((await source()).scenario.picturedTerrain.confirmed,true);
+  const count=shortened?7:10;
+  let commandCol=0,reconCol=0,attackerCol=0,steps=0;
+  while(!(await source()).scenario.placement.complete){
+   let g=await source();
+   const step=g.scenario.placement.steps[g.scenario.placement.placed.length];
+   assert(step,'one authentic printed placement step required');
+   const role=step.team===g.scenario.attackerTeam?'attacker':step.lance;
+   const unit=g.units.find(u=>u.team===step.team&&!u.deployed&&
+    !u.notFielded&&(role==='attacker'||u.lance===step.lance));
+   assert(unit,'printed pilot must belong to authenticated player '+role);
+   let hex;
+   if(role==='command')hex=tile(g,commandCol++,0);
+   else if(role==='recon')hex=tile(g,31-reconCol++,16);
+   else{
+    if(!g.scenario.placement.attackerRow){
+     await signed('attacker','setup',{type:'choose-row',side:'east'});
+     g=await source();
+    }
+    hex=g.divideAndConquerPrintedRow('east')[attackerCol++];
+   }
+   assert(hex,'legal source deployment hex');
+   await signed(role,'setup',{type:'place-mech',
+    id:unit.id,q:hex.q,r:hex.r,facing:0});
+   assert(++steps<=count,'each real pilot deployed exactly once');
+  }
+  let g=await source();
+  assert.equal(g.scenario.placement.placed.length,count);
+  assert.equal(g.phase,'initiative');
+  const wrongInitiative=await req(route+'/command',{method:'POST',
+   cookie:recon.cookie,body:{version,action:{type:'next'}}});
+  assert.equal(wrongInitiative.status,403,'recon cannot act as initial initiative controller');
+  assert.equal(wrongInitiative.data.error,'wrong_initiative_controller');
+  await signed('command','command',{type:'next'});
+  g=await source();
+  assert.equal(g.phase,'move');
+  assert.equal(g.queue.length,count);
+  let resolvedDispute=null;
+  for(const phase of ['move','fire','physical']){
+   g=await source();
+   assert.equal(g.phase,phase);
+   let turns=0;
+   while(g.queue.length){
+    if(phase==='move'&&!resolvedDispute&&g.activeTeam===g.scenario.defenderTeam){
+     const cmd=g.units.find(u=>u.lance==='command'&&g.canAct(u));
+     const rec=g.units.find(u=>u.lance==='recon'&&g.canAct(u));
+     assert(cmd&&rec,'both defending lances can dispute activation order');
+     const proposed=await signed('command','command',{type:'propose-dispute',id:cmd.id});
+     assert.equal(proposed.effect.pending,true);
+     const attackerUnit=g.units.find(u=>u.team===g.scenario.attackerTeam);
+     const denied=await req(route+'/command',{method:'POST',cookie:attacker.cookie,
+      body:{version,action:{type:'hold',id:attackerUnit.id}}});
+     assert.equal(denied.status,409);
+     assert.equal(denied.data.error,'scenario_dispute_pending');
+     const decided=await signed('recon','command',{type:'propose-dispute',id:rec.id});
+     assert.equal(decided.effect.pending,false);
+     assert(['command','recon'].includes(decided.effect.controller));
+     assert(decided.effect.rolls.length>=2,'server actually rolls 2D6 for dispute');
+     resolvedDispute=decided.effect.controller;
+     g=await source();
+    }
+    const unit=g.units.find(u=>g.canAct(u)&&!u.notFielded);
+    assert(unit,'active team needs at least one legal Mech');
+    const role=unit.team===g.scenario.attackerTeam?'attacker':
+     phase==='move'?resolvedDispute:unit.lance;
+    assert(['attacker','command','recon'].includes(role));
+    await signed(role,'command',{type:'hold',id:unit.id});
+    assert(++turns<=count,'one activation per unit per phase');
+    g=await source();
+   }
+   assert.equal(turns,count,phase+' must process every printed Mech once');
+   await signed('attacker','command',{type:'next'});
+  }
+  assert.equal((await source()).phase,'heat');
+  await signed('command','command',{type:'next'});
+  assert.equal((await source()).phase,'end');
+  await signed('attacker','command',{type:'next'});
+  g=await source();
+  assert.equal(g.phase,'initiative');
+  assert.equal(g.round,2);
+  assert.equal(g.scenario.sharedLances.decided.phase,'move');
+  assert.equal(g.scenario.sharedLances.decided.round,1);
+  const reconNext=await signed('recon','command',{type:'next'});
+  assert.equal(reconNext.effect.round,2);
+  assert.equal((await source()).phase,'move');
+  for(const [role,seat]of Object.entries(accounts)){
+   const snap=checked(await req(route+'/snapshot',{cookie:seat.cookie}),200,
+    tag+' round2 '+role);
+   assert.equal(snap.item.version,version);
+   assert.equal(snap.item.yourRole,role);
+   assert.equal(snap.game.round,2);
+   assert.deepEqual(snap.game.setupMap.sheets.map(x=>x.name),
+    ['Desert #2','Grassland #3']);
+   assert(!JSON.stringify(snap).includes('rngState'));
+  }
+  assert.equal((await pool.query('SELECT version FROM agoac_scenario_rooms WHERE id=$1',
+   [id])).rows[0].version,version);
+
  }
  console.log('AGoAC Ch11: real PostgreSQL and three-session full/shortened room lifecycle passed');
 }finally{await pool.end();}
