@@ -741,6 +741,49 @@ test('AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear
   assert.equal(distance(u,t),1);assert.notEqual(t.q+','+t.r,'0,0');
  }
 });
+test('CAT3500D p.41: PSR situation table modifiers use the printed target numbers',()=>{
+ const cases=[
+  ['Удар ногой',0],['Толчок',0],['Промах ногой',0],
+  ['Таран',2],['Попадание тарана',2],
+  ['Посадка DFA',4],['Попадание DFA',2],
+  ['Подъём',0],['Обломки',0],
+  ['Вода глубина 1',-1],['Вода глубина 2',0],['Вода глубина 3',1],
+  ['Отключение реактора',3]
+ ];
+ for(const [reason,modifier] of cases){
+  const g=fresh(),u=g.units[0];
+  for(const other of g.units.slice(1))other.dead=true;
+  u.piloting=5;g.rng=()=>.99;
+  assert.equal(g.psr(u,modifier,reason,true,0,reason==='Отключение реактора'),true,reason);
+  assert.equal(g.phaseRolls.at(-1).target,5+modifier,reason);
+ }
+ for(const [source,setup,expected] of [
+  ['gyro hit',u=>{u.gyroHits=1;},3],
+  ['hip hit',u=>{u.actuators.LL.hip=true;},2],
+  ['lower leg actuator',u=>{u.actuators.LL.lower=true;},1],
+  ['destroyed biped leg',u=>{u.structure.LL=0;},5],
+  ['gyro and hip',u=>{u.gyroHits=1;u.actuators.LL.hip=true;},5]
+ ]){
+  const g=fresh(),u=g.units[0];for(const other of g.units.slice(1))other.dead=true;
+  u.piloting=5;setup(u);g.rng=()=>.99;
+  assert.equal(g.psrMod(u,true),expected,source);
+  assert.equal(g.psr(u,0,source,true),true,source);
+  assert.equal(g.phaseRolls.at(-1).target,5+expected,source);
+ }
+ // Every PSR at the end of one attack phase shares the cumulative TN.
+ // The 20+ damage row adds only one event, even if more than 20 was taken.
+ const g=fresh(),u=g.units[0];
+ for(const other of g.units.slice(1))other.dead=true;
+ u.piloting=5;u.phaseDamage=43;
+ u.psrs.push({modifier:0,reason:'Удар ногой'},{modifier:2,reason:'Попадание тарана'});
+ g.rng=()=>.99;
+ g.endPSR();
+ assert.equal(g.phaseRolls.length,3);
+ assert.deepEqual(g.phaseRolls.map(r=>r.target),[8,8,8]);
+ assert.deepEqual(u.psrs,[]);
+ assert.equal(u.phaseDamage,0);
+});
+
 test('CAT3500D pp.42-43: all six falling facings select the exact new hexside and hit-location arc',()=>{
  const arcs=['front','right','right','rear','left','left'];
  for(let die=1;die<=6;die++){
