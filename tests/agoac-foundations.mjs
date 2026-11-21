@@ -6403,3 +6403,120 @@ test('CAT3500D p.46: Trial by Fire inflicts exactly four front 5-point hits, rer
  assert.equal(g.applyTrialByFirePreDamage(u.id).ok,false,'pre-existing damage applies once');
  const other=fresh();assert.equal(other.applyTrialByFirePreDamage(other.units[2].id).ok,false);
 });
+
+
+const cardScenarioFixture=()=>{
+ const g=new Game({rng:()=>.5});
+ assert(g.configureScenario('final-exam').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ const cards=[
+  {team:0,unitId:0,cardId:'Alpha',cost:2,gunnery:2,piloting:4},
+  {team:1,unitId:2,cardId:'Beta',cost:2,gunnery:3,piloting:3}
+ ];
+ const mirrors=[{sourceTeam:0,unitId:3},{sourceTeam:1,unitId:1}];
+ return {g,cards,mirrors};
+};
+
+test('CAT3500D p.48: equal-cost MechWarrior Cards replace pilot values and mirror improvement to opponent',()=>{
+ const {g,cards,mirrors}=cardScenarioFixture();
+ const original=g.units.map(u=>[u.gunnery,u.piloting]);
+ const result=g.configureScenarioCards({cards,mirrors,agreedCost:2});
+ assert(result.ok);assert.equal(result.cost,2);assert.equal(result.die,null);
+ assert.deepEqual(g.units.map(u=>[u.gunnery,u.piloting]),[
+  [2,4],[original[1][0]-1,original[1][1]-2],
+  [3,3],[original[3][0]-2,original[3][1]-1]
+ ]);
+ assert.deepEqual(result.bonuses,[
+  {sourceTeam:0,unitId:3,gunnery:2,piloting:1},
+  {sourceTeam:1,unitId:1,gunnery:1,piloting:2}
+ ]);
+ assert.equal(g.units[0].scenarioCard.id,'Alpha');
+ assert.equal(g.units[2].scenarioCard.id,'Beta');
+ assert.equal(g.configureScenarioCards({cards,mirrors,agreedCost:2}).ok,false,'cannot reapply');
+ const invalid=cardScenarioFixture();
+ assert.equal(invalid.g.configureScenarioCards({cards:[cards[0],{...cards[1],team:0}],mirrors,agreedCost:2}).ok,false);
+ assert.equal(invalid.g.configureScenarioCards({cards:[cards[0],{...cards[1],cost:1}],mirrors,agreedCost:2}).ok,false);
+ assert.equal(invalid.g.configureScenarioCards({cards,mirrors:[{sourceTeam:0,unitId:2},mirrors[1]],agreedCost:2}).ok,false);
+ assert.equal(invalid.g.configureScenarioCards({cards,mirrors,agreedCost:1}).ok,false);
+ assert(invalid.g.configureScenarioCards({cards,mirrors,agreedCost:2}).ok,'invalid requests do not mutate state');
+});
+
+test('CAT3500D p.48: card-cost disagreement uses exactly one D6 and floor(D6/2)',()=>{
+ for(let die=1;die<=6;die++){
+  const {g,cards,mirrors}=cardScenarioFixture();
+  for(const c of cards)c.cost=Math.floor(die/2);
+  const dice=[(die-.5)/6];g.rng=()=>{assert(dice.length);return dice.shift();};
+  const result=g.configureScenarioCards({cards,mirrors});
+  assert(result.ok);assert.equal(result.cost,Math.floor(die/2));
+  assert.equal(result.die,die);assert.equal(g.phaseRolls.at(-1).dice.length,1);
+  assert.equal(dice.length,0);
+ }
+ const {g,cards,mirrors}=cardScenarioFixture();
+ const before=JSON.stringify(g.units);g.rng=()=>.99;
+ const miss=g.configureScenarioCards({cards,mirrors});
+ assert.equal(miss.ok,false);assert.equal(miss.chosenCost,3);
+ assert.equal(JSON.stringify(g.units),before,'mismatch must not mutate units');
+ assert.equal(g.scenario.cardSetup,undefined);
+ assert(g.configureScenarioCards({cards:cards.map(c=>({...c,cost:3})),mirrors}).ok);
+});
+
+const looseSheetFixture=()=>{
+ const {g}=cardScenarioFixture();
+ assert(g.configureRectangularSheets('horizontal',[
+  {id:'clear',rotation:0},{id:'clear',rotation:0}]).ok);
+ return g;
+};
+const atSheetCoord=(g,col,row)=>g.tiles.find(t=>
+ t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
+ t.r+Math.floor(g.setupMap.height/2)===row);
+
+test('CAT3500D p.48: each 16x17 mapsheet has its own two-hex exclusion zone',()=>{
+ const g=looseSheetFixture();
+ for(const [col,row,expected]of [
+  [0,8,false],[1,8,false],[2,8,false],[3,8,true],
+  [12,8,true],[13,8,false],[15,8,false],[16,8,false],
+  [18,8,false],[19,8,true],[28,8,true],[29,8,false],
+  [8,0,false],[8,1,false],[8,2,false],[8,3,true],
+  [8,13,true],[8,14,false],[24,2,false],[24,3,true],
+  [24,13,true],[24,14,false]
+ ]){
+  const t=atSheetCoord(g,col,row);
+  assert(t,'sheet coordinate exists');
+  assert.equal(g.looseTerrainZoneAllowed(t.q,t.r),expected,col+','+row);
+ }
+ const normal=cardScenarioFixture().g;
+ assert.equal(normal.looseTerrainZoneAllowed(0,0),false);
+});
+
+test('CAT3500D p.48: optional terrain requires equal pieces, alternate one each and 3 empty hexes between',()=>{
+ const g=looseSheetFixture(),dice=[(4-.5)/6];
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ const begin=g.startScenarioLooseTerrain({piecesPerTeam:2});
+ assert(begin.ok);assert.equal(begin.firstTeam,1);assert.equal(begin.roll,4);
+ const put=(team,col,row)=>{
+  const t=atSheetCoord(g,col,row);assert(t);
+  return g.placeScenarioLooseTerrain({team,q:t.q,r:t.r,label:'woods'});
+ };
+ assert.equal(put(0,5,8).ok,false,'not the starting player');
+ assert(put(1,5,8).ok);
+ assert.equal(put(1,11,8).ok,false,'one at a time');
+ assert.equal(put(0,8,8).ok,false,'distance of three leaves only two intervening hexes');
+ assert(put(0,9,8).ok,'four-hex separation legal');
+ assert(put(1,19,8).ok);
+ const before=JSON.stringify(g.scenario.looseTerrain);
+ assert.equal(put(0,17,8).ok,false,'inner seam boundary still counts');
+ assert.equal(JSON.stringify(g.scenario.looseTerrain),before);
+ assert(put(0,24,8).ok);
+ assert.deepEqual(g.scenario.looseTerrain.pieces.map(x=>x.team),[1,0,1,0]);
+ assert(g.scenario.looseTerrain.complete);
+ assert.equal(g.scenario.looseTerrain.nextTeam,null);
+ assert.equal(g.scenario.looseTerrain.visualAssetsLoaded,false,
+  'punch-out graphics and terrain effects not silently invented');
+ assert.equal(put(1,28,9).ok,false,'quota complete');
+ assert.equal(g.startScenarioLooseTerrain({piecesPerTeam:2}).ok,false);
+ const bad=looseSheetFixture();
+ assert.equal(bad.startScenarioLooseTerrain({piecesPerTeam:0}).ok,false);
+ assert(bad.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok);
+ assert.equal(bad.scenario.looseTerrain.roll,null);
+});
