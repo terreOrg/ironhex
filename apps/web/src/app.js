@@ -42,7 +42,7 @@ function refreshMapLabel(){
   $('#allies').previousElementSibling.before(label);
  }
  const layout=game.setupMap??{id:'frontier',rotation:0};
- const name=layout.id==='sheets'?layout.sheets.map(s=>AGOAC_MAP_PRESETS.find(p=>p.id===s.id)?.name??s.id).join(' + '):AGOAC_MAP_PRESETS.find(p=>p.id===layout.id)?.name??layout.id;
+ const name=layout.id==='sheets'?layout.sheets.map(s=>s.name??AGOAC_MAP_PRESETS.find(p=>p.id===s.id)?.name??s.id).join(' + '):AGOAC_MAP_PRESETS.find(p=>p.id===layout.id)?.name??layout.id;
  $('#viewport').dataset.mapLayout=layout.id;
  $('#viewport').dataset.mapRotation=String(layout.rotation);$('#viewport').dataset.sheetLayout=layout.layout??'hex';$('#viewport').dataset.hexCount=String(game.tiles.length);
  const label=$('#battle-map-label');
