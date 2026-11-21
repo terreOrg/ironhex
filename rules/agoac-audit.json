@@ -9965,8 +9965,8 @@
         47
       ],
       "statement": "Scenario 2 chase variant starts the defender alone, grants one full movement turn, then has attackers enter from west during Movement on Turn 2 with first complete hex counted.",
-      "status": "tested_case",
-      "reviewNote": "No delayed turn-two attacker reinforcement and no chase-variant activation. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
+      "status": "verified",
+      "reviewNote": "No delayed turn-two attacker reinforcement and no chase-variant activation. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet. VERIFIED 2026-11-21: source-linked gameplay certified on four-way green main 3bc84ef35d65978a5b8aef3de5b0b3324c35658e. CI 44914215815; Browser 44914215772; Smoke 44914215781; Sonar 44914215846. Printed card artwork, official card catalog and authenticated UI are separate gaps, not included in this engine-only certification.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9976,7 +9976,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.47: source Trial by Fire chase provides defender-only turn and west attacker arrival on second Movement"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) original Scenarios pp.47-48, visually inspected PDF pages 48-49; official errata v8.01; pinned MegaMek/mm-data source maps/MTF records",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "testedTree": "bdae3983b77b2aaff984ac394aae77bc1899cc1d",
+        "mergedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44914215815,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44914215772,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44914215781,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44914215846,
+          "jobId": 136876263552,
+          "conclusion": "success",
+          "headSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e"
+        },
+        "review": "Source p.47 chase: BLR-1G alone in first turn, mandatory pre-damage, three actual attacker Mechs absent from all first-turn selection/heat/weapon phases, west-edge entry in Turn 2 Movement paying the initial full hex of MP. Original AGoAC maps including 180-degree orientation and real MTF records tested."
+      }
     },
     {
       "id": "agoac-150",
@@ -10156,8 +10190,8 @@
         48
       ],
       "statement": "MechWarrior Cards attach to no more than one Mech per side, have equal cost on opposing sides, and use floor(D6/2) when the players cannot agree on cost.",
-      "status": "tested_case",
-      "reviewNote": "Pilot data/skills are configurable, but physical MechWarrior Card limits, cost and fallback roll are absent. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
+      "status": "verified",
+      "reviewNote": "Pilot data/skills are configurable, but physical MechWarrior Card limits, cost and fallback roll are absent. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet. VERIFIED 2026-11-21: source-linked gameplay certified on four-way green main 3bc84ef35d65978a5b8aef3de5b0b3324c35658e. CI 44914215815; Browser 44914215772; Smoke 44914215781; Sonar 44914215846. Printed card artwork, official card catalog and authenticated UI are separate gaps, not included in this engine-only certification.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10171,7 +10205,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.47-48: source setup rejects premature campaign import and forged card identities"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) original Scenarios pp.47-48, visually inspected PDF pages 48-49; official errata v8.01; pinned MegaMek/mm-data source maps/MTF records",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "testedTree": "bdae3983b77b2aaff984ac394aae77bc1899cc1d",
+        "mergedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44914215815,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44914215772,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44914215781,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44914215846,
+          "jobId": 136876263552,
+          "conclusion": "success",
+          "headSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e"
+        },
+        "review": "Source p.48 paired MechWarrior Cards: at most one per team, equal point cost, no agreement yields a single D6 roll divided by two with floor. Every die result, binding mismatch, forged card ID and unsafe deployment timing checked with authentic Final Exam MTF pilots."
+      }
     },
     {
       "id": "agoac-156",
@@ -10180,8 +10248,8 @@
         48
       ],
       "statement": "Card-specified Piloting and Gunnery replace the scenario pilot skills; the opposing side receives an equivalent skill improvement to preserve balance.",
-      "status": "tested_case",
-      "reviewNote": "Generic custom pilot skill assignment exists; no card-aware mirrored balance adjustment or scenario pilot replacement. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
+      "status": "verified",
+      "reviewNote": "Generic custom pilot skill assignment exists; no card-aware mirrored balance adjustment or scenario pilot replacement. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet. VERIFIED 2026-11-21: source-linked gameplay certified on four-way green main 3bc84ef35d65978a5b8aef3de5b0b3324c35658e. CI 44914215815; Browser 44914215772; Smoke 44914215781; Sonar 44914215846. Printed card artwork, official card catalog and authenticated UI are separate gaps, not included in this engine-only certification.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10191,7 +10259,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: source-backed Final Exam permits equal-cost cards and mirrored pilot skills before printed deployment"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) original Scenarios pp.47-48, visually inspected PDF pages 48-49; official errata v8.01; pinned MegaMek/mm-data source maps/MTF records",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "testedTree": "bdae3983b77b2aaff984ac394aae77bc1899cc1d",
+        "mergedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44914215815,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44914215772,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44914215781,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44914215846,
+          "jobId": 136876263552,
+          "conclusion": "success",
+          "headSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e"
+        },
+        "review": "Source p.48 cards replace printed Gunnery and Piloting; opposing non-card pilot receives identical numeric improvement. Original Final Exam pilot identity, chassis, team and lance stay source-correct; both attacker assignments, unauthorized modification and setup progression tested."
+      }
     },
     {
       "id": "agoac-157",
@@ -10477,8 +10579,8 @@
         48
       ],
       "statement": "Linked campaign play can transfer surviving Mechs with persistent damage from Scenario 1 into Scenario 3 as west-edge reinforcements in the Movement Phase of Turn 5.",
-      "status": "tested_case",
-      "reviewNote": "Economy operations persist damage and ammunition but there is no AGoAC scenario linking, survivor transfer or turn-five reinforcements. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
+      "status": "verified",
+      "reviewNote": "Economy operations persist damage and ammunition but there is no AGoAC scenario linking, survivor transfer or turn-five reinforcements. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet. VERIFIED 2026-11-21: source-linked gameplay certified on four-way green main 3bc84ef35d65978a5b8aef3de5b0b3324c35658e. CI 44914215815; Browser 44914215772; Smoke 44914215781; Sonar 44914215846. Printed card artwork, official card catalog and authenticated UI are separate gaps, not included in this engine-only certification.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10488,7 +10590,41 @@
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: source Final Exam survivor damage and ammunition enter real Divide on Turn 5 west edge"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) original Scenarios pp.47-48, visually inspected PDF pages 48-49; official errata v8.01; pinned MegaMek/mm-data source maps/MTF records",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "testedTree": "bdae3983b77b2aaff984ac394aae77bc1899cc1d",
+        "mergedSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44914215815,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44914215772,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44914215781,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44914215846,
+          "jobId": 136876263552,
+          "conclusion": "success",
+          "headSha": "3bc84ef35d65978a5b8aef3de5b0b3324c35658e"
+        },
+        "review": "Source p.48 linked Final Exam to Divide and Conquer: actual surviving Catapult/Locust retain armor, rear, structure, crit, ammo, heat and pilot wounds through deep-copy transfer. Turn 1-4 reserves cannot act or cool, turn 5 allows west-edge Movement entry with true first-hex MP; base 6+4 roster unchanged and dead/duplicate/early imports rejected."
+      }
     }
   ]
 }
