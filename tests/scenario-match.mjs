@@ -30,8 +30,8 @@ function begin(shortened=false){
  assert.equal(runtime.game.scenario.defenderTeam,1);
  assert.equal(runtime.game.setupMap.id,'sheets');
  assert.deepEqual(runtime.game.setupMap.sheets.map(s=>s.name),
-  ['Desert #3','Grassland #3'],
-  'CAT3500D printed p.47 requires Desert #3, not Desert #2');
+  ['Desert #2','Grassland #3'],
+  'CAT3500D official errata v8.01 p.5 requires Desert #2, not superseded Desert #3');
  assert.equal(runtime.game.units.filter(u=>!u.notFielded).length,shortened?7:10);
  assert.equal(runtime.game.scenario.recordSheetsImported,true);
  assert.equal(runtime.game.scenario.sourceTerrainLoaded,true);
