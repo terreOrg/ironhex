@@ -1651,7 +1651,7 @@ test('AGoAC Ch11: signed Scenario 3 terrain setup offers interactive 544-hex sou
   assert.match(await diagram.textContent(),/Desert #2; восток — Grassland #3/);
   assert.equal(await diagram.locator('svg polygon').count(),544);
   const options=page.locator('#scenario-room-details select[name=hex] option');
-  assert(await options.count()>10,'legally eligible water origins available');
+  assert.equal(await options.count(),1,'the original figure fixes one origin');
   const origin=diagram.locator('polygon[data-choice]').first();
   const picked=await origin.getAttribute('data-choice');
   assert.match(picked,/^-?\d+,-?\d+$/);
@@ -1659,8 +1659,11 @@ test('AGoAC Ch11: signed Scenario 3 terrain setup offers interactive 544-hex sou
   assert.equal(await page.locator('#scenario-room-details select[name=hex]').inputValue(),
    picked,'map selection updates the command form');
   const [q,r]=picked.split(',').map(Number);
+  const canonical=g.scenario.picturedTerrain.counters[0].printedHexes.map(hex=>
+   g.tiles.find(t=>t.sheet===0&&t.printedHex===hex));
+  const footprint=canonical.map(t=>({q:t.q-q,r:t.r-r}));
   const placed=g.placeScenarioLooseTerrain({team:0,q,r,
-   label:'depth1',terrainType:'depth1',footprint:[{q:0,r:0},{q:1,r:0}]});
+   label:'depth1',terrainType:'depth1',footprint});
   assert(placed.ok,'browser-eligible terrain origin is accepted by real rules engine: '+placed.error);
   item.version++;
   // A participant sees all placed hexes from the authoritative snapshot.
@@ -1676,10 +1679,14 @@ test('AGoAC Ch11: signed Scenario 3 terrain setup offers interactive 544-hex sou
    'the signed command seat can now choose the triangular element');
   const shape=page.locator('#scenario-room-details input[name=offsets]');
   const submit=page.locator('#scenario-room-details button[type=submit]').last();
-  await shape.fill('0,0;1,0;1,1');
-  assert(await submit.isDisabled(),'invalid triangle cannot be submitted');
-  await shape.fill('0,0;1,0;1,-1');
-  assert(await submit.isEnabled(),'valid triangular footprint has legal origins');
+  assert.equal(await shape.evaluate(el=>el.readOnly),true,
+   'triangular orientation must remain fixed by the source figure');
+  const canonicalTriangle=g.scenario.picturedTerrain.counters[1].printedHexes.map(
+   hex=>g.tiles.find(t=>t.sheet===0&&t.printedHex===hex));
+  const expectedOffsets=canonicalTriangle.map(t=>
+   (t.q-canonicalTriangle[0].q)+','+(t.r-canonicalTriangle[0].r)).join(';');
+  assert.equal(await shape.inputValue(),expectedOffsets);
+  assert(await submit.isEnabled(),'printed triangle is directly placeable');
  });
 });
 
