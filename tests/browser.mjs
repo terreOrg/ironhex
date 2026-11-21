@@ -1666,7 +1666,10 @@ test('AGoAC Ch11: signed Scenario 3 terrain setup offers interactive 544-hex sou
   // A participant sees all placed hexes from the authoritative snapshot.
   item.yourRole='command';
   await page.locator('#scenario-room-refresh').click();
-  await diagram.waitFor({state:'visible'});
+  // The previous SVG remains visible while the asynchronous snapshot GET
+  // is pending; wait for the new persisted version, not old DOM visibility.
+  await page.waitForFunction(()=>document.querySelector('#scenario-terrain-map')?.
+   textContent.includes('Размещено 1/4'),null,{timeout:15000});
   assert.match(await diagram.textContent(),/Размещено 1\/4/);
   assert.equal(await diagram.locator('polygon[fill="#277a95"]').count(),2);
   assert(await diagram.locator('polygon[data-choice]').count()>0,
