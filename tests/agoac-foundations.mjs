@@ -7178,6 +7178,81 @@ test('CAT3500D p.48: source-backed Divide and Conquer completes corrected defend
  assert.equal(g.phase,'move');
  assert.equal(g.queue.length,10,'correct printed 6 defenders vs 4 attackers');
 });
+test('CAT3500D p.48: shortened Divide and Conquer loads 4 defenders and 3 attackers with real records',async()=>{
+ const {prepareAgoacPrintedScenario,loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ assert.throws(()=>loadAgoacPrintedDesigns('final-exam',{variation:'shortened'}),/unsupported_printed/);
+ assert.throws(()=>loadAgoacPrintedDesigns('divide-and-conquer',{variation:'unknown'}),/unsupported_printed/);
+ const shortened=loadAgoacPrintedDesigns('divide-and-conquer',{variation:'shortened'});
+ assert.deepEqual(Object.keys(shortened).sort(),['AWS-8Q','COM-2D','COM-3A','CPLT-K2','GRF-1N','TDR-5S','WVR-6M']);
+ assert.equal(Object.keys(loadAgoacPrintedDesigns('divide-and-conquer')).length,10,
+  'ordinary published scenario still retains ten real variants');
+ for(const role of ['attacker','defender']){
+  const g=fresh();
+  assert(g.configureScenario('divide-and-conquer').ok);
+  g.scenario.sideRollWinner=0;
+  assert(g.chooseScenarioSide(0,role).ok);
+  assert.equal(g.configurePrintedScenarioVariation('unknown').ok,false);
+  assert(g.configurePrintedScenarioVariation('shortened').ok);
+  assert.equal(g.configurePrintedScenarioVariation('shortened').ok,false,'one-time variation lock');
+  const loaded=prepareAgoacPrintedScenario(g,'divide-and-conquer',{
+   rotations:role==='defender'?[3,0]:[0,3]
+  });
+  assert.equal(loaded.records.units,7);
+  assert.equal(g.units.length,7);
+  assert.equal(g.setupForces.variation,'shortened');
+  assert.deepEqual(g.units.filter(u=>u.team===g.scenario.defenderTeam).map(u=>u.variant),
+   ['CPLT-K2','TDR-5S','COM-3A','COM-2D']);
+  assert.deepEqual(g.units.filter(u=>u.team===g.scenario.attackerTeam).map(u=>u.variant),
+   ['AWS-8Q','WVR-6M','GRF-1N']);
+  assert(g.units.every(u=>u.recordSource==='MegaMek/mm-data'&&u.recordSourceRevision===g.setupMap.sourceRevision));
+  assert.equal(g.configurePrintedScenarioVariation('shortened').ok,false,'cannot swap after force load');
+  assert(g.beginPrintedScenarioPlacement().ok);
+  assert.deepEqual(g.scenario.placement.steps.map(x=>x.lance),
+   ['command','command','recon','recon','printed-row','printed-row','printed-row']);
+  assert.equal(g.chooseDivideAndConquerAttackerRow('west').ok,false,
+   'printed attacker deployment waits for all four shortened defenders');
+  for(const stage of g.scenario.placement.steps.slice(0,4)){
+   const unit=g.units.find(u=>u.team===stage.team&&u.lance===stage.lance&&!u.deployed);
+   assert(unit,'printed defender of specified lance exists');
+   const hex=g.tiles.find(t=>g.scenarioZoneAllowed(unit.team,t.q,t.r,{lance:unit.lance,facing:0})&&
+    !g.scenario.placement.placed.some(p=>p.q===t.q&&p.r===t.r));
+   assert(hex,'legal printed defender placement exists');
+   assert(g.placePrintedScenarioMech(unit.id,hex.q,hex.r).ok);
+  }
+  assert(g.chooseDivideAndConquerAttackerRow('west').ok);
+  const row=g.divideAndConquerPrintedRow('west');
+  assert.equal(row.length,8,'printed 1510–1517 still valid after 0/180 rotation');
+  for(let k=0;k<3;k++){
+   const unit=g.units.find(u=>u.team===g.scenario.attackerTeam&&!u.deployed);
+   assert(unit);
+   assert(g.placePrintedScenarioMech(unit.id,row[k].q,row[k].r).ok);
+  }
+  assert(g.scenario.placement.complete);
+  assert.equal(g.scenario.placement.placed.length,7);
+  g.rng=()=>.83;
+  assert(g.nextPhase().ok);
+  assert.equal(g.phase,'move');
+  assert.equal(g.queue.length,7,'all shortened forces participate in turn one');
+ }
+});
+
+test('CAT3500D p.48: shortened roster selection rejects mismatched full force records atomically',async()=>{
+ const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert(g.configurePrintedScenarioVariation('shortened').ok);
+ assert(g.configurePrintedScenarioMap().ok);
+ const before=JSON.stringify(g.units);
+ assert.equal(g.configurePrintedScenarioForces({designs:loadAgoacPrintedDesigns('divide-and-conquer')}).ok,false);
+ assert.equal(JSON.stringify(g.units),before,'wrong 10-unit file set cannot alter game');
+ assert.equal(g.setupForces,null);
+ assert(g.configurePrintedScenarioForces({designs:
+  loadAgoacPrintedDesigns('divide-and-conquer',{variation:'shortened'})}).ok);
+ assert.equal(g.setupForces.variants.length,7);
+});
+
 test('CAT3500D p.48: Awesome AWS-8Q source MTF retains lower arm actuator but omits hand',async()=>{
  const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
  const {construct}=await import('../dist/construction.js');

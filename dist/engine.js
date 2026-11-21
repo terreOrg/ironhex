@@ -730,12 +730,13 @@ export class Game extends Legacy{
   }
   return hexes;
  }
- // v8.01 errata: after six defenders have placed, choose ONE
- // attacker row for the whole lance; no mixing two locations.
+ // v8.01 errata: choose ONE printed attacker row only after the entire
+ // defender force has placed (six regular or four in the printed variation).
  chooseDivideAndConquerAttackerRow(side){
   const state=this.scenario?.placement;
   if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
-   !state||state.complete||state.attackerRow||state.placed.length!==6||
+   !state||state.complete||state.attackerRow||
+   state.placed.length!==state.steps.filter(s=>s.team===this.scenario.defenderTeam).length||
    !['west','east'].includes(side))
    return fail('Сначала расставьте оба лэнса защитников, затем выберите одну сторону 1510–1517');
   const hexes=this.divideAndConquerPrintedRow(side);
@@ -744,6 +745,25 @@ export class Game extends Legacy{
   state.attackerRow={side,hexes};
   return {ok:true,side,hexes:structuredClone(hexes)};
  }
+ // CAT3500D p.48: choose the published smaller-force option before map,
+ // record sheets, MechWarrior cards and any placement are initialized.
+ configurePrintedScenarioVariation(variation){
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
+   ![0,1].includes(this.scenario.defenderTeam)||
+   this.scenario.forceVariation||this.setupMap||this.setupForces||
+   this.scenario.placement||this.scenario.cardSetup||this.scenario.campaign||
+   variation!=='shortened')
+   return fail('Сокращённый состав выбирают один раз до загрузки карт и мехов');
+  this.scenario.forceVariation='shortened';
+  return {ok:true,variation,defender:4,attacker:3};
+ }
+ printedScenarioRoster(){
+  const original=AGOAC_PRINTED_SCENARIOS[this.scenario?.id];
+  if(!original)return null;
+  if(this.scenario?.forceVariation==='shortened')
+   return AGOAC_SCENARIO_VARIATIONS['divide-and-conquer'].shortened;
+  return original;
+ }
  beginPrintedScenarioPlacement(){
   if(!this.scenarioSetupOpen()||!this.scenario||
    this.scenario.placement||
@@ -751,7 +771,7 @@ export class Game extends Legacy{
    this.setupMap?.id!=='sheets'||this.setupMap.layout!=='horizontal'||this.setupMap.width!==32||
    this.setupMap.height!==17||![0,1].includes(this.scenario.defenderTeam))
    return fail('Нужны выбранные стороны сценария и две горизонтальные карты');
-  const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario.id];
+  const manifest=this.printedScenarioRoster();
   if(!manifest)return fail('Неизвестный сценарий');
   const actual=this.units.filter(u=>!u.dead&&!u.notFielded&&!u.scenarioArrivalRound);
   const encode=u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??''].join('|');
@@ -791,8 +811,9 @@ export class Game extends Legacy{
    this.scenario.id==='trial-by-fire'?
    (this.scenario.chase?repeat(defender,1):
     [...repeat(attacker,3),...repeat(defender,1)]):
-   [...repeat(defender,3,'command'),...repeat(defender,3,'recon'),
-    ...repeat(attacker,4,'printed-row')];
+   [...repeat(defender,manifest.defender.filter(u=>u.lance==='command').length,'command'),
+    ...repeat(defender,manifest.defender.filter(u=>u.lance==='recon').length,'recon'),
+    ...repeat(attacker,manifest.attacker.length,'printed-row')];
   this.scenario.placement={
    steps,placed:[],complete:false,attackerRow:null,
    exactMapImplemented:this.scenario.sourceTerrainLoaded===true,
@@ -1198,7 +1219,7 @@ export class Game extends Legacy{
  // equipment/critical/armor validator and then attach printed pilot skills.
  // Fail atomically: no fake stock-demo chassis are substituted.
  configurePrintedScenarioForces({designs}={}){
-  const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario?.id];
+  const manifest=this.printedScenarioRoster();
   if(!this.scenarioSetupOpen()||!manifest||
    this.setupMap?.printedScenario!==this.scenario.id||
    this.setupForces||this.scenario.placement||this.scenario.campaign||
@@ -1239,6 +1260,7 @@ export class Game extends Legacy{
   }
   this.units=next;
   this.setupForces={type:'agoac-printed-records',scenario:this.scenario.id,
+   variation:this.scenario.forceVariation??null,
    variants:[...available],sourceRevision:AGOAC_BOARD_SOURCE.revision};
   this.scenario.recordSheetsImported=true;
   return {ok:true,units:next.length,variants:[...available],
