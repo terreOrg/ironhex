@@ -7,6 +7,7 @@ import {GLTFLoader} from './GLTFLoader.js';
 import {clone} from './SkeletonUtils.js';
 import {Game,LOCATIONS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,AGOAC_PRINTED_SCENARIOS,rangeMeters,elapsedBattleSeconds} from './engine.js';
 import {loadAgoacBrowserDesigns} from './agoac-scenario-loader.js';
+import {AGOAC_BOARD_NAMES} from './agoac-boards.js';
 const $=s=>document.querySelector(s),game=new Game();
 const operationId=new URLSearchParams(location.search).get('operation');
 const remoteMode=operationId!==null;
@@ -689,10 +690,21 @@ function showPrintedScenarioSetup(){
   '<option value="vertical">Короткие стороны · Final Exam, вариация</option></select></label>'+
   '<label>Поворот первой карты<select id="scenario-book-rotation0"><option value="0">0°</option><option value="3">180°</option></select></label>'+
   '<label>Поворот второй карты<select id="scenario-book-rotation1"><option value="0">0°</option><option value="3">180°</option></select></label>'+
+  '<label id="scenario-book-replace-wrap"><input id="scenario-book-replace" type="checkbox"> Заменить печатные карты на другие исходные листы</label>'+
+  '<label id="scenario-book-board-wrap" hidden>Левый/верхний лист<select id="scenario-book-board0"></select>'+
+  'Правый/нижний лист<select id="scenario-book-board1"></select></label>'+
   '<label>Дополнительные элементы местности на игрока<select id="scenario-book-terrain">'+
   '<option value="0">Без накладок</option><option value="1">По одному</option><option value="2">По два</option></select></label>'+
   '<label><input id="scenario-book-three" type="checkbox"> Два отдельных игрока защищают командный и разведывательный лэнсы (локально)</label>'+
   '<button class="primary" id="scenario-book-start">БРОСИТЬ 2D6 И ВЫБРАТЬ СТОРОНУ</button>');
+ for(const [i,preset] of ['Desert #3','Grassland #2'].entries()){
+  const sel=$('#scenario-book-board'+i);
+  for(const name of AGOAC_BOARD_NAMES)sel.append(new Option(name,name));
+  sel.value=preset;
+ }
+ $('#scenario-book-replace').onchange=()=>{
+  $('#scenario-book-board-wrap').hidden=!$('#scenario-book-replace').checked;
+ };
  const update=()=>{
   const id=$('#scenario-book-id').value,variant=$('#scenario-book-variant');
   const previous=variant.value;variant.replaceChildren();
@@ -705,6 +717,9 @@ function showPrintedScenarioSetup(){
   const layout=$('#scenario-book-layout');
   layout.querySelector('[value="vertical"]').disabled=id!=='final-exam';
   if(id!=='final-exam')layout.value='horizontal';
+  $('#scenario-book-replace').disabled=id!=='final-exam';
+  if(id!=='final-exam')$('#scenario-book-replace').checked=false;
+  $('#scenario-book-board-wrap').hidden=!$('#scenario-book-replace').checked;
   $('#scenario-book-three').disabled=id!=='divide-and-conquer';
   if(id!=='divide-and-conquer')$('#scenario-book-three').checked=false;
  };
@@ -714,6 +729,8 @@ function showPrintedScenarioSetup(){
   const options={id,variation,layout:$('#scenario-book-layout').value,
    rotations:[Number($('#scenario-book-rotation0').value),Number($('#scenario-book-rotation1').value)],
    terrainCount:Number($('#scenario-book-terrain').value),
+   names:$('#scenario-book-replace').checked?
+    [$('#scenario-book-board0').value,$('#scenario-book-board1').value]:null,
    shared:$('#scenario-book-three').checked};
   const button=$('#scenario-book-start');button.disabled=true;
   try{
@@ -741,7 +758,7 @@ function installPrintedScenario(trial,winner,role,options,designs){
   if(!variation.ok)return void toast(variation.error);
  }
  const sourceMap=trial.configurePrintedScenarioMap({
-  rotations:options.rotations,layout:options.layout});
+  rotations:options.rotations,layout:options.layout,names:options.names});
  if(!sourceMap.ok)return void toast(sourceMap.error);
  const loaded=trial.configurePrintedScenarioForces({designs});
  if(!loaded.ok)return void toast(loaded.error);
@@ -795,16 +812,30 @@ function showPrintedPlacementStep(){
    '<option value="woods">Лёгкий лес</option><option value="heavy">Густой лес</option>'+
    '<option value="rough">Пересечённая местность</option><option value="rubble">Обломки</option></select></label>'+
    '<label>Размер<select id="scenario-terrain-shape">'+
-   '<option value="1">Один гекс</option><option value="2">Два соседних гекса</option></select></label>'+
+   '<option value="1">Один гекс</option><option value="2">Два соседних гекса</option>'+
+   '<option value="custom">Контур реального элемента — свои смещения</option></select></label>'+
+   '<label id="scenario-terrain-custom-wrap" hidden>Смещения q,r через точку с запятой '+
+   '<input id="scenario-terrain-offsets" value="0,0;1,0;1,-1"></label>'+
    '<label>Исходный гекс<select id="scenario-terrain-hex"></select></label>'+
    '<button class="primary" id="scenario-terrain-place">РАЗМЕСТИТЬ ЭЛЕМЕНТ</button>');
   scenarioHexOptions($('#scenario-terrain-hex'),game.tiles.filter(t=>
    game.looseTerrainZoneAllowed(t.q,t.r)));
+  $('#scenario-terrain-shape').onchange=()=>{
+   $('#scenario-terrain-custom-wrap').hidden=$('#scenario-terrain-shape').value!=='custom';
+  };
   $('#scenario-terrain-place').onclick=()=>{
    const [q,r]=$('#scenario-terrain-hex').value.split(',').map(Number);
    const terrainType=$('#scenario-terrain-type').value;
-   const footprint=$('#scenario-terrain-shape').value==='2'?
-    [{q:0,r:0},{q:1,r:0}]:[{q:0,r:0}];
+   let footprint=[{q:0,r:0}];
+   if($('#scenario-terrain-shape').value==='2')footprint=[{q:0,r:0},{q:1,r:0}];
+   if($('#scenario-terrain-shape').value==='custom'){
+    const segments=$('#scenario-terrain-offsets').value.split(';');
+    if(segments.length>32||!segments.every(s=>/^\s*-?\d+,\s*-?\d+\s*$/.test(s)))
+     return void toast('Контур: до 32 координат в формате q,r; q,r');
+    footprint=segments.map(s=>{
+     const [dq,dr]=s.split(',').map(Number);return {q:dq,r:dr};
+    });
+   }
    const placed=game.placeScenarioLooseTerrain({team:next,q,r,label:terrainType,
     terrainType,footprint});
    if(!placed.ok)return void toast(placed.error);

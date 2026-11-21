@@ -7443,6 +7443,25 @@ test('CAT3500D Ch11 browser technical manifest uses identical source MTF constru
   readCatalog:async()=>bundle}),/unsupported_printed/);
 });
 
+test('CAT3500D p.46: Final Exam substitute terrain variation uses only independently pinned boards',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario('final-exam').ok);
+ g.scenario.sideRollWinner=0;assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert.equal(g.configurePrintedScenarioMap({names:['Fake #0','Grassland #3']}).ok,false);
+ assert.equal(g.setupMap,null,'unknown source maps must not commit setup');
+ const loaded=prepareAgoacPrintedScenario(g,'final-exam',{
+  layout:'vertical',rotations:[3,0],names:['Desert #2','Grassland #3']});
+ assert.equal(loaded.records.units,8);
+ assert.deepEqual(g.setupMap.sheets.map(s=>s.name),['Desert #2','Grassland #3']);
+ assert(g.tiles.filter(t=>t.sheet===0).every(t=>t.printedSheet==='Desert #2'));
+ assert(g.tiles.filter(t=>t.sheet===1).every(t=>t.printedSheet==='Grassland #3'));
+ assert(g.beginPrintedScenarioPlacement().ok);
+ const trial=fresh();assert(trial.configureScenario('trial-by-fire').ok);
+ trial.scenario.sideRollWinner=0;assert(trial.chooseScenarioSide(0,'attacker').ok);
+ assert.equal(trial.configurePrintedScenarioMap({names:['Desert #2','Grassland #2']}).ok,false);
+});
+
 test('CAT3500D p.48: Awesome AWS-8Q source MTF retains lower arm actuator but omits hand',async()=>{
  const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
  const {construct}=await import('../dist/construction.js');

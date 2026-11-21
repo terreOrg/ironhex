@@ -1,6 +1,6 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
 import {construct} from './construction.js';
-import {AGOAC_BOARD_SOURCE,buildAgoacSheet} from './agoac-boards.js';
+import {AGOAC_BOARD_SOURCE,AGOAC_BOARD_NAMES,buildAgoacSheet} from './agoac-boards.js';
 export {LOCATIONS,DIRS,distance};
 // AGoAC pp.3–4: logical game scale; visual model dimensions remain illustrative.
 // Digital battlefield presets, not reproductions of the printed mapsheets.
@@ -1218,7 +1218,7 @@ export class Game extends Legacy{
  // left-to-right arrangement. Unlike generic synthetic presets, every
  // elevation, water/rough/woods hex and physical label comes from the
  // pinned source board files. No printed artwork is embedded.
- configurePrintedScenarioMap({rotations=[0,0],layout='horizontal'}={}){
+ configurePrintedScenarioMap({rotations=[0,0],layout='horizontal',names=null}={}){
   if(!this.scenarioSetupOpen()||!this.scenario||
    ![0,1].includes(this.scenario.defenderTeam)||this.setupMap||
    this.setupForces||this.scenario.placement||
@@ -1228,8 +1228,14 @@ export class Game extends Legacy{
    return fail('Сначала выберите сценарий, стороны и допустимый поворот обеих карт');
   const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario.id];
   if(!manifest)return fail('Неизвестный сценарий AGoAC');
+  // CAT3500D p.46 suggests substituting alternative board terrain only
+  // in Final Exam. All substituted tiles still come from pinned true maps.
+  if(names!==null&&(this.scenario.id!=='final-exam'||
+   !Array.isArray(names)||names.length!==2||
+   names.some(name=>!AGOAC_BOARD_NAMES.includes(name))))
+   return fail('Допустима только явная замена двумя известными листами Final Exam');
   const named=manifest.sheets.map((sheet,i)=>({
-   name:sheet.name,side:sheet.side,rotation:rotations[i]}));
+   name:names?.[i]??sheet.name,side:sheet.side,rotation:rotations[i]}));
   const preset=this.configureRectangularSheets(layout,[
    {id:'clear',rotation:rotations[0]},{id:'clear',rotation:rotations[1]}]);
   if(!preset.ok)return preset;

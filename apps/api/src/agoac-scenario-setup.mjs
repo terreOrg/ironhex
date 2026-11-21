@@ -41,11 +41,11 @@ export function loadAgoacPrintedDesigns(scenarioId,{variation=null}={}){
  }
  return designs;
 }
-export function prepareAgoacPrintedScenario(game,scenarioId,{rotations=[0,0],layout='horizontal'}={}){
+export function prepareAgoacPrintedScenario(game,scenarioId,{rotations=[0,0],layout='horizontal',names=null}={}){
  if(!game?.scenario||game.scenario.id!==scenarioId||
   ![0,1].includes(game.scenario.defenderTeam))
   throw Error('select_printed_scenario_sides_first');
- const map=game.configurePrintedScenarioMap({rotations,layout});
+ const map=game.configurePrintedScenarioMap({rotations,layout,names});
  if(!map.ok)throw Error('printed_map:'+map.error);
  const records=game.configurePrintedScenarioForces({
   designs:loadAgoacPrintedDesigns(scenarioId,{variation:game.scenario.forceVariation??null})});
