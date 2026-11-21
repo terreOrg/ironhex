@@ -6292,7 +6292,7 @@ test('CAT3500D pp.45-48 plus errata v8.01: printed scenario manifests carry exac
  const {AGOAC_PRINTED_SCENARIOS:s}=await import('../dist/engine.js');
  assert.deepEqual(Object.keys(s),['final-exam','trial-by-fire','divide-and-conquer']);
  assert.deepEqual(Object.values(s).map(x=>x.sheets.map(y=>y.name)),[
-  ['Desert #3','Grassland #2'],['Desert #2','Grassland #3'],['Desert #2','Grassland #3']
+  ['Desert #3','Grassland #2'],['Desert #2','Grassland #3'],['Desert #3','Grassland #3']
  ]);
  assert.deepEqual(Object.values(s).map(x=>[x.defender.length,x.attacker.length]),[[4,4],[1,3],[6,4]]);
  const tuples=x=>x.map(u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??null]);
@@ -7055,6 +7055,21 @@ test('CAT3500D pp.47-48: other scenarios and invalid campaign sources cannot cla
  assert.equal(bad.g.configureLinkedScenarioReinforcements({
   sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok,false,
  'unfinished Scenario 1 cannot provide certified survivors');
+});
+
+test('CAT3500D printed p.47: Scenario 3 uses Desert #3 and Grassland #3, not Desert #2',async()=>{
+ const g=await chapter11SourceGame('divide-and-conquer');
+ assert.deepEqual(g.setupMap.sheets.map(s=>s.name),
+  ['Desert #3','Grassland #3']);
+ assert.equal(g.tiles.length,544);
+ for(const [index,name]of ['Desert #3','Grassland #3'].entries()){
+  const sheet=g.tiles.filter(t=>t.sheet===index);
+  assert.equal(sheet.length,272);
+  assert(sheet.every(t=>t.printedSheet===name),
+   'all physical hexes come from the correct source mapsheet '+name);
+ }
+ assert.equal(g.setupMap.sourceRevision,
+  '5ee1b15ff2877611db4b0ffa864a57d0b9f72938');
 });
 
 test('CAT3500D pp.45-48: pinned AGoAC maps preserve four 16x17 source elevations, water and bridge records',async()=>{
