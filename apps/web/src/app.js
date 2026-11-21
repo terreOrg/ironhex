@@ -5,7 +5,7 @@ import {animateRoll,clearDice} from './dice.js';
 import * as THREE from 'three';
 import {GLTFLoader} from './GLTFLoader.js';
 import {clone} from './SkeletonUtils.js';
-import {Game,LOCATIONS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,AGOAC_PRINTED_SCENARIOS,rangeMeters,elapsedBattleSeconds} from './engine.js';
+import {Game,LOCATIONS,DIRS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,AGOAC_PRINTED_SCENARIOS,rangeMeters,elapsedBattleSeconds} from './engine.js';
 import {loadAgoacBrowserDesigns} from './agoac-scenario-loader.js';
 import {AGOAC_BOARD_NAMES} from './agoac-boards.js';
 const $=s=>document.querySelector(s),game=new Game();
@@ -801,6 +801,38 @@ function scenarioHexOptions(select,tiles){
   select.append(option);
  }
 }
+
+function showIllustratedTerrainDispute(pieceIndex){
+ const pictured=game.scenario?.picturedTerrain,setup=game.scenario?.looseTerrain;
+ if(!pictured?.required||!setup||setup.pieces.length!==pieceIndex)return;
+ const isPair=pieceIndex%2===0;
+ const faceOptions='<option value="level1">Высота 1</option><option value="level2">Высота 2</option>'+
+  '<option value="depth1">Глубина 1</option><option value="depth2">Глубина 2</option>';
+ const dirOptions=DIRS.map(([q,r],i)=>'<option value="'+i+'">'+
+  (i*60)+'° ('+q+','+r+')</option>').join('');
+ replaceScenarioModal('<h2>Спор о фигурном элементе · 2D6</h2>'+
+  '<p>Страница 47: место и разворот треугольника заданы схемой. Спорить разрешено о стороне элемента, '+
+  'а для двойного — также о развороте. При равенстве 2D6 перебрасываются.</p>'+
+  [0,1].map(team=>'<label>Игрок '+(team===0?'зелёных':'красных')+
+   ': сторона<select id="pictured-dispute-type'+team+'">'+faceOptions+'</select></label>'+
+   (isPair?'<label>Разворот<select id="pictured-dispute-rotation'+team+'">'+
+    dirOptions+'</select></label>':'')).join('')+
+  '<button class="primary" id="pictured-dispute-roll">РАЗРЕШИТЬ СПОР · 2D6</button>');
+ $('#pictured-dispute-type0').value='depth1';
+ $('#pictured-dispute-type1').value='level1';
+ $('#pictured-dispute-roll').onclick=()=>{
+  const proposal=team=>({
+   terrainType:$('#pictured-dispute-type'+team).value,
+   orientation:isPair?Number($('#pictured-dispute-rotation'+team).value):null
+  });
+  const result=game.arbitrateIllustratedTerrainDispute({
+   pieceIndex,first:proposal(0),second:proposal(1)});
+  if(!result.ok)return void toast(result.error);
+  showPrintedPlacementStep();
+  toast('2D6: решение '+(result.winner===0?'зелёных':'красных')+
+   ' обязательно для элемента '+(pieceIndex+1));
+ };
+}
 function showPrintedPlacementStep(){
  const scenario=game.scenario,terrain=scenario?.looseTerrain;
  if(!scenario)return;
@@ -820,10 +852,29 @@ function showPrintedPlacementStep(){
    '<label id="scenario-terrain-custom-wrap" hidden>Смещения q,r через точку с запятой '+
    '<input id="scenario-terrain-offsets" value="0,0;1,0;1,-1"></label>'+
    '<label>Исходный гекс<select id="scenario-terrain-hex"></select></label>'+
+   '<label id="scenario-terrain-rotation-wrap"'+(pictured&&pieceIndex%2===0?'':' hidden')+
+   '>Разворот двойного элемента<select id="scenario-terrain-rotation">'+
+   DIRS.map(([q,r],i)=>'<option value="'+i+'">'+(i*60)+'° ('+q+','+r+')</option>').join('')+
+   '</select></label>'+
+   (pictured&&!scenario.picturedTerrain.disputes?.[pieceIndex]?
+    '<button id="scenario-terrain-dispute">СПОР О СТОРОНЕ / РАЗВОРОТЕ · 2D6</button>':'')+
    '<button class="primary" id="scenario-terrain-place">РАЗМЕСТИТЬ ЭЛЕМЕНТ</button>');
   scenarioHexOptions($('#scenario-terrain-hex'),game.tiles.filter(t=>
    game.looseTerrainZoneAllowed(t.q,t.r)&&(!pictured||t.sheet===Math.floor(pieceIndex/2))));
   if(pictured){
+   const allowed=new Set(['level1','level2','depth1','depth2']);
+   for(const option of [...$('#scenario-terrain-type').options])
+    if(!allowed.has(option.value))option.remove();
+   const ruling=scenario.picturedTerrain.disputes?.[pieceIndex]?.choice;
+   if(ruling){
+    $('#scenario-terrain-type').value=ruling.terrainType;
+    $('#scenario-terrain-type').disabled=true;
+    if(pieceIndex%2===0){
+     $('#scenario-terrain-rotation').value=String(ruling.orientation);
+     $('#scenario-terrain-rotation').disabled=true;
+    }
+   }
+   if(!ruling)$('#scenario-terrain-dispute').onclick=()=>showIllustratedTerrainDispute(pieceIndex);
    $('#scenario-terrain-shape').value=pieceIndex%2===0?'2':'custom';
    $('#scenario-terrain-shape').disabled=true;
    $('#scenario-terrain-custom-wrap').hidden=pieceIndex%2===0;
@@ -835,7 +886,10 @@ function showPrintedPlacementStep(){
    const [q,r]=$('#scenario-terrain-hex').value.split(',').map(Number);
    const terrainType=$('#scenario-terrain-type').value;
    let footprint=[{q:0,r:0}];
-   if($('#scenario-terrain-shape').value==='2')footprint=[{q:0,r:0},{q:1,r:0}];
+   if($('#scenario-terrain-shape').value==='2'){
+    const [dq,dr]=DIRS[Number($('#scenario-terrain-rotation').value)];
+    footprint=[{q:0,r:0},{q:dq,r:dr}];
+   }
    if($('#scenario-terrain-shape').value==='custom'){
     const segments=$('#scenario-terrain-offsets').value.split(';');
     if(segments.length>32||!segments.every(s=>/^\s*-?\d+,\s*-?\d+\s*$/.test(s)))
