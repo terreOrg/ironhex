@@ -151,3 +151,20 @@ test('only exact successful audit push with existing artifact can reuse coverage
  assert(matchingArtifact([{name:'report',size_in_bytes:42,expired:false}],'report'));
  assert(!matchingArtifact([{name:'report',size_in_bytes:42,expired:true}],'report'));
 });
+
+test('API Docker smoke integration fixtures are included in the Docker build context',async()=>{
+ const root=new URL('../',import.meta.url);
+ const [dockerfile,ignore]=await Promise.all([
+  readFile(new URL('../apps/api/Dockerfile',import.meta.url),'utf8'),
+  readFile(new URL('../.dockerignore',import.meta.url),'utf8')
+ ]);
+ const inclusions=new Set(ignore.split(/\r?\n/).filter(s=>s.startsWith('!')).map(s=>s.slice(1)));
+ const fixtures=[...dockerfile.matchAll(/^COPY (tests\/[^\s]+\.mjs)\s+\/app\/tests\//gm)]
+  .map(match=>match[1]);
+ assert(fixtures.length>=5,'integration test files are listed in API Dockerfile');
+ for(const fixture of fixtures){
+  assert(inclusions.has(fixture),
+   fixture+' must be explicitly allowed after tests/* in .dockerignore');
+ }
+ assert(fixtures.includes('tests/scenario-rooms-integration.mjs'));
+});
