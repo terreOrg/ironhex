@@ -62,6 +62,16 @@
       "variant": "GRF-1N",
       "file": "GRF-1N.mtf",
       "sourcePath": "data/mekfiles/meks/3039u/Griffin GRF-1N.mtf"
+    },
+    {
+      "variant": "LCT-1E",
+      "file": "LCT-1E.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Locust LCT-1E.mtf"
+    },
+    {
+      "variant": "WVR-6R",
+      "file": "WVR-6R.mtf",
+      "sourcePath": "data/mekfiles/meks/3039u/Wolverine WVR-6R.mtf"
     }
   ]
 }
