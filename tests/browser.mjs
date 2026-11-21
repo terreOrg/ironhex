@@ -1882,8 +1882,8 @@ test('AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitr
    recon.name.toUpperCase(),'recon seat initially selects its own actionable Mech');
   assert(await pages.command.locator('#hold').isEnabled());
   assert(await pages.recon.locator('#hold').isEnabled());
-  assert(await pages.attacker.locator('#hold').isDisabled(),
-   'attacker cannot submit a Mech move during defender phase');
+  assert.equal(await pages.attacker.locator('#hold').count(),0,
+   'attacker has no active move control during defender phase');
   await pages.command.locator('#room-dispute-unit').selectOption(String(command.id));
   await pages.command.locator('#room-dispute-send').click();
   await pages.command.locator('#room-dispute-withdraw').waitFor({state:'visible'});
@@ -1903,11 +1903,11 @@ test('AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitr
   await pages.command.locator('[data-unit="'+recon.id+'"]').click();
   assert(await pages.command.locator('#hold').isEnabled(),
    '2D6 winner can order either defending lance for the rest of the phase');
-  assert(await pages.recon.locator('#hold').isDisabled(),
-   '2D6 loser cannot order either defending lance after arbitration');
+  assert.equal(await pages.recon.locator('#hold').count(),0,
+   '2D6 loser has no active move controls after arbitration');
   await pages.command.locator('#hold').click();
   await pages.command.waitForFunction(()=>document.querySelector('#status')?.
-   textContent.includes('v25'),null,{timeout:30000});
+   textContent.includes('v26'),null,{timeout:30000});
   assert.equal(game.activeTeam,game.scenario.attackerTeam);
   await pages.attacker.reload({waitUntil:'domcontentloaded'});
   await loaded(pages.attacker);
@@ -1916,7 +1916,7 @@ test('AGoAC Ch11: three independent cockpit seats share engine-backed 2D6 arbitr
   assert(await pages.attacker.locator('#hold').isEnabled());
   await pages.attacker.locator('#hold').click();
   await pages.attacker.waitForFunction(()=>document.querySelector('#status')?.
-   textContent.includes('v26'),null,{timeout:30000});
+   textContent.includes('v27'),null,{timeout:30000});
   assert.deepEqual(accepted.map(x=>x.role),['command','recon','command','attacker']);
   assert.equal(game.activeTeam,game.scenario.defenderTeam);
   assert.equal(game.scenario.sharedLances.decided.controller,'command');
