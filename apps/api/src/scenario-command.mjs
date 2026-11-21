@@ -92,12 +92,10 @@ export function runScenarioRoomCommand(game,authenticatedRole,rawAction){
  authoritativeGame(game);
  const action=validated(rawAction),state=game.scenario.sharedLances;
  if(action.type==='propose-dispute'){
+  const phaseDecided=state.decided?.round===game.round&&
+   state.decided.phase===game.phase;
   check(['move','fire'].includes(game.phase)&&
-   game.activeTeam===game.scenario.defenderTeam&&
-   !state.decided?.controller||
-   ['move','fire'].includes(game.phase)&&
-   game.activeTeam===game.scenario.defenderTeam&&
-   !(state.decided?.round===game.round&&state.decided.phase===game.phase),
+   game.activeTeam===game.scenario.defenderTeam&&!phaseDecided,
    'scenario_dispute_unavailable');
   check(validDisputeCandidate(game,authenticatedRole,action.id),
    'scenario_lance_not_owned',403);
