@@ -86,6 +86,51 @@ jobs:
           rm -f coverage/browser.info
           node --test tests/browser.mjs
           test -s coverage/browser.info
+      - name: True three-seat Chromium and PostgreSQL integration (Chapter 11)
+        if: startsWith(github.ref, 'refs/heads/audit/agoac-ch11-')
+        timeout-minutes: 14
+        shell: bash
+        run: |
+          set -euo pipefail
+          suffix="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          image="ironhex-api-agoac-ch11-e2e:${GITHUB_SHA:0:12}-${suffix}"
+          db="ironhex-pg-ch11-e2e-${suffix}"
+          api="ironhex-api-ch11-e2e-${suffix}"
+          cleanup() {
+            docker rm -fv "$api" "$db" >/dev/null 2>&1 || true
+            docker image rm -f "$image" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          # Isolated temporary PostgreSQL database; no host data, volumes,
+          # reverse proxy, Docker prune or production services are touched.
+          docker build -f apps/api/Dockerfile -t "$image" .
+          docker run -d --rm --name "$db" \
+            -p 127.0.0.1::3000 \
+            --mount type=tmpfs,destination=/var/lib/postgresql/data,tmpfs-size=536870912 \
+            -e POSTGRES_USER=ironhex -e POSTGRES_DB=ironhex \
+            -e POSTGRES_PASSWORD=ci-ephemeral-not-secret postgres:17-alpine
+          for i in $(seq 1 60); do
+            if docker exec "$db" sh -ec 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h 127.0.0.1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atqc "SELECT 1"' 2>/dev/null | grep -qx 1; then break; fi
+            sleep 1
+          done
+          # Only the local browser endpoint is exposed by this test.
+          browser_port=$((21000 + GITHUB_RUN_ID % 10000))
+          docker run -d --rm --name "$api" --network "container:$db" \
+            -e PGHOST=127.0.0.1 -e PGPORT=5432 \
+            -e PGUSER=ironhex -e PGDATABASE=ironhex \
+            -e PGPASSWORD=ci-ephemeral-not-secret \
+            -e IRONHEX_PUBLIC_ORIGIN="http://127.0.0.1:$browser_port" \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
+            --cap-drop ALL --security-opt no-new-privileges "$image"
+          port_binding="$(docker port "$db" 3000/tcp)"
+          api_port="${port_binding##*:}"
+          for i in $(seq 1 60); do
+            if curl --fail --silent "http://127.0.0.1:$api_port/api/health" >/dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent "http://127.0.0.1:$api_port/api/health" >/dev/null
+          IRONHEX_REAL_API_PORT="$api_port" IRONHEX_REAL_BROWSER_PORT="$browser_port" \
+            node tests/scenario-three-browser-postgres.mjs
       - name: Upload browser LCOV report
         if: ${{ !startsWith(github.ref, 'refs/heads/audit/agoac-ch11-') }}
         uses: actions/upload-artifact@v4
