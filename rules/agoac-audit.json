@@ -623,7 +623,7 @@
         48
       ],
       "status": "known_missing",
-      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit. 21.11.2026 first four atomic existing planetary-condition rules source-to-code Verified on green main e12ebe6: ground lunar MP, lunar weapon/heat, gale weapon classes and gale PSR. Exact CI 44896909451, Browser 44896909461, Smoke 44896909396, strict Sonar 44896909440 all successful. Remaining 21 Known Missing; chapter stays open, pointer stays agoac-scenarios. No scenario implementation or deploy. 21.11.2026 follow-up: conditional scenario side choice, first-turn automatic Trial by Fire initiative, scenario 3 -2 defender initiative, full-moon jumping MP on-board and offboard first-hex implemented. Four new named deterministic tests; 148 still only partially covered; full scenarios remain missing. No deploy / Ch12. 21.11.2026 final packet source certification: 140, 153 and 158 independently verified on exact main 249f3ba with CI 44899292879, Browser 44899292900, Smoke 44899292893 and strict Sonar 44899292896 green. 148 remains Tested Case, 17 scenario-specific groups Known Missing. 7 verified/1 tested/17 missing in Ch11; remain chapter-scoped; no deployment/Ch12. 2026-11-21 PR#234 (branch, not merged): cripple/exit/victory partial engine package. Tentative registry after tests: 7 verified, 4 tested_case, 14 known_missing. Keep topic known_missing, do not claim exact scenario parity or deploy. Exact-head PR CI, Browser, Smoke and post-merge four-way main checks required before later independent source certification.",
+      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit. 21.11.2026 first four atomic existing planetary-condition rules source-to-code Verified on green main e12ebe6: ground lunar MP, lunar weapon/heat, gale weapon classes and gale PSR. Exact CI 44896909451, Browser 44896909461, Smoke 44896909396, strict Sonar 44896909440 all successful. Remaining 21 Known Missing; chapter stays open, pointer stays agoac-scenarios. No scenario implementation or deploy. 21.11.2026 follow-up: conditional scenario side choice, first-turn automatic Trial by Fire initiative, scenario 3 -2 defender initiative, full-moon jumping MP on-board and offboard first-hex implemented. Four new named deterministic tests; 148 still only partially covered; full scenarios remain missing. No deploy / Ch12. 21.11.2026 final packet source certification: 140, 153 and 158 independently verified on exact main 249f3ba with CI 44899292879, Browser 44899292900, Smoke 44899292893 and strict Sonar 44899292896 green. 148 remains Tested Case, 17 scenario-specific groups Known Missing. 7 verified/1 tested/17 missing in Ch11; remain chapter-scoped; no deployment/Ch12. 2026-11-21 PR#234 (branch, not merged): cripple/exit/victory partial engine package. Tentative registry after tests: 7 verified, 4 tested_case, 14 known_missing. Keep topic known_missing, do not claim exact scenario parity or deploy. Exact-head PR CI, Browser, Smoke and post-merge four-way main checks required before later independent source certification. 2026-11-21 PR#251 cross-cutting closeout: all eight formerly Tested Case requirements received grouped source-backed integration work and tests. The source figure's mandatory die-cut physical terrain for Divide and Conquer is a still explicit gap. Do not promote the topic unless all child requirements meet source, edge and four-way CI audit. No deployment.",
       "audit": {
         "sourceChecked": true,
         "edgeCasesChecked": false,
@@ -9604,7 +9604,7 @@
       ],
       "statement": "Scenario 1 Final Exam uses Desert #3 + Grassland #2 in the pictured arrangement (v8.01 correction), four precise chassis/variants and 4/5 pilots per side.",
       "status": "tested_case",
-      "reviewNote": "2026-11-21 source-data package: source-native Desert #3 + Grassland #2 (16x17 each, 544 terrain hexes) from MegaMek/mm-data pinned revision 5ee1b15 and all 4 source MTF variants imported using combat construct(), with eight exact printed pilot assignments (4 per side) and initial setup lock. Regression checks elevation, water/woodland, exact roster and no demo fallbacks. TESTED CASE only: original full-color map textures, exact commercial record-sheet graphics, independent printed-to-digital terrain validation and scenario-launch UI remain unverified.",
+      "reviewNote": "2026-11-21 source-data package: source-native Desert #3 + Grassland #2 (16x17 each, 544 terrain hexes) from MegaMek/mm-data pinned revision 5ee1b15 and all 4 source MTF variants imported using combat construct(), with eight exact printed pilot assignments (4 per side) and initial setup lock. Regression checks elevation, water/woodland, exact roster and no demo fallbacks. TESTED CASE only: original full-color map textures, exact commercial record-sheet graphics, independent printed-to-digital terrain validation and scenario-launch UI remain unverified. 2026-11-21 PR#251 integrated implementation: Source digital Desert #3 + Grassland #2 (errata v8.01) 544 hexes, pinned 14-record technical catalog, the original 8 pilot identities/skills, launchable browser exact roster and source-coordinate turn-based deployment. Commercial paper artwork is not redistributed; ordinary 3D proxy model assets do not replace technical record sheets. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9613,6 +9613,14 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.45-48: pinned MegaMek MTF data construct all printed AGoAC technical designs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D Ch11 browser technical manifest uses identical source MTF constructor data for every printed variation"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Final Exam alternate exact MTFs, vertical source maps, full interactive deployment"
         }
       ]
     },
@@ -9744,11 +9752,27 @@
       ],
       "statement": "Scenario 1 suggested variants permit alternative four-Mech force rosters and rotated/reshaped two-map terrain while preserving other scenario rules.",
       "status": "tested_case",
-      "reviewNote": "Generic roster/map layout selection exists but no Final Exam preset, approved printed roster variation or scenario continuity. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated.",
+      "reviewNote": "Generic roster/map layout selection exists but no Final Exam preset, approved printed roster variation or scenario continuity. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated. 2026-11-21 PR#251 integrated implementation: Final Exam alternate published 4+4 force uses actual TDR-5S, GRF-1N, LCT-1E, COM-2D vs TDR-5SE, WVR-6R, LCT-1V, COM-3A from pinned MegaMek MTF. Both independent 180-degree map rotations, 16x34 short-edge join, and explicit substitution of other real pinned AGoAC boards are enforced. Generic synthetic replacements rejected; browser scenario variant exposed. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.46,48: exact alternative Final Exam chassis and shortened 6-defender vs 4-attacker scenario"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.45-46: Final Exam optional source-based alternative forces are 4v4, not substituted demo units"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.46: Final Exam reshapes authentic source maps to short edges and keeps printed rotations"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.46: Final Exam substitute terrain variation uses only independently pinned boards"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Final Exam alternate exact MTFs, vertical source maps, full interactive deployment"
         }
       ]
     },
@@ -9760,7 +9784,7 @@
       ],
       "statement": "Scenario 2 Trial by Fire uses Desert #2 + Grassland #3, exact lone BLR-1G and three attackers with printed 4/5,5/5,5/6 pilots, plus four random front 5-point pre-damage hits excluding heads and criticals.",
       "status": "tested_case",
-      "reviewNote": "2026-11-21 source-data package: Desert #2 + Grassland #3 from pinned MegaMek mm-data, real BLR-1G and WVR-6M/LCT-1V/COM-3A MTF technical definitions, exact published pilot/skill manifest, printed pregame four 5-point FRONT hits with head reroll, critical suppression and first-turn initiative. Source-backed end-to-end regression covers true BattleMaster model, placement, pre-damage and phase transition. TESTED CASE only: printed full-color map art, MTF-to-commercial record-sheet equivalence and complete scenario user interface remain unaudited.",
+      "reviewNote": "2026-11-21 source-data package: Desert #2 + Grassland #3 from pinned MegaMek mm-data, real BLR-1G and WVR-6M/LCT-1V/COM-3A MTF technical definitions, exact published pilot/skill manifest, printed pregame four 5-point FRONT hits with head reroll, critical suppression and first-turn initiative. Source-backed end-to-end regression covers true BattleMaster model, placement, pre-damage and phase transition. TESTED CASE only: printed full-color map art, MTF-to-commercial record-sheet equivalence and complete scenario user interface remain unaudited. 2026-11-21 PR#251 integrated implementation: Source exact Desert #2 + Grassland #3, named BLR-1G and three printed attacker MTF with skills, 4 independently randomized front damage hits of 5 excluding head reroll and criticals, first-turn initiative exception; browser full 4-unit placement/pre-damage covered. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9769,6 +9793,14 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.46-48: source BattleMaster gets four pregame 5-point hits without head/crit"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D Ch11 browser technical manifest uses identical source MTF constructor data for every printed variation"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Trial by Fire real pre-damage, printed force deployment and source sheet labels"
         }
       ]
     },
@@ -10020,7 +10052,7 @@
       ],
       "statement": "Scenario 3 Divide and Conquer uses Desert #2 + Grassland #3 with specified terrain (v8.01 correction), six defending and FOUR attacking printed BattleMechs and individual pilot skills.",
       "status": "tested_case",
-      "reviewNote": "2026-11-21 source-data package: source-native Desert #2 + Grassland #3 terrain from pinned MegaMek mm-data, six defender and exactly FOUR attacker MTF chassis records with source-correct pilot skills. Construct validated all ten technical units; end-to-end setup tests exercise command/recon placement, source maps, selected printed attacker hexes and ten-unit initiative. TESTED CASE only: independent physical-map visual proof, original printed record-sheet artwork and multiplayer scenario UI remain open.",
+      "reviewNote": "2026-11-21 source-data package: source-native Desert #2 + Grassland #3 terrain from pinned MegaMek mm-data, six defender and exactly FOUR attacker MTF chassis records with source-correct pilot skills. Construct validated all ten technical units; end-to-end setup tests exercise command/recon placement, source maps, selected printed attacker hexes and ten-unit initiative. TESTED CASE only: independent physical-map visual proof, original printed record-sheet artwork and multiplayer scenario UI remain open. 2026-11-21 PR#251 integrated implementation: Pinned source Desert #2 + Grassland #3, six actual defending MTFs and FOUR named attacking MTFs, printed pilot skills, digital 544-hex battlefield. SOURCE GAP: original pp.47 figure explicitly requires four colored die-cut terrain piece shapes/locations before battle; corrected errata swaps the Desert sheet. Exact numbered overlay coordinates, shapes and terrain types from the physical figure are NOT independently established. Manual typed overlays are supported but cannot be claimed as automatic exact pictured setup. Remains TESTED CASE. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10029,6 +10061,14 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: source-backed Divide and Conquer completes corrected defender-first ten-Mech setup"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D Ch11 browser technical manifest uses identical source MTF constructor data for every printed variation"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances"
         }
       ]
     },
@@ -10040,7 +10080,7 @@
       ],
       "statement": "Scenario 3 defender places command lance first within 6 hexes of north and west edges and recon lance within 6 hexes of south and east edges (errata v8.01), then attacker chooses the printed northeast east-sheet or southwest west-sheet deployment row numbered 1510–1517.",
       "status": "tested_case",
-      "reviewNote": "2026-11-21: chapter 11 numbered deployment implemented and guarded. Errata v8.01 command then recon defender setup, explicit selection of one east or west mapsheet, exact printed column 15 / rows 10–17 (labels 1510–1517) converted for local 16×17 sheet coordinates under 0°/180° rotation. The four attackers cannot mix sides, overlap, act before defenders, or skip initial placement. Source-linked regression tests cover both sheets, rotation, collision and initiative handoff. TESTED CASE only; authentic Desert #2 / Grassland #3 terrain elevations/artwork, die-cut terrain arrangements, Mech record sheets and playable authenticated scenario UI remain absent. 2026-11-21 reduced-force regression: attacker 1510–1517 choice now waits for 4 rather than 6 defending deployments in printed smaller-force variation, preserving original six-defender requirement for full roster. Rotations/ordering tested on real maps. Retain TESTED CASE pending source/visual and four-way QA audits. 2026-11-21 north/south bug fix candidate: assembled playing-area north is minimum axial r and south is maximum axial r, even when printed source sheet rows are reversed by 180° rotation. Previous scenarioZoneAllowed inverted the north/south axial-r distances, allowing command in SW and recon in NE. Source/dist now use north=r-minRow and south=maxRow-r, tested at both inclusive six-hex boundaries for 0°/180° independent rotations, both side assignments and real 6+4/4+3 printed setup. Keep TESTED CASE pending exact-HEAD checks, main SonarQube and independent source certification. 2026-11-21 PR#250 CI follow-up: two legacy deterministic fixture tests assumed the previous inverted orientation. Their asserted NW and SE positions have been corrected to the original book plus errata, not the gameplay behavior rolled back.",
+      "reviewNote": "2026-11-21: chapter 11 numbered deployment implemented and guarded. Errata v8.01 command then recon defender setup, explicit selection of one east or west mapsheet, exact printed column 15 / rows 10–17 (labels 1510–1517) converted for local 16×17 sheet coordinates under 0°/180° rotation. The four attackers cannot mix sides, overlap, act before defenders, or skip initial placement. Source-linked regression tests cover both sheets, rotation, collision and initiative handoff. TESTED CASE only; authentic Desert #2 / Grassland #3 terrain elevations/artwork, die-cut terrain arrangements, Mech record sheets and playable authenticated scenario UI remain absent. 2026-11-21 reduced-force regression: attacker 1510–1517 choice now waits for 4 rather than 6 defending deployments in printed smaller-force variation, preserving original six-defender requirement for full roster. Rotations/ordering tested on real maps. Retain TESTED CASE pending source/visual and four-way QA audits. 2026-11-21 north/south bug fix candidate: assembled playing-area north is minimum axial r and south is maximum axial r, even when printed source sheet rows are reversed by 180° rotation. Previous scenarioZoneAllowed inverted the north/south axial-r distances, allowing command in SW and recon in NE. Source/dist now use north=r-minRow and south=maxRow-r, tested at both inclusive six-hex boundaries for 0°/180° independent rotations, both side assignments and real 6+4/4+3 printed setup. Keep TESTED CASE pending exact-HEAD checks, main SonarQube and independent source certification. 2026-11-21 PR#250 CI follow-up: two legacy deterministic fixture tests assumed the previous inverted orientation. Their asserted NW and SE positions have been corrected to the original book plus errata, not the gameplay behavior rolled back. 2026-11-21 PR#251 integrated implementation: Official v8.01 correct NW/SE 6-hex defender restrictions, actual source 1510–1517 selectable west/east attacker row, full 6+4 and reduced 4+3 printed placement, independently rotated maps, first initiative only after full placement. Source/dist engine, browser wizard and deterministic boundary tests all included. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10065,6 +10105,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48 errata: real 6+4 and shortened 4+3 defenders obey NW/SE physical deployment"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances"
         }
       ]
     },
@@ -10187,7 +10231,7 @@
       ],
       "statement": "Scenario 3 shorter-force variation and three-player shared defender-lance control include independent alternation and 2D6 tie arbitration for each disputed phase.",
       "status": "tested_case",
-      "reviewNote": "No scenario alternate force roster or shared two-person control with 2D6 dispute arbitration. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated. 2026-11-21: every defender Initiative is attributed to alternating command/recon controller each turn, with consistent controller across tie rerolls, optional first commander, and unchanged -2 scenario modifier. Regression added. Automated roll attribution is not authenticated 3-player command authorization; remains TESTED CASE. 2026-11-21 reduced-force implementation: actual scenario variation chooses the printed 4-defender / 3-attacker roster, preserves named pilots and original MTF records, 2+2 defender lances, 3 printed-row attackers, legal 1510–1517, mirrored defender-team assignment and no mid-setup switching. Authenticated three-player turn authorization remains outside this packet. Retain TESTED CASE until exact-head four-way quality proof and independent source certification.",
+      "reviewNote": "No scenario alternate force roster or shared two-person control with 2D6 dispute arbitration. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated. 2026-11-21: every defender Initiative is attributed to alternating command/recon controller each turn, with consistent controller across tie rerolls, optional first commander, and unchanged -2 scenario modifier. Regression added. Automated roll attribution is not authenticated 3-player command authorization; remains TESTED CASE. 2026-11-21 reduced-force implementation: actual scenario variation chooses the printed 4-defender / 3-attacker roster, preserves named pilots and original MTF records, 2+2 defender lances, 3 printed-row attackers, legal 1510–1517, mirrored defender-team assignment and no mid-setup switching. Authenticated three-player turn authorization remains outside this packet. Retain TESTED CASE until exact-head four-way quality proof and independent source certification. 2026-11-21 PR#251 integrated implementation: Real source reduced 4 vs 3, independently assigned defender command/recon controllers in three-human local hotseat, alternating designated defending Initiative roller by round, 2D6 tie-referee for disputed movement/fire action for remainder of same phase. LIMITATION: serverAuthorizationImplemented=false, independent remote player identities/authenticated 3-user command routing absent; only local hotseat is supported. Browser end-to-end tests setup and source rosters, engine tests arbitration. Do not claim remote multi-player. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10204,6 +10248,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: shortened roster selection rejects mismatched full force records atomically"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances"
         }
       ]
     },
@@ -10572,7 +10620,7 @@
       ],
       "statement": "Optional loose terrain pieces require equal counts per player, with D6-based alternate starting side if no agreement, adding exactly one piece at a time.",
       "status": "tested_case",
-      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion.",
+      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion. 2026-11-21 PR#251 integrated implementation: Equal terrain piece quotas and strict one-at-a-time alternation, D6 first-team fallback, connected arbitrary 1–32-hex outlines, actual woods/heavy/rough/rubble hex terrain type effects, current authenticated print-setup lock (hotseat only). Tool exposes manual shape entry for user physical punchout outlines; no fake licensed art. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10589,6 +10637,14 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: source printed scenarios require finishing optional terrain before placing Mechs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: optional playable terrain overlays change movement and LOS terrain, with atomic geometry and type rejection"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances"
         }
       ]
     },
@@ -10600,7 +10656,7 @@
       ],
       "statement": "Loose terrain pieces must be placed at least two hexes away from the mapsheet edge and separated by three empty hexes from other pieces.",
       "status": "tested_case",
-      "reviewNote": "No terrain-piece placement constraints or equal placement workflow. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion.",
+      "reviewNote": "No terrain-piece placement constraints or equal placement workflow. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion. 2026-11-21 PR#251 integrated implementation: Every occupied hex remains MORE than 2 hexes from each independent source sheet edge and at least 3 empty hexes between all edges of distinct pieces (hex-distance >=4). Invalid or overlapping footprint placement is atomic; UI permits true custom connected multihex outlines and propagates valid effects to movement/LOS. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10617,6 +10673,14 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: source printed scenarios require finishing optional terrain before placing Mechs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: optional playable terrain overlays change movement and LOS terrain, with atomic geometry and type rejection"
+        },
+        {
+          "file": "tests/browser.mjs",
+          "test": "AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances"
         }
       ]
     },
