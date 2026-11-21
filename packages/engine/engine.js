@@ -611,6 +611,21 @@ export class Game extends Legacy{
   return {ok:true,commandController:commandController.trim(),reconController:reconController.trim(),
    firstInitiativeController};
  }
+ // CAT3500D p.48: when arbitration settles a disputed order, the
+ // winner chooses the defending SIDE's actions for the remainder of
+ // that phase, not merely actions by units in the winner's own lance.
+ // In undisputed play each local controller still selects their own lance.
+ // This is local hotseat turn arbitration, not server-side authentication.
+ sharedDefenderCanControl(u,controller){
+  const state=this.scenario?.sharedLances;
+  if(this.scenario?.id!=='divide-and-conquer'||!state||!u||
+   !['command','recon'].includes(controller)||
+   u.dead||u.notFielded||u.team!==this.scenario.defenderTeam||
+   !['command','recon'].includes(u.lance))return false;
+  const ruling=state.decided?.round===this.round&&state.decided?.phase===this.phase?
+   state.decided.controller:null;
+  return ruling?controller===ruling:u.lance===controller;
+ }
  // The source only permits settling a disagreement about who moves or
  // declares fire. Do not silently turn this into control of attacker,
  // physical attacks, heat or a different round.

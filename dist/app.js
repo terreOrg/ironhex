@@ -220,9 +220,9 @@ function owned(u){
  if(!u||u.dead||!(hotseat?u.team===game.activeTeam:u.team===0))return false;
  const shared=game.scenario?.sharedLances;
  if(!hotseat||!shared||u.team!==game.scenario.defenderTeam)return true;
- const decided=shared.decided?.round===game.round&&shared.decided.phase===game.phase?
+ const controller=shared.decided?.round===game.round&&shared.decided.phase===game.phase?
   shared.decided.controller:sharedDefenderController;
- return u.lance===decided;
+ return game.sharedDefenderCanControl(u,controller);
 }
 function readCustomDesign(){
  try{const d=JSON.parse(localStorage.getItem('ironhex-design'));if(!d?.config)return null;

@@ -8051,3 +8051,39 @@ test('CAT3500D pp.45-48: five source-certified scenario and loose-terrain cases 
   }
  }
 });
+
+test('CAT3500D p.48: winning shared defender controls either lance only until phase changes',()=>{
+ const g=fresh();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert(g.configureSharedDefenderLances({
+  commandController:'captain',reconController:'scout'}).ok);
+ const commander=g.units[2],recon=g.units[3],attacker=g.units[0];
+ commander.lance='command';recon.lance='recon';
+ g.phase='move';
+ assert(g.sharedDefenderCanControl(commander,'command'));
+ assert(g.sharedDefenderCanControl(recon,'recon'));
+ assert.equal(g.sharedDefenderCanControl(recon,'command'),false);
+ assert.equal(g.sharedDefenderCanControl(commander,'recon'),false);
+ assert.equal(g.sharedDefenderCanControl(attacker,'command'),false);
+ const dice=[...diceFor(2),...diceFor(12)];
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ const roll=g.arbitrateSharedDefenderChoice({
+  commandChoice:commander.id,reconChoice:recon.id});
+ assert(roll.ok);assert.equal(roll.controller,'recon');
+ assert.equal(dice.length,0);
+ assert(g.sharedDefenderCanControl(recon,'recon'));
+ assert(g.sharedDefenderCanControl(commander,'recon'),
+  '2D6 winner decides actions of the entire defending side for remainder of phase');
+ assert.equal(g.sharedDefenderCanControl(commander,'command'),false);
+ assert.equal(g.sharedDefenderCanControl(recon,'command'),false);
+ g.phase='fire';
+ assert(g.sharedDefenderCanControl(commander,'command'),'ruling cannot leak into next phase');
+ assert.equal(g.sharedDefenderCanControl(commander,'recon'),false);
+ g.phase='move';g.round=2;
+ assert(g.sharedDefenderCanControl(commander,'command'),'ruling cannot leak into next round');
+ assert.equal(g.sharedDefenderCanControl(commander,'recon'),false);
+ assert.equal(g.sharedDefenderCanControl({...commander,dead:true},'command'),false);
+ assert.equal(g.sharedDefenderCanControl({...commander,notFielded:true},'command'),false);
+});
