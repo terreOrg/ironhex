@@ -7116,3 +7116,19 @@ test('CAT3500D p.48: source-backed Divide and Conquer completes corrected defend
  assert.equal(g.phase,'move');
  assert.equal(g.queue.length,10,'correct printed 6 defenders vs 4 attackers');
 });
+test('CAT3500D p.48: Awesome AWS-8Q source MTF retains lower arm actuator but omits hand',async()=>{
+ const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const {construct}=await import('../dist/construction.js');
+ const config=loadAgoacPrintedDesigns('divide-and-conquer')['AWS-8Q'];
+ assert(config,'source model found');
+ assert.deepEqual(config.removeHandActuators,['RA']);
+ assert.equal(config.removeActuators?.includes('RA')??false,false);
+ const real=construct(config);
+ assert.equal(real.errors.length,0,real.errors.join(';'));
+ assert.equal(real.unit.slots.RA[2],'lower','preserve the lower arm actuator');
+ assert.equal(real.unit.slots.RA[3],'sink','print-defined heat sink replaces only the hand');
+ const incompatible={...config,removeHandActuators:[],removeActuators:[]};
+ const invalid=construct(incompatible);
+ assert(invalid.errors.length>0,'cannot silently accept heat sink overlapping a hand actuator');
+});
+

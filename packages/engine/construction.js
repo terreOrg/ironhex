@@ -65,9 +65,12 @@ export function construct(c,{auditQuad=false}={}){
   Object.fromEntries(LOCS.map((l,i)=>[l,[3,st[0],st[1],st[1],st[2],st[2],st[3],st[3]][i]]));
  const armor={},rear={};for(const l of LOCS){armor[l]=Number(c.armor?.[l]??0);if(!Number.isInteger(armor[l])||armor[l]<0)errors.push(l+': броня должна быть целой и неотрицательной.');if(['CT','LT','RT'].includes(l)){rear[l]=Number(c.rear?.[l]??0);if(!Number.isInteger(rear[l])||rear[l]<0)errors.push(l+': кормовая броня должна быть целой и неотрицательной.');}if(armor[l]+(rear[l]||0)>(l==='HD'?9:2*structure[l]))errors.push(l+': превышен предел брони.');}
  const slots=quadLayout?quadLayout.slots:{HD:['life','sensors','cockpit',null,'sensors','life'],CT:['engine','engine','engine','gyro','gyro','gyro','gyro','engine','engine','engine',null,null],LT:Array(12).fill(null),RT:Array(12).fill(null),LA:['shoulder','upper','lower','hand',...Array(8).fill(null)],RA:['shoulder','upper','lower','hand',...Array(8).fill(null)],LL:['hip','upper','lower','foot',null,null],RL:['hip','upper','lower','foot',null,null]};
- if(quadLayout&&c.removeActuators?.length)
+ if(quadLayout&&(c.removeActuators?.length||c.removeHandActuators?.length))
   errors.push('Quad leg actuators must not be removed through biped arm settings.');
- else for(const l of ['LA','RA'])if(c.removeActuators?.includes(l)){slots[l][2]=null;slots[l][3]=null;}
+ else for(const l of ['LA','RA']){
+  if(c.removeActuators?.includes(l)){slots[l][2]=null;slots[l][3]=null;}
+  else if(c.removeHandActuators?.includes(l))slots[l][3]=null;
+ }
  const weights={structure:ton/10,engine:masses[(rating-20)/5],gyro:Math.ceil(rating/100),cockpit:3,sinks:sinks-10,case:0,armor:Math.ceil([...Object.values(armor),...Object.values(rear)].reduce((a,b)=>a+b,0)/8)/2,jump:jump*(ton<=55?.5:ton<=85?1:2),weapons:0,ammo:0};
  const weapons=[],bins=[],hatchets=[];let extSinks=0,jets=0;
  function place(l,start,n,value){const a=slots[l],i=Number(start)-1;if(!a||!Number.isInteger(i)||i<0||i+n>a.length||a.slice(i,i+n).some(Boolean)){errors.push(`${l} ${start}: ${n} слот(а) заняты или вне секции.`);return false;}for(let k=0;k<n;k++)a[i+k]=value;return true;}
