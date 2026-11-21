@@ -8,6 +8,7 @@ import {clone} from './SkeletonUtils.js';
 import {Game,LOCATIONS,DIRS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,AGOAC_PRINTED_SCENARIOS,rangeMeters,elapsedBattleSeconds} from './engine.js';
 import {loadAgoacBrowserDesigns} from './agoac-scenario-loader.js';
 import {AGOAC_BOARD_NAMES} from './agoac-boards.js';
+import {hexElevationMark} from './terrain-level-labels.js';
 const $=s=>document.querySelector(s),game=new Game();
 const requestParams=new URLSearchParams(location.search);
 const operationId=requestParams.get('operation');
@@ -23,8 +24,52 @@ const camera=new THREE.OrthographicCamera(-15,15,15,-15,.1,240);let software=fal
 scene.add(new THREE.HemisphereLight(0xc6ddbf,0x394332,2.5));const sun=new THREE.DirectionalLight(0xffe1a1,3.6);sun.position.set(-10,22,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:65});sun.shadow.bias=-.001;scene.add(sun);
 const world=(q,r)=>new THREE.Vector3(Math.sqrt(3)*(q+r/2),0,1.5*r);const groundY=(q,r)=>.14+game.tile(q,r).height*.45;
 const hexgeo=new THREE.CylinderGeometry(.977,.977,.32,6);const tileMeshes=[];const terrainGroup=new THREE.Group();scene.add(terrainGroup);const baseColors={plain:0x627057,woods:0x465d43,heavy:0x3d533e,hill:0x88876a,water:0x436e78,rough:0x8a7c61,rubble:0x777e77};
+const levelLabelGroup=new THREE.Group();scene.add(levelLabelGroup);
+const levelLabelGeometry=new THREE.PlaneGeometry(1.52,.53);
+const levelLabelMaterials=new Map();
+let showHexElevation=true,numberOfHexElevationLabels=0;
+function levelLabelMaterial(mark){
+ const key=mark.type+':'+mark.lines.join('/');
+ if(levelLabelMaterials.has(key))return levelLabelMaterials.get(key);
+ const canvas=document.createElement('canvas');canvas.width=384;canvas.height=128;
+ const ctx=canvas.getContext('2d');
+ if(ctx){
+  ctx.clearRect(0,0,384,128);
+  ctx.fillStyle=mark.type==='depth'?'#073743d8':'#1d2520d7';
+  ctx.fillRect(4,20,376,90);
+  ctx.strokeStyle=mark.type==='depth'?'#a5d9e4':'#8c977d';
+  ctx.lineWidth=4;ctx.strokeRect(6,22,372,86);
+  ctx.fillStyle=mark.type==='depth'?'#e9f7fb':mark.type==='sublevel'?'#ffe4c2':'#f3f2db';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  if(mark.lines.length===1){
+   ctx.font='bold 47px "IBM Plex Sans",Arial,sans-serif';
+   ctx.fillText(mark.lines[0],192,64,360);
+  }else{
+   ctx.font='bold 37px "IBM Plex Sans",Arial,sans-serif';
+   ctx.fillText(mark.lines[0],192,49,350);
+   ctx.fillText(mark.lines[1],192,89,350);
+  }
+ }
+ const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+ const material=new THREE.MeshBasicMaterial({
+  map:texture,transparent:true,depthWrite:false,side:THREE.DoubleSide,
+  toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2
+ });
+ levelLabelMaterials.set(key,material);return material;
+}
+function syncHexElevationLabels(){
+ for(const label of levelLabelGroup.children)label.visible=showHexElevation;
+ const viewport=$('#viewport');
+ viewport.dataset.elevationLabelCount=String(numberOfHexElevationLabels);
+ viewport.dataset.elevationLabelsVisible=String(showHexElevation);
+}
+function updateHexElevation(){
+ showHexElevation=$('#elevationtoggle').checked;
+ syncHexElevationLabels();
+}
 function seeded(n){return Math.abs(Math.sin(n*127.1+311.7)*43758.54)%1;}
 function buildTerrain(){
+ levelLabelGroup.clear();numberOfHexElevationLabels=0;
  for(const child of [...terrainGroup.children]){
   terrainGroup.remove(child);child.traverse(o=>{
    if(o.geometry&&o.geometry!==hexgeo)o.geometry.dispose();
@@ -34,11 +79,26 @@ function buildTerrain(){
  tileMeshes.length=0;
  for(const [i,t]of game.tiles.entries()){
  const mat=new THREE.MeshStandardMaterial({color:baseColors[t.type],roughness:1});mat.color.multiplyScalar(.87+seeded(i)*.22);const h=new THREE.Mesh(hexgeo,mat);h.position.copy(world(t.q,t.r));h.position.y=t.height*.45;h.receiveShadow=true;h.userData.tile=t;terrainGroup.add(h);tileMeshes.push(h);t.mesh=h;t.original=mat.color.clone();
+ const mark=hexElevationMark(t);
+ if(mark){
+  numberOfHexElevationLabels++;
+  if(!software){
+   const label=new THREE.Mesh(levelLabelGeometry,levelLabelMaterial(mark));
+   label.rotation.x=-Math.PI/2;
+   label.position.copy(world(t.q,t.r));
+   label.position.y=groundY(t.q,t.r)+.09;
+   label.position.z+=.43;
+   label.renderOrder=3;
+   label.userData.hexElevation=mark.lines.join(' / ');
+   levelLabelGroup.add(label);
+  }
+ }
  if(t.height){const side=new THREE.Mesh(new THREE.CylinderGeometry(.97,1,.5,6),new THREE.MeshStandardMaterial({color:0x555a44,roughness:1}));side.position.copy(h.position);side.position.y=-.15;terrainGroup.add(side);side.receiveShadow=true;}
  if(t.type==='woods'||t.type==='heavy')for(let j=0;j<(t.type==='heavy'?5:3);j++){
  const x=(seeded(i*5+j)-.5)*1.2,z=(seeded(i*7+j)-.5)*1.2;const tree=new THREE.Group();const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.04,.06,.5,5),new THREE.MeshStandardMaterial({color:0x423b2b}));trunk.position.y=.25;tree.add(trunk);for(let k=0;k<3;k++){const foliage=new THREE.Mesh(new THREE.ConeGeometry(.25-k*.05,.65,5),new THREE.MeshStandardMaterial({color:[0x263e2c,0x344d32,0x445b38][k],roughness:1}));foliage.position.y=.6+k*.2;foliage.castShadow=true;tree.add(foliage);}tree.position.copy(h.position);tree.position.add(new THREE.Vector3(x,.16,z));terrainGroup.add(tree);
  }else if(seeded(i+40)>.7){let rock=new THREE.Mesh(new THREE.DodecahedronGeometry(.14+seeded(i)*.15,0),new THREE.MeshStandardMaterial({color:0x878775,roughness:1}));rock.position.copy(h.position).add(new THREE.Vector3(.45,.15,-.3));rock.scale.y=.6;rock.castShadow=true;terrainGroup.add(rock);}
 }
+ syncHexElevationLabels();
 }
 function refreshMapLabel(){
  if(!$('#battle-map-label')){
@@ -72,6 +132,7 @@ function updateArcs(){const u=game.units[selected];if(arcWeapon!=='all'&&!u.weap
  $('#arcweapon').value=arcWeapon;$('#arcinfo').textContent=arcsEnabled?u.name+' · '+arcTiles.size+' гексов':'Секторы скрыты';$('#arclegend').hidden=!arcsEnabled;
 }
 $('#arctoggle').onchange=()=>{arcsEnabled=$('#arctoggle').checked;updateArcs();};$('#arcweapon').onchange=()=>{arcWeapon=$('#arcweapon').value;updateArcs();};
+$('#elevationtoggle').onchange=updateHexElevation;
 function resize(){const w=$('#viewport').clientWidth,h=$('#viewport').clientHeight;renderer.setSize(w,h);const a=w/h;camera.left=-zoom*a;camera.right=zoom*a;camera.top=zoom;camera.bottom=-zoom;camera.updateProjectionMatrix();const hud=$('.visor-reticle span');if(hud)hud.textContent='AZIMUTH '+((Math.round(angle*180/Math.PI)%360+360)%360)+'° · ZOOM '+zoom.toFixed(1);}
 function fitBoard(){return game.setupMap?.id==='sheets'?Math.max(14,Math.max(game.setupMap.width,game.setupMap.height)*1.15):12;}
 function cam(){const d=Math.max(23,fitBoard()*1.6);camera.position.set(Math.cos(angle)*d,d,Math.sin(angle)*d);camera.lookAt(0,0,0);camera.updateMatrixWorld();resize();}new ResizeObserver(resize).observe($('#viewport'));cam();
@@ -1243,6 +1304,23 @@ $('#bmm-floating').onchange=updateTacticalOptions;
 $('#bmm-underwater').onchange=updateTacticalOptions;
 $('#gamemode').disabled=remoteMode;$('#gamemode').onchange=()=>{if(remoteMode)return;if(busy){$('#gamemode').value=hotseat?'hotseat':'ai';return;}hotseat=$('#gamemode').value==='hotseat';reset();};
 function project(v){v=v.clone().project(camera);return {x:(v.x*.5+.5)*renderer.domElement.width,y:(-v.y*.5+.5)*renderer.domElement.height};}
-function drawFallback(){const c=renderer.domElement,ctx=c.getContext('2d');if(!ctx)return;ctx.fillStyle='#28362d';ctx.fillRect(0,0,c.width,c.height);for(const t of [...game.tiles].sort((a,b)=>project(world(a.q,a.r)).y-project(world(b.q,b.r)).y)){const center=world(t.q,t.r);center.y=groundY(t.q,t.r);ctx.beginPath();for(let j=0;j<6;j++){let p=project(center.clone().add(new THREE.Vector3(Math.sin(j*Math.PI/3)*.97,0,Math.cos(j*Math.PI/3)*.97)));j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}ctx.closePath();ctx.fillStyle='#'+t.mesh.material.color.getHexString();ctx.fill();if(reach.some(p=>p.q===t.q&&p.r===t.r)){ctx.fillStyle='#b4e56c44';ctx.fill();}const arcBand=arcTiles.get(t.q+','+t.r);if(arcBand!==undefined){ctx.fillStyle=['#59dccc45','#e5c57838','#c88d692d'][arcBand];ctx.fill();ctx.strokeStyle=['#73efe0aa','#f4d89188','#e9ab8477'][arcBand];ctx.lineWidth=1.6;ctx.stroke();}else{ctx.strokeStyle='#18251f';ctx.lineWidth=1;ctx.stroke();}const p=project(center);if(t.type==='woods'||t.type==='heavy'){ctx.fillStyle='#243d2c';ctx.font='22px sans-serif';ctx.fillText('♠',p.x-8,p.y);}}
+function drawFallback(){const c=renderer.domElement,ctx=c.getContext('2d');if(!ctx)return;ctx.fillStyle='#28362d';ctx.fillRect(0,0,c.width,c.height);for(const t of [...game.tiles].sort((a,b)=>project(world(a.q,a.r)).y-project(world(b.q,b.r)).y)){const center=world(t.q,t.r);center.y=groundY(t.q,t.r);ctx.beginPath();for(let j=0;j<6;j++){let p=project(center.clone().add(new THREE.Vector3(Math.sin(j*Math.PI/3)*.97,0,Math.cos(j*Math.PI/3)*.97)));j?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y);}ctx.closePath();ctx.fillStyle='#'+t.mesh.material.color.getHexString();ctx.fill();if(reach.some(p=>p.q===t.q&&p.r===t.r)){ctx.fillStyle='#b4e56c44';ctx.fill();}const arcBand=arcTiles.get(t.q+','+t.r);if(arcBand!==undefined){ctx.fillStyle=['#59dccc45','#e5c57838','#c88d692d'][arcBand];ctx.fill();ctx.strokeStyle=['#73efe0aa','#f4d89188','#e9ab8477'][arcBand];ctx.lineWidth=1.6;ctx.stroke();}else{ctx.strokeStyle='#18251f';ctx.lineWidth=1;ctx.stroke();}const p=project(center);if(t.type==='woods'||t.type==='heavy'){ctx.fillStyle='#243d2c';ctx.font='22px sans-serif';ctx.fillText('♠',p.x-8,p.y);}
+ if(showHexElevation){
+  const mark=hexElevationMark(t);
+  if(mark){
+   ctx.save();
+   const fontSize=Math.max(8,Math.min(13,14/Math.sqrt(zoom/12)));
+   ctx.font='bold '+fontSize+'px sans-serif';ctx.textAlign='center';
+   const lineHeight=fontSize+1;
+   const boxWidth=Math.max(...mark.lines.map(x=>ctx.measureText(x).width))+10;
+   const px=p.x,py=p.y+Math.max(9,16*(12/Math.max(12,zoom)));
+   ctx.fillStyle=mark.type==='depth'?'#083746de':'#141e1de0';
+   ctx.fillRect(px-boxWidth/2,py-12,boxWidth,mark.lines.length*lineHeight+7);
+   ctx.fillStyle=mark.type==='depth'?'#e9f7fb':mark.type==='sublevel'?'#ffe4c2':'#f3f2db';
+   for(const [i,text]of mark.lines.entries())ctx.fillText(text,px,py+i*lineHeight);
+   ctx.restore();
+  }
+ }
+}
 for(const u of game.units){if(!game.onMap(u))continue;const rec=records.get(u.id);let p=project(rec?rec.root.position:world(u.q,u.r));let sc=12/zoom;ctx.save();ctx.translate(p.x,p.y);ctx.scale(sc,sc);ctx.fillStyle=u.team?'#e68e74':'#c3ee78';ctx.strokeStyle='#18221b';ctx.lineWidth=2;for(const [x,y,w,h] of [[-11,-31,22,18],[-7,-43,14,11],[-19,-29,7,22],[12,-29,7,22],[-10,-12,8,14],[3,-12,8,14]]){ctx.fillRect(x,y,w,h);ctx.strokeRect(x,y,w,h);}ctx.restore();const d=game.units[u.id].facing,tip=project(world(u.q+Math.cos(d*Math.PI/3)*.3,u.r).add(new THREE.Vector3(0,.05,0)));const dv=[ [1,0],[1,-1],[0,-1],[-1,0],[-1,1],[0,1] ][d],to=project(world(u.q+dv[0]*.65,u.r+dv[1]*.65));ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(to.x,to.y);ctx.strokeStyle=u.team?'#ffb38e':'#e4ffa5';ctx.lineWidth=3;ctx.stroke();}ctx.fillStyle='#d8dfcb';ctx.font='10px sans-serif';ctx.fillText('РЕЗЕРВНЫЙ РЕЖИМ · WebGL недоступен',18,c.height-42);}
 const clock=new THREE.Clock();function frame(){requestAnimationFrame(frame);const dt=Math.min(clock.getDelta(),.05);for(const rec of records.values()){rec.mixer.update(dt);if(!rec.dead){let p=rec.root.position.clone();p.y+=2.5;p.project(camera);rec.label.style.left=(p.x*.5+.5)*$('#viewport').clientWidth+'px';rec.label.style.top=(-p.y*.5+.5)*$('#viewport').clientHeight+'px';}}for(let i=effects.length-1;i>=0;i--){const e=effects[i];e.time+=dt;const t=Math.min(1,e.time/e.duration);if(e.type==='move'){e.rec.root.position.lerpVectors(e.start,e.end,t);if(e.jump)e.rec.root.position.y+=Math.sin(t*Math.PI)*2;}else if(e.type==='beam'){e.obj.material.opacity=1-t;}else{e.obj.position.addScaledVector(e.v,dt);e.v.y-=dt*6;e.obj.scale.setScalar(1-t);}if(t===1){if(e.obj){scene.remove(e.obj);e.obj.geometry.dispose();e.obj.material.dispose();}e.resolve?.();effects.splice(i,1);}}renderer.render(scene,camera);}picked=new Set([0,1]);renderUI();frame();if(remoteMode)load().then(joinServerBattle).catch(reportActionError);else load().then(()=>{if(new URLSearchParams(location.search).has('custom')&&readCustomDesign())showBattleSetup({preferCustom:true});}).catch(reportActionError);

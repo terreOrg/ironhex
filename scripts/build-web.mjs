@@ -8,7 +8,7 @@ const mappings = [
   ['apps/api/src/mtf.mjs','dist/agoac-mtf.js'],
 
   ['packages/ui/mech-toggle/mech-toggle.js','dist/mech-toggle.js'],
-  ...['app.js','hub.js','scenario-room-ui.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','auth.css','cockpit.css','dice.js','index.html','mechlab.html',
+  ...['app.js','terrain-level-labels.js','hub.js','scenario-room-ui.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','auth.css','cockpit.css','dice.js','index.html','mechlab.html',
       'mechlab.js','record-sheet.js','style.css','agoac-scenario-loader.js']
     .map(name => ['apps/web/src/' + name, 'dist/' + name]),
   ...['engine.js','agoac-boards.js','legacy-engine.js','construction.js','equipment.js','rulebook.js','component-damage.js','fire-arcs.js']

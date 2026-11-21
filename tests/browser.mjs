@@ -1739,3 +1739,37 @@ test('AGoAC Ch11: signed 3D room fails closed after a snapshot transport error',
   assert(polls>=2);
  });
 });
+
+
+test('AGoAC 3D room: printed LEVEL / SUBLEVEL / DEPTH toggle works on 32x17 source map',
+ {timeout:120000},async()=>{
+ await withPage('scenario-elevation-labels',{noWebGL:true,
+  path:'/index.html?battle=1&room='+browserScenarioRoomId},async page=>{
+  const toggle=page.locator('#elevationtoggle');
+  await page.waitForFunction(()=>Number(
+   document.querySelector('#viewport')?.dataset.elevationLabelCount)>0,
+   null,{timeout:60000});
+  assert.equal(await toggle.getByRole('switch').getAttribute('aria-checked'),'true');
+  const initial=await page.locator('#viewport').getAttribute('data-elevation-label-count');
+  assert(Number(initial)>0,'source 32x17 board contains raised or water hexes');
+  const capture=()=>page.evaluate(async()=>{
+   const canvas=document.querySelector('#viewport canvas');
+   const ctx=canvas.getContext('2d'),original=ctx.fillText;
+   const labels=[];
+   ctx.fillText=function(text,...args){
+    if(/^(LEVEL|SUBLEVEL|DEPTH) [0-9]+$/.test(String(text)))labels.push(String(text));
+    return original.call(this,text,...args);
+   };
+   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+   ctx.fillText=original;return labels;
+  });
+  assert((await capture()).length>0,'2D fallback draws actual printed elevation text');
+  await setMechToggle(toggle,false);
+  assert.equal(await page.locator('#viewport').getAttribute('data-elevation-labels-visible'),'false');
+  assert.equal((await capture()).length,0,'toggle hides level labels without mutating map');
+  await setMechToggle(toggle,true);
+  assert((await capture()).length>0,'toggle restores level labels');
+  await page.setViewportSize({width:390,height:844});
+  assert(await toggle.getByRole('switch').isVisible(),'mobile control remains available');
+ });
+});
