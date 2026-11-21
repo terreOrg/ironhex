@@ -168,17 +168,20 @@ function reportAccess(){
   };
   panel.append(button);
 }
-function freezeRoomConnection(reason){
- // An unverified or unavailable server snapshot must not leave an interactive stale turn.
- remoteReady=false;busy=true;
- renderUI();
- toast('СЕТЕВОЙ СЦЕНАРИЙ: синхронизация потеряна ('+reason+'). Переподключитесь.');
+function ensureRoomReconnect(){
  if($('#room-reconnect'))return;
  const retry=document.createElement('button');
  retry.id='room-reconnect';retry.type='button';
  retry.textContent='ПЕРЕПОДКЛЮЧИТЬСЯ К СЦЕНАРИЮ';
  retry.onclick=()=>void joinServerBattle();
  $('#actions').append(retry);
+}
+function freezeRoomConnection(reason){
+ // No cached command may be sent while the authoritative response is uncertain.
+ remoteReady=false;busy=true;
+ renderUI();
+ toast('СЕТЕВОЙ СЦЕНАРИЙ: синхронизация потеряна ('+reason+'). Переподключитесь.');
+ ensureRoomReconnect();
 }
 async function joinServerBattle(){
   if(!remoteMode)return;
@@ -284,6 +287,8 @@ async function serverCommand(order){
     });
     const data=await response.json();
     if(!response.ok){
+      if(roomMode&&(response.status===401||response.status>=500))
+        throw Error('room_transport_http_'+response.status);
       if(response.status===409){
         busy=false;await joinServerBattle();
       }
@@ -314,6 +319,11 @@ async function serverCommand(order){
     syncModels();renderUI();reportAccess();
     if(remoteFinished)toast('СРАЖЕНИЕ ЗАВЕРШЕНО. Результат подтверждён сервером.');
   }catch(e){
+    if(roomMode&&(e instanceof TypeError||e instanceof SyntaxError||
+      String(e.message||'').startsWith('room_transport_http_'))){
+      freezeRoomConnection(e.message||'network_error');
+      return;
+    }
     busy=remoteFinished;
     syncWeatherSwitches();
     renderUI();reportAccess();
@@ -326,6 +336,7 @@ async function serverCommand(order){
   }finally{
     if(!remoteFinished&&remoteReady)busy=false;
     renderUI();reportAccess();
+    if(roomMode&&!remoteReady)ensureRoomReconnect();
   }
 }
 
