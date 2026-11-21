@@ -5374,7 +5374,7 @@ test('CAT3500D pp.30–36: Chapter 8 closes only with twelve source-reviewed dam
  const criticalTests=readFileSync(new URL('./agoac-ch8-critical-components.mjs',import.meta.url),'utf8');
  assert(criticalTests.split("test('").length-1>=21,'full component effects matrix must not disappear');
  assert(crit.evidence.some(x=>x.file==='tests/agoac-ch8-critical-components.mjs'));
- assert.equal(r.currentTopicId,'agoac-heat','cursor must point at next unverified chapter without starting it');
+ assert.equal(r.currentTopicId,r.topics.find(x=>x.status!=='verified')?.id??null,'cursor must point at next unverified chapter without starting it');
 });
 
 test('CAT3500D p.32 and errata v8.01 p.4: first gyro hit immediately rolls its PSR',()=>{
