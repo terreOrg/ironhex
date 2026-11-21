@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { createBrowserCoverage } from './browser-coverage.mjs';
 import { Game as TestBattleGame } from '../packages/engine/engine.js';
+import {prepareAgoacPrintedScenario} from '../apps/api/src/agoac-scenario-setup.mjs';
 import { runTacticalOrder } from '../apps/api/src/server-combat.mjs';
 
 const dist = resolve(fileURLToPath(new URL('../dist/', import.meta.url)));
@@ -17,6 +18,33 @@ const types = { '.html':'text/html; charset=utf-8', '.js':'text/javascript; char
 let server, browser, baseURL;
 const browserPilots=[];
 const browserScenarioRooms=[];
+const browserScenarioRoomId='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+let browserScenarioSnapshot=null;
+function roomSceneFixture(){
+ if(browserScenarioSnapshot)return browserScenarioSnapshot;
+ const g=new TestBattleGame();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert(g.configureSharedDefenderLances({
+  commandController:'browser-command',reconController:'browser-recon'}).ok);
+ prepareAgoacPrintedScenario(g,'divide-and-conquer');
+ g.scenario.picturedTerrain={required:true,confirmed:true};
+ g.scenario.placement={complete:true};
+ g.scenario.sourceTerrainLoaded=true;
+ g.scenario.recordSheetsImported=true;
+ const positions=g.tiles.filter(t=>t.type==='plain'&&t.height===0&&t.depth===0);
+ assert(positions.length>110);
+ g.units.forEach((u,i)=>{
+  const p=positions[10+i*9];
+  u.q=p.q;u.r=p.r;u.deployed=true;u.dead=false;u.notFielded=false;u.facing=0;
+ });
+ g.phase='move';g.activeTeam=0;g.queue=[0,1];
+ browserScenarioSnapshot=JSON.parse(JSON.stringify(g,(k,v)=>
+  k==='map'||k==='rng'?undefined:v));
+ return browserScenarioSnapshot;
+}
+
 const browserCoverage=await createBrowserCoverage();
 
 function serve(req,res) {
@@ -54,6 +82,11 @@ function serve(req,res) {
       return authenticated?reply(200,{balance:150000,stock:{},catalog:[],repairs:[],
         ledger:[],contracts:[{id:'patrol',name:'Приграничный патруль',victory:32000}]}) :
         reply(401,{error:'unauthorized'});
+    if(req.method==='GET'&&urlPath==='/api/v1/scenario-rooms/'+browserScenarioRoomId+'/snapshot'){
+      if(!authenticated)return reply(401,{error:'unauthorized'});
+      return reply(200,{item:{id:browserScenarioRoomId,scenarioId:'divide-and-conquer',
+       yourRole:'attacker',status:'active',version:12},game:roomSceneFixture()});
+    }
     if(req.method==='GET'&&urlPath==='/api/v1/scenario-rooms')
       return authenticated?reply(200,{items:browserScenarioRooms}):
         reply(401,{error:'unauthorized'});
@@ -1582,5 +1615,28 @@ test('AGoAC Chapter 11: authenticated hub opens three-player lobby and creates s
   assert.match(await page.locator('#scenario-room-details').textContent(),/recon_test/);
   await page.locator('#hub-home-button').click();
   assert.equal(await page.locator('#hub-scenarios-panel').isVisible(),false);
+ });
+});
+
+test('AGoAC Chapter 11: 3D cockpit connects to signed source 10-Mech room and original 32x17 map',
+ {timeout:120000},async()=>{
+ await withPage('scenario-room-3d',{
+  path:'/index.html?battle=1&room='+browserScenarioRoomId
+ },async page=>{
+  await page.locator('#loading').waitFor({state:'hidden',timeout:60000});
+  await page.locator('#allies .unitcard').first().waitFor({state:'visible'});
+  await page.locator('#enemies .unitcard').first().waitFor({state:'visible'});
+  assert.equal(await page.locator('#allies .unitcard').count(),4);
+  assert.equal(await page.locator('#enemies .unitcard').count(),6);
+  await page.waitForFunction(()=>document.querySelector('#toast')?.textContent
+   .includes('СЕТЕВОЙ СЦЕНАРИЙ'),{timeout:20000});
+  const terrain=await page.evaluate(()=>{
+   const m=document.querySelectorAll('#viewport canvas');
+   return {canvas:m.length,units:document.querySelectorAll('[data-unit]').length};
+  });
+  assert(terrain.canvas>=1);
+  assert.equal(terrain.units,10);
+  assert.equal(await page.locator('#gamemode').isDisabled(),true,
+   'remote role cannot switch back to unaudited hotseat game mid-battle');
  });
 });
