@@ -768,8 +768,9 @@ function installPrintedScenario(trial,winner,role,options,designs){
    reconController:'Игрок разведывательного лэнса'});
   if(!shared.ok)return void toast(shared.error);
  }
- if(options.terrainCount){
-  const started=trial.startScenarioLooseTerrain({piecesPerTeam:options.terrainCount});
+ if(options.terrainCount||trial.scenario.picturedTerrain?.required){
+  const started=trial.startScenarioLooseTerrain({piecesPerTeam:
+   trial.scenario.picturedTerrain?.required?2:options.terrainCount});
   if(!started.ok)return void toast(started.error);
  }else{
   const placement=trial.beginPrintedScenarioPlacement();
@@ -804,13 +805,15 @@ function showPrintedPlacementStep(){
  const scenario=game.scenario,terrain=scenario?.looseTerrain;
  if(!scenario)return;
  if(terrain&&!terrain.complete){
-  const next=terrain.nextTeam;
-  replaceScenarioModal('<h2>Дополнительная местность · шаг '+(terrain.pieces.length+1)+
+  const next=terrain.nextTeam,pictured=scenario.picturedTerrain?.required;
+  const pieceIndex=terrain.pieces.length;
+  replaceScenarioModal('<h2>'+(pictured?'Обязательная местность сценария 3':'Дополнительная местность')+
+   ' · шаг '+(terrain.pieces.length+1)+
    ' из '+(terrain.piecesPerTeam*2)+'</h2><p>Ход '+(next===0?'зелёных':'красных')+
-   '. Дистанция между отдельными элементами — три пустых гекса, от края каждого листа — более двух.</p>'+
+   '. Дистанция между отдельными элементами — три пустых гекса, от края каждого листа — более двух.</p>'+   (pictured?'<p>Сверьте контур и координаты с напечатанной схемой, стр. 47. '+   '<a href="https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d%2Bbattletech%2Ba%2Bgame%2Bof%2Barmored%2Bcombat%2Brulebook.pdf#page=49" target="_blank" rel="noopener noreferrer">Схема в книге</a>. '+   'По одному двойному и треугольному контуру на каждом листе.</p>':'')+
    '<label>Тип элемента<select id="scenario-terrain-type">'+
    '<option value="woods">Лёгкий лес</option><option value="heavy">Густой лес</option>'+
-   '<option value="rough">Пересечённая местность</option><option value="rubble">Обломки</option></select></label>'+
+   '<option value="rough">Пересечённая местность</option><option value="rubble">Обломки</option>'+   '<option value="level1">Высота 1</option><option value="level2">Высота 2</option>'+   '<option value="depth1">Вода, глубина 1</option><option value="depth2">Вода, глубина 2</option></select></label>'+
    '<label>Размер<select id="scenario-terrain-shape">'+
    '<option value="1">Один гекс</option><option value="2">Два соседних гекса</option>'+
    '<option value="custom">Контур реального элемента — свои смещения</option></select></label>'+
@@ -819,7 +822,12 @@ function showPrintedPlacementStep(){
    '<label>Исходный гекс<select id="scenario-terrain-hex"></select></label>'+
    '<button class="primary" id="scenario-terrain-place">РАЗМЕСТИТЬ ЭЛЕМЕНТ</button>');
   scenarioHexOptions($('#scenario-terrain-hex'),game.tiles.filter(t=>
-   game.looseTerrainZoneAllowed(t.q,t.r)));
+   game.looseTerrainZoneAllowed(t.q,t.r)&&(!pictured||t.sheet===Math.floor(pieceIndex/2))));
+  if(pictured){
+   $('#scenario-terrain-shape').value=pieceIndex%2===0?'2':'custom';
+   $('#scenario-terrain-shape').disabled=true;
+   $('#scenario-terrain-custom-wrap').hidden=pieceIndex%2===0;
+  }
   $('#scenario-terrain-shape').onchange=()=>{
    $('#scenario-terrain-custom-wrap').hidden=$('#scenario-terrain-shape').value!=='custom';
   };
@@ -840,10 +848,21 @@ function showPrintedPlacementStep(){
     terrainType,footprint});
    if(!placed.ok)return void toast(placed.error);
    buildTerrain();renderUI();
-   if(placed.complete){
+   if(placed.complete&&!pictured){
     const began=game.beginPrintedScenarioPlacement();
     if(!began.ok)return void toast(began.error);
    }
+   showPrintedPlacementStep();
+  };
+  return;
+ }
+ if(scenario.picturedTerrain?.required&&!scenario.picturedTerrain.confirmed){
+  replaceScenarioModal('<h2>Сверка со схемой, стр. 47</h2>'+   '<p>Размещены четыре обязательных элемента, по одному двойному и треугольному на каждом листе. '+   'Проверьте позиции и разворот треугольников по оригинальной книге перед игрой.</p>'+   '<button class="primary" id="scenario-figure-confirm">СВЕРЕНО · НАЧАТЬ РАССТАНОВКУ</button>');
+  $('#scenario-figure-confirm').onclick=()=>{
+   const verified=game.confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed:true});
+   if(!verified.ok)return void toast(verified.error);
+   const started=game.beginPrintedScenarioPlacement();
+   if(!started.ok)return void toast(started.error);
    showPrintedPlacementStep();
   };
   return;

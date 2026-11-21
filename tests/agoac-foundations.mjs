@@ -6574,13 +6574,13 @@ test('CAT3500D p.48: source printed scenarios require finishing optional terrain
  assert(g.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok);
  assert.match(g.nextPhase().error,/местности/,
   'initiative cannot bypass unfinished loose terrain setup');
- assert.equal(g.beginPrintedScenarioPlacement().ok,false,
+ assert.equal(beginPrintedScenarioTest(g).ok,false,
   'placement must not begin while optional terrain is incomplete');
  const west=atSheetCoord(g,5,8),east=atSheetCoord(g,25,8);
  assert(g.placeScenarioLooseTerrain({team:0,q:west.q,r:west.r,label:'woods'}).ok);
  assert(g.placeScenarioLooseTerrain({team:1,q:east.q,r:east.r,label:'rough'}).ok);
  assert(g.scenario.looseTerrain.complete);
- assert(g.beginPrintedScenarioPlacement().ok);
+ assert(beginPrintedScenarioTest(g).ok);
  assert.equal(g.placeScenarioLooseTerrain({team:0,q:west.q,r:west.r,label:'woods'}).ok,false);
  assert.equal(g.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok,false);
 });
@@ -6663,6 +6663,36 @@ test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER
 });
 
 
+
+// The positions below exercise engine geometry, not a transcription of
+// the licensed p.47 diagram. A real game requires player confirmation.
+const prepareScenario3IllustrationForTest=g=>{
+ if(!g.scenario?.picturedTerrain?.required||g.scenario.picturedTerrain.confirmed)return;
+ assert.equal(g.beginPrintedScenarioPlacement().ok,false,
+  'Scenario 3 must not bypass the four mandatory die-cut figures');
+ assert(g.startScenarioLooseTerrain({piecesPerTeam:2,startingTeam:0}).ok);
+ const positions=[
+  [0,5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
+  [1,10,11,'level1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
+  [0,21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
+  [1,26,11,'level2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
+ ];
+ for(const [team,col,row,terrainType,footprint]of positions){
+  const tile=g.tiles.find(t=>t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
+   t.r+Math.floor(g.setupMap.height/2)===row);
+  assert(tile,'fixture tile '+col+','+row);
+  const placed=g.placeScenarioLooseTerrain({team,q:tile.q,r:tile.r,
+   label:terrainType,terrainType,footprint});
+  assert(placed.ok,placed.error);
+ }
+ const confirmed=g.confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed:true});
+ assert(confirmed.ok,confirmed.error);
+};
+const beginPrintedScenarioTest=g=>{
+ prepareScenario3IllustrationForTest(g);
+ return g.beginPrintedScenarioPlacement();
+};
+
 const printedDeploymentFixture=(name,sheets=[{id:'clear',rotation:0},{id:'clear',rotation:0}])=>{
  const g=fresh();
  assert(g.configureScenario(name).ok);
@@ -6701,10 +6731,10 @@ test('CAT3500D pp.46-47: Final Exam alternates west defenders and east attackers
  const original=structuredClone(g.units);
  const wrong=printedDeploymentFixture('final-exam');
  wrong.g.units[0].variant='LCT-1E';
- assert.equal(wrong.g.beginPrintedScenarioPlacement().ok,false,'reject fabricated original force');
+ assert.equal(beginPrintedScenarioTest(wrong.g).ok,false,'reject fabricated original force');
  assert.deepEqual(wrong.g.units.map(u=>u.deployed),original.map(u=>u.deployed),
   'invalid setup does not change roster');
- const started=g.beginPrintedScenarioPlacement();
+ const started=beginPrintedScenarioTest(g);
  assert(started.ok);assert.equal(started.steps,8);
  assert.equal(started.exactMapImplemented,false);
  assert.equal(started.recordSheetsImported,false);
@@ -6729,7 +6759,7 @@ test('CAT3500D pp.46-47: Final Exam alternates west defenders and east attackers
 
 test('CAT3500D p.47: Trial by Fire attacker-first clear/level-zero setup and defender-after deployment',()=>{
  const {g,place,get,defenders,attackers}=printedDeploymentFixture('trial-by-fire');
- assert(g.beginPrintedScenarioPlacement().ok);
+ assert(beginPrintedScenarioTest(g).ok);
  assert.equal(place(defenders[0].id,0,6).ok,false,'defender cannot deploy first');
  const invalid=get(25,5);invalid.type='woods';
  assert.equal(place(attackers[0].id,25,5).ok,false,'attacker needs Clear');
@@ -6755,7 +6785,7 @@ test('CAT3500D p.47: Trial by Fire attacker-first clear/level-zero setup and def
 test('CAT3500D p.48 / errata v8.01: defenders first, attacker chooses one numbered row',()=>{
  const {g,place,defenders,attackers}=printedDeploymentFixture('divide-and-conquer');
  assert.equal(defenders.length,6);assert.equal(attackers.length,4);
- assert(g.beginPrintedScenarioPlacement().ok);
+ assert(beginPrintedScenarioTest(g).ok);
  assert.equal(g.scenario.placement.steps.length,10);
  assert.equal(g.chooseDivideAndConquerAttackerRow('east').ok,false,'no choice before both defender lances');
  assert.equal(place(attackers[0].id,31,15).ok,false,'attacker must wait for both defending lances');
@@ -6848,12 +6878,12 @@ test('CAT3500D pp.45-48: printed force comparison is order-independent and local
  const {g}=printedDeploymentFixture('final-exam');
  const reversed=[...g.units].reverse().map((unit,i)=>({...unit,id:i}));
  g.units=reversed;
- const started=g.beginPrintedScenarioPlacement();
+ const started=beginPrintedScenarioTest(g);
  assert(started.ok,'the same roster in a different order must remain legal');
  assert.equal(started.steps,8);
  const invalid=printedDeploymentFixture('divide-and-conquer');
  invalid.g.units[0].gunnery=1;
- assert.equal(invalid.g.beginPrintedScenarioPlacement().ok,false,
+ assert.equal(beginPrintedScenarioTest(invalid.g).ok,false,
   'matching variants with unprinted pilot skills cannot bypass roster verification');
 });
 
@@ -6863,7 +6893,7 @@ test('CAT3500D p.47: Trial by Fire chase places defender alone, reserves attacke
  assert(g.configureTrialByFireChase().ok);
  assert.equal(g.nextPhase().ok,false,'chase cannot start without lone-defender placement');
  assert.equal(g.configureTrialByFireChase().ok,false,'no second chase setup');
- const start=g.beginPrintedScenarioPlacement();
+ const start=beginPrintedScenarioTest(g);
  assert(start.ok);assert.equal(start.steps,1,'only the defender is placed before battle');
  assert.equal(g.scenario.placement.complete,false);
  assert.equal(place(attackers[0].id,0,7).ok,false,'attacker cannot deploy in chase setup');
@@ -6966,7 +6996,7 @@ test('CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defend
   sourceGame:source,sourceIds:survivors.map(u=>u.id)
  });
  assert(linked.ok);
- const printed=preview.beginPrintedScenarioPlacement();
+ const printed=beginPrintedScenarioTest(preview);
  assert(printed.ok,'campaign reserves must not invalidate the six-vs-four published setup');
  assert.equal(printed.steps,10);
  for(const id of linked.unitIds)assert.equal(preview.unit(id).deployed,false);
@@ -7105,7 +7135,7 @@ test('CAT3500D pp.45-48: three source-backed scenarios load true maps and Mech r
   const before=JSON.stringify(g.units);
   assert.equal(g.configurePrintedScenarioForces({designs:loadAgoacPrintedDesigns(id)}).ok,false,'cannot replace once loaded');
   assert.equal(JSON.stringify(g.units),before);
-  const start=g.beginPrintedScenarioPlacement();
+  const start=beginPrintedScenarioTest(g);
   assert(start.ok,id);
   assert.equal(start.exactMapImplemented,true);
   assert.equal(start.recordSheetsImported,true);
@@ -7122,7 +7152,7 @@ test('CAT3500D pp.46-48: source BattleMaster gets four pregame 5-point hits with
  g.scenario.sideRollWinner=0;
  assert(g.chooseScenarioSide(0,'attacker').ok);
  prepareAgoacPrintedScenario(g,'trial-by-fire');
- assert(g.beginPrintedScenarioPlacement().ok);
+ assert(beginPrintedScenarioTest(g).ok);
  for(const stage of g.scenario.placement.steps){
   const unit=g.units.find(u=>u.team===stage.team&&!u.deployed);
   assert(unit);
@@ -7183,7 +7213,7 @@ test('CAT3500D p.48 errata: real 6+4 and shortened 4+3 defenders obey NW/SE phys
   assert(g.chooseScenarioSide(0,'defender').ok);
   if(variation)assert(g.configurePrintedScenarioVariation(variation).ok);
   prepareAgoacPrintedScenario(g,'divide-and-conquer',{rotations:[3,0]});
-  assert(g.beginPrintedScenarioPlacement().ok);
+  assert(beginPrintedScenarioTest(g).ok);
   const steps=g.scenario.placement.steps;
   const commandCount=steps.filter(s=>s.lance==='command').length;
   const reconCount=steps.filter(s=>s.lance==='recon').length;
@@ -7221,6 +7251,24 @@ test('CAT3500D p.48 errata: real 6+4 and shortened 4+3 defenders obey NW/SE phys
  }
 });
 
+
+test('CAT3500D p.47: printed Scenario 3 mandates four diagram counters with real height/depth before initiative',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;assert(g.chooseScenarioSide(0,'defender').ok);
+ prepareAgoacPrintedScenario(g,'divide-and-conquer');
+ assert.equal(g.beginPrintedScenarioPlacement().ok,false);
+ assert.equal(g.confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed:true}).ok,false);
+ prepareScenario3IllustrationForTest(g);
+ assert(g.beginPrintedScenarioPlacement().ok);
+ assert.equal(g.scenario.picturedTerrain.pieces.length,4);
+ assert.equal(g.scenario.picturedTerrain.sourcePage,47);
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='level1'&&t.height===1));
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='level2'&&t.height===2));
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='depth1'&&t.depth===1));
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='depth2'&&t.depth===2));
+});
 test('CAT3500D p.48: source-backed Divide and Conquer completes corrected defender-first ten-Mech setup',async()=>{
  const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
  const g=fresh();
@@ -7228,7 +7276,7 @@ test('CAT3500D p.48: source-backed Divide and Conquer completes corrected defend
  g.scenario.sideRollWinner=0;
  assert(g.chooseScenarioSide(0,'attacker').ok);
  prepareAgoacPrintedScenario(g,'divide-and-conquer');
- assert(g.beginPrintedScenarioPlacement().ok);
+ assert(beginPrintedScenarioTest(g).ok);
  for(let k=0;k<6;k++){
   const stage=g.scenario.placement.steps[k];
   const unit=g.units.find(u=>u.team===stage.team&&u.lance===stage.lance&&!u.deployed);
@@ -7281,7 +7329,7 @@ test('CAT3500D p.48: shortened Divide and Conquer loads 4 defenders and 3 attack
    ['AWS-8Q','WVR-6M','GRF-1N']);
   assert(g.units.every(u=>u.recordSource==='MegaMek/mm-data'&&u.recordSourceRevision===g.setupMap.sourceRevision));
   assert.equal(g.configurePrintedScenarioVariation('shortened').ok,false,'cannot swap after force load');
-  assert(g.beginPrintedScenarioPlacement().ok);
+  assert(beginPrintedScenarioTest(g).ok);
   assert.deepEqual(g.scenario.placement.steps.map(x=>x.lance),
    ['command','command','recon','recon','printed-row','printed-row','printed-row']);
   assert.equal(g.chooseDivideAndConquerAttackerRow('west').ok,false,
@@ -7357,7 +7405,7 @@ test('CAT3500D pp.45-46: Final Exam optional source-based alternative forces are
    ['TDR-5SE','WVR-6R','LCT-1V','COM-3A']);
   assert(g.units.every(u=>u.recordSource==='MegaMek/mm-data'&&u.piloting===5&&u.gunnery===4));
   assert.equal(g.configurePrintedScenarioVariation('alternate-forces').ok,false,'locked after technical source import');
-  assert(g.beginPrintedScenarioPlacement().ok);
+  assert(beginPrintedScenarioTest(g).ok);
   assert.equal(g.scenario.placement.steps.length,8);
  }
 });
@@ -7383,7 +7431,7 @@ test('CAT3500D p.46: Final Exam reshapes authentic source maps to short edges an
    assert(sheet.every(t=>t.printedSheet===(index?'Grassland #2':'Desert #3')));
   }
   assert.equal(g.configurePrintedScenarioMap({layout:'horizontal'}).ok,false,'no second layout');
-  assert(g.beginPrintedScenarioPlacement().ok);
+  assert(beginPrintedScenarioTest(g).ok);
   const defender=g.units.find(u=>u.team===g.scenario.defenderTeam&&!u.deployed);
   const west=g.tiles.find(t=>t.q+Math.floor(t.r/2)===-8);
   assert(west&&g.scenarioZoneAllowed(defender.team,west.q,west.r));
@@ -7456,7 +7504,7 @@ test('CAT3500D p.46: Final Exam substitute terrain variation uses only independe
  assert.deepEqual(g.setupMap.sheets.map(s=>s.name),['Desert #2','Grassland #3']);
  assert(g.tiles.filter(t=>t.sheet===0).every(t=>t.printedSheet==='Desert #2'));
  assert(g.tiles.filter(t=>t.sheet===1).every(t=>t.printedSheet==='Grassland #3'));
- assert(g.beginPrintedScenarioPlacement().ok);
+ assert(beginPrintedScenarioTest(g).ok);
  const trial=fresh();assert(trial.configureScenario('trial-by-fire').ok);
  trial.scenario.sideRollWinner=0;assert(trial.chooseScenarioSide(0,'attacker').ok);
  assert.equal(trial.configurePrintedScenarioMap({names:['Desert #2','Grassland #2']}).ok,false);
@@ -7499,7 +7547,7 @@ const chapter11SourceGame=async(id,attackerTeam=0,rotations=[0,0])=>{
 };
 const chapter11SourceColumn=(g,t)=>t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2);
 const chapter11SourceDeployAll=g=>{
- const start=g.beginPrintedScenarioPlacement();
+ const start=beginPrintedScenarioTest(g);
  assert(start.ok);
  let attempts=0;
  while(!g.scenario.placement.complete){
@@ -7532,7 +7580,7 @@ test('CAT3500D p.45 plus errata 8.01: source-backed Final Exam alternates all 8 
   const defender=g.units.filter(u=>u.team===1-attackerTeam);
   const attacker=g.units.filter(u=>u.team===attackerTeam);
   assert.equal(defender.length,4);assert.equal(attacker.length,4);
-  assert(g.beginPrintedScenarioPlacement().ok);
+  assert(beginPrintedScenarioTest(g).ok);
   assert.equal(g.scenario.placement.exactMapImplemented,true);
   assert.equal(g.scenario.placement.recordSheetsImported,true);
   assert.equal(g.nextPhase().ok,false,'no first initiative until eight placements');
@@ -7571,7 +7619,7 @@ test('CAT3500D pp.46-47: source-backed Trial by Fire deploys 3 clear eastern att
   const attacker=g.units.filter(u=>u.team===0),defender=g.units.find(u=>u.team===1);
   assert.equal(attacker.length,3);assert.equal(defender.variant,'BLR-1G');
   assert.equal(defender.tonnage,85);
-  assert(g.beginPrintedScenarioPlacement().ok);
+  assert(beginPrintedScenarioTest(g).ok);
   assert.equal(g.placePrintedScenarioMech(defender.id,0,0).ok,false,'defender must wait');
   assert.equal(g.nextPhase().ok,false);
   const east=g.tiles.filter(t=>chapter11SourceColumn(g,t)>=25);
@@ -7736,7 +7784,7 @@ test('CAT3500D p.48: source-backed Final Exam permits equal-cost cards and mirro
   assert.deepEqual([attacker[1].gunnery,attacker[1].piloting],[3,4]);
   assert(g.units.slice(2).some(u=>!u.scenarioCard),'unmodified printed pilots remain original');
   assert.equal(g.configureScenarioCards({cards,mirrors,agreedCost:2}).ok,false);
-  const started=g.beginPrintedScenarioPlacement();
+  const started=beginPrintedScenarioTest(g);
   assert(started.ok,'printed roster allows *authorized* card skills');
   assert.equal(started.steps,8);
   assert.equal(g.configureScenarioCards({cards,mirrors,agreedCost:2}).ok,false,
@@ -7776,7 +7824,7 @@ test('CAT3500D p.48: all D6 card costs are binding on actual source Mech rosters
   assert.equal(r.die,die);assert.equal(r.cost,cost);
   assert.equal(rolls.length,0);
   assert.equal(g.phaseRolls.at(-1).dice.length,1);
-  assert(g.beginPrintedScenarioPlacement().ok,'allowed cost does not block scenario setup');
+  assert(beginPrintedScenarioTest(g).ok,'allowed cost does not block scenario setup');
  }
  const g=await chapter11SourceGame('final-exam');
  const atk=g.units.filter(u=>u.team===g.scenario.attackerTeam),
@@ -7798,7 +7846,7 @@ test('CAT3500D p.48: all D6 card costs are binding on actual source Mech rosters
  g.rng=()=>{throw Error('D6 fallback must not be rerolled');};
  assert.equal(g.configureScenarioCards({cards,mirrors,agreedCost:3}).ok,false,'cannot supersede established D6 by agreement');
  assert(g.configureScenarioCards({cards:cards.map(c=>({...c,cost:3})),mirrors}).ok);
- assert(g.beginPrintedScenarioPlacement().ok);
+ assert(beginPrintedScenarioTest(g).ok);
 });
 
 test('CAT3500D p.47: source Trial by Fire chase provides defender-only turn and west attacker arrival on second Movement',async()=>{
@@ -7809,7 +7857,7 @@ test('CAT3500D p.47: source Trial by Fire chase provides defender-only turn and 
   assert.equal(defender.variant,'BLR-1G');assert.equal(attackers.length,3);
   assert(g.configureTrialByFireChase().ok);
   assert.equal(g.configureTrialByFireChase().ok,false);
-  const setup=g.beginPrintedScenarioPlacement();
+  const setup=beginPrintedScenarioTest(g);
   assert(setup.ok);assert.equal(setup.steps,1);
   assert.equal(g.scenario.placement.complete,false);
   assert.equal(g.placePrintedScenarioMech(attackers[0].id,0,0).ok,false,'attacker may not enter during initial placement');

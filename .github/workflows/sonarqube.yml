@@ -119,3 +119,28 @@ jobs:
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info,coverage/browser.info
             -Dsonar.qualitygate.wait=true
             -Dsonar.qualitygate.timeout=300
+
+      - name: Explain strict SonarQube Quality Gate conditions
+        if: ${{ always() }}
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 2 \
+            --user "${SONAR_TOKEN}:" \
+            "${SONAR_HOST_URL%/}/api/qualitygates/project_status?projectKey=ironhex" |
+            node -e '
+              let raw="";
+              process.stdin.on("data",c=>raw+=c);
+              process.stdin.on("end",()=>{
+                const gate=JSON.parse(raw).projectStatus;
+                console.log("Quality Gate result:",gate.status);
+                for(const c of gate.conditions||[]){
+                  console.log([c.status,c.metricKey,
+                    "actual="+(c.actualValue??"n/a"),
+                    "limit="+(c.errorThreshold??"n/a")].join(" "));
+                }
+              });
+            '
