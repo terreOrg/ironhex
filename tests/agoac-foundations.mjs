@@ -6294,7 +6294,7 @@ test('CAT3500D pp.45-48 plus errata v8.01: printed scenario manifests carry exac
  assert.deepEqual(Object.values(s).map(x=>x.sheets.map(y=>y.name)),[
   ['Desert #3','Grassland #2'],['Desert #2','Grassland #3'],['Desert #2','Grassland #3']
  ]);
- assert.deepEqual(Object.values(s).map(x=>[x.defender.length,x.attacker.length]),[[4,4],[1,3],[6,6]]);
+ assert.deepEqual(Object.values(s).map(x=>[x.defender.length,x.attacker.length]),[[4,4],[1,3],[6,4]]);
  const tuples=x=>x.map(u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??null]);
  assert.deepEqual(tuples(s['final-exam'].defender),[
   ['Horace','CPLT-C1',5,4,null],['Winston','LCT-1V',5,4,null],
@@ -6311,8 +6311,7 @@ test('CAT3500D pp.45-48 plus errata v8.01: printed scenario manifests carry exac
   ['Theissen','COM-3A',5,4,'recon'],['Jones','COM-2D',5,4,'recon']]);
  assert.deepEqual(tuples(s['divide-and-conquer'].attacker),[
   ['Seymore','AWS-8Q',3,3,null],['Marks','TDR-5SE',5,4,null],
-  ['Kanazawa','WVR-6M',4,3,null],["O'Rourke",'GRF-1N',4,3,null],
-  ['Adjani','LCT-1V',6,5,null],['Lucas','COM-3A',6,5,null]]);
+  ['Kanazawa','WVR-6M',4,3,null],["O'Rourke",'GRF-1N',4,3,null]]);
  for(const x of Object.values(s)){
   assert(Object.isFrozen(x)&&Object.isFrozen(x.sheets));
   assert(x.sheets.every(Object.isFrozen));
@@ -6521,4 +6520,74 @@ test('CAT3500D p.48: optional terrain requires equal pieces, alternate one each 
  assert.equal(bad.startScenarioLooseTerrain({piecesPerTeam:0}).ok,false);
  assert(bad.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok);
  assert.equal(bad.scenario.looseTerrain.roll,null);
+});
+
+
+test('CAT3500D pp.46,48: exact alternative Final Exam chassis and shortened 6-defender vs 4-attacker scenario',async()=>{
+ const {AGOAC_SCENARIO_VARIATIONS:variants,AGOAC_PRINTED_SCENARIOS:scenarios}=await import('../dist/engine.js');
+ const s1=variants['final-exam'].alternateForces;
+ assert.deepEqual(s1.defender,['TDR-5S','GRF-1N','LCT-1E','COM-2D']);
+ assert.deepEqual(s1.attacker,['TDR-5SE','WVR-6R','LCT-1V','COM-3A']);
+ assert.deepEqual(variants['final-exam'].terrainVariations,[
+  'turn-sheets-180','join-short-sides','substitute-terrain']);
+ const regular=scenarios['divide-and-conquer'];
+ assert.equal(regular.defender.length,6);
+ assert.equal(regular.attacker.length,4,'the original has just FOUR attackers; Trial by Fire pilots are NOT transferred');
+ assert.deepEqual(regular.attacker.map(u=>u.pilot),['Seymore','Marks','Kanazawa',"O'Rourke"]);
+ const reduced=variants['divide-and-conquer'].shortened;
+ assert.deepEqual(reduced.defender.map(u=>u.variant),['CPLT-K2','TDR-5S','COM-3A','COM-2D']);
+ assert.deepEqual(reduced.attacker.map(u=>u.variant),['AWS-8Q','WVR-6M','GRF-1N']);
+ assert.deepEqual(reduced.removed.defender,['SHD-2H','LCT-1V']);
+ assert.deepEqual(reduced.removed.attacker,['TDR-5SE']);
+ assert(regular.defender.length===reduced.defender.length+2);
+ assert(regular.attacker.length===reduced.attacker.length+1);
+ assert(Object.isFrozen(reduced)&&Object.isFrozen(reduced.defender)&&
+  Object.isFrozen(reduced.attacker)&&Object.isFrozen(variants));
+ assert.equal(regular.exactRecordSheetsImplemented,false,'source manifests are not fabricated unit sheets');
+});
+
+test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER phase',()=>{
+ const g=fresh();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert.equal(g.configureSharedDefenderLances({
+  commandController:'captain',reconController:'captain'}).ok,false);
+ assert(g.configureSharedDefenderLances({commandController:'captain',reconController:'scout'}).ok);
+ assert.equal(g.scenario.sharedLances.serverAuthorizationImplemented,false);
+ assert.equal(g.configureSharedDefenderLances({commandController:'other',reconController:'scout'}).ok,false);
+ const [commander,recon]=[g.units[2],g.units[3]];
+ commander.lance='command';recon.lance='recon';
+ g.phase='move';
+ assert.equal(g.arbitrateSharedDefenderChoice({
+  commandChoice:g.units[0].id,reconChoice:recon.id}).ok,false,'attacker cannot arbitrate');
+ assert.equal(g.arbitrateSharedDefenderChoice({
+  commandChoice:recon.id,reconChoice:commander.id}).ok,false,'cross-lance selection invalid');
+ const dice=[...diceFor(6),...diceFor(6),...diceFor(4),...diceFor(12)];
+ g.rng=()=>{assert(dice.length,'unexpected dice');return dice.shift();};
+ const first=g.arbitrateSharedDefenderChoice({commandChoice:commander.id,reconChoice:recon.id});
+ assert(first.ok);assert.equal(first.controller,'recon');assert.equal(first.unitId,recon.id);
+ assert.equal(first.reused,false);assert.equal(first.rolls.length,4);
+ assert.equal(dice.length,0);
+ g.rng=()=>{throw Error('same-phase dispute must NOT reroll');};
+ const repeat=g.arbitrateSharedDefenderChoice({commandChoice:commander.id,reconChoice:recon.id});
+ assert(repeat.ok);assert.equal(repeat.reused,true);
+ assert.equal(repeat.controller,'recon');assert.equal(repeat.rolls.length,0);
+ g.phase='fire';
+ const fireDice=[...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(fireDice.length);return fireDice.shift();};
+ const next=g.arbitrateSharedDefenderChoice({commandChoice:commander.id,reconChoice:recon.id});
+ assert(next.ok);assert.equal(next.controller,'command');
+ assert.equal(next.unitId,commander.id);
+ assert.equal(fireDice.length,0);
+ g.phase='physical';
+ assert.equal(g.arbitrateSharedDefenderChoice({
+  commandChoice:commander.id,reconChoice:recon.id}).ok,false);
+ g.phase='move';g.round=2;
+ const newRound=[...diceFor(2),...diceFor(12)];
+ g.rng=()=>{assert(newRound.length);return newRound.shift();};
+ const later=g.arbitrateSharedDefenderChoice({commandChoice:commander.id,reconChoice:recon.id});
+ assert(later.ok);assert.equal(later.reused,false);
+ assert.equal(later.controller,'recon');
+ assert.equal(newRound.length,0);
 });
