@@ -217,19 +217,22 @@ test('AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain 
   await page.locator('#scenario-book-id').selectOption('divide-and-conquer');
   await page.locator('#scenario-book-variant').selectOption('shortened');
   await page.locator('#scenario-book-three').check();
-  await page.locator('#scenario-book-terrain').selectOption('1');
+  await page.locator('#scenario-book-terrain').selectOption('2');
   await page.locator('#scenario-book-start').click();
   await page.locator('#scenario-book-attacker').waitFor({state:'visible',timeout:30000});
   await page.locator('#scenario-book-attacker').click();
   await page.locator('#scenario-terrain-place').waitFor({state:'visible',timeout:30000});
-  await page.locator('#scenario-terrain-type').selectOption('rough');
-  // Two widely separated sheets satisfy the published spacing requirement.
-  await page.locator('#scenario-terrain-hex').selectOption({index:0});
-  await page.locator('#scenario-terrain-place').click();
-  await page.locator('#scenario-terrain-place').waitFor({state:'visible'});
-  await page.locator('#scenario-terrain-hex').selectOption({
-   index:(await page.locator('#scenario-terrain-hex option').count())-1});
-  await page.locator('#scenario-terrain-place').click();
+  // Four source-illustration counters are mandatory, not an optional skip.
+  // Test positions exercise legal geometry; human figure confirmation is UI driven.
+  for(let i=0;i<4;i++){
+   const shape=await page.locator('#scenario-terrain-shape').inputValue();
+   assert.equal(shape,i%2?'custom':'2');
+   await page.locator('#scenario-terrain-type').selectOption(i%2?'level1':'depth1');
+   await page.locator('#scenario-terrain-hex').selectOption({index:i%2?65:0});
+   await page.locator('#scenario-terrain-place').click();
+  }
+  await page.locator('#scenario-figure-confirm').waitFor({state:'visible'});
+  await page.locator('#scenario-figure-confirm').click();
   await page.locator('#scenario-placement-place').waitFor({state:'visible',timeout:30000});
   for(let i=0;i<4;i++)await page.locator('#scenario-placement-place').click();
   await page.locator('#scenario-row-east').waitFor({state:'visible'});
