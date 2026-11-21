@@ -10548,11 +10548,23 @@
       ],
       "statement": "Optional loose terrain pieces require equal counts per player, with D6-based alternate starting side if no agreement, adding exactly one piece at a time.",
       "status": "tested_case",
-      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: optional terrain requires equal pieces, alternate one each and 3 empty hexes between"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: multi-hex terrain-piece footprints are connected and keep three empty hexes across all edges"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: D6 chooses alternating terrain starter exactly once for all six faces"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: source printed scenarios require finishing optional terrain before placing Mechs"
         }
       ]
     },
@@ -10564,11 +10576,23 @@
       ],
       "statement": "Loose terrain pieces must be placed at least two hexes away from the mapsheet edge and separated by three empty hexes from other pieces.",
       "status": "tested_case",
-      "reviewNote": "No terrain-piece placement constraints or equal placement workflow. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "reviewNote": "No terrain-piece placement constraints or equal placement workflow. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: each 16x17 mapsheet has its own two-hex exclusion zone"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: multi-hex terrain-piece footprints are connected and keep three empty hexes across all edges"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: D6 chooses alternating terrain starter exactly once for all six faces"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: source printed scenarios require finishing optional terrain before placing Mechs"
         }
       ]
     },
