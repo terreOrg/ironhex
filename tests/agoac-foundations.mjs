@@ -6731,7 +6731,7 @@ test('CAT3500D pp.46-47: Final Exam alternates west defenders and east attackers
  const original=structuredClone(g.units);
  const wrong=printedDeploymentFixture('final-exam');
  wrong.g.units[0].variant='LCT-1E';
- assert.equal(wrong.beginPrintedScenarioTest(g).ok,false,'reject fabricated original force');
+ assert.equal(beginPrintedScenarioTest(wrong.g).ok,false,'reject fabricated original force');
  assert.deepEqual(wrong.g.units.map(u=>u.deployed),original.map(u=>u.deployed),
   'invalid setup does not change roster');
  const started=beginPrintedScenarioTest(g);
@@ -6883,7 +6883,7 @@ test('CAT3500D pp.45-48: printed force comparison is order-independent and local
  assert.equal(started.steps,8);
  const invalid=printedDeploymentFixture('divide-and-conquer');
  invalid.g.units[0].gunnery=1;
- assert.equal(invalid.beginPrintedScenarioTest(g).ok,false,
+ assert.equal(beginPrintedScenarioTest(invalid.g).ok,false,
   'matching variants with unprinted pilot skills cannot bypass roster verification');
 });
 
