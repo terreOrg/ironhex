@@ -499,7 +499,7 @@
         39
       ],
       "status": "not_audited",
-      "reviewNote": "21.11.2026 first book-first Chapter 9 audit: printed CAT3500D pp.37–39 compared directly with engine, prior named tests and official errata v8.01. Inventoried 12 atomic groups 109–120. Seven existing groups source-to-code verified using exact green main c3f65cf7 (CI 44760040257, Browser 44760040465, Smoke 44760040230, Sonar 44760041039); three groups 111–113 get new boundary tests awaiting branch CI. Group 118 KNOWN MISSING: heatExplosionBin lets controller choose a lower-shot same-type ammo bin and does not randomly break identical-shot bins, contradicting printed p.39. Group 120 TESTED CASE: v8.01 simultaneous heat effects require interaction audit. Chapter stays not_audited. Work confined to Heat; no deploy/no Chapter 10."
+      "reviewNote": "21.11.2026 first book-first Chapter 9 audit: printed CAT3500D pp.37–39 compared directly with engine, prior named tests and official errata v8.01. Inventoried 12 atomic groups 109–120. Seven existing groups source-to-code verified using exact green main c3f65cf7 (CI 44760040257, Browser 44760040465, Smoke 44760040230, Sonar 44760041039); three groups 111–113 get new boundary tests awaiting branch CI. Group 118 KNOWN MISSING: heatExplosionBin lets controller choose a lower-shot same-type ammo bin and does not randomly break identical-shot bins, contradicting printed p.39. Group 120 TESTED CASE: v8.01 simultaneous heat effects require interaction audit. Chapter stays not_audited. Work confined to Heat; no deploy/no Chapter 10. 21.11.2026 source-to-code plus exact PR#225 CI 535/535, Browser 44887361711 and Smoke 44887361761 green: 111,112,113 promoted Verified. Chapter remains not_audited; 118 Known Missing and 120 Tested Case."
     },
     {
       "id": "agoac-psr",
@@ -7774,14 +7774,42 @@
         37
       ],
       "statement": "Operational heat sinks remove one heat each; submerged heat sinks cool one extra each up to six additional heat per turn; Depth 1 standing submerges leg sinks and Depth 2+ or prone in water submerges all; lost and flooded sinks do not cool.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.37: water cooling counts submerged leg sinks and caps additional cooling at six"
         }
       ],
-      "reviewNote": "Engine heatPhase uses sinksLost/floodedSlots, checks leg slot submergence and caps extra water cooling at 6. New depth/prone/loss boundary matrix committed in heat-audit branch, exact CI not yet recorded; do not promote before execution."
+      "reviewNote": "Engine heatPhase uses sinksLost/floodedSlots, checks leg slot submergence and caps extra water cooling at 6. New depth/prone/loss boundary matrix committed in heat-audit branch, exact CI not yet recorded; do not promote before execution. 21.11.2026 Source and real API boundary checks confirmed on PR #225 initial commit 17745b73; exact CI 535/535, Chromium Browser E2E and Container Smoke success. Final PR/head and postmerge gates still required.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–38; official AGoAC errata v8.01",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "17745b73ef8e8fe26fbcb54b35ec9589e01cacc5",
+        "testedTree": "3081a402482184c7d89772a20a586b4fd63aac0d",
+        "mergedSha": null,
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44887361750,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44887361711,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44887361761,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": null,
+        "review": "Confirmed printed AGoAC p.37 Water: submerged heat sinks dissipate +1 each with cap six. Verified real heatPhase Depth 0, standing Depth 1 leg-only, prone Depth 1 whole mech, standing Depth 2 full cooling and damaged/lost sink interaction. Branch CI 44887361750 (535/535) and Browser 44887361711 + scoped Smoke 44887361761 all success."
+      }
     },
     {
       "id": "agoac-112",
@@ -7790,7 +7818,7 @@
         37
       ],
       "statement": "Heat Phase applies turn-generated heat minus current cooling to previous accumulated heat, clamps at zero, retains overflow beyond 30 across turns, and updates effects after adjustment.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7801,7 +7829,35 @@
           "test": "AGoAC pp.5,37-38: all heat scale levels mark effects and preserve current overflow"
         }
       ],
-      "reviewNote": "Source p.37 heat recording/overflow; heatPhase and recordSheet retain unbounded state. New two-phase overflow and floor regression awaits exact CI."
+      "reviewNote": "Source p.37 heat recording/overflow; heatPhase and recordSheet retain unbounded state. New two-phase overflow and floor regression awaits exact CI. 21.11.2026 Source and real API boundary checks confirmed on PR #225 initial commit 17745b73; exact CI 535/535, Chromium Browser E2E and Container Smoke success. Final PR/head and postmerge gates still required.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–38; official AGoAC errata v8.01",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "17745b73ef8e8fe26fbcb54b35ec9589e01cacc5",
+        "testedTree": "3081a402482184c7d89772a20a586b4fd63aac0d",
+        "mergedSha": null,
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44887361750,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44887361711,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44887361761,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": null,
+        "review": "Confirmed printed AGoAC p.37 Recording Heat Build-Up, including overflow above 30 and no negative heat. Real heatPhase carries pending heat into accumulated heat, resets pending once, cools subsequent turns, clamps to zero; boundary test passed exact branch 535/535; Chromium and scoped Smoke success."
+      }
     },
     {
       "id": "agoac-113",
@@ -7810,7 +7866,7 @@
         38
       ],
       "statement": "At heat 5/10/15/20/25 Walking MP loses 1/2/3/4/5 (non-cumulative), Running MP recalculates rounding up, Jump MP is unchanged; at heat 8/13/17/24 weapon TN is +1/+2/+3/+4 without affecting physical attacks.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -7825,7 +7881,35 @@
           "test": "AGoAC pp.16–20: direct GATOR composes damage heat movement terrain and minimum range"
         }
       ],
-      "reviewNote": "Source p.38 Heat Data table and text; mp() subtracts floor(heat/5) cap 5, preview() counts 8,13,17,24. Full threshold matrix new in audit branch awaits exact CI."
+      "reviewNote": "Source p.38 Heat Data table and text; mp() subtracts floor(heat/5) cap 5, preview() counts 8,13,17,24. Full threshold matrix new in audit branch awaits exact CI. 21.11.2026 Source and real API boundary checks confirmed on PR #225 initial commit 17745b73; exact CI 535/535, Chromium Browser E2E and Container Smoke success. Final PR/head and postmerge gates still required.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D AGoAC (2018), printed pp.37–38; official AGoAC errata v8.01",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "17745b73ef8e8fe26fbcb54b35ec9589e01cacc5",
+        "testedTree": "3081a402482184c7d89772a20a586b4fd63aac0d",
+        "mergedSha": null,
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44887361750,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44887361711,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44887361761,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": null,
+        "review": "Confirmed printed AGoAC p.38 Movement and Weapon Attacks: step thresholds 5,10,15,20,25 noncumulative, run MP recalculated with upward rounding, jump MP unchanged; fire TN +1/+2/+3/+4 at heat 8,13,17,24. Existing physical-attack distinction and new actual Game.mp()/Game.preview() threshold tests passed exact branch gates."
+      }
     },
     {
       "id": "agoac-114",
