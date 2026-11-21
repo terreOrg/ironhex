@@ -26,3 +26,103 @@ body>header .lablink{display:flex;align-items:center;text-decoration:none}main b
 body mech-toggle{--toggle-width:30px;flex-shrink:0}.weapon mech-toggle{--toggle-width:32px}.weather mech-toggle{--toggle-width:25px}.weather [data-toggle-row]{white-space:normal;gap:7px}.arc-switch,.switch-line{display:flex;align-items:center;gap:8px}.arc-switch{font:10px monospace;color:#9fe3d5}.arc-switch mech-toggle{--toggle-width:28px}.switch-line{margin:6px 0}.advanced label:has(mech-toggle),#modalbody label:has(mech-toggle){display:flex;align-items:center;gap:8px}.weapon>div{min-width:0;flex:1}@media(max-width:780px){.left .weather [data-toggle-row]{white-space:normal}.weather mech-toggle{--toggle-width:23px}.arc-switch mech-toggle{--toggle-width:26px}}
 
 [data-toggle-row]{cursor:pointer}
+
+/* Worn painted steel. All abrasion is decorative CSS: no remote image requests.
+   Keep glass, warnings and technical record paper readable. */
+:root{
+ --iron-shadow:#080b0d;
+ --iron-edge:#777c74;
+ --iron-rust:#9f6448;
+ --iron-chips:
+  radial-gradient(ellipse 20px 6px at 3% 1%,#9b9e91 0 19%,#454f4d 22% 47%,transparent 54%),
+  radial-gradient(ellipse 14px 5px at 97% 99%,#afb1a0 0 17%,#5b5c53 20% 45%,transparent 53%),
+  radial-gradient(ellipse 27px 4px at 62% 0,#9d7156 0 13%,#505650 16% 35%,transparent 42%),
+  radial-gradient(ellipse 4px 20px at 100% 34%,#979c8e 0 13%,#404743 18% 44%,transparent 50%);
+ --iron-grain:
+  repeating-linear-gradient(177deg,transparent 0 22px,#dce3d607 23px,transparent 24px 44px),
+  repeating-linear-gradient(89deg,transparent 0 29px,#05080916 30px,transparent 31px 59px);
+}
+body{background:radial-gradient(ellipse at 50% 10%,#293132,#070b0d 75%)}
+body>header{
+ background-image:var(--iron-chips),var(--iron-grain),linear-gradient(170deg,#485052 0%,#222c2e 13%,#1a2325 67%,#13191b 100%);
+ border-bottom-color:#070b0c;
+ box-shadow:inset 0 2px 0 #a4aa9761,inset 0 -3px 0 #141919,0 3px 9px #000a;
+}
+.left,.right{
+ background-image:var(--iron-chips),var(--iron-grain),linear-gradient(125deg,#434949 0%,#252e2f 5%,#1a2224 38%,#1a2324 83%,#454b48 100%);
+ border-color:#70766b;
+ box-shadow:inset 0 0 0 4px #101719,inset 0 0 0 5px #888d7c66,inset 11px 0 26px #0006;
+ isolation:isolate;
+}
+.left::before,.right::before{
+ content:"";position:absolute;inset:9px;pointer-events:none;z-index:1;opacity:.7;
+ border:1px solid #aab09b25;
+ background:
+ radial-gradient(circle at 6px 6px,#adb3a4 0 1px,#252b29 2px 3px,transparent 4px) top left/18px 18px no-repeat,
+ radial-gradient(circle at 6px 6px,#adb3a4 0 1px,#252b29 2px 3px,transparent 4px) top right/18px 18px no-repeat,
+ radial-gradient(circle at 6px 6px,#adb3a4 0 1px,#252b29 2px 3px,transparent 4px) bottom left/18px 18px no-repeat,
+ radial-gradient(circle at 6px 6px,#adb3a4 0 1px,#252b29 2px 3px,transparent 4px) bottom right/18px 18px no-repeat;
+}
+.left>.eyebrow,.right>.eyebrow{
+ background:linear-gradient(95deg,#182022,#333d3c,#171d1d);
+ border-color:#8e94846e;border-left:3px solid #a77b57;
+ box-shadow:inset 0 1px #b8bdab29,0 2px 4px #0008;
+ color:#d5dccb;
+}
+.sectiontitle{color:#d5d4bf;text-shadow:0 1px #000}
+.unitcard,.unitcard.enemy{
+ background-image:var(--iron-chips),repeating-linear-gradient(172deg,transparent 0 19px,#ffffff08 20px,transparent 21px 34px),linear-gradient(132deg,#35413b,#17221f 48%,#111a19);
+ border-color:#636e61;border-left:3px solid #606e5b;
+ box-shadow:inset 0 1px #b6b6a528,inset -3px -4px 8px #0008,0 2px 3px #0008;
+}
+.unitcard.enemy{background-image:var(--iron-chips),var(--iron-grain),linear-gradient(132deg,#45382f,#27201d 60%,#171412);border-left-color:#985b43}
+.unitcard.active{background-image:var(--iron-chips),var(--iron-grain),linear-gradient(132deg,#465341,#252f26 65%,#1c2520);border-color:#bdca8f;box-shadow:inset 4px 0 #cce49d,0 0 11px #b6ce8b38}
+body>header button,body>header .lablink,main button:not(.unitcard),main select{
+ background-image:var(--iron-chips),repeating-linear-gradient(177deg,transparent 0 16px,#c5c9bb0a 17px,transparent 18px),linear-gradient(#5a615e,#323b3b 43%,#1c2527);
+ border-top-color:#9ba1938c;border-right-color:#646c63;border-left-color:#85897a;
+ box-shadow:inset 0 1px #c2c7ba44,inset 1px 0 #9ba39418,0 2px 4px #000b;
+ color:#ebede3;
+}
+body>header button:hover,body>header .lablink:hover,main button:not(.unitcard):hover:enabled{
+ background-image:var(--iron-chips),linear-gradient(#66706a,#37463f 55%,#29322e);
+ border-color:#9faf94;
+}
+main button.primary{
+ background-image:var(--iron-chips),linear-gradient(#aebb8d,#758a5d 50%,#4d633e);
+ border-color:#b3c99c;box-shadow:inset 0 1px #f2f1c77a,0 3px 4px #000a;
+ color:#172211;
+}
+main #fire,main #physical{
+ background-image:var(--iron-chips),linear-gradient(#c17754,#954a30 55%,#68341f);
+ border-color:#d89470;color:#fff3dc;
+}
+main .segments button.on{
+ background-image:var(--iron-chips),linear-gradient(#64734d,#37462e)!important;
+}
+#selected,#annunciator,.weapon,.advanced{
+ background-image:var(--iron-chips),repeating-linear-gradient(177deg,transparent 0 24px,#d9e5d908 25px,transparent 26px 42px),linear-gradient(145deg,#323e37,#15211c 18%,#0f1714 84%,#2f3b33);
+ border-color:#657167;box-shadow:inset 0 0 0 2px #0d1513,inset 0 1px 9px #080f0aa6,0 2px 5px #0008;
+}
+#selected{border-top:3px solid #929989;border-radius:5px}
+#selected h2,.system-lamp b,.weapon b{color:#e3ecd7}
+#annunciator .system-lamp{background:#0a1412;border-color:#576357}
+#battle{border-color:#292f2d;box-shadow:inset 0 0 0 2px #aab09b4b,0 0 0 1px #717971,inset 0 0 35px #0009}
+#battle::before{
+ content:"";position:absolute;inset:0;z-index:2;pointer-events:none;opacity:.5;
+ background:
+ radial-gradient(ellipse 42px 5px at 8% 0,#c5bea0 0 24%,transparent 50%),
+ radial-gradient(ellipse 35px 6px at 85% 100%,#a69f8c 0 18%,transparent 48%),
+ linear-gradient(90deg,#969f8c3d,transparent 4%,transparent 97%,#9d9c8e46);
+}
+.maptools,.arc-panel,.dice-tray,#toast{
+ background-image:var(--iron-chips),linear-gradient(145deg,#333d3b,#111b1d 70%,#283230);
+ border-color:#818c7d;box-shadow:inset 0 1px #bec1ac27,0 3px 10px #000b;
+}
+#toast{border-left:4px solid #c69b64;color:#edf0df}
+#log{background-image:repeating-linear-gradient(180deg,transparent 0 22px,#a9c89c09 23px,transparent 24px),linear-gradient(#0b1513,#131c18);border-color:#45514b}
+body>footer{background-image:var(--iron-grain),linear-gradient(#333c3b,#192123);border-top:2px solid #808478}
+@media(max-width:780px){
+ .left::before,.right::before{inset:4px;opacity:.4}
+ #battle::before{opacity:.28}
+ .unitcard{background-size:auto}
+}

@@ -1640,3 +1640,31 @@ test('AGoAC Chapter 11: 3D cockpit connects to signed source 10-Mech room and or
    'remote role cannot switch back to unaudited hotseat game mid-battle');
  });
 });
+
+
+test('Cockpit worn-steel surfaces remain legible, decorative and mobile-safe',
+ {timeout:120000},async()=>{
+ await withPage('worn-steel-cockpit',{noWebGL:true},async page=>{
+  const computed=await page.evaluate(()=>{
+   const style=sel=>getComputedStyle(document.querySelector(sel));
+   return {
+    frame:style('body>header').backgroundImage,
+    armor:style('.left').backgroundImage,
+    unit:style('.unitcard').backgroundImage,
+    bezel:getComputedStyle(document.querySelector('#battle'),'::before').pointerEvents,
+    rivets:getComputedStyle(document.querySelector('.left'),'::before').pointerEvents,
+    text:style('#selected').color,
+    focus:style('button').color
+   };
+  });
+  assert.match(computed.frame,/gradient/);
+  assert.match(computed.armor,/radial-gradient/);
+  assert.match(computed.unit,/gradient/);
+  assert.equal(computed.bezel,'none');
+  assert.equal(computed.rivets,'none');
+  assert.notEqual(computed.text,'rgb(0, 0, 0)');
+  await page.setViewportSize({width:390,height:844});
+  assert(await page.locator('#battle').isVisible());
+  assert(await page.locator('#next').isVisible());
+ });
+});
