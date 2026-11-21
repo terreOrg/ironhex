@@ -430,6 +430,36 @@ export class Game extends Legacy{
   Object.assign(this.scenario,{attackerTeam,defenderTeam:1-attackerTeam});
   return {ok:true,attackerTeam,defenderTeam:1-attackerTeam};
  }
+ // CAT3500D pp.46–48: voluntary map exits are movement actions from an actual map edge.
+ // Reserve one MP for the off-map step; there is no fictional terrain hex.
+ exitScenarioMap(id,edge,mode='walk'){
+  const u=this.unit(id);
+  if(!this.scenario||![0,1].includes(this.scenario.defenderTeam)||
+   this.phase!=='move'||!this.canAct(u)||u.deployed===false||
+   this.isImmobile(u)||u.prone||!['walk','run'].includes(mode)||
+   !this.deploymentEdgeIds().includes(edge)||
+   u.moveMode!=='stand'&&u.moveMode!==mode||
+   u.spent+1>this.mp(u,mode))
+   return fail('Выход за край карты сейчас невозможен');
+  if(!this.deploymentEdgeTiles(edge).some(t=>t.q===u.q&&t.r===u.r))
+   return fail('Мех не находится на указанной границе');
+  const safe=this.scenario.id==='trial-by-fire'&&
+   u.team===this.scenario.defenderTeam&&edge===3;
+  u.spent++;u.escaped=true;u.safeScenarioExit=safe;
+  this.destroyMech(u);u.removalPending=false;
+  this.note(u.name+(safe?': покинул поле через восточную границу.':
+   ': вышел за край карты и считается уничтоженным.'));
+  this.finish(u);this.checkWin();
+  return {ok:true,escaped:safe,destroyed:!safe,edge,winner:this.winner};
+ }
+ isScenarioEastExit(u,dir){
+  if(!DIRS[dir])return false;
+  const column=this.setupMap?.id==='sheets'?
+   p=>p.q+Math.floor(p.r/2):p=>p.q;
+  const max=Math.max(...this.tiles.map(column)),d=DIRS[dir];
+  return column(u)===max&&
+   column({q:u.q+d[0],r:u.r+d[1]})>max;
+ }
  // CAT3500D p.7 permits victory conditions agreed before play.
  // This digital preset is optional: draw when a negotiated turn limit ends.
  configureVictoryTerms({roundLimit,condition,approvals=[]}={}){
@@ -476,8 +506,44 @@ export class Game extends Legacy{
   this.note('Итог по согласованным условиям: '+(winner==='draw'?'ничья':winner===0?'победа зелёных':'победа красных')+'.');
   return {ok:true};
  }
+ // CAT3500D pp.46,48: "crippled" is a scenario condition, not ordinary death.
+ // Running out of ammunition or losing sensors does not destroy a weapon.
+ scenarioCrippled(u){
+  if(!u||u.notFielded)return false;
+  return u.dead||u.structure.LL===0||u.structure.RL===0||
+   u.gyroHits>=2||u.engineHits>=2||
+   u.weapons.length>0&&u.weapons.every(w=>w.destroyed||
+    u.structure[w.location]===0||w.locations?.some(loc=>u.structure[loc]===0));
+ }
  checkWin({stalemate=false}={}){
   if(this.winner!==null)return;
+  const scenario=this.scenario;
+  if(scenario&&[0,1].includes(scenario.attackerTeam)&&[0,1].includes(scenario.defenderTeam)){
+   const teams=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.notFielded));
+   let result=null;
+   if(['final-exam','divide-and-conquer'].includes(scenario.id)&&teams.every(a=>a.length)){
+    const defeated=teams.map(a=>a.every(u=>this.scenarioCrippled(u)));
+    if(defeated[0]||defeated[1])
+     result=defeated[0]&&defeated[1]?'draw':defeated[0]?1:0;
+   }else if(scenario.id==='trial-by-fire'){
+    const defenders=teams[scenario.defenderTeam],attackers=teams[scenario.attackerTeam];
+    // The printed objective concerns the lone defending BattleMaster.
+    // Until the exact force exists, do not turn a generic 2v2 into that scenario.
+    if(defenders.length===1&&attackers.length){
+     const defender=defenders[0],attackersDestroyed=attackers.every(u=>u.dead);
+     if(defender.dead)
+      result=defender.safeScenarioExit&&!attackersDestroyed?scenario.defenderTeam:
+       attackersDestroyed?'draw':scenario.attackerTeam;
+     else if(attackersDestroyed)result=scenario.defenderTeam;
+    }
+   }
+   if(result!==null){
+    this.winner=result;this.activeTeam=null;this.actingId=null;
+    this.note(result==='draw'?'Сценарий: ничья — обе стороны выполнили условия поражения.':
+     'Сценарий: победа '+(result===0?'зелёных':'красных')+'.');
+    return;
+   }
+  }
   const alive=this.units.filter(u=>!u.dead),sides=[0,1].map(t=>alive.filter(u=>u.team===t));
   if(!sides[0].length||!sides[1].length){super.checkWin();return;}
   if(stalemate&&Number.isInteger(this.victoryTerms?.roundLimit)&&this.round>this.victoryTerms.roundLimit){
@@ -2129,7 +2195,14 @@ export class Game extends Legacy{
  displace(u,dir,depth=0){
   if(u.dead||depth>this.units.length+1)return false;
   const d=DIRS[dir],t=this.tile(u.q+d[0],u.r+d[1]);
-  if(!t){u.dead=true;u.removalPending=false;u.escaped=true;this.note(u.name+' вытеснен за край карты.');return true;}
+  if(!t){
+    u.safeScenarioExit=this.scenario?.id==='trial-by-fire'&&
+     u.team===this.scenario.defenderTeam&&this.isScenarioEastExit(u,dir);
+    this.destroyMech(u);u.removalPending=false;u.escaped=true;
+    this.note(u.name+(u.safeScenarioExit?' вышел за восточный край поля.':
+     ' вытеснен за край карты и считается уничтоженным.'));
+    return true;
+   }
   const old=this.tile(u.q,u.r);
   if(t.height-old.height>2)return false;
   const occ=this.units.find(v=>v.deployed!==false&&!v.dead&&!v.airborne&&v.id!==u.id&&v.q===t.q&&v.r===t.r);
