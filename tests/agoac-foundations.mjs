@@ -6708,3 +6708,17 @@ test('CAT3500D p.48 / errata v8.01: two defender lances deploy first, attacker r
  assert.equal(g.nextPhase().ok,false,'source row mapping still missing');
  assert.equal(g.scenario.placement.complete,false);
 });
+
+
+test('CAT3500D pp.45-48: printed force comparison is order-independent and locale-aware',()=>{
+ const {g}=printedDeploymentFixture('final-exam');
+ const reversed=[...g.units].reverse().map((unit,i)=>({...unit,id:i}));
+ g.units=reversed;
+ const started=g.beginPrintedScenarioPlacement();
+ assert(started.ok,'the same roster in a different order must remain legal');
+ assert.equal(started.steps,8);
+ const invalid=printedDeploymentFixture('divide-and-conquer');
+ invalid.g.units[0].gunnery=1;
+ assert.equal(invalid.g.beginPrintedScenarioPlacement().ok,false,
+  'matching variants with unprinted pilot skills cannot bypass roster verification');
+});
