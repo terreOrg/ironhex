@@ -44,6 +44,45 @@ export function assertScenario3SourceMap(game){
   counts[tile.sheet]++;
  }
  check(counts[0]===272&&counts[1]===272,'scenario_source_map_mismatch');
+ const setup=game.scenario.looseTerrain,pictured=game.scenario.picturedTerrain;
+ if(!pictured?.required||!setup)return;
+ const parts=setup.pieces;
+ check(Array.isArray(parts)&&parts.length<=4,'scenario_source_terrain_mismatch');
+ const byHex=new Map(game.tiles.map(t=>[t.q+','+t.r,t]));
+ const covered=new Set();
+ for(const [index,part] of parts.entries()){
+  const expectedSize=index%2===0?2:3;
+  const allowed=index%2===0?['depth1','depth2']:['sublevel1','sublevel2'];
+  check(part&&allowed.includes(part.terrainType)&&
+   Array.isArray(part.hexes)&&part.hexes.length===expectedSize,
+   'scenario_source_terrain_mismatch');
+  const coordinates=part.hexes.map(h=>h.q+','+h.r);
+  check(coordinates.length===new Set(coordinates).size&&
+   part.hexes.some(h=>h.q===part.q&&h.r===part.r),
+   'scenario_source_terrain_mismatch');
+  for(const h of part.hexes){
+   const key=h.q+','+h.r,t=byHex.get(key);
+   check(Number.isInteger(h.q)&&Number.isInteger(h.r)&&t&&
+    t.sheet===Math.floor(index/2)&&
+    t.overlayTerrain?.terrainType===part.terrainType&&
+    t.overlayTerrain?.team===part.team&&!covered.has(key),
+    'scenario_source_terrain_mismatch');
+   covered.add(key);
+  }
+ }
+ check(game.tiles.filter(t=>t.overlayTerrain!=null).length===covered.size,
+  'scenario_source_terrain_mismatch');
+ if(setup.complete)check(parts.length===4,'scenario_source_terrain_mismatch');
+ if(pictured.confirmed){
+  check(setup.complete&&parts.length===4&&
+   ['attacker','command','recon'].every(role=>
+    pictured.approvals?.[role]===true)&&
+   Array.isArray(pictured.pieces)&&pictured.pieces.length===4&&
+   pictured.pieces.every((piece,i)=>
+    piece.terrainType===parts[i].terrainType&&
+    JSON.stringify(piece.hexes)===JSON.stringify(parts[i].hexes)),
+   'scenario_source_terrain_mismatch');
+ }
 }
 export function captureScenarioRoomGame(game,rng){
  assertScenario3SourceMap(game);
