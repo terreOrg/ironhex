@@ -47,6 +47,42 @@ function begin(shortened=false){
  assert.equal(runtime.game.scenario.looseTerrain.piecesPerTeam,2);
  return runtime;
 }
+test('AGoAC Ch11 p.47 source illustration: four exact printed contours and locked triangles',()=>{
+ const {game,rng}=begin();
+ const figure=game.scenario.picturedTerrain.counters;
+ assert.deepEqual(figure.map(f=>f.printedHexes),[
+  ['0711','0712'],['1213','1114','1214'],
+  ['0908','1009'],['0310','0311','0411']
+ ],'original publisher p.47 shapes; west sheet is Desert #2 under errata v8.01');
+ assert.deepEqual(game.setupMap.sheets.map(s=>s.name),
+  ['Desert #2','Grassland #3']);
+ for(let i=0;i<4;i++){
+  const source=figurePiece(game,i);
+  assert.equal(source.footprint.length,i%2===0?2:3);
+  const team=game.scenario.looseTerrain.nextTeam;
+  const role=team===game.scenario.attackerTeam?'attacker':i<2?'command':'recon';
+  const type=['depth1','sublevel1','depth2','sublevel2'][i];
+  const bad={type:'place-terrain',q:source.q+1,r:source.r,
+   terrainType:type,footprint:source.footprint};
+  blocked(()=>applyScenarioRoomSetup(game,role,bad),'illegal_scenario_terrain');
+  if(i%2===1)blocked(()=>applyScenarioRoomSetup(game,role,{
+   type:'place-terrain',q:source.q,r:source.r,terrainType:type,
+   footprint:[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]
+  }),'illegal_scenario_terrain');
+  assert.equal(game.scenario.looseTerrain.pieces.length,i);
+  const result=applyScenarioRoomSetup(game,role,{...bad,
+   q:source.q,r:source.r});
+  assert(result.ok);
+  const piece=game.scenario.looseTerrain.pieces[i];
+  assert.deepEqual(new Set(piece.hexes.map(x=>x.q+','+x.r)),
+   new Set(source.footprint.map(x=>
+    (source.q+x.q)+','+(source.r+x.r))));
+ }
+ assert(game.scenario.looseTerrain.complete);
+ const saved=captureScenarioRoomGame(game,rng);
+ const restored=restoreScenarioRoomGame(saved);
+ assert.equal(restored.game.scenario.looseTerrain.pieces.length,4);
+});
 test('AGoAC Ch11: three-user server start rolls source sides and loads exact pinned scenario 3',()=>{
  for(const shortened of [false,true]){
   const runtime=begin(shortened);

@@ -1,27 +1,65 @@
-# AGoAC Chapter 11 — Scenario 3 source precedence
+# AGoAC Chapter 11 — Scenario 3, four mandatory die-cut counters
 
-The 2018 CAT3500D book, printed p. 47, contains a known map typo: its GAME SET-UP text specifies **Desert #3 + Grassland #3**. That is *not* the authoritative scenario after the official corrections.
+## Source and errata precedence
 
-Official Catalyst **AGOAC Errata v8.01**, p. 5 (17 September 2023), explicitly replaces Desert #3 with **Desert #2**, preserving Grassland #3:
-https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf
+Source: *BattleTech: A Game of Armored Combat*, 2018 CAT3500D,
+printed p.47 (PDF physical page 49, zero-based page index 48),
+the **Scenario 3: Divide and Conquer** layout illustration.
+The 2018 text and illustration label the west sheet **Desert #3**.
+Official [AGoAC errata v8.01, p.5](https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf)
+corrects it to **Desert #2**; the east sheet stays **Grassland #3**.
+No code or test may regress to west Desert #3. Horizontal board = 32×17 =
+544 source tiles, 272 per sheet.
 
-The current publisher-hosted **2025 SLDF edition** independently prints **Desert #2 + Grassland #3** in both scenario setup and figure:
-https://battletech.com/wp-content/uploads/2025/07/BattleTech-A-Game-of-Armored-Combat-Rulebook-1st-SLDF-Print.pdf
+## Source figure digitization
 
-Implementation invariant: source and dist manifest must select the corrected west/east sheets; the 32×17 composite contains 272 source hexes from each sheet, with original printedSheet identity and pinned MegaMek source revision. The API scenario-start regression tests both roster sizes and the corrected sheet names.
+The actual publisher-printed figure was opened and visually inspected as
+a rasterized source page, then magnified. The visible red outlines were
+projected onto the original 16-column ×17-row paper hex grid. The labels
+below are **printed col (2 digits) + printed row (2 digits)**. They are
+not positions invented for tests. The 2018 source image is an illustration
+and does not itself print numeric labels inside the red outlines; these
+labels are a geometric transcription, subject to pixel-grid review.
 
-**Remaining limit:** exact die-cut counter placement from the scenario figure is still manually attested. This note does not certify those coordinates or upgrade `agoac-150` / `agoac-151` / `agoac-154`; all remain `tested_case` pending independent source evidence and full three-account browser verification. No Chapter 12 and no deployment.
+| Piece | Source sheet | Source hexes | Shape |
+| --- | --- | --- | --- |
+| 1 | West Desert #2 | 0711, 0712 | two hexes, original pictured rotation |
+| 2 | West Desert #2 | 1213, 1114, 1214 | fixed triangle |
+| 3 | East Grassland #3 | 0908, 1009 | two hexes, original pictured rotation |
+| 4 | East Grassland #3 | 0310, 0311, 0411 | fixed triangle |
 
-Server-side persistence lock: `apps/api/src/scenario-room-match.mjs` now validates both named source sheets (west `Desert #2`, east `Grassland #3`), 32×17 board, 544 hexes, 272 per sheet and every `printedSheet` marker on **both capture and restore**. The independent room regression rejects obsolete `Desert #3`, reversed sheets, swapped sides, forged tile metadata and missing hexes; an intact source map still round-trips. This is a safety assertion, not a claim that the unresolved printed die-cut counter illustration has been fully certified.
+Original source figure crop calibration: x ≈25–770 west, x≈770–1517 east,
+y≈20–633 (image 1553×690 pixels), grid horizontal center interval ≈44 px,
+vertical row interval ≈36 px. West pair centers ≈(333,398),(354,435);
+west triangle ≈(549,473),(527,510),(571,510); east pair ≈(1187,289),
+(1209,326); east triangle ≈(924,360),(902,398),(947,398).
+This evidence was obtained using the temporary unmerged GitHub Actions
+source-inspection run 44963200341, job 137026342133, which downloaded
+the original public PDF and rendered its original figure directly.
 
-PG three-account smoke: `tests/scenario-rooms-integration.mjs` covers real HTTP authentication, three consenting room roles, full and shortened source map starts, signed/serialized version authority and fail-closed GET snapshot on obsolete Desert #3 JSONB. This strengthens `agoac-154` but does not certify all combat phases in a true three-device browser test or the illustrated terrain-counter coordinates. Keep `agoac-150/151/154` as `tested_case`.
+The physical pair markers permit rotating the two-hex piece and selecting
+a die-cut face subject to binding 2D6 dispute arbitration. The triangular
+shape **and rotation** cannot be changed. Source triangle coordinates are
+validated by the engine and PostgreSQL snapshot integrity guard. The
+separate free/optional-terrain margin rule must not reject mandatory
+publisher-illustrated pieces adjacent to that margin.
 
-Next candidate (`agoac-154`, pending CI): real authenticated HTTP/PostgreSQL integration now exercises **both full 10-Mech and shortened 7-Mech** deployments, the four terrain-counter placement workflow, three distinct figure approvals, command/recon 2D6 dispute arbitration, movement/fire/physical/heat/end, and second-round alternating initiative control. All orders pass through version-locked server transactions and each actor receives a synchronized round-two snapshot. Terrain-piece positions in this test are deterministic *fixtures*, not independently transcribed source illustrations, and the test does not represent three simultaneous graphical browsers. Keep `agoac-154` in `tested_case` until all proof requirements are met.
-\nSource map preparation UI: the signed lobby now renders a **clearly labeled digital 32×17 schematic**, highlights the actual 2-/3-hex counter footprints and offers keyboard-accessible origin selection. Eligible origin previews enforce the individual 16×17 sheet margins and 3-blank-hex separation in the browser before POST; the engine/API remain authoritative. The shared read-only diagram is visible during all three manual figure approvals. It is **not** a claim that four exact locations or triangle orientations have been independently recovered from the publisher artwork; `agoac-150/151` remain tested_case.\n
-Consolidated Chapter 11 closeout block: source-state integrity now rejects forged or internally inconsistent four-piece overlays, missing source tiles, copied confirmation signatures and mismatched persisted figure overlays. The signed deployment hub includes the role-specific 544-hex graphical picker and an outbound link to the publisher's original figure for manual verification. These safeguards do NOT turn undocumented coordinates into fact. Until a readable, independently transcribed and verified p.47 illustration with exact counter hexes/orientations is available, `agoac-150/151` remain `tested_case`; no fictional coordinates are added.
+## Implementation and verification
 
-All-in-one chapter-11 integration closeout candidate (CI pending):
-- A server snapshot invariant now validates the exact four 2-/3-hex piece shapes, types, map-sheet provenance, overlay cell parity, three distinct signed approvals, and figure-attested payload consistency before capture, restore, or HTTP snapshot. Forged database overlays fail closed.
-- The real authenticated lobby now displays **role-specific deployment candidates on the interactive 544-hex board** and includes the publisher's original rulebook link for manual p.47 verification.
-- A new **three separate real Chromium browser context + PostgreSQL** integration loads genuine server sessions, boots both sheets, deploys the shortened source roster, resolves a real two-commander 2D6 dispute, submits authenticated browser orders for all three participants, advances through movement, weapons, physical, heat and end, and verifies round-2 snapshots. The backend and database are isolated ephemeral CI Docker resources, not production.
-- The manual test coordinates are not transcribed from the copyrighted original scenario figure. Until those four locations and triangle orientations are independently visually certified, agoac-150 and agoac-151 CANNOT be upgraded to Verified. agoac-154 can be upgraded only if the real three-browser/PG job and all main gates pass and source-specific evidence is complete.
+Single immutable source manifest:
+`packages/engine/agoac-scenario3-figure.js`.
+Game engine `placeScenarioLooseTerrain()` and API `assertScenario3SourceMap()`
+enforce the same coordinates. The three-user signed setup UI displays all
+four contours before placement and leaves only the book-permitted pair
+rotation and counter-face decisions interactive. Source and browser `dist`
+are byte-synchronized. Direct source regression, PostgreSQL full/shortened
+rosters, and independent three-Chromium-client E2E must all pass on exact PR
+head and on the merged main quality-gate run.
+
+This figure image is **not copied** into the application's proprietary
+art assets. Never assert complete Chapter 11 certification or mark
+`agoac-150/151` Verified merely because the coordinates were coded:
+pixel-based transcription and gameplay correctness need final source QA and
+CI/SonarQube confirmation.
+
+No deployment and no Chapter 12.
