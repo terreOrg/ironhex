@@ -5,7 +5,7 @@
 export const AGOAC_SCENARIO3_FIGURE=Object.freeze([
  Object.freeze({sheet:0,shape:'pair',printedHexes:Object.freeze(['0711','0712'])}),
  Object.freeze({sheet:0,shape:'triangle',printedHexes:Object.freeze(['1213','1114','1214'])}),
- Object.freeze({sheet:1,shape:'pair',printedHexes:Object.freeze(['0908','0909'])}),
+ Object.freeze({sheet:1,shape:'pair',printedHexes:Object.freeze(['0908','1009'])}),
  Object.freeze({sheet:1,shape:'triangle',printedHexes:Object.freeze(['0310','0311','0411'])})
 ]);
 export function agoacScenario3FigureTiles(game,index){
