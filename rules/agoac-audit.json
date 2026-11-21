@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy.",
   "currentTopicId": "agoac-psr",
   "topics": [
     {
@@ -558,7 +558,7 @@
         44
       ],
       "status": "not_audited",
-      "reviewNote": "21.11.2026 first detailed Ch10 source-to-code inspection: original CAT3500D pp.40–44 and official v8.01 errata visually consulted. 19 granular rules 121–139 registered with exact already-passing main 540/540 CI (44891964395), Browser (44891964336), Smoke (44891964353) and strict Sonar (44891964328). Fourteen Verified from existing code and real deterministic tests; four Tested Case require complete modifier-table/facing/dry-fall/accidental-impact matrix; one Known Missing (135) for errata collision impact level: code subtracts 2 from drop for standing target, but -1 required; preexisting test wrongly expects 21 instead of 28 in 65-ton 5-level fixture. Chapter remains not_audited, no engine edits, no deploy, no Chapter 11."
+      "reviewNote": "21.11.2026 first detailed Ch10 source-to-code inspection: original CAT3500D pp.40–44 and official v8.01 errata visually consulted. 19 granular rules 121–139 registered with exact already-passing main 540/540 CI (44891964395), Browser (44891964336), Smoke (44891964353) and strict Sonar (44891964328). Fourteen Verified from existing code and real deterministic tests; four Tested Case require complete modifier-table/facing/dry-fall/accidental-impact matrix; one Known Missing (135) for errata collision impact level: code subtracts 2 from drop for standing target, but -1 required; preexisting test wrongly expects 21 instead of 28 in 65-ton 5-level fixture. Chapter remains not_audited, no engine edits, no deploy, no Chapter 11. 21.11.2026 follow-up engine/test batch: collision errata fixed in source+dist, 6-facing / 35-dry-fall / 54 accidental-impact cases and p.41 PSR modifier matrix added. Current branch registry 14 Verified / 5 Tested Case / 0 Known Missing; awaiting exact final-HEAD checks. No deployment/Chapter 11."
     },
     {
       "id": "agoac-scenarios",
@@ -8630,9 +8630,13 @@
         {
           "file": "tests/combat.mjs",
           "test": "Failed initial heat shutdown PSR causes fall and automatic pilot injury (BMM pp.52,54)"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.41: PSR situation table modifiers use the printed target numbers"
         }
       ],
-      "reviewNote": "Most p.41 triggers and modifiers implemented in psr(), psrMod(), move/stand/jump and physical resolution, with existing tests. No one-to-one exhaustive complete row matrix across all cases; stay Tested Case until table inventory/boundaries are exercised. Official errata deletes unintentional-charge row."
+      "reviewNote": "Most p.41 triggers and modifiers implemented in psr(), psrMod(), move/stand/jump and physical resolution, with existing tests. No one-to-one exhaustive complete row matrix across all cases; stay Tested Case until table inventory/boundaries are exercised. Official errata deletes unintentional-charge row. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
     },
     {
       "id": "agoac-126",
@@ -8881,9 +8885,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.42-43: all six falling facings select the exact new hexside and hit-location arc"
         }
       ],
-      "reviewNote": "Game.fall() rotates facing from 1D6 and maps impact side; existing tests cover some orientations. Complete 1–6 facing/arc matrix, including reverse and special fall reasons, is not individually proved; Tested Case."
+      "reviewNote": "Game.fall() rotates facing from 1D6 and maps impact side; existing tests cover some orientations. Complete 1–6 facing/arc matrix, including reverse and special fall reasons, is not individually proved; Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
     },
     {
       "id": "agoac-131",
@@ -8901,9 +8909,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.43: dry falling damage matches tonnage, level and exact 5-point packets"
         }
       ],
-      "reviewNote": "fallDamageGroups() and packets() implement printed arithmetic/packets, but dedicated exhaustive dry-fall 20–100 ton, 0–4 level, last-packet 1–4 and all arc matrix is not recorded; Tested Case."
+      "reviewNote": "fallDamageGroups() and packets() implement printed arithmetic/packets, but dedicated exhaustive dry-fall 20–100 ton, 0–4 level, last-packet 1–4 and all arc matrix is not recorded; Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
     },
     {
       "id": "agoac-132",
@@ -9073,14 +9085,18 @@
         44
       ],
       "statement": "On a successful accidental fall onto a target, damage equals ceil(falling Mech tonnage/10) times the number of levels from its origin down to the target's impact level (target Mech's level MINUS ONE per errata v8.01); halve if the target is fully submerged; split among 5-point Punch Location packets.",
-      "status": "known_missing",
+      "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/prone level and submersion matrix"
         }
       ],
-      "reviewNote": "CONFIRMED MISMATCH: official errata v8.01 p.5 changes impact level to underlying hex + target level -1. Current accidentalFallHit() uses impactLevels=Math.max(0,drop-(target.prone?1:2)), giving drop-2 for standing and drop-1 for prone; must be drop-1 standing and drop-0 prone. Existing test encodes wrong expected 21 for 65-ton, 5-level standing hit, while errata demands 28 (and 10 vs 14 when fully submerged Depth 2). Change code and this regression together; do not mark verified."
+      "reviewNote": "IMPLEMENTED PENDING VERIFICATION: repaired accidentalFallHit() in both source and dist to apply v8.01 target-level-minus-one impact height. Updated 65t 5-level expected dry 28 / submerged 14, plus 54 drop/tonnage/prone/depth combinations. Existing bug no longer present on PR head. Require exact-head CI, Browser E2E, scoped Container Smoke and post-merge strict Sonar before Verified."
     },
     {
       "id": "agoac-136",
@@ -9098,9 +9114,13 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys the falling Mech"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/prone level and submersion matrix"
         }
       ],
-      "reviewNote": "The engine implements rear-fall, target random displacement and +2 PSR, tested; full successful impact pipeline still relies on known incorrect collision damage calculation in 135, so remains Tested Case."
+      "reviewNote": "The engine implements rear-fall, target random displacement and +2 PSR, tested; full successful impact pipeline still relies on known incorrect collision damage calculation in 135, so remains Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
     },
     {
       "id": "agoac-137",
