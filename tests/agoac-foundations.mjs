@@ -6363,14 +6363,14 @@ test('CAT3500D pp.45-48: corrected geometric scenario zones constrain opposing e
  defenderHex.type='woods';
  assert(is(trial,1,west+3,0),'defender need not be on clear ground');
  const divide=sourceRectScenario('divide-and-conquer');
- assert(is(divide,1,west+6,8-6,{lance:'command'}));
- assert(!is(divide,1,west+7,8-6,{lance:'command'}));
- assert(!is(divide,1,west+6,8-7,{lance:'command'}));
- assert(is(divide,1,east-6,-8+6,{lance:'recon'}));
- assert(!is(divide,1,east-7,-8+6,{lance:'recon'}));
- assert(!is(divide,1,east-6,-8+7,{lance:'recon'}));
- assert(!is(divide,1,west+6,8-6,{lance:'recon'}));
- assert(!is(divide,1,west+6,8-6));
+ assert(is(divide,1,west+6,-8+6,{lance:'command'}));
+ assert(!is(divide,1,west+7,-8+6,{lance:'command'}));
+ assert(!is(divide,1,west+6,-8+7,{lance:'command'}));
+ assert(is(divide,1,east-6,8-6,{lance:'recon'}));
+ assert(!is(divide,1,east-7,8-6,{lance:'recon'}));
+ assert(!is(divide,1,east-6,8-7,{lance:'recon'}));
+ assert(!is(divide,1,west+6,-8+6,{lance:'recon'}));
+ assert(!is(divide,1,west+6,-8+6));
  assert(!is(divide,0,east,0),'printed 1510-1517 attacker rows not inferred');
  const noMap=fresh();assert(noMap.configureScenario('final-exam').ok);
  noMap.scenario.sideRollWinner=0;assert(noMap.chooseScenarioSide(0,'attacker').ok);
@@ -6760,8 +6760,8 @@ test('CAT3500D p.48 / errata v8.01: defenders first, attacker chooses one number
  assert.equal(g.chooseDivideAndConquerAttackerRow('east').ok,false,'no choice before both defender lances');
  assert.equal(place(attackers[0].id,31,15).ok,false,'attacker must wait for both defending lances');
  assert.equal(place(defenders[3].id,31,0).ok,false,'recon cannot replace first command lance');
- for(let k=0;k<3;k++)assert(place(defenders[k].id,k,16-k).ok,'command NW placements');
- for(let k=3;k<6;k++)assert(place(defenders[k].id,31-(k-3),k-3).ok,'recon SE placements');
+ for(let k=0;k<3;k++)assert(place(defenders[k].id,k,k).ok,'command NW placements');
+ for(let k=3;k<6;k++)assert(place(defenders[k].id,31-(k-3),16-(k-3)).ok,'recon SE placements');
  assert.deepEqual(g.scenario.placement.placed.map(p=>p.lance),
   ['command','command','command','recon','recon','recon']);
  assert.equal(place(attackers[0].id,31,15).ok,false,'no arbitrary attacker entry');
@@ -7147,7 +7147,7 @@ test('CAT3500D pp.46-48: source BattleMaster gets four pregame 5-point hits with
 });
 
 
-test('CAT3500D p.48 errata v8.01: source sheet north is row 01; command NW and recon SE setup must not flip',()=>{
+test('CAT3500D p.48 errata v8.01: battlefield minimum axial r is north; command NW and recon SE hold under sheet rotations',()=>{
  for(const rotations of [[0,0],[3,3],[3,0],[0,3]]){
   for(const role of ['attacker','defender']){
    const g=fresh();
