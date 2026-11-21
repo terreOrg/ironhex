@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {createPool} from '../apps/api/src/db.mjs';
 import {restoreScenarioRoomGame} from '../apps/api/src/scenario-room-match.mjs';
+import {agoacScenario3FigureTiles} from '../packages/engine/agoac-scenario3-figure.js';
 const base='http://127.0.0.1:3000',suffix=randomBytes(5).toString('hex');
 const pool=createPool(),password='Ch11-PG-Integration-2026!';
 async function req(path,{method='GET',body,cookie,origin=true}={}){
@@ -126,18 +127,12 @@ try{
    assert(!JSON.stringify(result).includes('rngState'),'PRNG seed stays server-private');
    return result;
   };
-  const tile=(game,col,row)=>game.tiles.find(t=>
-   t.q+Math.floor(t.r/2)+Math.floor(game.setupMap.width/2)===col&&
-   t.r+Math.floor(game.setupMap.height/2)===row);
-  const pieces=[
-   [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-   [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
-   [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-   [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
-  ];
-  for(const [index,[col,row,terrainType,footprint]]of pieces.entries()){
-   const g=await source(),hex=tile(g,col,row);
-   assert(hex,'source hex for published piece geometry');
+  const types=['depth1','sublevel1','depth2','sublevel2'];
+  for(let index=0;index<types.length;index++){
+   const g=await source(),cells=agoacScenario3FigureTiles(g,index);
+   assert.equal(cells.length,index%2===0?2:3);
+   const hex=cells[0],terrainType=types[index];
+   const footprint=cells.map(t=>({q:t.q-hex.q,r:t.r-hex.r}));
    const role=g.scenario.looseTerrain.nextTeam===g.scenario.attackerTeam?
     'attacker':index<2?'command':'recon';
    await signed(role,'setup',{type:'place-terrain',
