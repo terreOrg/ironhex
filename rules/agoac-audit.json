@@ -11,8 +11,8 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy.",
-  "currentTopicId": "agoac-psr",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment.",
+  "currentTopicId": "agoac-scenarios",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -557,8 +557,63 @@
         40,
         44
       ],
-      "status": "not_audited",
-      "reviewNote": "21.11.2026 first detailed Ch10 source-to-code inspection: original CAT3500D pp.40–44 and official v8.01 errata visually consulted. 19 granular rules 121–139 registered with exact already-passing main 540/540 CI (44891964395), Browser (44891964336), Smoke (44891964353) and strict Sonar (44891964328). Fourteen Verified from existing code and real deterministic tests; four Tested Case require complete modifier-table/facing/dry-fall/accidental-impact matrix; one Known Missing (135) for errata collision impact level: code subtracts 2 from drop for standing target, but -1 required; preexisting test wrongly expects 21 instead of 28 in 65-ton 5-level fixture. Chapter remains not_audited, no engine edits, no deploy, no Chapter 11. 21.11.2026 follow-up engine/test batch: collision errata fixed in source+dist, 6-facing / 35-dry-fall / 54 accidental-impact cases and p.41 PSR modifier matrix added. Current branch registry 14 Verified / 5 Tested Case / 0 Known Missing; awaiting exact final-HEAD checks. No deployment/Chapter 11."
+      "status": "verified",
+      "reviewNote": "21.11.2026 first detailed Ch10 source-to-code inspection: original CAT3500D pp.40–44 and official v8.01 errata visually consulted. 19 granular rules 121–139 registered with exact already-passing main 540/540 CI (44891964395), Browser (44891964336), Smoke (44891964353) and strict Sonar (44891964328). Fourteen Verified from existing code and real deterministic tests; four Tested Case require complete modifier-table/facing/dry-fall/accidental-impact matrix; one Known Missing (135) for errata collision impact level: code subtracts 2 from drop for standing target, but -1 required; preexisting test wrongly expects 21 instead of 28 in 65-ton 5-level fixture. Chapter remains not_audited, no engine edits, no deploy, no Chapter 11. 21.11.2026 follow-up engine/test batch: collision errata fixed in source+dist, 6-facing / 35-dry-fall / 54 accidental-impact cases and p.41 PSR modifier matrix added. Current branch registry 14 Verified / 5 Tested Case / 0 Known Missing; awaiting exact final-HEAD checks. No deployment/Chapter 11. FINAL 2026-11-21: 19/19 registered rules independently checked against CAT3500D pp.40–44, official errata and live engine; corrected impact, p41 PSR table, six fall facings, 35 dry-fall and 54 accidental fall cases. Main 9b963f0 has successful CI 44895000060, Browser 44895000057, Smoke 44895000058 and strict Sonar 44895000082. Dedicated no-legal-placement/random-target boundary regression added in the chapter-closeout PR and must pass exact-head CI/Browser/Smoke before merging. No deployment or Chapter 11.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "inventoryComplete": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.40–44; official AGoAC errata v8.01; official SLDF print crosscheck",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "testedTree": "f822595b5e3eceb4591e7c4ee796a638305c9d80",
+        "mergedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44895000060,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44895000057,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44895000058,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44895000082,
+          "conclusion": "success",
+          "headSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119"
+        },
+        "requirementIds": [
+          "agoac-121",
+          "agoac-122",
+          "agoac-123",
+          "agoac-124",
+          "agoac-125",
+          "agoac-126",
+          "agoac-127",
+          "agoac-128",
+          "agoac-129",
+          "agoac-130",
+          "agoac-131",
+          "agoac-132",
+          "agoac-133",
+          "agoac-134",
+          "agoac-135",
+          "agoac-136",
+          "agoac-137",
+          "agoac-138",
+          "agoac-139"
+        ],
+        "review": "19 independently inventoried PSR, timing, displacement/domino, falling, water, seatbelt and pilot-injury rules. Confirmed p41 modifiers, six facings, 35 fall damage combinations, 54 target collisions incl errata, source and exact four-way main quality gates. Final random/legal-placement regression must pass exact PR-head before merge. No deploy."
+      }
     },
     {
       "id": "agoac-scenarios",
@@ -8613,7 +8668,7 @@
         41
       ],
       "statement": "The printed PSR Situation Table has correct independent triggers and modifiers for 20+ damage, involuntary shutdown +3, kicked/pushed 0, charge/DFA +2/+4, missed kick 0, water depth -1/0/+1, rubble/stand 0, running/jumping with damage, and previously damaged systems.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -8636,7 +8691,40 @@
           "test": "CAT3500D p.41: PSR situation table modifiers use the printed target numbers"
         }
       ],
-      "reviewNote": "Most p.41 triggers and modifiers implemented in psr(), psrMod(), move/stand/jump and physical resolution, with existing tests. No one-to-one exhaustive complete row matrix across all cases; stay Tested Case until table inventory/boundaries are exercised. Official errata deletes unintentional-charge row. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
+      "reviewNote": "Most p.41 triggers and modifiers implemented in psr(), psrMod(), move/stand/jump and physical resolution, with existing tests. No one-to-one exhaustive complete row matrix across all cases; stay Tested Case until table inventory/boundaries are exercised. Official errata deletes unintentional-charge row. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion. FINAL 2026-11-21: source-to-code reconciled against official CAT3500D and errata; validated complete relevant deterministic matrices. Source: printed p.41 modifier table, footnotes and v8.01; checked psr/psrMod/endPSR, move/stand/run/jump/heatPhase, kick/push/charge/DFA and running/jump critical triggers. Explicit modifier/20+ matrix plus prior actual game-phase tests; exact main four-way quality gates green.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.40–44; official AGoAC errata v8.01 and SLDF print source",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "testedTree": "f822595b5e3eceb4591e7c4ee796a638305c9d80",
+        "mergedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44895000060,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44895000057,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44895000058,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44895000082,
+          "conclusion": "success",
+          "headSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119"
+        },
+        "review": "Source: printed p.41 modifier table, footnotes and v8.01; checked psr/psrMod/endPSR, move/stand/run/jump/heatPhase, kick/push/charge/DFA and running/jump critical triggers. Explicit modifier/20+ matrix plus prior actual game-phase tests; exact main four-way quality gates green."
+      }
     },
     {
       "id": "agoac-126",
@@ -8876,7 +8964,7 @@
         43
       ],
       "statement": "A falling BattleMech remains in entered/occupied hex as applicable, becomes prone, and rolls 1D6 on the six-row Facing After Fall Table; corresponding front/right/rear/left hit-location column must match rolled orientation.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -8891,7 +8979,40 @@
           "test": "CAT3500D pp.42-43: all six falling facings select the exact new hexside and hit-location arc"
         }
       ],
-      "reviewNote": "Game.fall() rotates facing from 1D6 and maps impact side; existing tests cover some orientations. Complete 1–6 facing/arc matrix, including reverse and special fall reasons, is not individually proved; Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
+      "reviewNote": "Game.fall() rotates facing from 1D6 and maps impact side; existing tests cover some orientations. Complete 1–6 facing/arc matrix, including reverse and special fall reasons, is not individually proved; Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion. FINAL 2026-11-21: source-to-code reconciled against official CAT3500D and errata; validated complete relevant deterministic matrices. Source: pp.42–43 six-row facing table. Checked Game.fall() die-to-rotation and front/right/rear/left damage column; all six rows covered by deterministic tests plus moving/landed special falls. Exact main green.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.40–44; official AGoAC errata v8.01 and SLDF print source",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "testedTree": "f822595b5e3eceb4591e7c4ee796a638305c9d80",
+        "mergedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44895000060,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44895000057,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44895000058,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44895000082,
+          "conclusion": "success",
+          "headSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119"
+        },
+        "review": "Source: pp.42–43 six-row facing table. Checked Game.fall() die-to-rotation and front/right/rear/left damage column; all six rows covered by deterministic tests plus moving/landed special falls. Exact main green."
+      }
     },
     {
       "id": "agoac-131",
@@ -8900,7 +9021,7 @@
         43
       ],
       "statement": "Ordinary dry falls inflict ceil(tonnage/10) times (levels fallen+1) points of damage, split into 5-point packets plus remainder with rolled hit location and facing-derived damage table, resolved after pilot seatbelt check.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -8915,7 +9036,40 @@
           "test": "CAT3500D p.43: dry falling damage matches tonnage, level and exact 5-point packets"
         }
       ],
-      "reviewNote": "fallDamageGroups() and packets() implement printed arithmetic/packets, but dedicated exhaustive dry-fall 20–100 ton, 0–4 level, last-packet 1–4 and all arc matrix is not recorded; Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
+      "reviewNote": "fallDamageGroups() and packets() implement printed arithmetic/packets, but dedicated exhaustive dry-fall 20–100 ton, 0–4 level, last-packet 1–4 and all arc matrix is not recorded; Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion. FINAL 2026-11-21: source-to-code reconciled against official CAT3500D and errata; validated complete relevant deterministic matrices. Source: p.43 tonnage/10 roundup ×(levels+1), packets five then remainder, pilot check before damage. Reviewed fallDamageGroups/packets/fall; dry-fall matrix 35 weight/elevation combos and all facing columns; source and exact main green.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.40–44; official AGoAC errata v8.01 and SLDF print source",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "testedTree": "f822595b5e3eceb4591e7c4ee796a638305c9d80",
+        "mergedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44895000060,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44895000057,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44895000058,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44895000082,
+          "conclusion": "success",
+          "headSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119"
+        },
+        "review": "Source: p.43 tonnage/10 roundup ×(levels+1), packets five then remainder, pilot check before damage. Reviewed fallDamageGroups/packets/fall; dry-fall matrix 35 weight/elevation combos and all facing columns; source and exact main green."
+      }
     },
     {
       "id": "agoac-132",
@@ -9085,7 +9239,7 @@
         44
       ],
       "statement": "On a successful accidental fall onto a target, damage equals ceil(falling Mech tonnage/10) times the number of levels from its origin down to the target's impact level (target Mech's level MINUS ONE per errata v8.01); halve if the target is fully submerged; split among 5-point Punch Location packets.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9096,7 +9250,40 @@
           "test": "CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/prone level and submersion matrix"
         }
       ],
-      "reviewNote": "IMPLEMENTED PENDING VERIFICATION: repaired accidentalFallHit() in both source and dist to apply v8.01 target-level-minus-one impact height. Updated 65t 5-level expected dry 28 / submerged 14, plus 54 drop/tonnage/prone/depth combinations. Existing bug no longer present on PR head. Require exact-head CI, Browser E2E, scoped Container Smoke and post-merge strict Sonar before Verified."
+      "reviewNote": "IMPLEMENTED PENDING VERIFICATION: repaired accidentalFallHit() in both source and dist to apply v8.01 target-level-minus-one impact height. Updated 65t 5-level expected dry 28 / submerged 14, plus 54 drop/tonnage/prone/depth combinations. Existing bug no longer present on PR head. Require exact-head CI, Browser E2E, scoped Container Smoke and post-merge strict Sonar before Verified. FINAL 2026-11-21: source-to-code reconciled against official CAT3500D and errata; validated complete relevant deterministic matrices. Source: p.44 successful collision calculation, corrected official SLDF text (target underlying hex + target level −1), v8.01 errata. Engine and mirrored dist same blob; confirmed 65t/5-level dry 28 and submerged 14, 54 matrix variants of standing/prone targets, water and tonnage. Main 544/544 and three other main gates green.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.40–44; official AGoAC errata v8.01 and SLDF print source",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "testedTree": "f822595b5e3eceb4591e7c4ee796a638305c9d80",
+        "mergedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44895000060,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44895000057,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44895000058,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44895000082,
+          "conclusion": "success",
+          "headSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119"
+        },
+        "review": "Source: p.44 successful collision calculation, corrected official SLDF text (target underlying hex + target level −1), v8.01 errata. Engine and mirrored dist same blob; confirmed 65t/5-level dry 28 and submerged 14, 54 matrix variants of standing/prone targets, water and tonnage. Main 544/544 and three other main gates green."
+      }
     },
     {
       "id": "agoac-136",
@@ -9105,7 +9292,7 @@
         44
       ],
       "statement": "On an accidental-fall hit, the falling Mech lands on its back with damage applied to rear, and a surviving target is displaced into a random legal neighboring hex then immediately attempts a +2 PSR; no legal hex destroys the unit.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9118,9 +9305,46 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/prone level and submersion matrix"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.44: struck target random legal displacement and forbidden-hex destruction"
         }
       ],
-      "reviewNote": "The engine implements rear-fall, target random displacement and +2 PSR, tested; full successful impact pipeline still relies on known incorrect collision damage calculation in 135, so remains Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion."
+      "reviewNote": "The engine implements rear-fall, target random displacement and +2 PSR, tested; full successful impact pipeline still relies on known incorrect collision damage calculation in 135, so remains Tested Case. 21.11.2026 follow-up: dedicated source-scoped parameterized test committed; exact-head CI/Browser/Smoke and post-merge main Sonar needed before promotion. FINAL 2026-11-21: source-to-code reconciled against official CAT3500D and errata; validated complete relevant deterministic matrices. Source: p.44 target random neighboring legal displacement, rear-only fall damage and immediate +2 PSR; forbidden displacement destroys target. Reviewed accidentalFallHit, fallNeighborOptions, displace, psr; existing end-to-end impact/PSR tests and new blocked/random neighbor boundary regression on closure PR; branch tests required before merge.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed pp.40–44; official AGoAC errata v8.01 and SLDF print source",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "testedTree": "f822595b5e3eceb4591e7c4ee796a638305c9d80",
+        "mergedSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44895000060,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44895000057,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44895000058,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44895000082,
+          "conclusion": "success",
+          "headSha": "9b963f003f5f560bd917eaf98782b4ac3bf81119"
+        },
+        "review": "Source: p.44 target random neighboring legal displacement, rear-only fall damage and immediate +2 PSR; forbidden displacement destroys target. Reviewed accidentalFallHit, fallNeighborOptions, displace, psr; existing end-to-end impact/PSR tests and new blocked/random neighbor boundary regression on closure PR; branch tests required before merge."
+      }
     },
     {
       "id": "agoac-137",
