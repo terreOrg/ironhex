@@ -148,7 +148,7 @@ function printedTerrainDiagram(game,{choices=[],chosen=null,onPick=null}={}){
   const col=tile.q+Math.floor(tile.r/2)+Math.floor(game.setupMap.width/2);
   const row=tile.r+Math.floor(game.setupMap.height/2);
   if(col<0||col>=32||row<0||row>=17)continue;
-  const cx=18+17.32*(col+(tile.r%2)/2),cy=18+15*row;
+  const cx=18+17.32*(col+((tile.r%2+2)%2)/2),cy=18+15*row;
   const key=tile.q+','+tile.r,piece=applied.get(key);
   const eligible=picks.has(key);
   const chosenTile=key===chosen;
@@ -247,7 +247,7 @@ function renderSetup(body,room,game){
     return Number.isInteger(q)?[{q:0,r:0},{q,r}]:[];
    }
    const values=shape.value.split(';').map(v=>v.trim());
-   if(values.length!==3||values.some(v=>!/^[-]?\\d+\\s*,\\s*[-]?\\d+$/.test(v)))return [];
+   if(values.length!==3||values.some(v=>!/^[-]?\d+\s*,\s*[-]?\d+$/.test(v)))return [];
    return values.map(v=>{
     const [q,r]=v.split(',').map(Number);return {q,r};
    });
