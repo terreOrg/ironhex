@@ -320,6 +320,12 @@ async function renderRoomDetails(room,host){
  if(!['active','finished'].includes(room.status))return;
  const {game}=await request(apiRoom(room.id,'/snapshot'));
  if(!game)return;
+ if(game.scenario?.placement?.complete){
+  const link=E('a','hub-fullscreen-link','↗ ОТКРЫТЬ ИЗОМЕТРИЧЕСКОЕ ПОЛЕ');
+  link.href='index.html?battle=1&room='+encodeURIComponent(room.id);
+  link.target='_blank';link.rel='noopener noreferrer';
+  frame.append(link);
+ }
  if(room.status==='active'&&!game.scenario?.placement?.complete)renderSetup(host,room,game);
  else renderBattle(host,room,game);
  frame.append(E('p','',
