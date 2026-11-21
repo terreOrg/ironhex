@@ -8012,3 +8012,42 @@ test('CAT3500D pp.47-48: source setup rejects premature campaign import and forg
  game.units.find(u=>u.id===cards[0].unitId).scenarioCard.id='forged';
  assert.equal(game.beginPrintedScenarioPlacement().ok,false,'forged card ID rejected');
 });
+
+test('CAT3500D pp.45-48: five source-certified scenario and loose-terrain cases retain exact four-way main evidence',()=>{
+ const reg=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
+ const cases=reg.requirements.filter(r=>r.topicId==='agoac-scenarios');
+ const verified=cases.filter(r=>r.status==='verified');
+ const pending=cases.filter(r=>r.status!=='verified');
+ assert.equal(verified.length,22,'do not close unverified scenario cases');
+ assert.deepEqual(pending.map(r=>r.id),['agoac-150','agoac-151','agoac-154']);
+ assert.equal(reg.topics.find(t=>t.id==='agoac-scenarios').status,'known_missing',
+  'the chapter cannot close with an unverified figure or three-player authorization');
+ const audited=['agoac-141','agoac-144','agoac-145','agoac-162','agoac-163'];
+ const expectedSha='c81c2e41fc97515e8ba7f1734aa0c8af1df601a5';
+ const expectedTree='61da074b6f775be28598793fa9bfc8b903b91414';
+ const sourceTests=readFileSync(new URL('./agoac-foundations.mjs',import.meta.url),'utf8');
+ const browserTests=readFileSync(new URL('./browser.mjs',import.meta.url),'utf8');
+ for(const id of audited){
+  const rule=cases.find(r=>r.id===id);
+  assert.equal(rule.status,'verified',id);
+  const audit=rule.audit;
+  assert(audit?.sourceChecked&&audit?.edgeCasesChecked,id);
+  assert.equal(audit.testedSha,expectedSha,id);
+  assert.equal(audit.mergedSha,expectedSha,id);
+  assert.equal(audit.testedTree,expectedTree,id);
+  assert.deepEqual(audit.checks.map(c=>[c.name,c.conclusion,c.runId]).sort((a,b)=>a[0].localeCompare(b[0])),[
+   ['Ironhex Browser E2E','success',44924950598],
+   ['Ironhex CI','success',44924950563],
+   ['Ironhex Container Smoke','success',44924950568]
+  ]);
+  assert.deepEqual([audit.mainQualityGate.name,audit.mainQualityGate.conclusion,
+   audit.mainQualityGate.runId,audit.mainQualityGate.headSha],
+   ['Ironhex SonarQube','success',44924950545,expectedSha]);
+  assert(rule.evidence?.length,id+' needs linked source-backed tests');
+  for(const item of rule.evidence){
+   const suite=item.file==='tests/browser.mjs'?browserTests:sourceTests;
+   assert(item.file==='tests/browser.mjs'||item.file==='tests/agoac-foundations.mjs');
+   assert(suite.includes("test('"+item.test+"'"),id+' missing '+item.test);
+  }
+ }
+});

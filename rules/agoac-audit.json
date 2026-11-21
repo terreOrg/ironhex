@@ -623,7 +623,7 @@
         48
       ],
       "status": "known_missing",
-      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit. 21.11.2026 first four atomic existing planetary-condition rules source-to-code Verified on green main e12ebe6: ground lunar MP, lunar weapon/heat, gale weapon classes and gale PSR. Exact CI 44896909451, Browser 44896909461, Smoke 44896909396, strict Sonar 44896909440 all successful. Remaining 21 Known Missing; chapter stays open, pointer stays agoac-scenarios. No scenario implementation or deploy. 21.11.2026 follow-up: conditional scenario side choice, first-turn automatic Trial by Fire initiative, scenario 3 -2 defender initiative, full-moon jumping MP on-board and offboard first-hex implemented. Four new named deterministic tests; 148 still only partially covered; full scenarios remain missing. No deploy / Ch12. 21.11.2026 final packet source certification: 140, 153 and 158 independently verified on exact main 249f3ba with CI 44899292879, Browser 44899292900, Smoke 44899292893 and strict Sonar 44899292896 green. 148 remains Tested Case, 17 scenario-specific groups Known Missing. 7 verified/1 tested/17 missing in Ch11; remain chapter-scoped; no deployment/Ch12. 2026-11-21 PR#234 (branch, not merged): cripple/exit/victory partial engine package. Tentative registry after tests: 7 verified, 4 tested_case, 14 known_missing. Keep topic known_missing, do not claim exact scenario parity or deploy. Exact-head PR CI, Browser, Smoke and post-merge four-way main checks required before later independent source certification. 2026-11-21 PR#251 cross-cutting closeout: all eight formerly Tested Case requirements received grouped source-backed integration work and tests. The source figure's mandatory die-cut physical terrain for Divide and Conquer is a still explicit gap. Do not promote the topic unless all child requirements meet source, edge and four-way CI audit. No deployment.",
+      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit. 21.11.2026 first four atomic existing planetary-condition rules source-to-code Verified on green main e12ebe6: ground lunar MP, lunar weapon/heat, gale weapon classes and gale PSR. Exact CI 44896909451, Browser 44896909461, Smoke 44896909396, strict Sonar 44896909440 all successful. Remaining 21 Known Missing; chapter stays open, pointer stays agoac-scenarios. No scenario implementation or deploy. 21.11.2026 follow-up: conditional scenario side choice, first-turn automatic Trial by Fire initiative, scenario 3 -2 defender initiative, full-moon jumping MP on-board and offboard first-hex implemented. Four new named deterministic tests; 148 still only partially covered; full scenarios remain missing. No deploy / Ch12. 21.11.2026 final packet source certification: 140, 153 and 158 independently verified on exact main 249f3ba with CI 44899292879, Browser 44899292900, Smoke 44899292893 and strict Sonar 44899292896 green. 148 remains Tested Case, 17 scenario-specific groups Known Missing. 7 verified/1 tested/17 missing in Ch11; remain chapter-scoped; no deployment/Ch12. 2026-11-21 PR#234 (branch, not merged): cripple/exit/victory partial engine package. Tentative registry after tests: 7 verified, 4 tested_case, 14 known_missing. Keep topic known_missing, do not claim exact scenario parity or deploy. Exact-head PR CI, Browser, Smoke and post-merge four-way main checks required before later independent source certification. 2026-11-21 PR#251 cross-cutting closeout: all eight formerly Tested Case requirements received grouped source-backed integration work and tests. The source figure's mandatory die-cut physical terrain for Divide and Conquer is a still explicit gap. Do not promote the topic unless all child requirements meet source, edge and four-way CI audit. No deployment. 2026-11-21 after merge #253 and four green main gates c81c2e41: independently certified five additional atomic rules (141,144,145,162,163), with exact test, source/errata and CI evidence. Remaining 150/151 depend on fixed printed illustrated punch-out positions (only user-attested so far); 154 cannot be certified while three-player per-user server authorization is not implemented. Chapter remains known_missing; verified 22, tested_case 3; no deploy/Ch12.",
       "audit": {
         "sourceChecked": true,
         "edgeCasesChecked": false,
@@ -656,7 +656,7 @@
           "agoac-163",
           "agoac-164"
         ],
-        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending. VERIFIED SUBSET: 4 already-implemented weather requirements with source and test coverage on exact four-way green main e12ebe6; all missing scenario/game setup and optional functionality remain unverified. 4 Verified, 21 Known Missing. New engine-only partial scenario setup and initiative, plus lunar jump path. No accurate mapsheets or complete scenario victory logic; do not close chapter. Package FINAL: scenario 2D6 roles, scenario 3 -2 defender Initiative and full-moon jump MP source/code/test verified on four-way green main 249f3ba. Trial by Fire automatic first-turn initiative proved only as a subset; east-edge exit and instant destruction still missing. Chapter remains open. PR#234 audit packet: scenario terminal conditions and exit mechanics added to source and dist and API, with five deterministic test groups. Mark 143/147/152 Tested Case only, not Verified. Published scenario presets, exact maps/forces/deployment/launcher absent; scenario rule chapter remains open. Additional API command validation tests included in #234; no chapter completion."
+        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending. VERIFIED SUBSET: 4 already-implemented weather requirements with source and test coverage on exact four-way green main e12ebe6; all missing scenario/game setup and optional functionality remain unverified. 4 Verified, 21 Known Missing. New engine-only partial scenario setup and initiative, plus lunar jump path. No accurate mapsheets or complete scenario victory logic; do not close chapter. Package FINAL: scenario 2D6 roles, scenario 3 -2 defender Initiative and full-moon jump MP source/code/test verified on four-way green main 249f3ba. Trial by Fire automatic first-turn initiative proved only as a subset; east-edge exit and instant destruction still missing. Chapter remains open. PR#234 audit packet: scenario terminal conditions and exit mechanics added to source and dist and API, with five deterministic test groups. Mark 143/147/152 Tested Case only, not Verified. Published scenario presets, exact maps/forces/deployment/launcher absent; scenario rule chapter remains open. Additional API command validation tests included in #234; no chapter completion. 2026-11-21 subset certification: 141,144,145,162,163 have source-backed four-way green evidence c81c2e41. Three still Tested Case: 150/151 unverified illustrated hex placement; 154 missing authenticated three-player decision routing. Not a full-topic certification."
       }
     },
     {
@@ -9603,8 +9603,8 @@
         45
       ],
       "statement": "Scenario 1 Final Exam uses Desert #3 + Grassland #2 in the pictured arrangement (v8.01 correction), four precise chassis/variants and 4/5 pilots per side.",
-      "status": "tested_case",
-      "reviewNote": "2026-11-21 source-data package: source-native Desert #3 + Grassland #2 (16x17 each, 544 terrain hexes) from MegaMek/mm-data pinned revision 5ee1b15 and all 4 source MTF variants imported using combat construct(), with eight exact printed pilot assignments (4 per side) and initial setup lock. Regression checks elevation, water/woodland, exact roster and no demo fallbacks. TESTED CASE only: original full-color map textures, exact commercial record-sheet graphics, independent printed-to-digital terrain validation and scenario-launch UI remain unverified. 2026-11-21 PR#251 integrated implementation: Source digital Desert #3 + Grassland #2 (errata v8.01) 544 hexes, pinned 14-record technical catalog, the original 8 pilot identities/skills, launchable browser exact roster and source-coordinate turn-based deployment. Commercial paper artwork is not redistributed; ordinary 3D proxy model assets do not replace technical record sheets. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
+      "status": "verified",
+      "reviewNote": "2026-11-21 source-data package: source-native Desert #3 + Grassland #2 (16x17 each, 544 terrain hexes) from MegaMek/mm-data pinned revision 5ee1b15 and all 4 source MTF variants imported using combat construct(), with eight exact printed pilot assignments (4 per side) and initial setup lock. Regression checks elevation, water/woodland, exact roster and no demo fallbacks. TESTED CASE only: original full-color map textures, exact commercial record-sheet graphics, independent printed-to-digital terrain validation and scenario-launch UI remain unverified. 2026-11-21 PR#251 integrated implementation: Source digital Desert #3 + Grassland #2 (errata v8.01) 544 hexes, pinned 14-record technical catalog, the original 8 pilot identities/skills, launchable browser exact roster and source-coordinate turn-based deployment. Commercial paper artwork is not redistributed; ordinary 3D proxy model assets do not replace technical record sheets. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main. CERTIFIED 2026-11-21 on independent source review and exact main c81c2e41 four-way green gates: CAT3500D pp.45–46 scenario 1 and v8.01 sheet correction: Desert #3 west, Grassland #2 east; 8 exact named 5/4 pilot assignments and four original source-MTF BattleMech variants. Real 16×17 source hex data loaded; no demo substitutes; browser launch/placement and source MTF parity tests pass. Paper artwork and graphic reproduction are out of scope of the stated roster/map rule, not falsely claimed.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9622,7 +9622,40 @@
           "file": "tests/browser.mjs",
           "test": "AGoAC Ch11 browser: Final Exam alternate exact MTFs, vertical source maps, full interactive deployment"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.45–48; official errata v8.01 (2023-09-17), pinned MegaMek/mm-data 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "testedTree": "61da074b6f775be28598793fa9bfc8b903b91414",
+        "mergedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44924950563,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44924950598,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44924950568,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44924950545,
+          "conclusion": "success",
+          "headSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5"
+        },
+        "review": "CAT3500D pp.45–46 scenario 1 and v8.01 sheet correction: Desert #3 west, Grassland #2 east; 8 exact named 5/4 pilot assignments and four original source-MTF BattleMech variants. Real 16×17 source hex data loaded; no demo substitutes; browser launch/placement and source MTF parity tests pass. Paper artwork and graphic reproduction are out of scope of the stated roster/map rule, not falsely claimed."
+      }
     },
     {
       "id": "agoac-142",
@@ -9751,8 +9784,8 @@
         46
       ],
       "statement": "Scenario 1 suggested variants permit alternative four-Mech force rosters and rotated/reshaped two-map terrain while preserving other scenario rules.",
-      "status": "tested_case",
-      "reviewNote": "Generic roster/map layout selection exists but no Final Exam preset, approved printed roster variation or scenario continuity. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated. 2026-11-21 PR#251 integrated implementation: Final Exam alternate published 4+4 force uses actual TDR-5S, GRF-1N, LCT-1E, COM-2D vs TDR-5SE, WVR-6R, LCT-1V, COM-3A from pinned MegaMek MTF. Both independent 180-degree map rotations, 16x34 short-edge join, and explicit substitution of other real pinned AGoAC boards are enforced. Generic synthetic replacements rejected; browser scenario variant exposed. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
+      "status": "verified",
+      "reviewNote": "Generic roster/map layout selection exists but no Final Exam preset, approved printed roster variation or scenario continuity. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated. 2026-11-21 PR#251 integrated implementation: Final Exam alternate published 4+4 force uses actual TDR-5S, GRF-1N, LCT-1E, COM-2D vs TDR-5SE, WVR-6R, LCT-1V, COM-3A from pinned MegaMek MTF. Both independent 180-degree map rotations, 16x34 short-edge join, and explicit substitution of other real pinned AGoAC boards are enforced. Generic synthetic replacements rejected; browser scenario variant exposed. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main. CERTIFIED 2026-11-21 on independent source review and exact main c81c2e41 four-way green gates: CAT3500D p.46 alternative Final Exam force roster (real TDR-5S/GRF-1N/LCT-1E/COM-2D against TDR-5SE/WVR-6R/LCT-1V/COM-3A), either independent 180-degree sheet rotation, short-side 16×34 join, and explicitly sourced substitute boards. Actual source record construction and browser 8-unit setup tested; printed variant retains all other scenario rules.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9774,7 +9807,40 @@
           "file": "tests/browser.mjs",
           "test": "AGoAC Ch11 browser: Final Exam alternate exact MTFs, vertical source maps, full interactive deployment"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.45–48; official errata v8.01 (2023-09-17), pinned MegaMek/mm-data 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "testedTree": "61da074b6f775be28598793fa9bfc8b903b91414",
+        "mergedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44924950563,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44924950598,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44924950568,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44924950545,
+          "conclusion": "success",
+          "headSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5"
+        },
+        "review": "CAT3500D p.46 alternative Final Exam force roster (real TDR-5S/GRF-1N/LCT-1E/COM-2D against TDR-5SE/WVR-6R/LCT-1V/COM-3A), either independent 180-degree sheet rotation, short-side 16×34 join, and explicitly sourced substitute boards. Actual source record construction and browser 8-unit setup tested; printed variant retains all other scenario rules."
+      }
     },
     {
       "id": "agoac-145",
@@ -9783,8 +9849,8 @@
         46
       ],
       "statement": "Scenario 2 Trial by Fire uses Desert #2 + Grassland #3, exact lone BLR-1G and three attackers with printed 4/5,5/5,5/6 pilots, plus four random front 5-point pre-damage hits excluding heads and criticals.",
-      "status": "tested_case",
-      "reviewNote": "2026-11-21 source-data package: Desert #2 + Grassland #3 from pinned MegaMek mm-data, real BLR-1G and WVR-6M/LCT-1V/COM-3A MTF technical definitions, exact published pilot/skill manifest, printed pregame four 5-point FRONT hits with head reroll, critical suppression and first-turn initiative. Source-backed end-to-end regression covers true BattleMaster model, placement, pre-damage and phase transition. TESTED CASE only: printed full-color map art, MTF-to-commercial record-sheet equivalence and complete scenario user interface remain unaudited. 2026-11-21 PR#251 integrated implementation: Source exact Desert #2 + Grassland #3, named BLR-1G and three printed attacker MTF with skills, 4 independently randomized front damage hits of 5 excluding head reroll and criticals, first-turn initiative exception; browser full 4-unit placement/pre-damage covered. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
+      "status": "verified",
+      "reviewNote": "2026-11-21 source-data package: Desert #2 + Grassland #3 from pinned MegaMek mm-data, real BLR-1G and WVR-6M/LCT-1V/COM-3A MTF technical definitions, exact published pilot/skill manifest, printed pregame four 5-point FRONT hits with head reroll, critical suppression and first-turn initiative. Source-backed end-to-end regression covers true BattleMaster model, placement, pre-damage and phase transition. TESTED CASE only: printed full-color map art, MTF-to-commercial record-sheet equivalence and complete scenario user interface remain unaudited. 2026-11-21 PR#251 integrated implementation: Source exact Desert #2 + Grassland #3, named BLR-1G and three printed attacker MTF with skills, 4 independently randomized front damage hits of 5 excluding head reroll and criticals, first-turn initiative exception; browser full 4-unit placement/pre-damage covered. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main. CERTIFIED 2026-11-21 on independent source review and exact main c81c2e41 four-way green gates: CAT3500D pp.46–47 Trial by Fire: pinned Desert #2 / Grassland #3, lone Thompson BLR-1G and three printed pilot/MTF attacker variants and skills; apply four independently randomized 5-point front attacks with head reroll and no criticals before first turn. Real source records plus browser placement/pre-damage and negative controls verified.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9802,7 +9868,40 @@
           "file": "tests/browser.mjs",
           "test": "AGoAC Ch11 browser: Trial by Fire real pre-damage, printed force deployment and source sheet labels"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.45–48; official errata v8.01 (2023-09-17), pinned MegaMek/mm-data 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "testedTree": "61da074b6f775be28598793fa9bfc8b903b91414",
+        "mergedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44924950563,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44924950598,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44924950568,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44924950545,
+          "conclusion": "success",
+          "headSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5"
+        },
+        "review": "CAT3500D pp.46–47 Trial by Fire: pinned Desert #2 / Grassland #3, lone Thompson BLR-1G and three printed pilot/MTF attacker variants and skills; apply four independently randomized 5-point front attacks with head reroll and no criticals before first turn. Real source records plus browser placement/pre-damage and negative controls verified."
+      }
     },
     {
       "id": "agoac-146",
@@ -10619,8 +10718,8 @@
         48
       ],
       "statement": "Optional loose terrain pieces require equal counts per player, with D6-based alternate starting side if no agreement, adding exactly one piece at a time.",
-      "status": "tested_case",
-      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion. 2026-11-21 PR#251 integrated implementation: Equal terrain piece quotas and strict one-at-a-time alternation, D6 first-team fallback, connected arbitrary 1–32-hex outlines, actual woods/heavy/rough/rubble hex terrain type effects, current authenticated print-setup lock (hotseat only). Tool exposes manual shape entry for user physical punchout outlines; no fake licensed art. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
+      "status": "verified",
+      "reviewNote": "Digital presets include terrain but have no loose-piece editor, balance of contributions or start-order selection. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion. 2026-11-21 PR#251 integrated implementation: Equal terrain piece quotas and strict one-at-a-time alternation, D6 first-team fallback, connected arbitrary 1–32-hex outlines, actual woods/heavy/rough/rubble hex terrain type effects, current authenticated print-setup lock (hotseat only). Tool exposes manual shape entry for user physical punchout outlines; no fake licensed art. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main. CERTIFIED 2026-11-21 on independent source review and exact main c81c2e41 four-way green gates: CAT3500D p.48 optional punch-out terrain: same nonzero piece count per side, one alternating piece per turn, explicit starter agreement or exactly one D6 to choose, cannot start setup once placement begins. Tests exhaust D6 1–6, both player orders, quotas, setup lock, atomic failures and real source map setup; no licensed artwork inferred.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10646,7 +10745,40 @@
           "file": "tests/browser.mjs",
           "test": "AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.45–48; official errata v8.01 (2023-09-17), pinned MegaMek/mm-data 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "testedTree": "61da074b6f775be28598793fa9bfc8b903b91414",
+        "mergedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44924950563,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44924950598,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44924950568,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44924950545,
+          "conclusion": "success",
+          "headSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5"
+        },
+        "review": "CAT3500D p.48 optional punch-out terrain: same nonzero piece count per side, one alternating piece per turn, explicit starter agreement or exactly one D6 to choose, cannot start setup once placement begins. Tests exhaust D6 1–6, both player orders, quotas, setup lock, atomic failures and real source map setup; no licensed artwork inferred."
+      }
     },
     {
       "id": "agoac-163",
@@ -10655,8 +10787,8 @@
         48
       ],
       "statement": "Loose terrain pieces must be placed at least two hexes away from the mapsheet edge and separated by three empty hexes from other pieces.",
-      "status": "tested_case",
-      "reviewNote": "No terrain-piece placement constraints or equal placement workflow. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion. 2026-11-21 PR#251 integrated implementation: Every occupied hex remains MORE than 2 hexes from each independent source sheet edge and at least 3 empty hexes between all edges of distinct pieces (hex-distance >=4). Invalid or overlapping footprint placement is atomic; UI permits true custom connected multihex outlines and propagates valid effects to movement/LOS. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main.",
+      "status": "verified",
+      "reviewNote": "No terrain-piece placement constraints or equal placement workflow. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 PR#248: source p.48 strengthened: connected multi-hex piece footprints are validated cell-by-cell against the independent sheet edges and three wholly empty hexes, invalid placement is atomic, complete alternating placement is required before printed BattleMech deployment, with all six single-D6 starting-player outcomes. Remains TESTED CASE pending exact-head/post-merge green gates, original die-cut piece footprint/type data, actual terrain effects in movement/LOS, and playable placement UI. No source-based Verified assertion. 2026-11-21 PR#251 integrated implementation: Every occupied hex remains MORE than 2 hexes from each independent source sheet edge and at least 3 empty hexes between all edges of distinct pieces (hex-distance >=4). Invalid or overlapping footprint placement is atomic; UI permits true custom connected multihex outlines and propagates valid effects to movement/LOS. Source certification and postmerge exact SHA strict Quality Gate pending. Status deliberately retained TESTED CASE until after four green checks on main. CERTIFIED 2026-11-21 on independent source review and exact main c81c2e41 four-way green gates: CAT3500D p.48 optional terrain: every occupied footprint cell stays beyond the 2-hex border of its own physical 16×17 sheet; different pieces leave at least 3 empty intervening hexes (distance≥4). Tests reject disconnected/overlapping/cross-sheet shapes, check border and spacing at boundaries, validate movement/LOS overlay effects and preserve atomicity.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -10682,7 +10814,40 @@
           "file": "tests/browser.mjs",
           "test": "AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) printed pp.45–48; official errata v8.01 (2023-09-17), pinned MegaMek/mm-data 5ee1b15ff2877611db4b0ffa864a57d0b9f72938",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "testedTree": "61da074b6f775be28598793fa9bfc8b903b91414",
+        "mergedSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44924950563,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44924950598,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44924950568,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44924950545,
+          "conclusion": "success",
+          "headSha": "c81c2e41fc97515e8ba7f1734aa0c8af1df601a5"
+        },
+        "review": "CAT3500D p.48 optional terrain: every occupied footprint cell stays beyond the 2-hex border of its own physical 16×17 sheet; different pieces leave at least 3 empty intervening hexes (distance≥4). Tests reject disconnected/overlapping/cross-sheet shapes, check border and spacing at boundaries, validate movement/LOS overlay effects and preserve atomicity."
+      }
     },
     {
       "id": "agoac-164",
