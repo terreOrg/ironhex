@@ -6523,6 +6523,68 @@ test('CAT3500D p.48: optional terrain requires equal pieces, alternate one each 
 });
 
 
+
+test('CAT3500D p.48: multi-hex terrain-piece footprints are connected and keep three empty hexes across all edges',()=>{
+ const g=looseSheetFixture();
+ assert(g.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok);
+ const at=(col,row)=>{const tile=atSheetCoord(g,col,row);assert(tile);return tile;};
+ const place=(team,col,row,footprint)=>g.placeScenarioLooseTerrain({
+  team,...at(col,row),label:'woods',footprint
+ });
+ const snapshot=()=>JSON.stringify(g.scenario.looseTerrain);
+ const initial=snapshot();
+ assert.equal(place(0,5,8,[{q:0,r:0},{q:0,r:0}]).ok,false,'duplicate occupied hex');
+ assert.equal(place(0,5,8,[{q:0,r:0},{q:2,r:0}]).ok,false,'disconnected piece');
+ assert.equal(place(0,5,8,[{q:1,r:0}]).ok,false,'missing origin');
+ assert.equal(place(0,12,8,[{q:0,r:0},{q:1,r:0}]).ok,false,'each hex must avoid sheet edge');
+ assert.equal(snapshot(),initial,'invalid piece requests never mutate turn or quota');
+ assert(place(0,5,8,[{q:0,r:0},{q:1,r:0}]).ok);
+ const afterFirst=snapshot();
+ assert.equal(place(1,9,8,[{q:0,r:0}]).ok,false,
+  'distance three from second cell leaves only two intervening hexes');
+ assert.equal(snapshot(),afterFirst);
+ assert(place(1,10,8,[{q:0,r:0},{q:1,r:0}]).ok,
+  'at least four-hex separation between all occupied cells is allowed');
+ assert.deepEqual(g.scenario.looseTerrain.pieces.map(p=>p.hexes.length),[2,2]);
+ assert.equal(g.scenario.looseTerrain.complete,true);
+ assert.equal(g.scenario.looseTerrain.visualAssetsLoaded,false,
+  'actual punch-out artwork and terrain effects are not fabricated');
+});
+
+test('CAT3500D p.48: D6 chooses alternating terrain starter exactly once for all six faces',()=>{
+ for(let face=1;face<=6;face++){
+  const g=looseSheetFixture();
+  let calls=0;
+  g.rng=()=>{calls++;return (face-.5)/6;};
+  const result=g.startScenarioLooseTerrain({piecesPerTeam:1});
+  assert(result.ok);
+  assert.equal(calls,1,'no tie reroll needed for a single D6');
+  assert.equal(result.roll,face);
+  assert.equal(result.firstTeam,(face-1)%2);
+ }
+});
+
+test('CAT3500D p.48: source printed scenarios require finishing optional terrain before placing Mechs',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario('final-exam').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ prepareAgoacPrintedScenario(g,'final-exam');
+ assert(g.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok);
+ assert.match(g.nextPhase().error,/местности/,
+  'initiative cannot bypass unfinished loose terrain setup');
+ assert.equal(g.beginPrintedScenarioPlacement().ok,false,
+  'placement must not begin while optional terrain is incomplete');
+ const west=atSheetCoord(g,5,8),east=atSheetCoord(g,25,8);
+ assert(g.placeScenarioLooseTerrain({team:0,q:west.q,r:west.r,label:'woods'}).ok);
+ assert(g.placeScenarioLooseTerrain({team:1,q:east.q,r:east.r,label:'rough'}).ok);
+ assert(g.scenario.looseTerrain.complete);
+ assert(g.beginPrintedScenarioPlacement().ok);
+ assert.equal(g.placeScenarioLooseTerrain({team:0,q:west.q,r:west.r,label:'woods'}).ok,false);
+ assert.equal(g.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok,false);
+});
+
 test('CAT3500D pp.46,48: exact alternative Final Exam chassis and shortened 6-defender vs 4-attacker scenario',async()=>{
  const {AGOAC_SCENARIO_VARIATIONS:variants,AGOAC_PRINTED_SCENARIOS:scenarios}=await import('../dist/engine.js');
  const s1=variants['final-exam'].alternateForces;
