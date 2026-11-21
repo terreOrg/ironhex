@@ -7419,6 +7419,30 @@ test('CAT3500D p.48: optional playable terrain overlays change movement and LOS 
  assert.equal(g.scenario.looseTerrain.visualAssetsLoaded,false,'licensed punch-out graphics not fabricated');
 });
 
+
+test('CAT3500D Ch11 browser technical manifest uses identical source MTF constructor data for every printed variation',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const {loadAgoacBrowserDesigns}=await import('../dist/agoac-scenario-loader.js');
+ const {AGOAC_BOARD_SOURCE}=await import('../packages/engine/agoac-boards.js');
+ const bundle=JSON.parse(readFileSync(new URL('../dist/agoac-records.json',import.meta.url),'utf8'));
+ assert.equal(bundle.sourceRevision,AGOAC_BOARD_SOURCE.revision);
+ assert.equal(bundle.licenseId,'CC-BY-NC-SA-4.0');
+ assert.equal(bundle.records.length,14);
+ for(const [id,variation]of [['final-exam',null],['final-exam','alternate-forces'],
+  ['trial-by-fire',null],['divide-and-conquer',null],['divide-and-conquer','shortened']]){
+  const actual=await loadAgoacBrowserDesigns(id,{variation,readCatalog:async()=>bundle});
+  const expected=loadAgoacPrintedDesigns(id,{variation});
+  assert.deepEqual(Object.keys(actual).sort(),Object.keys(expected).sort());
+  for(const variant of Object.keys(expected))
+   assert.deepEqual(actual[variant],expected[variant],id+' '+(variation||'original')+' '+variant);
+ }
+ await assert.rejects(()=>loadAgoacBrowserDesigns('final-exam',{
+  readCatalog:async()=>({...bundle,sourceRevision:'untrusted'})}),/revision/);
+ await assert.rejects(()=>loadAgoacBrowserDesigns('trial-by-fire',{variation:'shortened',
+  readCatalog:async()=>bundle}),/unsupported_printed/);
+});
+
 test('CAT3500D p.48: Awesome AWS-8Q source MTF retains lower arm actuator but omits hand',async()=>{
  const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
  const {construct}=await import('../dist/construction.js');
