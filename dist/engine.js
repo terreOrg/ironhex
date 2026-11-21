@@ -11,6 +11,50 @@ export const AGOAC_MAP_PRESETS=Object.freeze([
 ]);
 // CAT3500D pp.45–48: printed AGoAC scenario rule modes.
 export const AGOAC_SCENARIOS=Object.freeze(['final-exam','trial-by-fire','divide-and-conquer']);
+
+// CAT3500D printed pp.45–48 and official v8.01 errata pp.5–6.
+// Source-accurate mission metadata only: these entries are NOT unit designs,
+// mapsheet textures, a playable launcher or an approximation of record sheets.
+const printedMech=(pilot,variant,piloting,gunnery,lance=null)=>Object.freeze({
+ pilot,variant,piloting,gunnery,...(lance?{lance}:{})
+});
+const printedScenario=(sheets,defender,attacker)=>Object.freeze({
+ sheets:Object.freeze(sheets.map(s=>Object.freeze({...s}))),
+ defender:Object.freeze(defender),
+ attacker:Object.freeze(attacker),
+ exactMapImplemented:false,
+ exactRecordSheetsImplemented:false
+});
+export const AGOAC_PRINTED_SCENARIOS=Object.freeze({
+ 'final-exam':printedScenario(
+  [{name:'Desert #3',side:'west'},{name:'Grassland #2',side:'east'}],
+  [printedMech('Horace','CPLT-C1',5,4),printedMech('Winston','LCT-1V',5,4),
+   printedMech('Johansson','COM-2D',5,4),printedMech('Rodriguez','SHD-2H',5,4)],
+  [printedMech('Pushkin','CPLT-C1',5,4),printedMech('Shotugama','LCT-1V',5,4),
+   printedMech('Armstrong','COM-2D',5,4),printedMech('Keenan','SHD-2H',5,4)]
+ ),
+ 'trial-by-fire':printedScenario(
+  [{name:'Desert #2',side:'west'},{name:'Grassland #3',side:'east'}],
+  [printedMech('Thompson','BLR-1G',5,4)],
+  [printedMech('Hoffmann','WVR-6M',5,5),printedMech('Adjani','LCT-1V',6,5),
+   printedMech('Lucas','COM-3A',6,5)]
+ ),
+ 'divide-and-conquer':printedScenario(
+  [{name:'Desert #2',side:'west'},{name:'Grassland #3',side:'east'}],
+  [printedMech('Blake','CPLT-K2',3,2,'command'),
+   printedMech('Petersen','TDR-5S',4,3,'command'),
+   printedMech('Lee','SHD-2H',5,4,'command'),
+   printedMech('Alvarez','LCT-1V',4,4,'recon'),
+   printedMech('Theissen','COM-3A',5,4,'recon'),
+   printedMech('Jones','COM-2D',5,4,'recon')],
+  [printedMech('Seymore','AWS-8Q',3,3),
+   printedMech('Marks','TDR-5SE',5,4),
+   printedMech('Kanazawa','WVR-6M',4,3),
+   printedMech("O'Rourke",'GRF-1N',4,3),
+   printedMech('Adjani','LCT-1V',6,5),
+   printedMech('Lucas','COM-3A',6,5)]
+ )
+});
 export const AGOAC_SCALE=Object.freeze({hexMeters:30,levelMeters:6,turnSeconds:10,standingMechLevels:2});
 export const rangeMeters=(a,b)=>distance(a,b)*AGOAC_SCALE.hexMeters;
 export const elapsedBattleSeconds=round=>Math.max(0,round-1)*AGOAC_SCALE.turnSeconds;
@@ -459,6 +503,64 @@ export class Game extends Legacy{
   const max=Math.max(...this.tiles.map(column)),d=DIRS[dir];
   return column(u)===max&&
    column({q:u.q+d[0],r:u.r+d[1]})>max;
+ }
+ // CAT3500D pp.45–48. These are geometric filters, NOT complete mission deployment.
+ // Scenario 3 attacker must use the printed mapsheet row 1510–1517; that
+ // sheet-coordinate conversion is intentionally not guessed here.
+ scenarioZoneAllowed(team,q,r,{lance=null,facing=null}={}){
+  if(!this.scenario||![0,1].includes(team)||
+   ![0,1].includes(this.scenario.defenderTeam)||
+   this.setupMap?.id!=='sheets'||this.setupMap.layout!=='horizontal'||
+   this.setupMap.width!==32||this.setupMap.height!==17||
+   facing!==null&&(!Number.isInteger(facing)||facing<0||facing>5))return false;
+  const tile=this.tile(q,r);if(!tile)return false;
+  const col=t=>t.q+Math.floor(t.r/2);
+  const minCol=Math.min(...this.tiles.map(col)),maxCol=Math.max(...this.tiles.map(col));
+  const minRow=Math.min(...this.tiles.map(t=>t.r)),maxRow=Math.max(...this.tiles.map(t=>t.r));
+  const west=col(tile)-minCol,east=maxCol-col(tile);
+  const south=tile.r-minRow,north=maxRow-tile.r;
+  const defender=team===this.scenario.defenderTeam;
+  if(this.scenario.id==='final-exam')return defender?west===0:east===0;
+  if(this.scenario.id==='trial-by-fire'){
+   return defender?west<=3:east<=6&&tile.type==='plain'&&tile.height===0&&
+    tile.depth===0&&!tile.building?.cf;
+  }
+  if(this.scenario.id==='divide-and-conquer'&&defender){
+   return lance==='command'?west<=6&&north<=6:
+    lance==='recon'?east<=6&&south<=6:false;
+  }
+  return false;
+ }
+ // CAT3500D p.46: four separate 5-point FRONT hits, reroll any head;
+ // critical checks never occur, even on exposed internal structure.
+ // This is usable when the exact BLR-1G record sheet is supplied;
+ // the current four stock-demo 'Mechs are NOT substituted for it.
+ applyTrialByFirePreDamage(id){
+  const u=this.unit(id);
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='trial-by-fire'||
+   ![0,1].includes(this.scenario.defenderTeam)||
+   this.scenario.preDamageApplied||!u||u.dead||u.notFielded||
+   u.team!==this.scenario.defenderTeam||u.variant!=='BLR-1G'||
+   !/battlemaster/i.test(u.name)||
+   this.units.filter(v=>v.team===u.team&&!v.dead&&!v.notFielded).length!==1)
+   return fail('Нужен единственный защитник BattleMaster BLR-1G до инициативы');
+  const locations=[];this.phaseRolls=[];
+  for(let i=0;i<4;i++){
+   let location='HD';
+   for(let attempt=0;attempt<100&&location==='HD';attempt++){
+    const total=this.roll('Trial by Fire · исходное попадание '+(i+1));
+    location=front[total-2];
+   }
+   if(location==='HD')return fail('Слишком много подряд попаданий в голову');
+   locations.push(location);
+  }
+  const previousPhaseDamage=u.phaseDamage,previousPSRs=[...u.psrs];
+  for(const location of locations)this.damage(u,location,5,{skipCriticals:true});
+  u.phaseDamage=previousPhaseDamage;u.psrs=previousPSRs;
+  this.scenario.preDamageApplied=true;
+  this.scenario.preDamageHits=locations.map(location=>({location,damage:5,side:'front'}));
+  this.note('Trial by Fire: BattleMaster получил четыре предварительных попадания по 5 урона.');
+  return {ok:true,hits:structuredClone(this.scenario.preDamageHits),rolls:[...this.phaseRolls]};
  }
  // CAT3500D p.7 permits victory conditions agreed before play.
  // This digital preset is optional: draw when a negotiated turn limit ends.
@@ -1711,7 +1813,7 @@ export class Game extends Legacy{
  if(obscured(loc))return {location:loc,hits:[],damage:0};
  return {location:loc,hits:applied>0?this.damage(u,loc,applied,{rear:side==='rear',tac:table==='normal'&&(r===2&&!this.tacticalOptions?.floatingCriticals||floatingTac)}):[],damage:applied};
 }
- damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
+ damage(u,loc,amount,{rear=false,internal=false,tac=false,explosion=false,skipCriticals=false}={}){let rem=amount,hits=[],guard=0;const initial=loc;while(rem>0&&!u.dead&&loc&&guard++<8){if(!u.structure[loc]&&transfer[loc]){if(explosion&&(this.hasCASE(u,loc)||this.hasCASEII(u,loc)))break;loc=transfer[loc];continue;}
  if(explosion&&this.hasCASEII(u,loc)){
   // BMM 2022 p.119: only one point damages structure; remainder vents.
   const d=Math.min(1,u.structure[loc]);u.structure[loc]-=d;rem-=d;
@@ -1725,8 +1827,8 @@ export class Game extends Legacy{
   if(!u.structure[loc])this.destroyLocation(u,loc);
   break;
  }
- const ar=rear&&u.rear[loc]!==undefined?u.rear:u.armor;const a=internal?0:Math.min(ar[loc],rem);ar[loc]-=a;rem-=a;const d=Math.min(u.structure[loc],rem);u.structure[loc]-=d;rem-=d;u.phaseDamage+=a+d;hits.push({location:loc,armor:a,structure:d});if(a+d)this.checkDirectionalTorsoMountHit(u,loc);if(loc==='HD'&&a+d)this.wound(u,1);if(d&&(u.structure[loc]||u.slots?.[loc]?.some(s=>typeof s==='string'&&s.startsWith('ammo:'))))this.criticalHit(u,loc,!u.structure[loc]);if(a+d)this.checkHullIntegrity(u,loc);if(!u.structure[loc]){ // CAT3500D p.34: all remaining armor in a destroyed section counts toward phase damage; blown-off limbs do not pass through this path.
-  u.phaseDamage+=(u.armor[loc]||0)+(u.rear[loc]||0);this.destroyLocation(u,loc);if(explosion&&this.hasCASE(u,loc))break;loc=transfer[loc];}else break;}if(tac&&!u.dead)this.criticalHit(u,u.structure[initial]?initial:transfer[initial]||initial,false);return hits;}
+ const ar=rear&&u.rear[loc]!==undefined?u.rear:u.armor;const a=internal?0:Math.min(ar[loc],rem);ar[loc]-=a;rem-=a;const d=Math.min(u.structure[loc],rem);u.structure[loc]-=d;rem-=d;u.phaseDamage+=a+d;hits.push({location:loc,armor:a,structure:d});if(a+d)this.checkDirectionalTorsoMountHit(u,loc);if(loc==='HD'&&a+d)this.wound(u,1);if(d&&!skipCriticals&&(u.structure[loc]||u.slots?.[loc]?.some(s=>typeof s==='string'&&s.startsWith('ammo:'))))this.criticalHit(u,loc,!u.structure[loc]);if(a+d&&!skipCriticals)this.checkHullIntegrity(u,loc);if(!u.structure[loc]){ // CAT3500D p.34: all remaining armor in a destroyed section counts toward phase damage; blown-off limbs do not pass through this path.
+  u.phaseDamage+=(u.armor[loc]||0)+(u.rear[loc]||0);this.destroyLocation(u,loc);if(explosion&&this.hasCASE(u,loc))break;loc=transfer[loc];}else break;}if(tac&&!skipCriticals&&!u.dead)this.criticalHit(u,u.structure[initial]?initial:transfer[initial]||initial,false);return hits;}
  destroyLocation(u,loc){
   if(!u.slots[loc])return;
   // A location can be destroyed recursively by side-torso loss and
