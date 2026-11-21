@@ -153,7 +153,6 @@ test('only exact successful audit push with existing artifact can reuse coverage
 });
 
 test('API Docker smoke integration fixtures are included in the Docker build context',async()=>{
- const root=new URL('../',import.meta.url);
  const [dockerfile,ignore]=await Promise.all([
   readFile(new URL('../apps/api/Dockerfile',import.meta.url),'utf8'),
   readFile(new URL('../.dockerignore',import.meta.url),'utf8')
