@@ -6286,3 +6286,119 @@ test('CAT3500D p.47: forced displacement east lets Trial defender escape, other 
   g.checkWin();assert.equal(g.winner,expected);
  }
 });
+
+
+test('CAT3500D pp.45-48 plus errata v8.01: printed scenario manifests carry exact sheets, forces and pilot skills',async()=>{
+ const {AGOAC_PRINTED_SCENARIOS:s}=await import('../dist/engine.js');
+ assert.deepEqual(Object.keys(s),['final-exam','trial-by-fire','divide-and-conquer']);
+ assert.deepEqual(Object.values(s).map(x=>x.sheets.map(y=>y.name)),[
+  ['Desert #3','Grassland #2'],['Desert #2','Grassland #3'],['Desert #2','Grassland #3']
+ ]);
+ assert.deepEqual(Object.values(s).map(x=>[x.defender.length,x.attacker.length]),[[4,4],[1,3],[6,6]]);
+ const tuples=x=>x.map(u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??null]);
+ assert.deepEqual(tuples(s['final-exam'].defender),[
+  ['Horace','CPLT-C1',5,4,null],['Winston','LCT-1V',5,4,null],
+  ['Johansson','COM-2D',5,4,null],['Rodriguez','SHD-2H',5,4,null]]);
+ assert.deepEqual(tuples(s['final-exam'].attacker),[
+  ['Pushkin','CPLT-C1',5,4,null],['Shotugama','LCT-1V',5,4,null],
+  ['Armstrong','COM-2D',5,4,null],['Keenan','SHD-2H',5,4,null]]);
+ assert.deepEqual(tuples(s['trial-by-fire'].defender),[['Thompson','BLR-1G',5,4,null]]);
+ assert.deepEqual(tuples(s['trial-by-fire'].attacker),[
+  ['Hoffmann','WVR-6M',5,5,null],['Adjani','LCT-1V',6,5,null],['Lucas','COM-3A',6,5,null]]);
+ assert.deepEqual(tuples(s['divide-and-conquer'].defender),[
+  ['Blake','CPLT-K2',3,2,'command'],['Petersen','TDR-5S',4,3,'command'],
+  ['Lee','SHD-2H',5,4,'command'],['Alvarez','LCT-1V',4,4,'recon'],
+  ['Theissen','COM-3A',5,4,'recon'],['Jones','COM-2D',5,4,'recon']]);
+ assert.deepEqual(tuples(s['divide-and-conquer'].attacker),[
+  ['Seymore','AWS-8Q',3,3,null],['Marks','TDR-5SE',5,4,null],
+  ['Kanazawa','WVR-6M',4,3,null],["O'Rourke",'GRF-1N',4,3,null],
+  ['Adjani','LCT-1V',6,5,null],['Lucas','COM-3A',6,5,null]]);
+ for(const x of Object.values(s)){
+  assert(Object.isFrozen(x)&&Object.isFrozen(x.sheets));
+  assert(x.sheets.every(Object.isFrozen));
+  assert(Object.isFrozen(x.attacker)&&Object.isFrozen(x.defender));
+  assert(x.attacker.concat(x.defender).every(Object.isFrozen));
+  assert.equal(x.exactMapImplemented,false);
+  assert.equal(x.exactRecordSheetsImplemented,false);
+ }
+});
+
+const sourceRectScenario=(id)=>{
+ const g=fresh();
+ assert(g.configureRectangularSheets('horizontal',[
+  {id:'clear',rotation:0},{id:'clear',rotation:0}]).ok);
+ assert(g.configureScenario(id).ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ return g;
+};
+const rectAt=(g,column,row)=>g.tiles.find(t=>t.q+Math.floor(t.r/2)===column&&t.r===row);
+
+test('CAT3500D pp.45-48: corrected geometric scenario zones constrain opposing edges, clear level-0 and two defender lances',()=>{
+ const final=sourceRectScenario('final-exam');
+ const cols=final.tiles.map(t=>t.q+Math.floor(t.r/2));
+ const west=Math.min(...cols),east=Math.max(...cols);
+ const is=(g,team,c,row,options={})=>{
+  const t=rectAt(g,c,row);
+  assert(t,'fixture position exists');
+  return g.scenarioZoneAllowed(team,t.q,t.r,options);
+ };
+ assert(is(final,1,west,0));
+ assert(is(final,0,east,0));
+ assert(!is(final,1,west+1,0));
+ assert(!is(final,0,east-1,0));
+ assert(!is(final,0,west,0));
+ assert(!is(final,1,east,0));
+ assert(!is(final,1,west,0,{facing:6}));
+ const trial=sourceRectScenario('trial-by-fire');
+ assert(is(trial,0,east-6,0),'attack within six eastern hexes');
+ assert(!is(trial,0,east-7,0));
+ assert(is(trial,1,west+3,0));
+ assert(!is(trial,1,west+4,0));
+ const attackerHex=rectAt(trial,east-6,0);
+ attackerHex.type='woods';
+ assert(!is(trial,0,east-6,0),'attacker requires Clear Level 0');
+ attackerHex.type='plain';attackerHex.height=1;
+ assert(!is(trial,0,east-6,0),'attacker level zero');
+ const defenderHex=rectAt(trial,west+3,0);
+ defenderHex.type='woods';
+ assert(is(trial,1,west+3,0),'defender need not be on clear ground');
+ const divide=sourceRectScenario('divide-and-conquer');
+ assert(is(divide,1,west+6,8-6,{lance:'command'}));
+ assert(!is(divide,1,west+7,8-6,{lance:'command'}));
+ assert(!is(divide,1,west+6,8-7,{lance:'command'}));
+ assert(is(divide,1,east-6,-8+6,{lance:'recon'}));
+ assert(!is(divide,1,east-7,-8+6,{lance:'recon'}));
+ assert(!is(divide,1,east-6,-8+7,{lance:'recon'}));
+ assert(!is(divide,1,west+6,8-6,{lance:'recon'}));
+ assert(!is(divide,1,west+6,8-6));
+ assert(!is(divide,0,east,0),'printed 1510-1517 attacker rows not inferred');
+ const noMap=fresh();assert(noMap.configureScenario('final-exam').ok);
+ noMap.scenario.sideRollWinner=0;assert(noMap.chooseScenarioSide(0,'attacker').ok);
+ assert(!noMap.scenarioZoneAllowed(1,-6,0),'synthetic hex preset is not printed rectangular map');
+});
+
+test('CAT3500D p.46: Trial by Fire inflicts exactly four front 5-point hits, rerolls head, never rolls criticals',()=>{
+ const g=fresh();assert(g.configureScenario('trial-by-fire').ok);
+ g.scenario.sideRollWinner=0;assert(g.chooseScenarioSide(0,'attacker').ok);
+ const u=g.units[2];g.units[3].notFielded=true;g.units[3].dead=true;
+ assert.equal(g.applyTrialByFirePreDamage(u.id).ok,false,'no stand-in Shadow Hawk may replace BattleMaster');
+ Object.assign(u,{name:'BattleMaster',variant:'BLR-1G',phaseDamage:0});
+ u.armor.CT=0;const originalStructure=u.structure.CT;
+ const before=structuredClone(u.armor),wanted=[2,12,4,6,8],dice=wanted.flatMap(diceFor);
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ g.criticalHit=()=>{throw Error('critical dice prohibited by printed mission');};
+ const result=g.applyTrialByFirePreDamage(u.id);assert(result.ok);
+ assert.equal(dice.length,0);
+ assert.equal(result.rolls.length,5,'one head reroll');
+ assert.deepEqual(result.hits.map(x=>x.location),['CT','RA','RL','CT']);
+ assert.deepEqual(result.hits.map(x=>x.damage),[5,5,5,5]);
+ assert.equal(u.structure.CT,originalStructure-5);
+ assert.equal(u.armor.RA,before.RA-5);
+ assert.equal(u.armor.RL,before.RL-5);
+ assert.equal(u.phaseDamage,0,'pre-battle damage must not trigger phase PSR');
+ assert.equal(u.pilotWounds,0);
+ assert.equal(g.scenario.preDamageApplied,true);
+ assert.equal(g.applyTrialByFirePreDamage(u.id).ok,false,'pre-existing damage applies once');
+ const other=fresh();assert.equal(other.applyTrialByFirePreDamage(other.units[2].id).ok,false);
+});
