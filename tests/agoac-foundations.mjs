@@ -7173,7 +7173,9 @@ const chapter11SourceDeployAll=g=>{
   assert(position,'a real legal source hex exists for every printed step');
   assert(g.placePrintedScenarioMech(unit.id,position.q,position.r,0).ok);
  }
- assert.equal(g.scenario.placement.placed.length,g.units.length);
+ assert.equal(g.scenario.placement.placed.length,
+  g.units.filter(u=>!u.scenarioArrivalRound).length,
+  'future campaign reinforcements are excluded from initial printed deployment');
  return g;
 };
 
@@ -7358,4 +7360,261 @@ test('CAT3500D p.47: real Trial by Fire wins for BattleMaster east exit or destr
    assert.equal(g.winner,null,'one attacker exit does not end battle while two remain');
   }
  }
+});
+
+
+// Source-backed Chapter 11 certification packet II: the original printed
+// scenarios and pinned technical records, rather than demo-only Mechs.
+test('CAT3500D p.48: source-backed Final Exam permits equal-cost cards and mirrored pilot skills before printed deployment',async()=>{
+ for(const attackerTeam of [0,1]){
+  const g=await chapter11SourceGame('final-exam',attackerTeam);
+  const attacker=g.units.filter(u=>u.team===attackerTeam);
+  const defender=g.units.filter(u=>u.team===1-attackerTeam);
+  assert.equal(attacker.length,4);assert.equal(defender.length,4);
+  const cards=[
+   {team:attackerTeam,unitId:attacker[0].id,cardId:'Alpha',cost:2,gunnery:2,piloting:4},
+   {team:1-attackerTeam,unitId:defender[0].id,cardId:'Beta',cost:2,gunnery:3,piloting:4}
+  ];
+  const mirrors=[
+   {sourceTeam:attackerTeam,unitId:defender[1].id},
+   {sourceTeam:1-attackerTeam,unitId:attacker[1].id}
+  ];
+  assert(g.setupForces.type==='agoac-printed-records');
+  assert.equal(g.configureScenarioCards({cards:[cards[0],{...cards[1],cost:1}],mirrors,agreedCost:2}).ok,false);
+  assert.equal(g.scenario.cardSetup,undefined);
+  const applied=g.configureScenarioCards({cards,mirrors,agreedCost:2});
+  assert(applied.ok);assert.equal(applied.cost,2);assert.equal(applied.die,null);
+  assert.deepEqual([attacker[0].gunnery,attacker[0].piloting],[2,4]);
+  assert.deepEqual([defender[0].gunnery,defender[0].piloting],[3,4]);
+  assert.deepEqual([defender[1].gunnery,defender[1].piloting],[2,4]);
+  assert.deepEqual([attacker[1].gunnery,attacker[1].piloting],[3,4]);
+  assert(g.units.slice(2).some(u=>!u.scenarioCard),'unmodified printed pilots remain original');
+  assert.equal(g.configureScenarioCards({cards,mirrors,agreedCost:2}).ok,false);
+  const started=g.beginPrintedScenarioPlacement();
+  assert(started.ok,'printed roster allows *authorized* card skills');
+  assert.equal(started.steps,8);
+  assert.equal(g.configureScenarioCards({cards,mirrors,agreedCost:2}).ok,false,
+   'cannot change cards after deployment begins');
+  // A booked card never substitutes for the printed BattleMech identity.
+  const forged=await chapter11SourceGame('final-exam',attackerTeam);
+  const forgedAttack=forged.units.filter(u=>u.team===attackerTeam);
+  const forgedDef=forged.units.filter(u=>u.team===1-attackerTeam);
+  const forgedCards=cards.map((c,i)=>({...c,unitId:i===0?forgedAttack[0].id:forgedDef[0].id}));
+  const forgedMirrors=mirrors.map((m,i)=>({...m,unitId:i===0?forgedDef[1].id:forgedAttack[1].id}));
+  assert(forged.configureScenarioCards({cards:forgedCards,mirrors:forgedMirrors,agreedCost:2}).ok);
+  forgedAttack[0].gunnery=0;
+  assert.equal(forged.beginPrintedScenarioPlacement().ok,false,'unapproved skill change must not bypass roster');
+  forgedAttack[0].gunnery=2;
+  forgedAttack[0].variant='LCT-1E';
+  assert.equal(forged.beginPrintedScenarioPlacement().ok,false,'card cannot disguise variant substitution');
+ }
+});
+
+test('CAT3500D p.48: all D6 card costs are binding on actual source Mech rosters with no double roll',async()=>{
+ for(let die=1;die<=6;die++){
+  const g=await chapter11SourceGame('final-exam');
+  const atk=g.units.filter(u=>u.team===g.scenario.attackerTeam);
+  const def=g.units.filter(u=>u.team===g.scenario.defenderTeam);
+  const cost=Math.floor(die/2),cards=[
+   {team:atk[0].team,unitId:atk[0].id,cardId:'Cost A',cost,gunnery:3,piloting:4},
+   {team:def[0].team,unitId:def[0].id,cardId:'Cost B',cost,gunnery:3,piloting:4}
+  ];
+  const mirrors=[
+   {sourceTeam:atk[0].team,unitId:def[1].id},
+   {sourceTeam:def[0].team,unitId:atk[1].id}
+  ];
+  const rolls=[(die-.5)/6];
+  g.rng=()=>{assert(rolls.length);return rolls.shift();};
+  const r=g.configureScenarioCards({cards,mirrors});
+  assert(r.ok,'valid result for die '+die);
+  assert.equal(r.die,die);assert.equal(r.cost,cost);
+  assert.equal(rolls.length,0);
+  assert.equal(g.phaseRolls.at(-1).dice.length,1);
+  assert(g.beginPrintedScenarioPlacement().ok,'allowed cost does not block scenario setup');
+ }
+ const g=await chapter11SourceGame('final-exam');
+ const atk=g.units.filter(u=>u.team===g.scenario.attackerTeam),
+  def=g.units.filter(u=>u.team===g.scenario.defenderTeam);
+ const cards=[
+  {team:atk[0].team,unitId:atk[0].id,cardId:'A',cost:2,gunnery:3,piloting:4},
+  {team:def[0].team,unitId:def[0].id,cardId:'B',cost:2,gunnery:3,piloting:4}
+ ];
+ const mirrors=[
+  {sourceTeam:atk[0].team,unitId:def[1].id},
+  {sourceTeam:def[0].team,unitId:atk[1].id}
+ ];
+ const old=JSON.stringify(g.units);
+ g.rng=()=>.99;
+ const rejected=g.configureScenarioCards({cards,mirrors});
+ assert.equal(rejected.ok,false);assert.equal(rejected.chosenCost,3);
+ assert.equal(JSON.stringify(g.units),old,'rejected cost cannot mutate actual MTF pilots');
+ assert.deepEqual(g.scenario.cardCostRoll,{die:6,cost:3});
+ g.rng=()=>{throw Error('D6 fallback must not be rerolled');};
+ assert.equal(g.configureScenarioCards({cards,mirrors,agreedCost:3}).ok,false,'cannot supersede established D6 by agreement');
+ assert(g.configureScenarioCards({cards:cards.map(c=>({...c,cost:3})),mirrors}).ok);
+ assert(g.beginPrintedScenarioPlacement().ok);
+});
+
+test('CAT3500D p.47: source Trial by Fire chase provides defender-only turn and west attacker arrival on second Movement',async()=>{
+ for(const rotation of [[0,0],[3,0]]){
+  const g=await chapter11SourceGame('trial-by-fire',0,rotation);
+  const defender=g.units.find(u=>u.team===g.scenario.defenderTeam);
+  const attackers=g.units.filter(u=>u.team===g.scenario.attackerTeam);
+  assert.equal(defender.variant,'BLR-1G');assert.equal(attackers.length,3);
+  assert(g.configureTrialByFireChase().ok);
+  assert.equal(g.configureTrialByFireChase().ok,false);
+  const setup=g.beginPrintedScenarioPlacement();
+  assert(setup.ok);assert.equal(setup.steps,1);
+  assert.equal(g.scenario.placement.complete,false);
+  assert.equal(g.placePrintedScenarioMech(attackers[0].id,0,0).ok,false,'attacker may not enter during initial placement');
+  const home=g.tiles.find(tile=>g.scenarioZoneAllowed(defender.team,tile.q,tile.r)&&tile.type==='plain');
+  assert(home);
+  assert(g.placePrintedScenarioMech(defender.id,home.q,home.r,4).ok);
+  assert(g.scenario.placement.complete);
+  for(const u of attackers){
+   assert.equal(u.deployed,false);assert.equal(u.scenarioArrivalRound,2);
+   assert.equal(u.scenarioReserve,'trial-by-fire-chase');
+   assert.equal(g.deploymentEntryRoutes(u,'walk').length,0);
+  }
+  assert.equal(g.nextPhase().ok,false,'source BLR-1G pre-damage still mandatory');
+  g.rng=()=>.5;
+  assert(g.applyTrialByFirePreDamage(defender.id).ok);
+  const stored=attackers[0].armor.CT;attackers[0].heat=7;attackers[0].pendingHeat=3;
+  assert(g.nextPhase().ok);
+  assert.equal(g.round,1);assert.equal(g.phase,'move');
+  assert.deepEqual(g.queue,[defender.team]);
+  assert(g.hold(defender.id).ok);
+  assert(g.nextPhase().ok);assert.equal(g.phase,'fire');
+  assert.deepEqual(g.queue,[defender.team]);
+  assert(g.hold(defender.id).ok);
+  assert(g.nextPhase().ok);assert.equal(g.phase,'physical');
+  assert(g.hold(defender.id).ok);
+  assert(g.nextPhase().ok);assert.equal(g.phase,'heat');
+  assert(g.nextPhase().ok);assert.equal(g.phase,'end');
+  assert.equal(attackers[0].heat,7);
+  assert.equal(attackers[0].pendingHeat,3);
+  assert.equal(attackers[0].armor.CT,stored);
+  assert(g.nextPhase().ok);assert.equal(g.round,2);assert.equal(g.phase,'initiative');
+  const dice=[...diceFor(12),...diceFor(2)];
+  g.rng=()=>{assert(dice.length);return dice.shift();};
+  assert(g.nextPhase().ok);assert.equal(g.phase,'move');
+  assert.equal(g.queue.filter(t=>t===g.scenario.attackerTeam).length,3);
+  g.activeTeam=g.scenario.attackerTeam;g.actingId=null;
+  const routes=g.deploymentEntryRoutes(attackers[0],'walk');
+  const route=routes.find(x=>x.path.length===1&&!x.transit);
+  assert(route,'a real Desert #2 west-edge first hex is accessible');
+  assert(g.deploymentEdgeTiles(0).some(t=>t.q===route.q&&t.r===route.r));
+  const arrived=g.enterDeployment(attackers[0],route.q,route.r,'walk');
+  assert(arrived.ok);assert.equal(arrived.entry,true);
+  assert.equal(attackers[0].deployed,true);
+  assert.equal(attackers[0].spent,route.cost);
+  assert.equal(attackers[0].distanceMoved,1);
+  assert.deepEqual(attackers[0].moveStart,route.entryFrom);
+  assert.equal(g.enterDeployment(attackers[0],route.q,route.r,'walk').ok,false);
+ }
+});
+
+test('CAT3500D p.48: source Final Exam survivor damage and ammunition enter real Divide on Turn 5 west edge',async()=>{
+ const source=await chapter11SourceGame('final-exam');
+ chapter11SourceDeployAll(source);
+ const sourceTeam=source.scenario.defenderTeam;
+ const survivors=source.units.filter(u=>u.team===sourceTeam).slice(0,2);
+ const lost=source.units.find(u=>u.team===sourceTeam&&!survivors.includes(u));
+ assert.equal(survivors.length,2);
+ source.winner=sourceTeam;
+ const first=survivors[0];
+ assert.equal(first.variant,'CPLT-C1');
+ first.armor.CT-=8;first.rear.CT-=2;first.structure.LA-=1;
+ first.crit.LA[0]=true;first.pilotWounds=1;first.heat=9;
+ assert(first.bins.length,'true Catapult has LRM ammunition');
+ first.bins[0].shots=Math.max(0,first.bins[0].shots-3);
+ survivors[1].gyroHits=1;
+ lost.dead=true;
+ const snapshot=survivors.map(u=>structuredClone({
+  armor:u.armor,rear:u.rear,structure:u.structure,crit:u.crit,
+  bins:u.bins,heat:u.heat,pilotWounds:u.pilotWounds,gyroHits:u.gyroHits,
+  name:u.name,variant:u.variant,pilot:u.pilot
+ }));
+ const target=await chapter11SourceGame('divide-and-conquer');
+ assert.equal(target.setupMap.printedScenario,'divide-and-conquer');
+ assert.equal(target.units.length,10);
+ assert.equal(target.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:[lost.id]}).ok,false,'dead source is ineligible');
+ assert.equal(target.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:[survivors[0].id,survivors[0].id]}).ok,false,'duplicate source is invalid');
+ const added=target.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:survivors.map(u=>u.id)});
+ assert(added.ok);assert.equal(added.arrivalRound,5);assert.equal(added.entryEdge,0);
+ assert.equal(target.scenario.campaign.exactMapImplemented,true);
+ assert.equal(target.scenario.campaign.recordSheetsImported,true);
+ const imported=added.unitIds.map(id=>target.unit(id));
+ assert.equal(imported.length,2);assert.equal(target.units.length,12);
+ for(const [idx,u] of imported.entries()){
+  for(const field of Object.keys(snapshot[idx]))assert.deepEqual(u[field],snapshot[idx][field],field);
+  assert.equal(u.team,target.scenario.defenderTeam);
+  assert.equal(u.deployed,false);assert.equal(u.scenarioArrivalRound,5);
+  assert.equal(u.scenarioReserve,'linked-scenario');
+ }
+ assert.notEqual(imported[0].armor,survivors[0].armor);
+ const preserved=imported[0].armor.CT;survivors[0].armor.CT--;
+ assert.equal(imported[0].armor.CT,preserved);
+ chapter11SourceDeployAll(target);
+ assert.equal(target.scenario.placement.placed.length,10,
+  'reinforcements never replace the source-correct initial 6+4 deployment');
+ target.round=4;target.phase='initiative';
+ const roll4=[...diceFor(12),...diceFor(2)];
+ target.rng=()=>roll4.shift()??.5;
+ target.initiative();
+ assert.equal(target.phase,'move');
+ assert.equal(target.queue.length,10);
+ target.activeTeam=target.scenario.defenderTeam;target.actingId=null;
+ assert.equal(target.canAct(imported[0]),false);
+ assert.equal(target.deploymentEntryRoutes(imported[0],'walk').length,0);
+ target.phase='heat';target.heatPhase();
+ assert.equal(imported[0].heat,9,'offboard reinforcements do not cool or gain heat');
+ target.round=5;target.phase='initiative';
+ const roll5=[...diceFor(12),...diceFor(2)];
+ target.rng=()=>roll5.shift()??.5;
+ target.initiative();
+ assert.equal(target.phase,'move');assert.equal(target.queue.length,12);
+ target.activeTeam=target.scenario.defenderTeam;target.actingId=null;
+ const route=target.deploymentEntryRoutes(imported[0],'walk').find(x=>x.path.length===1&&!x.transit);
+ assert(route,'source Desert #2 has an accessible western reinforcement edge');
+ assert(target.deploymentEdgeTiles(0).some(tile=>tile.q===route.q&&tile.r===route.r));
+ const arrived=target.enterDeployment(imported[0],route.q,route.r,'walk');
+ assert(arrived.ok);assert.equal(arrived.entry,true);assert.equal(imported[0].deployed,true);
+ assert.equal(imported[0].spent,route.cost);assert.equal(imported[0].distanceMoved,1);
+ assert.deepEqual(imported[0].moveStart,route.entryFrom);
+ assert.equal(imported[0].armor.CT,preserved);
+ assert.deepEqual(imported[0].bins,snapshot[0].bins);
+ assert.equal(imported[0].pilotWounds,1);
+});
+
+test('CAT3500D pp.47-48: source setup rejects premature campaign import and forged card identities',async()=>{
+ const source=await chapter11SourceGame('final-exam');
+ chapter11SourceDeployAll(source);source.winner=source.scenario.defenderTeam;
+ const survivor=source.units.find(u=>u.team===source.scenario.defenderTeam);
+ const early=fresh();
+ assert(early.configureScenario('divide-and-conquer').ok);
+ early.scenario.sideRollWinner=0;
+ assert(early.chooseScenarioSide(0,'attacker').ok);
+ assert(early.configurePrintedScenarioMap().ok);
+ assert.equal(early.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:[survivor.id]}).ok,false,
+  'unloaded printed MTF roster cannot be displaced by campaign import');
+ assert.equal(early.units.length,4);
+ const game=await chapter11SourceGame('final-exam');
+ const att=game.units.filter(u=>u.team===game.scenario.attackerTeam);
+ const def=game.units.filter(u=>u.team===game.scenario.defenderTeam);
+ const cards=[
+  {team:att[0].team,unitId:att[0].id,cardId:'Same',cost:2,gunnery:2,piloting:4},
+  {team:def[0].team,unitId:def[0].id,cardId:'Same',cost:2,gunnery:3,piloting:4}
+ ];
+ const mirrors=[
+  {sourceTeam:att[0].team,unitId:def[1].id},
+  {sourceTeam:def[0].team,unitId:att[1].id}
+ ];
+ assert(game.configureScenarioCards({cards,mirrors,agreedCost:2}).ok);
+ game.units.find(u=>u.id===cards[0].unitId).scenarioCard.id='forged';
+ assert.equal(game.beginPrintedScenarioPlacement().ok,false,'forged card ID rejected');
 });
