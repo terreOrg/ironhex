@@ -6035,6 +6035,7 @@ test('CAT3500D p.48: Full Moon Night weapon penalty decreases at 20-point target
  Object.assign(target,{q:2,r:0,facing:3,moveMode:'stand'});
  for(const heat of [0,1,19,20,21,39,40,41,60]){
   target.heat=heat;g.weather.night=false;
+  const physicalBaseline=g.specialPhysicalTN(u,target,false);
   const baseline=g.preview(u.id,target.id,1);assert(baseline.legal);
   g.weather.night=true;
   const moon=g.preview(u.id,target.id,1);
@@ -6042,7 +6043,8 @@ test('CAT3500D p.48: Full Moon Night weapon penalty decreases at 20-point target
   assert(moon.legal);
   assert.equal(moon.mods.night,modifier,'heat '+heat);
   assert.equal(moon.targetNumber-baseline.targetNumber,modifier,'heat '+heat);
-  assert.equal(g.specialPhysicalTN(u,target,false),g.specialPhysicalTN(u,target,false));
+  assert.equal(g.specialPhysicalTN(u,target,false),physicalBaseline,
+   'night penalties must never affect physical attacks');
  }
 });
 
@@ -6058,6 +6060,14 @@ test('CAT3500D p.48: Strong Gale modifies missiles and ballistic weapons but not
   assert.equal(gale.mods.wind,modifier,kind);
   assert.equal(gale.targetNumber-baseline.targetNumber,modifier,kind);
  }
+ const machineGun=g.units[3].weapons.find(w=>w.name==='Machine Gun A');
+ assert(machineGun,'Default Thunderbolt must expose a machine gun');
+ u.weapons[1]={...machineGun,location:'RA'};
+ g.weather.gale=false;const calmMG=g.preview(u.id,target.id,1);
+ g.weather.gale=true;const windyMG=g.preview(u.id,target.id,1);
+ assert(calmMG.legal&&windyMG.legal);
+ assert.equal(windyMG.mods.wind,1);
+ assert.equal(windyMG.targetNumber-calmMG.targetNumber,1);
 });
 
 test('CAT3500D p.48: Strong Gale adds one to Piloting Skill Roll modifiers',()=>{
