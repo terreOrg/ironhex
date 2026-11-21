@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds,normalizeMapHex} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_PRINTED_SCENARIOS,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds,normalizeMapHex} from '../dist/engine.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {firingArcTiles} from '../dist/fire-arcs.js';
 import {example as setupExample} from '../dist/construction.js';
@@ -6598,4 +6598,113 @@ test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER
  assert(later.ok);assert.equal(later.reused,false);
  assert.equal(later.controller,'recon');
  assert.equal(newRound.length,0);
+});
+
+
+const printedDeploymentFixture=(name)=>{
+ const g=fresh();
+ assert(g.configureScenario(name).ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert(g.configureRectangularSheets('horizontal',[
+  {id:'clear',rotation:0},{id:'clear',rotation:0}]).ok);
+ const bases=g.units.map(u=>structuredClone(u));
+ const manifest=AGOAC_PRINTED_SCENARIOS[name];
+ const units=[];
+ for(const [team,roster]of [[0,manifest.attacker],[1,manifest.defender]]){
+  for(const pilot of roster){
+   const unit=structuredClone(bases[team*2]);
+   Object.assign(unit,{
+    id:units.length,team,pilot:pilot.pilot,variant:pilot.variant,
+    gunnery:pilot.gunnery,piloting:pilot.piloting,
+    name:pilot.variant==='BLR-1G'?'BattleMaster BLR-1G':pilot.variant,
+    lance:pilot.lance??null,dead:false,notFielded:false
+   });
+   units.push(unit);
+  }
+ }
+ g.units=units;
+ const get=(col,row)=>{
+  const t=g.tiles.find(t=>t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
+   t.r+Math.floor(g.setupMap.height/2)===row);
+  assert(t,'mapsheet position '+col+','+row);
+  return t;
+ };
+ const place=(id,col,row,facing=0)=>{const t=get(col,row);return g.placePrintedScenarioMech(id,t.q,t.r,facing);};
+ return {g,place,get,defenders:g.units.filter(u=>u.team===1),
+  attackers:g.units.filter(u=>u.team===0)};
+};
+
+test('CAT3500D pp.46-47: Final Exam alternates west defenders and east attackers before initiative',()=>{
+ const {g,place,defenders,attackers}=printedDeploymentFixture('final-exam');
+ const original=structuredClone(g.units);
+ const wrong=printedDeploymentFixture('final-exam');
+ wrong.g.units[0].variant='LCT-1E';
+ assert.equal(wrong.g.beginPrintedScenarioPlacement().ok,false,'reject fabricated original force');
+ assert.deepEqual(wrong.g.units.map(u=>u.deployed),original.map(u=>u.deployed),
+  'invalid setup does not change roster');
+ const started=g.beginPrintedScenarioPlacement();
+ assert(started.ok);assert.equal(started.steps,8);
+ assert.equal(started.exactMapImplemented,false);
+ assert.equal(started.recordSheetsImported,false);
+ assert.equal(g.nextPhase().ok,false,'initiative locked during placement');
+ assert.equal(g.startStandardDeployment().ok,false,'cannot evade source order');
+ assert.equal(g.configureSetupForces({slots:[0,1,2,3]}).ok,false);
+ assert.equal(place(attackers[0].id,31,0).ok,false,'defender first');
+ for(let i=0;i<4;i++){
+  assert(place(defenders[i].id,0,i).ok,'defender west edge');
+  if(i===0)assert.equal(place(attackers[i].id,0,i).ok,false,'attacker needs east edge');
+  assert(place(attackers[i].id,31,i).ok,'attacker east edge');
+ }
+ assert.equal(g.scenario.placement.complete,true);
+ assert.deepEqual(g.scenario.placement.placed.map(p=>p.team),[1,0,1,0,1,0,1,0]);
+ assert.equal(g.scenario.placement.placed.length,8);
+ assert.equal(g.placePrintedScenarioMech(attackers[0].id,31,0).ok,false,'cannot double place');
+ const dice=[...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ assert(g.nextPhase().ok,'initiative can run after all eight placements');
+ assert.equal(g.phase,'move');assert.equal(dice.length,0);
+});
+
+test('CAT3500D p.47: Trial by Fire attacker-first clear/level-zero setup and defender-after deployment',()=>{
+ const {g,place,get,defenders,attackers}=printedDeploymentFixture('trial-by-fire');
+ assert(g.beginPrintedScenarioPlacement().ok);
+ assert.equal(place(defenders[0].id,0,6).ok,false,'defender cannot deploy first');
+ const invalid=get(25,5);invalid.type='woods';
+ assert.equal(place(attackers[0].id,25,5).ok,false,'attacker needs Clear');
+ invalid.type='plain';invalid.height=1;
+ assert.equal(place(attackers[0].id,25,5).ok,false,'attacker needs Level 0');
+ invalid.height=0;
+ assert.equal(place(attackers[0].id,24,5).ok,false,'attacker too far west');
+ assert(place(attackers[0].id,25,5,3).ok);
+ assert.equal(place(attackers[1].id,25,5).ok,false,'occupied hex forbidden');
+ assert(place(attackers[1].id,26,6,4).ok);
+ assert(place(attackers[2].id,31,7,1).ok);
+ assert.equal(place(defenders[0].id,4,8).ok,false,'defender must remain within three western hexes');
+ assert(place(defenders[0].id,3,8,5).ok,'defender sets any facing');
+ assert(g.scenario.placement.complete);
+ assert.deepEqual(g.scenario.placement.placed.map(p=>p.team),[0,0,0,1]);
+ assert.equal(g.nextPhase().ok,false,'printed four 5-point pre-damage strikes are mandatory');
+ const pre=g.applyTrialByFirePreDamage(defenders[0].id);
+ assert(pre.ok);assert.equal(pre.hits.length,4);
+ assert(g.nextPhase().ok);
+ assert.equal(g.initiativeWinner,1,'defender wins first-turn initiative automatically');
+});
+
+test('CAT3500D p.48 / errata v8.01: two defender lances deploy first, attacker row 1510-1517 stays guarded',()=>{
+ const {g,place,defenders,attackers}=printedDeploymentFixture('divide-and-conquer');
+ assert.equal(defenders.length,6);assert.equal(attackers.length,4);
+ assert(g.beginPrintedScenarioPlacement().ok);
+ assert.equal(g.scenario.placement.steps.length,10);
+ assert.equal(place(attackers[0].id,31,15).ok,false,'attacker must wait');
+ assert.equal(place(defenders[3].id,31,0).ok,false,'recon cannot replace first command lance');
+ for(let i=0;i<3;i++)assert(place(defenders[i].id,i,16-i).ok,'command NW placements');
+ assert.equal(place(defenders[0].id,1,16).ok,false,'already deployed');
+ for(let i=3;i<6;i++)assert(place(defenders[i].id,31-(i-3),i-3).ok,'recon SE placements');
+ assert.equal(g.scenario.placement.placed.length,6);
+ assert.deepEqual(g.scenario.placement.placed.map(p=>p.lance),
+  ['command','command','command','recon','recon','recon']);
+ assert.equal(place(attackers[0].id,31,15).ok,false,'no invented mapsheet row coordinate');
+ assert.equal(g.nextPhase().ok,false,'source row mapping still missing');
+ assert.equal(g.scenario.placement.complete,false);
 });
