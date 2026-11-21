@@ -11,6 +11,7 @@ COPY tests/auth-integration.mjs /app/tests/auth-integration.mjs
 COPY tests/auth-email-integration.mjs /app/tests/auth-email-integration.mjs
 COPY tests/operations-integration.mjs /app/tests/operations-integration.mjs
 COPY tests/market-integration.mjs /app/tests/market-integration.mjs
+COPY tests/scenario-rooms-integration.mjs /app/tests/scenario-rooms-integration.mjs
 
 WORKDIR /app/apps/api
 USER node

@@ -1,6 +1,7 @@
 import {AuthError} from './auth.mjs';
 import {newScenarioRoomGame,captureScenarioRoomGame,restoreScenarioRoomGame,
- applyScenarioRoomSetup,applyScenarioRoomOrder,publicScenarioRoomGame} from
+ applyScenarioRoomSetup,applyScenarioRoomOrder,publicScenarioRoomGame,
+ assertScenario3SourceMap} from
  './scenario-room-match.mjs';
 
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -196,6 +197,7 @@ export function createScenarioRoomStore(pool){
    const seat=scenarioRoleForUser(row,actor);
    if(!seat)throw new AuthError(404,'scenario_room_not_found');
    if(!row.battle_state)throw new AuthError(409,'scenario_match_not_started');
+   assertScenario3SourceMap(row.battle_state.game);
    return {item:publicRoom(row,actor),
     game:publicScenarioRoomGame(row.battle_state)};
   },

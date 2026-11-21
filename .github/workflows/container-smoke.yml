@@ -117,6 +117,7 @@ jobs:
           docker exec "$api" node /app/tests/auth-email-integration.mjs
           docker exec "$api" node /app/tests/operations-integration.mjs
           docker exec "$api" node /app/tests/market-integration.mjs
+          docker exec "$api" node /app/tests/scenario-rooms-integration.mjs
           echo "PostgreSQL migrations, auth registration/login, health and catalogue verified."
 
       - name: Always clean isolated smoke resources
