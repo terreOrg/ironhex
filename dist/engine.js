@@ -1003,12 +1003,34 @@ export class Game extends Legacy{
    !Number.isInteger(q)||!Number.isInteger(r)||
    typeof label!=='string'||!label.trim()||label.length>80||
    terrainType!==null&&!['woods','heavy','rough','rubble',
-    'level1','level2','depth1','depth2'].includes(terrainType)||
+    'level1','level2','sublevel1','sublevel2','depth1','depth2'].includes(terrainType)||
    !Array.isArray(footprint)||!footprint.length||footprint.length>32||
    !footprint.every(h=>h&&Number.isInteger(h.q)&&Number.isInteger(h.r)&&
     Math.abs(h.q)<=15&&Math.abs(h.r)<=16)||
    !footprint.some(h=>h.q===0&&h.r===0))
    return fail('Некорректный ход или форма элемента местности');
+  // The illustrated Scenario 3 uses one connected 2-hex and one
+  // fixed-orientation 3-hex triangle on each printed sheet. Reject a
+  // wrong-size/foreign-sheet piece before modifying any map tile.
+  const pictured=this.scenario?.picturedTerrain;
+  if(pictured?.required){
+   const pieceIndex=setup.pieces.length,expected=pieceIndex%2===0?2:3;
+   if(footprint.length!==expected||
+    !(expected===2?['depth1','depth2']:['sublevel1','sublevel2']).includes(terrainType)||
+    this.tile(q,r)?.sheet!==Math.floor(pieceIndex/2)||
+    expected===3&&footprint.some((h,i)=>footprint.some((v,j)=>
+     i!==j&&distance(h,v)!==1)))
+    return fail('Контур и тип обязательного элемента не совпадают с исходной схемой');
+   const ruling=pictured.disputes?.[pieceIndex]?.choice;
+   if(ruling){
+    const direction=expected===2?footprint.find(h=>h.q!==0||h.r!==0):null;
+    if(ruling.terrainType!==terrainType||
+     expected===2&&(!direction||
+      direction.q!==DIRS[ruling.orientation][0]||
+      direction.r!==DIRS[ruling.orientation][1]))
+     return fail('Элемент должен соответствовать обязательному решению 2D6');
+   }
+  }
   const hexes=footprint.map(h=>({q:q+h.q,r:r+h.r}));
   const keys=new Set(hexes.map(h=>h.q+','+h.r));
   if(keys.size!==hexes.length)return fail('Элемент имеет повторяющиеся гексы');
@@ -1046,7 +1068,12 @@ export class Game extends Legacy{
    t.baseTerrainHeight??=t.height;
    t.baseTerrainDepth??=t.depth;
    t.baseTerrainSurface??=t.surface;
-   if(terrainType.startsWith('level')){
+   if(terrainType.startsWith('sublevel')){
+    // Source figure labels SUBLEVEL, not positive LEVEL: these dry
+    // sinkholes sit BELOW zero and must affect movement and LOS.
+    const sublevel=Number(terrainType.slice(8));
+    t.type='plain';t.depth=0;t.height=-sublevel;t.surface=-sublevel;
+   }else if(terrainType.startsWith('level')){
     const level=Number(terrainType.slice(5));
     t.type='plain';t.depth=0;t.height=level;t.surface=level;
    }else if(terrainType.startsWith('depth')){
@@ -1059,6 +1086,40 @@ export class Game extends Legacy{
   setup.nextTeam=setup.complete?null:1-team;
   return {ok:true,complete:setup.complete,nextTeam:setup.nextTeam,
    placed:setup.pieces.length,remaining:setup.piecesPerTeam*2-setup.pieces.length};
+ }
+ // 40th-anniversary p.47 clarification: when two players disagree
+ // about a punch-out's printed face, or the rotation of a two-hex
+ // piece, each rolls 2D6; ties reroll. The winner's choice is binding
+ // for that piece only. Locations and triangular orientation remain
+ // fixed by the physical diagram, not chosen by this roll.
+ arbitrateIllustratedTerrainDispute({pieceIndex,first,second}={}){
+  const pictured=this.scenario?.picturedTerrain,loose=this.scenario?.looseTerrain;
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
+   !pictured?.required||pictured.confirmed||!loose||loose.complete||
+   !Number.isInteger(pieceIndex)||pieceIndex!==loose.pieces.length||
+   pieceIndex<0||pieceIndex>=4||pictured.disputes?.[pieceIndex])
+   return fail('Арбитраж возможен только для следующего элемента схемы');
+  const isPair=pieceIndex%2===0;
+  const valid=c=>c&&typeof c==='object'&&!Array.isArray(c)&&
+   (isPair?['depth1','depth2']:['sublevel1','sublevel2']).includes(c.terrainType)&&
+   (isPair?Number.isInteger(c.orientation)&&c.orientation>=0&&c.orientation<6:
+    c.orientation===null);
+  if(!valid(first)||!valid(second)||
+   first.terrainType===second.terrainType&&first.orientation===second.orientation)
+   return fail('Нужны два допустимых различающихся варианта элемента');
+  const start=this.phaseRolls.length;
+  let a,b,retries=0;
+  do{
+   a=this.roll('Схема: сторона зелёных 2D6');
+   b=this.roll('Схема: сторона красных 2D6');
+  }while(a===b&&++retries<10000);
+  if(a===b)throw Error('Не удалось разрешить спор по схеме местности');
+  const winner=a>b?0:1,choice=structuredClone(winner===0?first:second);
+  pictured.disputes??={};
+  pictured.disputes[pieceIndex]={winner,choice,rolls:structuredClone(
+   this.phaseRolls.slice(start))};
+  return {ok:true,winner,choice:structuredClone(choice),rolls:
+   structuredClone(pictured.disputes[pieceIndex].rolls),retries};
  }
  // CAT3500D p.47 and 40th Anniversary clarification: two triangular
  // three-hex punch-outs and two connected two-hex punch-outs, one of each

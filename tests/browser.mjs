@@ -225,9 +225,19 @@ test('AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain 
   // Four source-illustration counters are mandatory, not an optional skip.
   // Test positions exercise legal geometry; human figure confirmation is UI driven.
   for(let i=0;i<4;i++){
+   if(i===0){
+    await page.locator('#scenario-terrain-dispute').click();
+    await page.locator('#pictured-dispute-type0').selectOption('depth1');
+    await page.locator('#pictured-dispute-type1').selectOption('depth2');
+    await page.locator('#pictured-dispute-roll').click();
+    await page.locator('#scenario-terrain-place').waitFor({state:'visible'});
+    assert.equal(await page.locator('#scenario-terrain-type').isDisabled(),true,
+     'winning illustrated counter face is binding');
+   }
    const shape=await page.locator('#scenario-terrain-shape').inputValue();
    assert.equal(shape,i%2?'custom':'2');
-   await page.locator('#scenario-terrain-type').selectOption(i%2?'level1':'depth1');
+   if(!await page.locator('#scenario-terrain-type').isDisabled())
+    await page.locator('#scenario-terrain-type').selectOption(i%2?'sublevel1':'depth1');
    await page.locator('#scenario-terrain-hex').selectOption({index:i%2?65:0});
    await page.locator('#scenario-terrain-place').click();
   }

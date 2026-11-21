@@ -6673,9 +6673,9 @@ const prepareScenario3IllustrationForTest=g=>{
  assert(g.startScenarioLooseTerrain({piecesPerTeam:2,startingTeam:0}).ok);
  const positions=[
   [0,5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-  [1,10,11,'level1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
+  [1,10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
   [0,21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-  [1,26,11,'level2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
+  [1,26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
  ];
  for(const [team,col,row,terrainType,footprint]of positions){
   const tile=g.tiles.find(t=>t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
@@ -7264,8 +7264,8 @@ test('CAT3500D p.47: printed Scenario 3 mandates four diagram counters with real
  assert(g.beginPrintedScenarioPlacement().ok);
  assert.equal(g.scenario.picturedTerrain.pieces.length,4);
  assert.equal(g.scenario.picturedTerrain.sourcePage,47);
- assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='level1'&&t.height===1));
- assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='level2'&&t.height===2));
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='sublevel1'&&t.height===-1&&t.surface===-1&&t.depth===0));
+ assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='sublevel2'&&t.height===-2&&t.surface===-2&&t.depth===0));
  assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='depth1'&&t.depth===1));
  assert(g.tiles.some(t=>t.overlayTerrain?.terrainType==='depth2'&&t.depth===2));
 });
@@ -8086,4 +8086,75 @@ test('CAT3500D p.48: winning shared defender controls either lance only until ph
  assert.equal(g.sharedDefenderCanControl(commander,'recon'),false);
  assert.equal(g.sharedDefenderCanControl({...commander,dead:true},'command'),false);
  assert.equal(g.sharedDefenderCanControl({...commander,notFielded:true},'command'),false);
+});
+
+test('CAT3500D p.47: illustrated four-piece source setup rejects false shapes and resolves disputed counter choices by 2D6',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const {DIRS}=await import('../packages/engine/engine.js');
+ const g=fresh();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ prepareAgoacPrintedScenario(g,'divide-and-conquer');
+ assert(g.startScenarioLooseTerrain({piecesPerTeam:2,startingTeam:0}).ok);
+ const at=(col,row)=>g.tiles.find(t=>
+  t.q+Math.floor(t.r/2)+Math.floor(g.setupMap.width/2)===col&&
+  t.r+Math.floor(g.setupMap.height/2)===row);
+ const first=at(5,5),second=at(10,11),third=at(21,5),fourth=at(26,11);
+ const place=(team,t,terrainType,footprint)=>g.placeScenarioLooseTerrain({
+  team,q:t.q,r:t.r,label:terrainType,terrainType,footprint});
+ const pair=[{q:0,r:0},{q:1,r:0}];
+ const triangle=[{q:0,r:0},{q:1,r:0},{q:1,r:-1}];
+ const snapshot=()=>JSON.stringify(g.scenario.looseTerrain)+'/'+JSON.stringify(g.tile(first.q,first.r));
+ const before=snapshot();
+ assert.equal(place(0,first,'depth1',[{q:0,r:0}]).ok,false,'cannot place one hex where printed pair is required');
+ assert.equal(place(0,first,'woods',pair).ok,false,'mandatory pictured counter is not arbitrary woods');
+ assert.equal(place(0,first,'sublevel1',pair).ok,false,'two-hex blue counter can only show water Depth');
+ assert.equal(place(0,third,'depth1',pair).ok,false,'first source pair must be on first sheet');
+ assert.equal(snapshot(),before,'invalid pictured pieces cannot change terrain or quota');
+ const tiedDice=[...diceFor(7),...diceFor(7),...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(tiedDice.length);return tiedDice.shift();};
+ const firstRuling=g.arbitrateIllustratedTerrainDispute({
+  pieceIndex:0,first:{terrainType:'depth1',orientation:0},
+  second:{terrainType:'depth2',orientation:4}});
+ assert(firstRuling.ok);assert.equal(firstRuling.winner,0);
+ assert.equal(firstRuling.retries,1);assert.equal(firstRuling.rolls.length,4);
+ assert.deepEqual(firstRuling.choice,{terrainType:'depth1',orientation:0});
+ assert.equal(tiedDice.length,0);
+ assert.equal(g.arbitrateIllustratedTerrainDispute({
+  pieceIndex:0,first:{terrainType:'depth2',orientation:3},
+  second:{terrainType:'depth1',orientation:0}}).ok,false,'cannot reroll decided face');
+ assert.equal(place(0,first,'depth2',pair).ok,false,'2D6 winner face is binding');
+ assert.equal(place(0,first,'depth1',[{q:0,r:0},{q:-1,r:1}]).ok,false,
+  '2D6 winner pair orientation is binding');
+ assert(place(0,first,'depth1',pair).ok);
+ assert.equal(place(1,second,'depth1',triangle).ok,false,'three-hex red counter can only show dry Sublevel');
+ assert.equal(place(1,second,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:2,r:0}]).ok,false,
+  'three hexes must form source triangular geometry');
+ const triangleDice=[...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(triangleDice.length);return triangleDice.shift();};
+ const triangleRuling=g.arbitrateIllustratedTerrainDispute({
+  pieceIndex:1,first:{terrainType:'sublevel1',orientation:null},
+  second:{terrainType:'sublevel2',orientation:null}});
+ assert(triangleRuling.ok);assert.equal(triangleRuling.winner,0);
+ assert.equal(triangleDice.length,0);
+ assert.equal(place(1,second,'sublevel2',triangle).ok,false,
+  'disputed triangular face must follow winning 2D6 result');
+ assert(place(1,second,'sublevel1',triangle).ok);
+ let d=[...diceFor(2),...diceFor(12)];
+ g.rng=()=>{assert(d.length);return d.shift();};
+ const alternate=g.arbitrateIllustratedTerrainDispute({
+  pieceIndex:2,first:{terrainType:'depth1',orientation:0},
+  second:{terrainType:'depth2',orientation:4}});
+ assert(alternate.ok);assert.equal(alternate.winner,1);
+ assert.deepEqual(alternate.choice,{terrainType:'depth2',orientation:4});
+ assert.equal(d.length,0);
+ assert(place(0,third,'depth2',[{q:0,r:0},{q:DIRS[4][0],r:DIRS[4][1]}]).ok);
+ assert(place(1,fourth,'sublevel2',triangle).ok);
+ assert.equal(g.scenario.looseTerrain.complete,true);
+ assert.equal(g.arbitrateIllustratedTerrainDispute({
+  pieceIndex:4,first:{terrainType:'sublevel1',orientation:0},
+  second:{terrainType:'depth1',orientation:1}}).ok,false,'no arbitration after completed terrain');
+ assert(g.confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed:true}).ok);
+ assert(g.beginPrintedScenarioPlacement().ok);
 });
