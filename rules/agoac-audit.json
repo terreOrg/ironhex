@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12. Ch11 existing weather certification 21.11.2026: 4/25 atomic requirements independently Verified on exact main e12ebe6 and four-way quality gates; 21 remain Known Missing; chapter open. Ch11 rule batch 21.11.2026: scenario sides, initiative effects and moonlit jump MP added to source/dist; four named regression suites pending CI/merge checks. No full scenario/deployment/exit integration.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12. Ch11 existing weather certification 21.11.2026: 4/25 atomic requirements independently Verified on exact main e12ebe6 and four-way quality gates; 21 remain Known Missing; chapter open. Ch11 rule batch 21.11.2026: scenario sides, initiative effects and moonlit jump MP added to source/dist; four named regression suites pending CI/merge checks. No full scenario/deployment/exit integration. AGoAC Ch11 package verified 2026-11-21: agoac-140,153,158 promoted on exact four-way green main 249f3ba; 7/25 verified, 1 tested_case (148), 17 known_missing. No deploy, no Ch12.",
   "currentTopicId": "agoac-scenarios",
   "topics": [
     {
@@ -623,7 +623,7 @@
         48
       ],
       "status": "known_missing",
-      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit. 21.11.2026 first four atomic existing planetary-condition rules source-to-code Verified on green main e12ebe6: ground lunar MP, lunar weapon/heat, gale weapon classes and gale PSR. Exact CI 44896909451, Browser 44896909461, Smoke 44896909396, strict Sonar 44896909440 all successful. Remaining 21 Known Missing; chapter stays open, pointer stays agoac-scenarios. No scenario implementation or deploy. 21.11.2026 follow-up: conditional scenario side choice, first-turn automatic Trial by Fire initiative, scenario 3 -2 defender initiative, full-moon jumping MP on-board and offboard first-hex implemented. Four new named deterministic tests; 148 still only partially covered; full scenarios remain missing. No deploy / Ch12.",
+      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit. 21.11.2026 first four atomic existing planetary-condition rules source-to-code Verified on green main e12ebe6: ground lunar MP, lunar weapon/heat, gale weapon classes and gale PSR. Exact CI 44896909451, Browser 44896909461, Smoke 44896909396, strict Sonar 44896909440 all successful. Remaining 21 Known Missing; chapter stays open, pointer stays agoac-scenarios. No scenario implementation or deploy. 21.11.2026 follow-up: conditional scenario side choice, first-turn automatic Trial by Fire initiative, scenario 3 -2 defender initiative, full-moon jumping MP on-board and offboard first-hex implemented. Four new named deterministic tests; 148 still only partially covered; full scenarios remain missing. No deploy / Ch12. 21.11.2026 final packet source certification: 140, 153 and 158 independently verified on exact main 249f3ba with CI 44899292879, Browser 44899292900, Smoke 44899292893 and strict Sonar 44899292896 green. 148 remains Tested Case, 17 scenario-specific groups Known Missing. 7 verified/1 tested/17 missing in Ch11; remain chapter-scoped; no deployment/Ch12.",
       "audit": {
         "sourceChecked": true,
         "edgeCasesChecked": false,
@@ -656,7 +656,7 @@
           "agoac-163",
           "agoac-164"
         ],
-        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending. VERIFIED SUBSET: 4 already-implemented weather requirements with source and test coverage on exact four-way green main e12ebe6; all missing scenario/game setup and optional functionality remain unverified. 4 Verified, 21 Known Missing. New engine-only partial scenario setup and initiative, plus lunar jump path. No accurate mapsheets or complete scenario victory logic; do not close chapter."
+        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending. VERIFIED SUBSET: 4 already-implemented weather requirements with source and test coverage on exact four-way green main e12ebe6; all missing scenario/game setup and optional functionality remain unverified. 4 Verified, 21 Known Missing. New engine-only partial scenario setup and initiative, plus lunar jump path. No accurate mapsheets or complete scenario victory logic; do not close chapter. Package FINAL: scenario 2D6 roles, scenario 3 -2 defender Initiative and full-moon jump MP source/code/test verified on four-way green main 249f3ba. Trial by Fire automatic first-turn initiative proved only as a subset; east-edge exit and instant destruction still missing. Chapter remains open."
       }
     },
     {
@@ -9554,14 +9554,47 @@
         45
       ],
       "statement": "Both players roll 2D6 to choose attacker/defender; the higher total chooses sides.",
-      "status": "tested_case",
-      "reviewNote": "Standard battle deployment rolls for a choice of entry-edge, not scenario attacker/defender role; there is no two-player scenario-side choice transaction. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified.",
+      "status": "verified",
+      "reviewNote": "Standard battle deployment rolls for a choice of entry-edge, not scenario attacker/defender role; there is no two-player scenario-side choice transaction. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. VERIFIED 2026-11-21: CAT3500D p.45: 2D6 side-selection contest with tie rerolls; winning team selects attacker or defender and losing team automatically gets the opposite. Game.configureScenario/rollScenarioSides/chooseScenarioSide enforce once-before-battle selection, no loser forgery or play before selection; tests cover both teams, both choices and all tie paths. Exact source, regression and four-way green main commit 249f3bae7877d36d4105bc251e0ddfaddc6a4fa7. Conditional engine rule verification; printed scenario maps/rosters, launch UI and all other scenario requirements are still pending.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.45: both players roll 2D6 and winner chooses attacker or defender exactly once"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed Scenarios pp.45–48; official AGoAC errata v8.01 (relevant scenario map/deployment corrections)",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7",
+        "testedTree": "acbb03928bf8b4352e8c9ce23dd89553209d7468",
+        "mergedSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44899292879,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44899292900,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44899292893,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44899292896,
+          "conclusion": "success",
+          "headSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7"
+        },
+        "review": "CAT3500D p.45: 2D6 side-selection contest with tie rerolls; winning team selects attacker or defender and losing team automatically gets the opposite. Game.configureScenario/rollScenarioSides/chooseScenarioSide enforce once-before-battle selection, no loser forgery or play before selection; tests cover both teams, both choices and all tie paths."
+      }
     },
     {
       "id": "agoac-141",
@@ -9641,7 +9674,7 @@
       ],
       "statement": "Scenario 2 defender automatically wins first-turn Initiative and may exit only the east edge; any attacking Mech that exits is destroyed.",
       "status": "tested_case",
-      "reviewNote": "Initiative is normally rolled for both teams and no scenario-specific first-round forced winner/exit policy exists. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. Partial: first-turn forced initiative proved, but exit-edge/destruction policy not implemented. Must remain Tested Case.",
+      "reviewNote": "Initiative is normally rolled for both teams and no scenario-specific first-round forced winner/exit policy exists. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. Partial: first-turn forced initiative proved, but exit-edge/destruction policy not implemented. Must remain Tested Case. 21.11.2026 final check: first-turn defender automatic initiative engine portion is CI/test confirmed, but east-edge-only safe defender exit and instant destruction of offside/attacker exits are absent. Cannot mark whole requirement Verified.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9696,14 +9729,47 @@
         48
       ],
       "statement": "Scenario 3 defending force subtracts 2 from every Initiative roll, including rerolls and all turns.",
-      "status": "tested_case",
-      "reviewNote": "Game.initiative rolls unmodified 2D6 for both sides, no side-specific scenario modifier. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified.",
+      "status": "verified",
+      "reviewNote": "Game.initiative rolls unmodified 2D6 for both sides, no side-specific scenario modifier. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. VERIFIED 2026-11-21: CAT3500D p.48: defender of Divide and Conquer subtracts -2 from every Initiative total, including each tie reroll and every later round. Game.initiative annotates raw dice records and scenarioAdjusted total separately; tests cover both defending teams, after-modifier ties and rounds 1/5 with ordinary no-scenario control. Exact source, regression and four-way green main commit 249f3bae7877d36d4105bc251e0ddfaddc6a4fa7. Conditional engine rule verification; printed scenario maps/rosters, launch UI and all other scenario requirements are still pending.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: Divide and Conquer defender suffers -2 initiative for every roll and reroll"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed Scenarios pp.45–48; official AGoAC errata v8.01 (relevant scenario map/deployment corrections)",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7",
+        "testedTree": "acbb03928bf8b4352e8c9ce23dd89553209d7468",
+        "mergedSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44899292879,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44899292900,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44899292893,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44899292896,
+          "conclusion": "success",
+          "headSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7"
+        },
+        "review": "CAT3500D p.48: defender of Divide and Conquer subtracts -2 from every Initiative total, including each tie reroll and every later round. Game.initiative annotates raw dice records and scenarioAdjusted total separately; tests cover both defending teams, after-modifier ties and rounds 1/5 with ordinary no-scenario control."
+      }
     },
     {
       "id": "agoac-154",
@@ -9791,14 +9857,47 @@
         48
       ],
       "statement": "Full Moon Night also has to be checked for jump movement and offboard first-hex entry costs under the printed universal +1 MP per hex rule.",
-      "status": "tested_case",
-      "reviewNote": "Game.reachable(mode='jump') uses jumpShortestReach(distance) and does not apply weather.night; printed modifier explicitly says per hex without a jump exception. Needs source clarification and implementation before Verified. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified.",
+      "status": "verified",
+      "reviewNote": "Game.reachable(mode='jump') uses jumpShortestReach(distance) and does not apply weather.night; printed modifier explicitly says per hex without a jump exception. Needs source clarification and implementation before Verified. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. VERIFIED 2026-11-21: CAT3500D p.48: +1 MP per hex from Full Moon Night applies to on-board jumps and full-hex offboard deployment entries. Game.reachable, deploymentEntryRoutes, enterDeployment and move charge 2 MP per traveled jump hex, without increasing Jump Heat or target-movement distance. Tests check night on/off, MP budget reach, cost and heat for both execution routes. Exact source, regression and four-way green main commit 249f3bae7877d36d4105bc251e0ddfaddc6a4fa7. Conditional engine rule verification; printed scenario maps/rosters, launch UI and all other scenario requirements are still pending.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: Full Moon Night jump MP pays one surcharge per hex both on map and entry"
         }
-      ]
+      ],
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed Scenarios pp.45–48; official AGoAC errata v8.01 (relevant scenario map/deployment corrections)",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7",
+        "testedTree": "acbb03928bf8b4352e8c9ce23dd89553209d7468",
+        "mergedSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44899292879,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44899292900,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44899292893,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44899292896,
+          "conclusion": "success",
+          "headSha": "249f3bae7877d36d4105bc251e0ddfaddc6a4fa7"
+        },
+        "review": "CAT3500D p.48: +1 MP per hex from Full Moon Night applies to on-board jumps and full-hex offboard deployment entries. Game.reachable, deploymentEntryRoutes, enterDeployment and move charge 2 MP per traveled jump hex, without increasing Jump Heat or target-movement distance. Tests check night on/off, MP budget reach, cost and heat for both execution routes."
+      }
     },
     {
       "id": "agoac-159",
