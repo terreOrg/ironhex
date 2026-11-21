@@ -13,6 +13,10 @@ jobs:
     runs-on: [self-hosted, Linux, X64, spellfire]
     timeout-minutes: 5
     steps:
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Explain main quality gate status
         env:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
