@@ -660,7 +660,9 @@ export class Game extends Legacy{
  configureLinkedScenarioReinforcements({sourceGame,sourceIds,sourceTeam}={}){
   if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
    ![0,1].includes(this.scenario?.defenderTeam)||this.scenario.placement||
-   this.scenario.campaign||!sourceGame||sourceGame===this||
+   this.scenario.campaign||
+   this.scenario.printedSetupRequired&&!this.setupForces||
+   !sourceGame||sourceGame===this||
    sourceGame.scenario?.id!=='final-exam'||![0,1,'draw'].includes(sourceGame.winner)||
    ![0,1].includes(sourceGame.scenario?.defenderTeam)||
    !Array.isArray(sourceGame.units)||!Array.isArray(sourceIds)||
@@ -690,7 +692,8 @@ export class Game extends Legacy{
    sourceScenario:'final-exam',sourceTeam:team,
    sourceIds:[...sourceIds],unitIds:newUnits.map(u=>u.id),
    arrivalRound:5,entryEdge:0,damageCarried:true,
-   exactMapImplemented:false,recordSheetsImported:false
+   exactMapImplemented:this.scenario.sourceTerrainLoaded===true,
+   recordSheetsImported:this.scenario.recordSheetsImported===true
   };
   return {ok:true,unitIds:newUnits.map(u=>u.id),
    arrivalRound:5,entryEdge:0};
@@ -752,12 +755,33 @@ export class Game extends Legacy{
   const actual=this.units.filter(u=>!u.dead&&!u.notFielded&&!u.scenarioArrivalRound);
   const encode=u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??''].join('|');
   const sortedRoster=units=>units.map(encode).sort((a,b)=>a.localeCompare(b)).join(';');
+  const cardSetup=this.scenario.cardSetup;
+  // CAT3500D p.48: printed pilots retain their *identities* even when
+  // card skills replace printed skills and the opposing player receives
+  // a matching skill improvement. Never accept arbitrary roster edits.
+  if(cardSetup&&(cardSetup.cards?.length!==2||cardSetup.bonuses?.length!==2||
+   cardSetup.cards.some(c=>{
+    const u=actual.find(u=>u.id===c.unitId&&u.team===c.team);
+    return !u||u.scenarioCard?.id!==c.cardId||u.scenarioCard?.cost!==c.cost;
+   })||cardSetup.bonuses.some(b=>!actual.some(u=>u.id===b.unitId&&
+    u.team!==b.sourceTeam))))
+   return fail('Карточки и встречные бонусы не соответствуют реальным пилотам');
   for(const team of [0,1]){
    const wanted=team===this.scenario.defenderTeam?manifest.defender:manifest.attacker;
    const ours=actual.filter(u=>u.team===team);
+   const expected=wanted.map(pilot=>{
+    const matched=ours.find(u=>u.pilot===pilot.pilot&&
+     u.variant===pilot.variant&&(u.lance??null)===(pilot.lance??null));
+    const card=cardSetup?.cards.find(c=>c.unitId===matched?.id&&c.team===team);
+    const bonus=cardSetup?.bonuses.find(b=>b.unitId===matched?.id);
+    // A card holder cannot also be the response to an opposing card.
+    if(card&&bonus)return {...pilot,gunnery:-99,piloting:-99};
+    return {...pilot,gunnery:card?.gunnery??pilot.gunnery-(bonus?.gunnery??0),
+     piloting:card?.piloting??pilot.piloting-(bonus?.piloting??0)};
+   });
    if(wanted.length!==ours.length||
-    sortedRoster(wanted)!==sortedRoster(ours))
-    return fail('До развёртывания нужен точный опубликованный список пилотов и вариантов мехов');
+    sortedRoster(expected)!==sortedRoster(ours))
+    return fail('До развёртывания нужен точный опубликованный список пилотов и разрешённых карточками навыков');
   }
   const defender=this.scenario.defenderTeam,attacker=this.scenario.attackerTeam;
   const repeat=(team,count,lance=null)=>Array.from({length:count},()=>({team,lance}));
@@ -814,7 +838,9 @@ export class Game extends Legacy{
  // optionally selected by floor(D6/2), and mirrored pilot improvement.
  configureScenarioCards({cards=[],mirrors=[],agreedCost=null}={}){
   if(!this.scenarioSetupOpen()||!this.scenario||!Number.isInteger(this.scenario.attackerTeam)||
-   this.scenario.cardSetup)return fail('MechWarrior Cards доступны только до боя');
+   this.scenario.cardSetup||this.scenario.placement||
+   this.scenario.printedSetupRequired&&this.setupForces?.type!=='agoac-printed-records')
+   return fail('MechWarrior Cards доступны только после загрузки состава и до расстановки');
   if(!Array.isArray(cards)||cards.length!==2||!Array.isArray(mirrors)||mirrors.length!==2)
    return fail('По одной карточке каждой стороне и по одному ответному бонусу');
   const byTeam=new Map();
@@ -1147,7 +1173,8 @@ export class Game extends Legacy{
   const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario?.id];
   if(!this.scenarioSetupOpen()||!manifest||
    this.setupMap?.printedScenario!==this.scenario.id||
-   this.setupForces||this.scenario.placement||
+   this.setupForces||this.scenario.placement||this.scenario.campaign||
+   this.scenario.cardSetup||
    !designs||typeof designs!=='object'||Array.isArray(designs))
    return fail('Нужны исходные записи мехов и точная карта выбранного сценария');
   const roster=[...manifest.attacker.map(u=>({...u,team:this.scenario.attackerTeam})),
