@@ -8,7 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {randomBytes} from 'node:crypto';
 import {once} from 'node:events';
 import {chromium} from 'playwright';
-import {Game} from '../packages/engine/engine.js';
+import {Game,agoacScenario3FigureTiles} from '../packages/engine/engine.js';
 
 const webPort=Number(process.env.IRONHEX_REAL_BROWSER_PORT);
 const apiPort=Number(process.env.IRONHEX_REAL_API_PORT);
@@ -126,16 +126,12 @@ try{
  assert.deepEqual(initial.setupMap.sheets.map(s=>s.name),
   ['Desert #2','Grassland #3']);
  assert.equal(initial.tiles.length,544);
- const sources=[
-  [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-  [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
-  [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-  [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
- ];
- // Deterministic test fixtures, NOT a claim of exact published coordinates.
- for(const [i,[col,row,terrainType,footprint]] of sources.entries()){
-  const g=await snapshot(),hex=tile(g,col,row);
-  assert(hex,'source map fixture terrain hex exists');
+ const types=['depth1','sublevel1','depth2','sublevel2'];
+ for(let i=0;i<types.length;i++){
+  const g=await snapshot(),cells=agoacScenario3FigureTiles(g,i);
+  assert.equal(cells.length,i%2===0?2:3);
+  const hex=cells[0],terrainType=types[i];
+  const footprint=cells.map(t=>({q:t.q-hex.q,r:t.r-hex.r}));
   const role=g.scenario.looseTerrain.nextTeam===g.scenario.attackerTeam?
    'attacker':i<2?'command':'recon';
   await signed(role,'setup',{type:'place-terrain',
