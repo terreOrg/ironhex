@@ -358,7 +358,7 @@ test('AGoAC Ch11: all three signed roles persist full original and shortened tur
   assert.equal(runtime.game.scenario.sharedLances.decided.round,1,
    '2D6 winner cannot claim authority in the new round');
   const second=order('recon',{type:'next'});
-  assert.equal(second.round,undefined,'room response does not forge a private turn counter');
+  assert.equal(second.round,2,'signed server returns the authoritative new round');
   assert.equal(runtime.game.phase,'move');
   assert.equal(runtime.game.scenario.sharedLances.initiativeController,'recon',
    'initiative control alternates to other defending player on round two');
