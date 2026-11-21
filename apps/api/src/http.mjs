@@ -209,14 +209,18 @@ export function createHttpServer({
             if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
             return json(res,201,{item:await scenarioRoomStore.create(user.id,await readJson(req))});
           }
-          const match=/^\/api\/v1\/scenario-rooms\/([^/]+)(?:\/(accept|decline|cancel))?$/.exec(path);
+          const match=/^\/api\/v1\/scenario-rooms\/([^/]+)(?:\/(accept|decline|cancel|start|snapshot|setup|command))?$/.exec(path);
           if(match){
             const [,id,action]=match;
             if(!action&&(method==='GET'||head))
               return json(res,200,{item:await scenarioRoomStore.get(user.id,id)},head);
-            if(action&&method==='POST'){
+            if(action==='snapshot'&&(method==='GET'||head))
+              return json(res,200,await scenarioRoomStore.snapshot(user.id,id),head);
+            if(action&&action!=='snapshot'&&method==='POST'){
               if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
               const body=await readJson(req);
+              if(['start','setup','command'].includes(action))
+                return json(res,200,await scenarioRoomStore[action](user.id,id,body),head);
               if(Object.keys(body).length)throw new AuthError(422,'invalid_scenario_room');
               return json(res,200,{item:await scenarioRoomStore[action](user.id,id)},head);
             }
