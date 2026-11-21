@@ -1773,3 +1773,28 @@ test('AGoAC 3D room: printed LEVEL / SUBLEVEL / DEPTH toggle works on 32x17 sour
   assert(await toggle.getByRole('switch').isVisible(),'mobile control remains available');
  });
 });
+
+test('AGoAC Ch11: failed signed 3D command locks stale actions until reconnect',
+ {timeout:120000},async()=>{
+ await withPage('room-command-network-lock',{
+  path:'/index.html?battle=1&room='+browserScenarioRoomId
+ },async page=>{
+  let commands=0;
+  await page.route('**/api/v1/scenario-rooms/'+browserScenarioRoomId+'/command',async route=>{
+   commands++;
+   return route.fulfill({status:503,contentType:'application/json',
+    body:JSON.stringify({error:'backend_unavailable'})});
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#hold').waitFor({state:'visible'});
+  await page.locator('#hold').click();
+  await page.locator('#room-reconnect').waitFor({state:'visible',timeout:10000});
+  assert.equal(commands,1,'only one signed server mutation is submitted');
+  assert(await page.locator('#next').isDisabled());
+  assert.match(await page.locator('#toast').textContent(),/синхронизация потеряна/i);
+  assert.equal(await page.locator('#room-reconnect').count(),1,
+   'renderUI must not discard the explicit reconnect control');
+  await page.locator('#next').evaluate(el=>el.click());
+  assert.equal(commands,1,'locked client cannot send another stale mutation');
+ });
+});
