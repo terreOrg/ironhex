@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy.",
   "currentTopicId": "agoac-psr",
   "topics": [
     {
@@ -557,7 +557,8 @@
         40,
         44
       ],
-      "status": "not_audited"
+      "status": "not_audited",
+      "reviewNote": "21.11.2026 first detailed Ch10 source-to-code inspection: original CAT3500D pp.40–44 and official v8.01 errata visually consulted. 19 granular rules 121–139 registered with exact already-passing main 540/540 CI (44891964395), Browser (44891964336), Smoke (44891964353) and strict Sonar (44891964328). Fourteen Verified from existing code and real deterministic tests; four Tested Case require complete modifier-table/facing/dry-fall/accidental-impact matrix; one Known Missing (135) for errata collision impact level: code subtracts 2 from drop for standing target, but -1 required; preexisting test wrongly expects 21 instead of 28 in 65-ton 5-level fixture. Chapter remains not_audited, no engine edits, no deploy, no Chapter 11."
     },
     {
       "id": "agoac-scenarios",
@@ -8378,6 +8379,894 @@
           "headSha": "94910663a59ce54d5d614c540a6ececca5cd5cf4"
         },
         "review": "Errata v8.01 p.4: all Heat effects simultaneously without mutual interference. Engine snapshots adjusted Heat Scale and computes all checks prior to shutdown PSR, ammunition explosion and life-support wounds. Game API tests include pilot-state changes during effects."
+      }
+    },
+    {
+      "id": "agoac-121",
+      "topicId": "agoac-psr",
+      "pages": [
+        40
+      ],
+      "statement": "A piloting skill roll uses 2D6 against Piloting Skill plus all applicable modifiers; equal or above target succeeds and below fails, normally resulting in a fall.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.5: piloting skill is the independent base for a required terrain PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers"
+        }
+      ],
+      "reviewNote": "p.40 PSR base and 2D6 compared with Game.psr()/roll() and terrain/seatbelt target-number fixtures. Applied to actual engine; tests pass exact green main.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.40 PSR base and 2D6 compared with Game.psr()/roll() and terrain/seatbelt target-number fixtures. Applied to actual engine; tests pass exact green main."
+      }
+    },
+    {
+      "id": "agoac-122",
+      "topicId": "agoac-psr",
+      "pages": [
+        40
+      ],
+      "statement": "Movement PSRs resolve immediately in the newly entered hex; attack-caused PSRs resolve at the end of the corresponding attack phase; displacement and fall-related pilot-damage PSRs are immediate; consciousness checks precede simultaneous PSRs.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,44: all pilots roll consciousness before any phase PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.24: weapon damage accumulates before phase-end PSR and physical attacks"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.9,11,40,42: hazardous friendly entry checks terrain before continuing or displacing"
+        }
+      ],
+      "reviewNote": "p.40 timing source reviewed against Game.psr(), endPSR(), movement collision and resolvePhysical; existing end-of-phase and movement tests confirm distinct trigger times.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.40 timing source reviewed against Game.psr(), endPSR(), movement collision and resolvePhysical; existing end-of-phase and movement tests confirm distinct trigger times."
+      }
+    },
+    {
+      "id": "agoac-123",
+      "topicId": "agoac-psr",
+      "pages": [
+        40
+      ],
+      "statement": "Multiple PSRs from the same event/phase have cumulative phase modifiers and require separate rolls until one fails; damage of at least 20 in a single phase causes exactly one extra PSR; already-prone units are exempt from unrelated fall-avoidance checks.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,40: damage from movement cannot contribute to the weapon phase 20-point PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.29: reciprocal push PSRs include later punch damage and remain phase-end"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll"
+        }
+      ],
+      "reviewNote": "p.40 simultaneous/cumulative and 20+ once-per-phase rule reviewed against phaseDamage, psrs[] and endPSR(); tests verify phase separation, cumulative physical PSRs and prone exemption.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.40 simultaneous/cumulative and 20+ once-per-phase rule reviewed against phaseDamage, psrs[] and endPSR(); tests verify phase separation, cumulative physical PSRs and prone exemption."
+      }
+    },
+    {
+      "id": "agoac-124",
+      "topicId": "agoac-psr",
+      "pages": [
+        40,
+        41
+      ],
+      "statement": "A standing immobile or unconscious BattleMech automatically fails any required fall-avoidance PSR; a prone unit ignores PSRs to avoid falling except attempts to stand; a destroyed gyro/leg applies automatic fall.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hits never raise modifier beyond six"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.34: destroyed biped leg never causes a second fall while prone or already falling"
+        }
+      ],
+      "reviewNote": "p.40 and p.41 footnotes source checked against psr/endPSR/isImmobile/fall and critical destruction. Existing automatic-fall tests pass.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.40 and p.41 footnotes source checked against psr/endPSR/isImmobile/fall and critical destruction. Existing automatic-fall tests pass."
+      }
+    },
+    {
+      "id": "agoac-125",
+      "topicId": "agoac-psr",
+      "pages": [
+        41
+      ],
+      "statement": "The printed PSR Situation Table has correct independent triggers and modifiers for 20+ damage, involuntary shutdown +3, kicked/pushed 0, charge/DFA +2/+4, missed kick 0, water depth -1/0/+1, rubble/stand 0, running/jumping with damage, and previously damaged systems.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.8: gyro and hip damage trigger movement PSR only for run and jump"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.10: ground terrain PSR dispatch uses the entered hex and depth"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.29: push and opposed pushes queue all PSRs until phase-end"
+        },
+        {
+          "file": "tests/combat.mjs",
+          "test": "Failed initial heat shutdown PSR causes fall and automatic pilot injury (BMM pp.52,54)"
+        }
+      ],
+      "reviewNote": "Most p.41 triggers and modifiers implemented in psr(), psrMod(), move/stand/jump and physical resolution, with existing tests. No one-to-one exhaustive complete row matrix across all cases; stay Tested Case until table inventory/boundaries are exercised. Official errata deletes unintentional-charge row."
+    },
+    {
+      "id": "agoac-126",
+      "topicId": "agoac-psr",
+      "pages": [
+        41
+      ],
+      "statement": "Preexisting gyro +3 per hit up to two, destroyed biped leg +5, damaged hip +2, other leg/foot actuators +1 each, with official hip errata overriding only previous-phase same-leg actuator modifiers; automatic falls use applicable special modifiers.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.32,40,43: second gyro hit makes fall automatic and subsequent hits never raise modifier beyond six"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGOAC errata v8.01 p.4: hip PSR preserves only same/later-phase leg actuator penalties"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: one-legged biped stand includes cumulative modifiers in a single PSR"
+        }
+      ],
+      "reviewNote": "Printed p.41 table and AGoAC errata hip footnote reviewed against Game.psrMod, actuatorHitPhases, phase history and immediate fall; source-linked tests cover cross-phase hip interactions.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "Printed p.41 table and AGoAC errata hip footnote reviewed against Game.psrMod, actuatorHitPhases, phase history and immediate fall; source-linked tests cover cross-phase hip interactions."
+      }
+    },
+    {
+      "id": "agoac-127",
+      "topicId": "agoac-psr",
+      "pages": [
+        40,
+        42
+      ],
+      "statement": "Displacement resolves immediately after the triggering action and before its resulting later attacks, applies phase damage before displacement, rejects a hex more than two levels uphill, treats off-board displacement as destruction, and preserves attack damage/PSRs when displacement is prohibited.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.26,42: successful charge against a prohibited displacement hex still deals damage and requires PSRs"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.29: prohibited push retains positions and queues a phase-end PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.42: displacement invalidates an unmade attack against a stationary third Mech"
+        }
+      ],
+      "reviewNote": "p.40–42 displacement restrictions and ordering checked against displace, applyPush, resolvePhysical; tests cover prohibited height, retained impact, and interruption of other attacks.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.40–42 displacement restrictions and ordering checked against displace, applyPush, resolvePhysical; tests cover prohibited height, retained impact, and interruption of other attacks."
+      }
+    },
+    {
+      "id": "agoac-128",
+      "topicId": "agoac-psr",
+      "pages": [
+        40,
+        42
+      ],
+      "statement": "A displacement by one or zero levels into an occupied hex can trigger domino; two or more levels down into an occupied hex triggers an accidental fall from above; a two-or-more-level clear drop causes an automatic fall.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.42: domino checks occur before chain displacement and failures fall in destination"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR"
+        }
+      ],
+      "reviewNote": "p.40 branch conditions checked in displace(): occupied level parity -> domino; vertical drop >=2 -> accidentalFall; unoccupied vertical drop -> fall. This certifies dispatch only; collision damage magnitude is separately registered Known Missing (135).",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.40 branch conditions checked in displace(): occupied level parity -> domino; vertical drop >=2 -> accidentalFall; unoccupied vertical drop -> fall. This certifies dispatch only; collision damage magnitude is separately registered Known Missing (135)."
+      }
+    },
+    {
+      "id": "agoac-129",
+      "topicId": "agoac-psr",
+      "pages": [
+        42
+      ],
+      "statement": "Domino target immediately makes PSR, failed check moves and falls in destination, passed side-entry check may dodge one forward/backward legal unoccupied hex using remaining MP (no backward running or jump dodge); domino chains repeat until open hex or blocked final unit destroyed.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.42: domino checks occur before chain displacement and failures fall in destination"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.42: domino dodge eligibility, direction, MP, occupied hexes and movement mode"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.42: movement domino dodge pauses, survives recovery and reuses its dice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.42: immobile and prone domino targets do not roll; blocked final target is destroyed"
+        }
+      ],
+      "reviewNote": "p.42 source compared to dominoCheck, dominoDodgeOptions, chooseResolutionOption, resolveDomino and replay; tests cover passed/failed PSR, chain, legal direction, remaining MP and replay.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.42 source compared to dominoCheck, dominoDodgeOptions, chooseResolutionOption, resolveDomino and replay; tests cover passed/failed PSR, chain, legal direction, remaining MP and replay."
+      }
+    },
+    {
+      "id": "agoac-130",
+      "topicId": "agoac-psr",
+      "pages": [
+        42,
+        43
+      ],
+      "statement": "A falling BattleMech remains in entered/occupied hex as applicable, becomes prone, and rolls 1D6 on the six-row Facing After Fall Table; corresponding front/right/rear/left hit-location column must match rolled orientation.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: failed water landing determines fall facing relative to selected landing orientation"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers"
+        }
+      ],
+      "reviewNote": "Game.fall() rotates facing from 1D6 and maps impact side; existing tests cover some orientations. Complete 1–6 facing/arc matrix, including reverse and special fall reasons, is not individually proved; Tested Case."
+    },
+    {
+      "id": "agoac-131",
+      "topicId": "agoac-psr",
+      "pages": [
+        43
+      ],
+      "statement": "Ordinary dry falls inflict ceil(tonnage/10) times (levels fallen+1) points of damage, split into 5-point packets plus remainder with rolled hit location and facing-derived damage table, resolved after pilot seatbelt check.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR"
+        }
+      ],
+      "reviewNote": "fallDamageGroups() and packets() implement printed arithmetic/packets, but dedicated exhaustive dry-fall 20–100 ton, 0–4 level, last-packet 1–4 and all arc matrix is not recorded; Tested Case."
+    },
+    {
+      "id": "agoac-132",
+      "topicId": "agoac-psr",
+      "pages": [
+        43
+      ],
+      "statement": "Water fall damage is halved rounding down, and a fall from above the water surface resolves separate half-damage surface and bottom impacts, each with its own damage group and rounding.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.43: falling from dry elevation into water resolves surface and bottom damage independently"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.12: failed water landing determines fall facing relative to selected landing orientation"
+        }
+      ],
+      "reviewNote": "p.43 water rules compared to fallDamageGroups for depth 1–3, tonnages 20/65/85/100 and dry elevation 0–3; exhaustive existing boundary matrix passes.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.43 water rules compared to fallDamageGroups for depth 1–3, tonnages 20/65/85/100 and dry elevation 0–3; exhaustive existing boundary matrix passes."
+      }
+    },
+    {
+      "id": "agoac-133",
+      "topicId": "agoac-psr",
+      "pages": [
+        40,
+        43,
+        44
+      ],
+      "statement": "A fall requires a separate immediate MechWarrior seatbelt PSR before applying the fall's damage, reusing the causing PSR modifiers plus +1 per level above one; a missed check wounds once, as does immobilization or target number above 12 without a roll.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.43-44: fall seatbelt checks occur before damage with elevation modifiers"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.11,40: standing limbless unit fails PSR automatically while prone unit need not roll"
+        }
+      ],
+      "reviewNote": "p.40 and p.43 pilot injury timing/modifiers/automatic damage checked against Game.fall() and seeded 0–3 level/immobile/TN13 tests.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.40 and p.43 pilot injury timing/modifiers/automatic damage checked against Game.fall() and seeded 0–3 level/immobile/TN13 tests."
+      }
+    },
+    {
+      "id": "agoac-134",
+      "topicId": "agoac-psr",
+      "pages": [
+        44
+      ],
+      "statement": "An accidental fall from above attacks at base TN 7 plus target movement and terrain; if it misses, the falling unit is placed in a randomly selected nearest legal adjacent hex or is destroyed when no legal landing exists.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys the falling Mech"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR"
+        }
+      ],
+      "reviewNote": "p.44 hit/miss dispatch and missed placement reviewed against accidentalFall, accidentalFallMiss and fallNeighborOptions; tests cover target movement/terrain and blocked landing.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.44 hit/miss dispatch and missed placement reviewed against accidentalFall, accidentalFallMiss and fallNeighborOptions; tests cover target movement/terrain and blocked landing."
+      }
+    },
+    {
+      "id": "agoac-135",
+      "topicId": "agoac-psr",
+      "pages": [
+        44
+      ],
+      "statement": "On a successful accidental fall onto a target, damage equals ceil(falling Mech tonnage/10) times the number of levels from its origin down to the target's impact level (target Mech's level MINUS ONE per errata v8.01); halve if the target is fully submerged; split among 5-point Punch Location packets.",
+      "status": "known_missing",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR"
+        }
+      ],
+      "reviewNote": "CONFIRMED MISMATCH: official errata v8.01 p.5 changes impact level to underlying hex + target level -1. Current accidentalFallHit() uses impactLevels=Math.max(0,drop-(target.prone?1:2)), giving drop-2 for standing and drop-1 for prone; must be drop-1 standing and drop-0 prone. Existing test encodes wrong expected 21 for 65-ton, 5-level standing hit, while errata demands 28 (and 10 vs 14 when fully submerged Depth 2). Change code and this regression together; do not mark verified."
+    },
+    {
+      "id": "agoac-136",
+      "topicId": "agoac-psr",
+      "pages": [
+        44
+      ],
+      "statement": "On an accidental-fall hit, the falling Mech lands on its back with damage applied to rear, and a surviving target is displaced into a random legal neighboring hex then immediately attempts a +2 PSR; no legal hex destroys the unit.",
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear fall and displaced target PSR"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys the falling Mech"
+        }
+      ],
+      "reviewNote": "The engine implements rear-fall, target random displacement and +2 PSR, tested; full successful impact pipeline still relies on known incorrect collision damage calculation in 135, so remains Tested Case."
+    },
+    {
+      "id": "agoac-137",
+      "topicId": "agoac-psr",
+      "pages": [
+        44
+      ],
+      "statement": "Head hits wound pilot even if only armor takes damage; an internal ammunition explosion deals two wounds; damaged life support deals appropriate Heat Phase wounds independent of normal armor.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.44: head hits wound the pilot even when armor holds"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.39,44: internal ammunition explosion wounds a surviving pilot twice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.33,39,44: damaged life support heat wounds at exact thresholds"
+        }
+      ],
+      "reviewNote": "p.44 pilot damage causes directly checked in hit(), explode(), heatPhase() and wound(); threshold tests confirm armor/head, ammo and life support.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.44 pilot damage causes directly checked in hit(), explode(), heatPhase() and wound(); threshold tests confirm armor/head, ammo and life support."
+      }
+    },
+    {
+      "id": "agoac-138",
+      "topicId": "agoac-psr",
+      "pages": [
+        44
+      ],
+      "statement": "Each new pilot wound separately checks consciousness at thresholds 3/5/7/10/11 for wounds 1–5, no further checks if already unconscious, sixth wound kills the pilot and schedules unit removal at phase end.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.6,44: delayed consciousness rolls retain each wound threshold"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.5,44: Warrior Data shows all six injury steps and the exact consciousness table"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.35,44: lethal pilot or component damage leaves map presence until phase end"
+        }
+      ],
+      "reviewNote": "p.44 Warrior Data table and timing reviewed against wound(), consciousness(), destroyMech(), removeDestroyedMechs; existing exact wound and fatal tests pass.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.44 Warrior Data table and timing reviewed against wound(), consciousness(), destroyMech(), removeDestroyedMechs; existing exact wound and fatal tests pass."
+      }
+    },
+    {
+      "id": "agoac-139",
+      "topicId": "agoac-psr",
+      "pages": [
+        44
+      ],
+      "statement": "An unconscious pilot remains unable to act for at least one full turn, makes one recovery roll in each eligible End Phase against current wound threshold, and need not roll again until newly wounded after recovery.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,38,44: recovered pilot can choose reactor state with exactly-once recovery and restart dice"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.7,44: unsuccessful recovery does not offer reactor choice"
+        }
+      ],
+      "reviewNote": "p.44 recovery timing checked against endPhase wasUnconscious gate, injury consciousness counters, tests for first eligible recovery and failure/preserved choice.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018) pp.40–44; official AGoAC errata v8.01 pp.5–6",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "testedTree": "68ccfce465451bf5d7c59f06e77dadfb10b587d6",
+        "mergedSha": "abfb709beb0c009995bf046516f5b4cc99f6935b",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44891964395,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44891964336,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44891964353,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44891964328,
+          "conclusion": "success",
+          "headSha": "abfb709beb0c009995bf046516f5b4cc99f6935b"
+        },
+        "review": "p.44 recovery timing checked against endPhase wasUnconscious gate, injury consciousness counters, tests for first eligible recovery and failure/preserved choice."
       }
     }
   ]
