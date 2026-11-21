@@ -6964,3 +6964,155 @@ test('CAT3500D pp.47-48: other scenarios and invalid campaign sources cannot cla
   sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok,false,
  'unfinished Scenario 1 cannot provide certified survivors');
 });
+
+test('CAT3500D pp.45-48: pinned AGoAC maps preserve four 16x17 source elevations, water and bridge records',async()=>{
+ const {buildAgoacSheet,AGOAC_BOARD_NAMES,AGOAC_BOARD_SOURCE}=await import('../dist/agoac-boards.js');
+ assert.deepEqual(AGOAC_BOARD_NAMES,['Desert #2','Desert #3','Grassland #2','Grassland #3']);
+ assert.equal(AGOAC_BOARD_SOURCE.revision,'5ee1b15ff2877611db4b0ffa864a57d0b9f72938');
+ const pick=(tiles,label)=>tiles.find(t=>t.printedHex===label);
+ for(const name of AGOAC_BOARD_NAMES){
+  const west=buildAgoacSheet(name,{sheet:0,rotation:0});
+  assert.equal(west.length,272,name);
+  assert.equal(new Set(west.map(t=>t.q+','+t.r)).size,272,name);
+  assert(west.every(t=>t.printedSheet===name&&Number.isInteger(t.height)));
+  const east=buildAgoacSheet(name,{sheet:1,rotation:3});
+  assert.equal(east.length,272);
+  assert.equal(pick(east,'0101').r,8,'180-degree sheet rotation flips north/south');
+  assert.equal(pick(east,'0101').q+Math.floor(pick(east,'0101').r/2)+16,31,
+   '180-degree sheet rotation flips east/west per mapsheet');
+ }
+ const d2=buildAgoacSheet('Desert #2');
+ assert.equal(pick(d2,'0403').height,1,'source Desert #2 printed level-1 elevation');
+ assert.equal(pick(d2,'0607').type,'water');
+ assert.equal(pick(d2,'0607').depth,1);
+ const g2=buildAgoacSheet('Grassland #2');
+ assert.equal(pick(g2,'0903').type,'heavy','printed heavy woods');
+ assert.equal(pick(g2,'0808').type,'bridge','pinned bridge at 0808');
+ assert.equal(pick(g2,'0808').bridge.cf,90,'source bridge CF');
+ assert.equal(pick(g2,'0808').bridge.elevation,1);
+ const g3=buildAgoacSheet('Grassland #3');
+ assert(g3.some(t=>t.type==='woods'||t.type==='heavy'));
+ assert.throws(()=>buildAgoacSheet('Desert #1'),/Unknown AGoAC/);
+ assert.throws(()=>buildAgoacSheet('Desert #2',{sheet:0,rotation:1}),/Unknown AGoAC/);
+});
+
+test('CAT3500D pp.45-48: pinned MegaMek MTF data construct all printed AGoAC technical designs',async()=>{
+ const {loadAgoacPrintedDesigns,AGOAC_PINNED_RECORD_SOURCE}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const {construct}=await import('../dist/construction.js');
+ assert.equal(AGOAC_PINNED_RECORD_SOURCE.revision,'5ee1b15ff2877611db4b0ffa864a57d0b9f72938');
+ const counts={'final-exam':4,'trial-by-fire':4,'divide-and-conquer':10};
+ const variants=new Set();
+ for(const [id,count]of Object.entries(counts)){
+  const designs=loadAgoacPrintedDesigns(id);
+  assert.equal(Object.keys(designs).length,count,id);
+  for(const [variant,config]of Object.entries(designs)){
+   variants.add(variant);
+   assert(config.name.endsWith(' '+variant));
+   const built=construct(config);
+   assert.equal(built.errors.length,0,id+' '+variant+' '+built.errors.join(';'));
+   assert(built.unit.weapons.length>0,'source technical equipment present: '+variant);
+   assert(Object.keys(built.unit.crit).length>=8,'real critical-slot layout');
+   assert(built.unit.tonnage>=20&&built.unit.tonnage<=100);
+  }
+ }
+ assert.equal(variants.size,12,'all 12 distinct published variants use actual source designs');
+ assert.throws(()=>loadAgoacPrintedDesigns('not-a-scenario'),/unknown_agoac/);
+});
+
+test('CAT3500D pp.45-48: three source-backed scenarios load true maps and Mech records, not demo units',async()=>{
+ const {prepareAgoacPrintedScenario,loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ for(const [id,expected] of [['final-exam',8],['trial-by-fire',4],['divide-and-conquer',10]]){
+  const g=fresh();
+  assert(g.configureScenario(id).ok);
+  g.scenario.sideRollWinner=0;
+  assert(g.chooseScenarioSide(0,'attacker').ok);
+  const missing=g.configurePrintedScenarioForces({designs:loadAgoacPrintedDesigns(id)});
+  assert.equal(missing.ok,false,'source map must be present before mech roster');
+  const loaded=prepareAgoacPrintedScenario(g,id);
+  assert.equal(loaded.map.tiles,544);
+  assert.equal(loaded.records.units,expected);
+  assert.equal(g.units.length,expected);
+  assert.equal(g.setupMap.printedScenario,id);
+  assert.deepEqual(g.setupMap.sheets.map(s=>s.name),AGOAC_PRINTED_SCENARIOS[id].sheets.map(s=>s.name));
+  assert(g.tiles.every(t=>t.printedHex&&t.printedSheet&&typeof t.sourceTerrain==='string'));
+  assert(g.units.every(u=>u.recordSource==='MegaMek/mm-data'&&u.recordSourceRevision===g.setupMap.sourceRevision));
+  assert.equal(g.units.every(u=>u.deployed===false),true);
+  assert.equal(g.nextPhase().ok,false,'cannot bypass source scenario without deployment');
+  assert.equal(g.startStandardDeployment().ok,false,'cannot silently use generic deployment');
+  assert.equal(g.configureSetupForces({slots:[0,1,2,3]}).ok,false);
+  const before=JSON.stringify(g.units);
+  assert.equal(g.configurePrintedScenarioForces({designs:loadAgoacPrintedDesigns(id)}).ok,false,'cannot replace once loaded');
+  assert.equal(JSON.stringify(g.units),before);
+  const start=g.beginPrintedScenarioPlacement();
+  assert(start.ok,id);
+  assert.equal(start.exactMapImplemented,true);
+  assert.equal(start.recordSheetsImported,true);
+  assert.equal(start.steps,expected);
+  assert.equal(g.scenario.placement.complete,false);
+  assert(g.units.some(u=>u.tonnage!==55),'not demo duplicates');
+ }
+});
+
+test('CAT3500D pp.46-48: source BattleMaster gets four pregame 5-point hits without head/crit',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario('trial-by-fire').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ prepareAgoacPrintedScenario(g,'trial-by-fire');
+ assert(g.beginPrintedScenarioPlacement().ok);
+ for(const stage of g.scenario.placement.steps){
+  const unit=g.units.find(u=>u.team===stage.team&&!u.deployed);
+  assert(unit);
+  const location=g.tiles.find(t=>g.scenarioZoneAllowed(unit.team,t.q,t.r,{lance:unit.lance,facing:0})&&
+   !g.scenario.placement.placed.some(p=>p.q===t.q&&p.r===t.r));
+  assert(location,'source terrain includes legal setup hex for '+unit.variant);
+  assert(g.placePrintedScenarioMech(unit.id,location.q,location.r).ok);
+ }
+ const defender=g.units.find(u=>u.team===g.scenario.defenderTeam);
+ assert.equal(defender.variant,'BLR-1G');
+ assert.equal(defender.tonnage,85);
+ assert.equal(g.nextPhase().ok,false,'printed prematch damage required');
+ // Deterministic 2D6 sum 7 hits center torso, never head.
+ g.rng=()=>.5;
+ const pre=g.applyTrialByFirePreDamage(defender.id);
+ assert(pre.ok);
+ assert.equal(pre.hits.length,4);
+ assert(pre.hits.every(h=>h.damage===5&&h.location!=='HD'));
+ assert.equal(g.scenario.preDamageApplied,true);
+ assert(g.nextPhase().ok,'source-backed scenario may enter Initiative after prematch damage');
+ assert.equal(g.initiativeWinner,g.scenario.defenderTeam);
+});
+
+test('CAT3500D p.48: source-backed Divide and Conquer completes corrected defender-first ten-Mech setup',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario('divide-and-conquer').ok);
+ g.scenario.sideRollWinner=0;
+ assert(g.chooseScenarioSide(0,'attacker').ok);
+ prepareAgoacPrintedScenario(g,'divide-and-conquer');
+ assert(g.beginPrintedScenarioPlacement().ok);
+ for(let k=0;k<6;k++){
+  const stage=g.scenario.placement.steps[k];
+  const unit=g.units.find(u=>u.team===stage.team&&u.lance===stage.lance&&!u.deployed);
+  assert(unit);
+  const eastRow=g.divideAndConquerPrintedRow('east');
+  const candidate=g.tiles.find(t=>g.scenarioZoneAllowed(unit.team,t.q,t.r,{lance:unit.lance,facing:0})&&
+   !eastRow.some(v=>v.q===t.q&&v.r===t.r)&&
+   !g.scenario.placement.placed.some(p=>p.q===t.q&&p.r===t.r));
+  assert(candidate);
+  assert(g.placePrintedScenarioMech(unit.id,candidate.q,candidate.r).ok);
+ }
+ assert(g.chooseDivideAndConquerAttackerRow('east').ok);
+ const row=g.divideAndConquerPrintedRow('east');
+ for(let k=0;k<4;k++){
+  const unit=g.units.find(u=>u.team===g.scenario.attackerTeam&&!u.deployed);
+  assert(unit);
+  assert(g.placePrintedScenarioMech(unit.id,row[k].q,row[k].r).ok,'printed east row attacker '+k);
+ }
+ assert(g.scenario.placement.complete);
+ g.rng=()=>.9;
+ assert(g.nextPhase().ok);
+ assert.equal(g.phase,'move');
+ assert.equal(g.queue.length,10,'correct printed 6 defenders vs 4 attackers');
+});
