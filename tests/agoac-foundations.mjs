@@ -7173,7 +7173,9 @@ const chapter11SourceDeployAll=g=>{
   assert(position,'a real legal source hex exists for every printed step');
   assert(g.placePrintedScenarioMech(unit.id,position.q,position.r,0).ok);
  }
- assert.equal(g.scenario.placement.placed.length,g.units.length);
+ assert.equal(g.scenario.placement.placed.length,
+  g.units.filter(u=>!u.scenarioArrivalRound).length,
+  'future campaign reinforcements are excluded from initial printed deployment');
  return g;
 };
 
