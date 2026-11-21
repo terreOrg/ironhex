@@ -102,6 +102,7 @@ export function createHttpServer({
   hangarStore = null,
   pilotStore = null,
   operationStore = null,
+  scenarioRoomStore = null,
   economyStore = null,
   accountFlows = null,
   publicOrigin = null,
@@ -137,12 +138,12 @@ export function createHttpServer({
           apiVersion:1,
           modes:{ai:true,hotseat:true,multiplayer:false},
           features:{database:true,accounts:!!authStore,hangar:!!authStore,pilots:!!pilotStore, emailDelivery:!!accountFlows?.emailAvailable,
-            operations:!!operationStore,campaigns:!!economyStore,market:!!economyStore,economy:!!economyStore,repairs:!!economyStore},
+            operations:!!operationStore,scenarioRoomInvites:!!scenarioRoomStore,campaigns:!!economyStore,market:!!economyStore,economy:!!economyStore,repairs:!!economyStore},
           combatAuthority:'browser',operationsAuthority:operationStore?'server':'unavailable'
         },head);
       }
 
-      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/') || path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/') || path === '/api/v1/operations' || path.startsWith('/api/v1/operations/') || path === '/api/v1/economy' || path.startsWith('/api/v1/economy/')) {
+      if (path.startsWith('/api/v1/auth/') || path === '/api/v1/hangar' || path.startsWith('/api/v1/hangar/') || path === '/api/v1/pilots' || path.startsWith('/api/v1/pilots/') || path === '/api/v1/operations' || path.startsWith('/api/v1/operations/') || path === '/api/v1/scenario-rooms' || path.startsWith('/api/v1/scenario-rooms/') || path === '/api/v1/economy' || path.startsWith('/api/v1/economy/')) {
         if (!authStore) return json(res,503,{error:'auth_unavailable'},head);
 
         if (path === '/api/v1/auth/me' && (method === 'GET' || head)) {
@@ -193,6 +194,32 @@ export function createHttpServer({
                   await economyStore.repairComponent(user.id,input):
                   await economyStore.repair(user.id,input);
             return json(res,200,{item},head);
+          }
+          return json(res,404,{error:'not_found'},head);
+        }
+        if(path==='/api/v1/scenario-rooms'||path.startsWith('/api/v1/scenario-rooms/')){
+          const user=await authStore.currentUser(extractSession(req.headers.cookie));
+          if(!user)return json(res,401,{error:'unauthorized'},head);
+          if(user.emailVerificationRequired&&!user.emailVerified)
+            return json(res,403,{error:'email_unverified'},head);
+          if(!scenarioRoomStore)return json(res,503,{error:'scenario_rooms_unavailable'},head);
+          if(path==='/api/v1/scenario-rooms'&&(method==='GET'||head))
+            return json(res,200,{items:await scenarioRoomStore.list(user.id)},head);
+          if(path==='/api/v1/scenario-rooms'&&method==='POST'){
+            if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
+            return json(res,201,{item:await scenarioRoomStore.create(user.id,await readJson(req))});
+          }
+          const match=/^\/api\/v1\/scenario-rooms\/([^/]+)(?:\/(accept|decline|cancel))?$/.exec(path);
+          if(match){
+            const [,id,action]=match;
+            if(!action&&(method==='GET'||head))
+              return json(res,200,{item:await scenarioRoomStore.get(user.id,id)},head);
+            if(action&&method==='POST'){
+              if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
+              const body=await readJson(req);
+              if(Object.keys(body).length)throw new AuthError(422,'invalid_scenario_room');
+              return json(res,200,{item:await scenarioRoomStore[action](user.id,id)},head);
+            }
           }
           return json(res,404,{error:'not_found'},head);
         }
