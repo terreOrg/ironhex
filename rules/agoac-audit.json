@@ -656,7 +656,7 @@
           "agoac-163",
           "agoac-164"
         ],
-        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending. VERIFIED SUBSET: 4 already-implemented weather requirements with source and test coverage on exact four-way green main e12ebe6; all missing scenario/game setup and optional functionality remain unverified. 4 Verified, 21 Known Missing. New engine-only partial scenario setup and initiative, plus lunar jump path. No accurate mapsheets or complete scenario victory logic; do not close chapter. Package FINAL: scenario 2D6 roles, scenario 3 -2 defender Initiative and full-moon jump MP source/code/test verified on four-way green main 249f3ba. Trial by Fire automatic first-turn initiative proved only as a subset; east-edge exit and instant destruction still missing. Chapter remains open. PR#234 audit packet: scenario terminal conditions and exit mechanics added to source and dist and API, with five deterministic test groups. Mark 143/147/152 Tested Case only, not Verified. Published scenario presets, exact maps/forces/deployment/launcher absent; scenario rule chapter remains open."
+        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending. VERIFIED SUBSET: 4 already-implemented weather requirements with source and test coverage on exact four-way green main e12ebe6; all missing scenario/game setup and optional functionality remain unverified. 4 Verified, 21 Known Missing. New engine-only partial scenario setup and initiative, plus lunar jump path. No accurate mapsheets or complete scenario victory logic; do not close chapter. Package FINAL: scenario 2D6 roles, scenario 3 -2 defender Initiative and full-moon jump MP source/code/test verified on four-way green main 249f3ba. Trial by Fire automatic first-turn initiative proved only as a subset; east-edge exit and instant destruction still missing. Chapter remains open. PR#234 audit packet: scenario terminal conditions and exit mechanics added to source and dist and API, with five deterministic test groups. Mark 143/147/152 Tested Case only, not Verified. Published scenario presets, exact maps/forces/deployment/launcher absent; scenario rule chapter remains open. Additional API command validation tests included in #234; no chapter completion."
       }
     },
     {
@@ -9678,7 +9678,7 @@
       ],
       "statement": "Scenario 2 defender wins by exiting BattleMaster via east edge or destroying every attacker; attacker wins on BattleMaster destruction.",
       "status": "tested_case",
-      "reviewNote": "No automatic east-edge escape victory, nor condition bound to designated BattleMaster. 2026-11-21 PR#234 code/test packet: a lone defender scenario state now handles east exit and elimination of attackers versus loss of designated defender; explicit tests for attacker, defender and simultaneous elimination. TESTED CASE only: actual BLR-1G roster, pre-damage, printed map and asymmetric setup missing; no full mission interface. Exact-head checks still required.",
+      "reviewNote": "No automatic east-edge escape victory, nor condition bound to designated BattleMaster. 2026-11-21 PR#234 code/test packet: a lone defender scenario state now handles east exit and elimination of attackers versus loss of designated defender; explicit tests for attacker, defender and simultaneous elimination. TESTED CASE only: actual BLR-1G roster, pre-damage, printed map and asymmetric setup missing; no full mission interface. Exact-head checks still required. 2026-11-21 follow-up API validation regression covers forged payload rejection, no-scenario rejection, terminal winner, and no post-victory opponent actions. No status promotion.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9687,6 +9687,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.46-48: voluntary exit must be a legal movement order from the correct map edge"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "AGoAC p.47 API: validated east exit wins only for the lone Trial by Fire defender"
         }
       ]
     },
@@ -9698,7 +9702,7 @@
       ],
       "statement": "Scenario 2 defender automatically wins first-turn Initiative and may exit only the east edge; any attacking Mech that exits is destroyed.",
       "status": "tested_case",
-      "reviewNote": "Initiative is normally rolled for both teams and no scenario-specific first-round forced winner/exit policy exists. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. Partial: first-turn forced initiative proved, but exit-edge/destruction policy not implemented. Must remain Tested Case. 21.11.2026 final check: first-turn defender automatic initiative engine portion is CI/test confirmed, but east-edge-only safe defender exit and instant destruction of offside/attacker exits are absent. Cannot mark whole requirement Verified. 2026-11-21 PR#234 adds guarded map-edge exit orders to engine + tactical API, east-only safe defender exit and attacker/wrong-edge destruction, plus forced east displacement checks. First-turn defender forced initiative was previously tested. TESTED CASE retained: scenario-specific printed map, exact BattleMaster roster and real user-facing exit control/mission launch remain to be completed, and new PR exact-head gates still required.",
+      "reviewNote": "Initiative is normally rolled for both teams and no scenario-specific first-round forced winner/exit policy exists. 21.11.2026 engine source/dist patch and named regression added; exact CI, Browser E2E, Smoke and main Sonar required before Verified. Partial: first-turn forced initiative proved, but exit-edge/destruction policy not implemented. Must remain Tested Case. 21.11.2026 final check: first-turn defender automatic initiative engine portion is CI/test confirmed, but east-edge-only safe defender exit and instant destruction of offside/attacker exits are absent. Cannot mark whole requirement Verified. 2026-11-21 PR#234 adds guarded map-edge exit orders to engine + tactical API, east-only safe defender exit and attacker/wrong-edge destruction, plus forced east displacement checks. First-turn defender forced initiative was previously tested. TESTED CASE retained: scenario-specific printed map, exact BattleMaster roster and real user-facing exit control/mission launch remain to be completed, and new PR exact-head gates still required. 2026-11-21 follow-up API validation regression covers forged payload rejection, no-scenario rejection, terminal winner, and no post-victory opponent actions. No status promotion.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
@@ -9711,6 +9715,10 @@
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D pp.46-48: voluntary exit must be a legal movement order from the correct map edge"
+        },
+        {
+          "file": "tests/api.mjs",
+          "test": "AGoAC p.47 API: validated east exit wins only for the lone Trial by Fire defender"
         }
       ]
     },
