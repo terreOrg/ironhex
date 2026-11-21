@@ -1404,26 +1404,21 @@ test('AGoAC pp.6,30: controller chooses Mech order independently while preservin
  assert.deepEqual(g.resolution.map(o=>o.id),[a.id,c.id,b.id,d.id]);
 });
 
-test('AGoAC p.38: controller selects tied hottest ammo bin without repeating the failed heat roll',()=>{
+test('CAT3500D p.39: heat ammo explosion automatically selects the same-type bin with most shots',()=>{
  const g=fresh(),u=g.units[0];
  g.phase='heat';g.queue=[];g.activeTeam=null;
  for(const tile of g.tiles)Object.assign(tile,{type:'plain',depth:0,height:0,surface:0});
  const base=u.bins[0],other=base.location==='LT'?'RT':'LT';
  u.bins=[{...base,shots:1},{...base,location:other,slot:11,shots:5}];
  u.prone=true;u.shutdown=true;u.voluntaryShutdown=true;u.heat=19+u.sinks;u.pendingHeat=0;
- let draws=0;g.rng=()=>{draws++;return draws<=2?0:.4;};
- assert(g.nextPhaseWithChoices({humanTeams:[0]}).pending);
- const pending=g.pendingChoice;assert.equal(pending.kind,'heat-ammo-bin');
- assert.equal(draws,2);assert.equal(pending.context.heat,19);
- assert.deepEqual(pending.options.map(o=>[o.id,o.shots]),[['0',1],['1',5]]);
- assert.equal(u.bins[0].shots,1);assert.equal(u.bins[1].shots,5);
- assert.equal(g.nextPhaseWithChoices({choice:{key:pending.key,option:'forged'}}).ok,false);
- assert.equal(draws,2);
- assert(g.nextPhaseWithChoices({choice:{key:pending.key,option:'0'}}).ok);
+ let draws=0;g.rng=()=>{draws++;return 0;};
+ assert(g.nextPhaseWithChoices({humanTeams:[0]}).ok);
  const resolved=g.units[0];
- assert.equal(g.phase,'end');assert.equal(g.pendingChoice,null);
- assert.equal(resolved.bins[0].destroyed,true);assert.equal(resolved.bins[0].shots,0);
- assert.equal(resolved.bins[1].shots,5);
+ assert.equal(g.pendingChoice,null,'same-type bins are never a controller choice');
+ assert.equal(draws,2,'only the two explosion-check dice are needed');
+ assert.equal(resolved.bins[0].shots,1);
+ assert.equal(resolved.bins[1].destroyed,true);
+ assert.equal(resolved.bins[1].shots,0);
  assert.equal(g.phaseRolls.filter(r=>r.kind.includes('Перегрев боезапаса')).length,1);
  assert.equal(resolved.pilotWounds,2);
 });
@@ -5729,4 +5724,69 @@ test('CAT3500D p.38: heat movement and weapon penalties activate at every printe
   assert.equal(g.mp(u,'jump'),baseJump,'jump MP is unaffected at heat '+heat);
   assert.equal(g.preview(u.id,enemy.id,0).mods.heat,[8,13,17,24].filter(h=>heat>=h).length,'weapon target modifier at heat '+heat);
  }
+});
+
+
+test('CAT3500D p.39: identical-shot ammo bins use RNG, never controller choice',()=>{
+ for(const [random,expected] of [[0,0],[.49,0],[.5,1],[.99,1]]){
+  const g=fresh(),u=g.units[0],base=u.bins[0];
+  u.bins=[{...base,shots:3},{...base,location:'RT',slot:11,shots:3}];
+  g.phaseRolls=[];g.rng=()=>random;
+  g._resolutionChooser=()=>{throw Error('No player choice for the same ammo type');};
+  const selected=g.heatExplosionBin(u,u.bins);
+  assert.equal(selected,u.bins[expected],'RNG sample '+random);
+  assert.equal(g.phaseRolls.at(-1).kind.includes('Случайный магазин'),true);
+ }
+});
+
+test('CAT3500D pp.38–39: tied damage across types allows controller choice, but not same-type bin choice',()=>{
+ const g=fresh(),u=g.units[0],base=u.bins[0];
+ u.weapons=[{name:'SRM 6',damage:2,rack:6},{name:'Medium AC',damage:12,rack:0}];
+ u.bins=[{...base,weapon:0,shots:9},{...base,weapon:0,location:'LT',slot:11,shots:2},
+  {...base,weapon:1,location:'RT',slot:11,shots:4}];
+ g._resolutionChooser=({kind,options},fallback)=>{
+  assert.equal(kind,'heat-ammo-bin');
+  assert.deepEqual(options.map(o=>[o.id,o.shots]),[['0',9],['2',4]]);
+  return '0';
+ };
+ assert.equal(g.heatExplosionBin(u,u.bins),u.bins[0]);
+});
+
+test('AGOAC errata v8.01 p.4: all heat checks resolve before shutdown, ammo and life-support effects',()=>{
+ const g=fresh(),u=g.units[0];
+ for(const other of g.units.slice(1))other.dead=true;
+ u.heat=30;u.pendingHeat=0;u.sinks=0;u.lifeSupport=true;
+ u.shutdown=false;u.voluntaryShutdown=false;u.bins=[{...u.bins[0],shots:1}];
+ const steps=[];
+ g.heatRequiresShutdown=()=>{steps.push('shutdown-check');return true;};
+ g.roll=(kind,target)=>{
+  if(kind.includes('Перегрев боезапаса')){steps.push('ammo-check');return 2;}
+  throw Error('Unexpected roll '+kind+' '+target);
+ };
+ g.psr=()=>{steps.push('shutdown-effect');return true;};
+ g.explode=()=>{steps.push('ammo-effect');};
+ g.wound=(unit,n)=>{assert.equal(n,2);steps.push('life-support-effect');};
+ g.consciousness=()=>{};
+ g.endPSR=()=>{};
+ g.heatPhase();
+ assert.deepEqual(steps,['shutdown-check','ammo-check','shutdown-effect','ammo-effect','life-support-effect']);
+ assert.equal(u.heat,30);
+ assert.equal(u.shutdown,true);
+});
+
+test('AGOAC errata v8.01 p.4: concurrent heat effects survive a shutdown PSR changing pilot state',()=>{
+ const g=fresh(),u=g.units[0];
+ for(const other of g.units.slice(1))other.dead=true;
+ u.heat=30;u.pendingHeat=0;u.sinks=0;u.lifeSupport=true;
+ u.shutdown=false;u.voluntaryShutdown=false;u.bins=[{...u.bins[0],shots:1}];
+ const events=[];
+ g.roll=(kind)=>{if(kind.includes('Перегрев боезапаса')){events.push('ammo-check');return 2;}return 2;};
+ g.psr=(unit)=>{events.push('shutdown-psr');unit.unconscious=true;return false;};
+ g.explode=()=>{events.push('ammo-explosion');};
+ g.wound=(unit,n)=>{events.push('life-support-'+n);};
+ g.consciousness=()=>{};
+ g.endPSR=()=>{};
+ g.heatPhase();
+ assert.deepEqual(events,['ammo-check','shutdown-psr','ammo-explosion','life-support-2']);
+ assert.equal(u.unconscious,true);
 });
