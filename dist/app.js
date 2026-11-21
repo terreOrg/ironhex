@@ -9,9 +9,13 @@ import {Game,LOCATIONS,DIRS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,AGOAC_
 import {loadAgoacBrowserDesigns} from './agoac-scenario-loader.js';
 import {AGOAC_BOARD_NAMES} from './agoac-boards.js';
 const $=s=>document.querySelector(s),game=new Game();
-const operationId=new URLSearchParams(location.search).get('operation');
-const remoteMode=operationId!==null;
+const requestParams=new URLSearchParams(location.search);
+const operationId=requestParams.get('operation');
+const scenarioRoomId=requestParams.get('room');
+const roomMode=scenarioRoomId!==null;
+const remoteMode=operationId!==null||roomMode;
 let remoteVersion=0,remoteReady=false,remoteFinished=false;
+let remoteRole=null,roomPollHandle=null,roomSceneInitialized=false;
 let selected=0,target=null,mode='walk',busy=remoteMode,hotseat=false,team=0,angle=Math.PI/4,zoom=12,reach=[],picked=new Set(),records=new Map(),effects=[];
 let sharedDefenderController='command';
 const scene=new THREE.Scene();scene.background=new THREE.Color('#28362d');scene.fog=new THREE.Fog('#28362d',30,65);
@@ -99,6 +103,38 @@ function reportActionError(error){
 function sum(o){return Object.values(o).reduce((a,b)=>a+b,0);}
 
 function applyServerState(state){
+  if(roomMode){
+    const active=state?.units?.filter(u=>!u.notFielded);
+    if(!Array.isArray(state?.tiles)||!Array.isArray(state?.units)||
+      ![7,10].includes(active?.length)||state.setupMap?.id!=='sheets'||
+      !state.scenario?.placement?.complete)
+      throw Error('invalid_source_room_snapshot');
+    const previous=selected;
+    // The demo initially constructed four placeholder records. Their
+    // variant/model scale is NOT the same as the source scenario roster.
+    // Rebuild those 3D records exactly once on first room activation.
+    if(!roomSceneInitialized){
+      for(const rec of records.values()){
+        rec.mixer.stopAllAction();
+        scene.remove(rec.root);rec.label.remove();
+      }
+      records.clear();
+      roomSceneInitialized=true;
+    }
+    Object.assign(game,state);game.rebuildMap();
+    // Original printed maps have 544 hexes and 7/10 units rather than
+    // the legacy four-unit demo. Rebuild actual scene geometry and models.
+    buildTerrain();buildArcMeshes();reconcileModelRecords();
+    selected=game.units.some(u=>u.id===previous&&!u.dead&&!u.notFielded)?
+      previous:(active.find(u=>roomControls(u))?.id??active[0].id);
+    mode=game.unit(selected).moveMode==='stand'?'walk':game.unit(selected).moveMode;
+    picked=new Set(game.unit(selected).weapons.map((_,i)=>i));
+    target=null;weaponTargets={};weaponBins={};weaponSpotters={};
+    weaponAims={};flamerHeat=false;primaryTarget=null;
+    zoom=fitBoard();cam();
+    syncWeatherSwitches();
+    return;
+  }
   if(!state||!Array.isArray(state.tiles)||!Array.isArray(state.units)||
      state.units.length!==4)throw Error('invalid_server_snapshot');
   const original=new Map(game.tiles.map(t=>[t.q+','+t.r,
@@ -118,7 +154,7 @@ function applyServerState(state){
   target=null;weaponTargets={};weaponBins={};weaponSpotters={};weaponAims={};flamerHeat=false;primaryTarget=null;
 }
 function reportAccess(){
-  if(!remoteMode||!remoteFinished)return;
+  if(roomMode||!remoteMode||!remoteFinished)return;
   const panel=$('#actions');
   if($('#server-report-button'))return;
   const button=document.createElement('button');
@@ -137,20 +173,36 @@ async function joinServerBattle(){
   busy=true;
   renderUI();
   try{
-    const res=await fetch('/api/v1/operations/'+encodeURIComponent(operationId)+'/snapshot',
-      {credentials:'same-origin',cache:'no-store'});
+    const path=roomMode?
+      '/api/v1/scenario-rooms/'+encodeURIComponent(scenarioRoomId)+'/snapshot':
+      '/api/v1/operations/'+encodeURIComponent(operationId)+'/snapshot';
+    const res=await fetch(path,{credentials:'same-origin',cache:'no-store'});
     const body=await res.json();
     if(!res.ok)throw Error(body.error||'HTTP '+res.status);
-    if(body.item.controlMode!=='interactive'||!body.item.game)
-      throw Error('Операция не активна или не поддерживает 3D-команды');
-    remoteVersion=body.item.version;
-    remoteFinished=body.item.status==='completed';
-    applyServerState(body.item.game);
-    remoteReady=true;
-    busy=remoteFinished;
-    syncModels();renderUI();reportAccess();
-    toast(remoteFinished?'Операция завершена. Посмотрите рапорт.':
-      'СЕРВЕРНЫЙ БОЙ: приказы проверяются и сохраняются на сервере.');
+    if(roomMode){
+      if(!body.item||!['attacker','command','recon'].includes(body.item.yourRole))
+        throw Error('Вы не участник этой комнаты');
+      if(!body.game?.scenario?.placement?.complete)
+        throw Error('Сначала завершите расстановку в разделе «Сценарии»');
+      remoteRole=body.item.yourRole;
+      remoteVersion=body.item.version;
+      remoteFinished=body.item.status==='finished';
+      applyServerState(body.game);
+      remoteReady=true;busy=remoteFinished;
+      syncModels();renderUI();startRoomPolling();
+      toast('СЕТЕВОЙ СЦЕНАРИЙ: роль '+remoteRole+
+        '. Приказы проверяет сервер; чужие ходы обновляются автоматически.');
+    }else{
+      if(body.item.controlMode!=='interactive'||!body.item.game)
+        throw Error('Операция не активна или не поддерживает 3D-команды');
+      remoteVersion=body.item.version;
+      remoteFinished=body.item.status==='completed';
+      applyServerState(body.item.game);
+      remoteReady=true;busy=remoteFinished;
+      syncModels();renderUI();reportAccess();
+      toast(remoteFinished?'Операция завершена. Посмотрите рапорт.':
+        'СЕРВЕРНЫЙ БОЙ: приказы проверяются и сохраняются на сервере.');
+    }
   }catch(e){
     busy=true;remoteReady=false;renderUI();
     toast('Нет связи с серверным боем: '+e.message);
@@ -160,16 +212,54 @@ async function joinServerBattle(){
     $('#actions').append(button);
   }
 }
+// All three browsers poll the versioned server snapshot; there is no
+// client-side simulated opponent and no sharing of secret dice state.
+function startRoomPolling(){
+  if(!roomMode||roomPollHandle!==null)return;
+  roomPollHandle=setInterval(async()=>{
+    if(!remoteReady||busy||document.hidden)return;
+    try{
+      const response=await fetch(
+        '/api/v1/scenario-rooms/'+encodeURIComponent(scenarioRoomId)+'/snapshot',
+        {credentials:'same-origin',cache:'no-store'});
+      if(!response.ok)return;
+      const body=await response.json();
+      if(body.item?.version===remoteVersion||!body.game)return;
+      busy=true;
+      remoteVersion=body.item.version;
+      remoteFinished=body.item.status==='finished';
+      applyServerState(body.game);
+      chooseActive();syncModels();
+      busy=remoteFinished;renderUI();
+      toast('Сервер: ход другого игрока получен, версия '+remoteVersion+'.');
+    }catch(error){console.warn('Room synchronization failed',error?.message||'error');}
+    finally{if(remoteReady&&!remoteFinished)busy=false;}
+  },3500);
+}
 async function serverCommand(order){
   if(!remoteMode)return;
   if(!remoteReady||busy||remoteFinished)return;
   if(!order){toast('Этот приказ пока не подключён к серверу.');return;}
+  if(roomMode&&!['move','hold','fire','physical','next',
+    'propose-dispute','withdraw-dispute'].includes(order.type)){
+    toast('Этот приказ пока не разрешён в серверном сценарии.');return;
+  }
+  // The first networked 3D slice deliberately uses engine-default
+  // movement facing. The server action schema rejects unsupported
+  // option fields rather than accepting unaudited combat mutations.
+  const command=roomMode&&order.type==='move'?
+    {type:'move',id:order.id,q:order.q,r:order.r,mode:order.mode}:order;
   busy=true;renderUI();
   try{
-    const response=await fetch('/api/v1/operations/'+encodeURIComponent(operationId)+'/command',{
+    const endpoint=roomMode?
+      '/api/v1/scenario-rooms/'+encodeURIComponent(scenarioRoomId)+'/command':
+      '/api/v1/operations/'+encodeURIComponent(operationId)+'/command';
+    const payload=roomMode?{version:remoteVersion,action:command}:
+      {...order,version:remoteVersion};
+    const response=await fetch(endpoint,{
       method:'POST',credentials:'same-origin',cache:'no-store',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({...order,version:remoteVersion})
+      body:JSON.stringify(payload)
     });
     const data=await response.json();
     if(!response.ok){
@@ -178,7 +268,7 @@ async function serverCommand(order){
       }
       throw Error(data.error||'HTTP '+response.status);
     }
-    const item=data.item,fx=item.effect||{};
+    const item=data.item,fx=(roomMode?data.effect:item.effect)||{};
     const movedId=fx.id??order.id;
     if(fx.result?.path?.length&&movedId!==undefined)
       await animateMove(movedId,{...fx.result,ok:true});
@@ -190,11 +280,13 @@ async function serverCommand(order){
     for(const roll of fx.rolls||[])await animateRoll(roll,'СЕРВЕР · '+(order.type||''));
     for(const roll of fx.afterRolls||[])await animateRoll(roll,'СЕРВЕР · СОСТОЯНИЕ');
     const fireDraft=fx.result?.losPrepared?{selected,target,picked,weaponTargets,weaponBins,weaponSpotters,weaponAims,flamerHeat,primaryTarget}:null;
-    applyServerState(item.game);
+    applyServerState(roomMode?data.game:item.game);
     remoteVersion=item.version;
-    remoteFinished=item.status==='completed';
+    remoteFinished=roomMode?item.status==='finished':item.status==='completed';
     chooseActive();
-    if(fireDraft&&game.canAct(game.unit(fireDraft.selected))&&game.unit(fireDraft.selected).team===0){
+    if(fireDraft&&game.canAct(game.unit(fireDraft.selected))&&
+      (roomMode?roomControls(game.unit(fireDraft.selected)):
+        game.unit(fireDraft.selected).team===0)){
       ({selected,target,picked,weaponTargets,weaponBins,weaponSpotters,weaponAims,flamerHeat,primaryTarget}=fireDraft);
     }
     busy=remoteFinished;
@@ -216,7 +308,16 @@ async function serverCommand(order){
   }
 }
 
+function roomControls(u){
+ if(!roomMode||!u||u.dead||u.notFielded||u.deployed===false||
+  u.team!==game.activeTeam)return false;
+ if(remoteRole==='attacker')return u.team===game.scenario?.attackerTeam;
+ if(!['command','recon'].includes(remoteRole)||
+  u.team!==game.scenario?.defenderTeam)return false;
+ return game.sharedDefenderCanControl(u,remoteRole);
+}
 function owned(u){
+ if(roomMode)return roomControls(u);
  if(!u||u.dead||!(hotseat?u.team===game.activeTeam:u.team===0))return false;
  const shared=game.scenario?.sharedLances;
  if(!hotseat||!shared||u.team!==game.scenario.defenderTeam)return true;
@@ -453,7 +554,7 @@ function advancedControls(u,a){const panel=document.createElement('details');pan
 async function specialMove(type){if(game.pendingChoice)return;if(remoteMode)return serverCommand({type:'charge',id:selected,target,attack:type});if(target===null){toast('Сначала выберите врага.');return;}const id=selected,r=game.chargeWithChoices(id,target,type,{humanTeams:hotseat?[0,1]:[0]});return finishLocalMove(id,r,true);}
 function selectUnit(id){if(busy)return;const u=game.units[id];if(['move','fire','physical'].includes(game.phase)&&game.canAct(game.units[selected])&&owned(game.units[selected])&&u.team!==game.units[selected].team&&game.onMap(u)&&!u.dead){target=id;renderUI();return;}selected=id;arcWeapon='all';target=null;weaponTargets={};weaponBins={};weaponSpotters={};weaponAims={};flamerHeat=false;primaryTarget=null;picked=new Set(u.weapons.map((_,i)=>i));mode=u.moveMode==='stand'?'walk':u.moveMode;renderUI();}
 async function showRolls(rolls){for(const r of rolls||[])await animateRoll(r,PHASES[game.phase]);}
-function chooseActive(){if(game.activeTeam!==null){const u=game.units.find(u=>game.canAct(u));if(u){selected=u.id;arcWeapon='all';mode=u.moveMode==='stand'?'walk':u.moveMode;}}target=null;weaponTargets={};weaponBins={};weaponSpotters={};weaponAims={};flamerHeat=false;primaryTarget=null;picked=new Set(game.units[selected].weapons.map((_,i)=>i));}
+function chooseActive(){if(game.activeTeam!==null){const u=game.units.find(u=>game.canAct(u)&&(!roomMode||roomControls(u)));if(u){selected=u.id;arcWeapon='all';mode=u.moveMode==='stand'?'walk':u.moveMode;}}target=null;weaponTargets={};weaponBins={};weaponSpotters={};weaponAims={};flamerHeat=false;primaryTarget=null;picked=new Set(game.units[selected].weapons.map((_,i)=>i));}
 async function pumpAI(){if(remoteMode||hotseat)return;while(!game.pendingChoice&&game.activeTeam===1&&game.winner===null){const u=game.aiSelection();if(!u)break;game.phaseRolls=[];if(game.phase==='move'){const r=game.aiMoveWithChoices(u.id,{humanTeams:[0]});if(!r.ok){toast(r.error);break;}if(r.pending)break;await animateMove(u.id,r);}else if(game.phase==='fire'){const r=game.aiAttackWithLosChoices(u.id,{humanTeams:[0]});if(r.pending)break;}else game.aiPhysical(u.id);await showRolls(game.phaseRolls);syncModels();}}
 async function action(fn,advance=false,order=null){if(game.pendingChoice)return;if(remoteMode)return serverCommand(order);if(busy)return;game.phaseRolls=[];const r=fn();if(!r?.ok){toast(r?.error||'Приказ не выполнен');return;}if(r.losPrepared){renderUI();if(!r.pending)toast('Линия огня выбрана. Проверьте цели и подтвердите огонь.');return;}if(game.units[selected].dead&&game.actingId===selected){game.hold(selected);advance=true;}busy=true;renderUI();await showRolls(game.phaseRolls);if(advance){await pumpAI();chooseActive();}busy=false;renderUI();}
 const ray=new THREE.Raycaster();const pointer=new THREE.Vector2();const activePointers=new Map();let gestureUsed=false,pinchDistance=null;
