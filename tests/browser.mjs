@@ -1669,8 +1669,14 @@ test('AGoAC Ch11: signed Scenario 3 terrain setup offers interactive 544-hex sou
   await diagram.waitFor({state:'visible'});
   assert.match(await diagram.textContent(),/Размещено 1\/4/);
   assert.equal(await diagram.locator('polygon[fill="#277a95"]').count(),2);
-  assert.equal(await diagram.locator('polygon[data-choice]').count(),0,
-   'other defender cannot submit the attacker-only placement');
+  assert(await diagram.locator('polygon[data-choice]').count()>0,
+   'the signed command seat can now choose the triangular element');
+  const shape=page.locator('#scenario-room-details input[name=offsets]');
+  const submit=page.locator('#scenario-room-details button[type=submit]').last();
+  await shape.fill('0,0;1,0;1,1');
+  assert(await submit.isDisabled(),'invalid triangle cannot be submitted');
+  await shape.fill('0,0;1,0;1,-1');
+  assert(await submit.isEnabled(),'valid triangular footprint has legal origins');
  });
 });
 
