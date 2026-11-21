@@ -979,12 +979,13 @@ export class Game extends Legacy{
  // Footprint offsets are relative axial hexes supplied by a piece catalog.
  // A multi-hex piece is one turn, one quota item and one connected footprint.
  // No fabricated punch-out art or undocumented terrain effects are assumed.
- placeScenarioLooseTerrain({team,q,r,label,footprint=[{q:0,r:0}]}={}){
+ placeScenarioLooseTerrain({team,q,r,label,terrainType=null,footprint=[{q:0,r:0}]}={}){
   const setup=this.scenario?.looseTerrain;
   if(!this.scenarioSetupOpen()||!setup||setup.complete||
    this.scenario.placement||![0,1].includes(team)||team!==setup.nextTeam||
    !Number.isInteger(q)||!Number.isInteger(r)||
    typeof label!=='string'||!label.trim()||label.length>80||
+   terrainType!==null&&!['woods','heavy','rough','rubble'].includes(terrainType)||
    !Array.isArray(footprint)||!footprint.length||footprint.length>32||
    !footprint.every(h=>h&&Number.isInteger(h.q)&&Number.isInteger(h.r)&&
     Math.abs(h.q)<=15&&Math.abs(h.r)<=16)||
@@ -1014,7 +1015,19 @@ export class Game extends Legacy{
    return fail('Между всеми краями элементов необходимо три пустых гекса');
   if(setup.pieces.filter(p=>p.team===team).length>=setup.piecesPerTeam)
    return fail('Превышена равная квота элементов');
-  setup.pieces.push({team,q,r,label:label.trim(),hexes});
+  // Physical markers have no combat effect until their printed terrain
+  // type is explicitly specified. Do not guess die-cut shapes from names.
+  if(terrainType!==null&&hexes.some(h=>{
+   const t=this.tile(h.q,h.r);
+   return t.depth>0||t.bridge||t.overlayTerrain!=null;
+  }))return fail('Эту местность нельзя наложить на воду, мост или другую накладку');
+  setup.pieces.push({team,q,r,label:label.trim(),hexes,terrainType});
+  if(terrainType!==null)for(const hex of hexes){
+   const t=this.tile(hex.q,hex.r);
+   t.baseTerrainType??=t.type;
+   t.type=terrainType;
+   t.overlayTerrain={label:label.trim(),terrainType,team};
+  }
   setup.complete=setup.pieces.length===setup.piecesPerTeam*2;
   setup.nextTeam=setup.complete?null:1-team;
   return {ok:true,complete:setup.complete,nextTeam:setup.nextTeam,
