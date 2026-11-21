@@ -1,0 +1,40 @@
+name: SonarQube Gate Diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Read current SonarQube quality gate conditions (read-only)
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 5
+    steps:
+      - name: Explain main quality gate status
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          node --input-type=module <<'JS'
+          const host=process.env.SONAR_HOST_URL;
+          const token=process.env.SONAR_TOKEN;
+          if(!host||!token)throw Error('SonarQube configuration missing');
+          const u=new URL('/api/qualitygates/project_status?projectKey=ironhex',host);
+          const response=await fetch(u,{
+            headers:{Authorization:'Basic '+Buffer.from(token+':').toString('base64')}
+          });
+          if(!response.ok)throw Error('SonarQube API HTTP '+response.status);
+          const data=await response.json();
+          const status=data.projectStatus;
+          console.log('Gate status:',status?.status??'unknown');
+          for(const c of status?.conditions??[]){
+            console.log(JSON.stringify({
+              metric:c.metricKey,status:c.status,actual:c.actualValue,
+              threshold:c.errorThreshold,operator:c.comparator,
+              period:c.periodIndex
+            }));
+          }
+          JS
