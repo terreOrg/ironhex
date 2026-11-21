@@ -63,7 +63,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$GITHUB_REF" == 'refs/heads/main' ]]; then
+          if [[ "$GITHUB_REF" != refs/heads/audit/agoac-ch11-* ]]; then
             npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1 v8-to-istanbul@9.3.0 istanbul-lib-coverage@3.2.2 istanbul-lib-report@3.0.1 istanbul-reports@3.1.7
           else
             npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.56.1
@@ -71,14 +71,15 @@ jobs:
       - name: Install headless Chromium
         if: github.ref != 'refs/heads/main' || steps.valid_browser.outputs.reuse != 'true'
         run: npx --no-install playwright install chromium
-      # Audit branches get Chapter 11 browser regression quickly; complete UI coverage
-      # is ALWAYS produced on main. Unit CI still runs the complete engine/API suite.
+      # Chapter-11 audit branches get focused scenario regressions first;
+      # main and other audit branches retain all browser cases and full LCOV.
+      # The engine/API job always runs its full unit coverage separately.
       - name: Execute Chapter 11 Chromium scenario regressions
-        if: github.ref != 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/heads/audit/agoac-ch11-')
         run: |
           node --test --test-name-pattern='^(AGoAC Ch11|AGoAC Chapter 11|AGoAC 3D room)' tests/browser.mjs
       - name: Execute full browser test suite and verify coverage report
-        if: github.ref == 'refs/heads/main' && steps.valid_browser.outputs.reuse != 'true'
+        if: ${{ !startsWith(github.ref, 'refs/heads/audit/agoac-ch11-') && (github.ref != 'refs/heads/main' || steps.valid_browser.outputs.reuse != 'true') }}
         env:
           IRONHEX_BROWSER_COVERAGE: '1'
         run: |
@@ -86,7 +87,7 @@ jobs:
           node --test tests/browser.mjs
           test -s coverage/browser.info
       - name: Upload browser LCOV report
-        if: github.ref == 'refs/heads/main'
+        if: ${{ !startsWith(github.ref, 'refs/heads/audit/agoac-ch11-') }}
         uses: actions/upload-artifact@v4
         with:
           name: ironhex-browser-lcov-${{ github.sha }}
