@@ -27,7 +27,7 @@ async function expectedBytes(source) {
     if(!Array.isArray(manifest.records)||manifest.records.length<12)
       throw Error('Incomplete pinned AGoAC technical records');
     const records=await Promise.all(manifest.records.map(async entry=>{
-      if(!/^[-A-Za-z0-9]+\\.mtf$/.test(entry.file))
+      if(!/^[-A-Za-z0-9]+\.mtf$/.test(entry.file))
         throw Error('Unsafe printed record filename');
       return {...entry,raw:await readFile(resolve(root,'data/megamek/scenarios',entry.file),'utf8')};
     }));

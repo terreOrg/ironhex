@@ -4,6 +4,8 @@ WORKDIR /src
 # The existing dist/ still contains third-party JS and animated GLB assets.
 COPY dist/ dist/
 COPY apps/web/src/ apps/web/src/
+COPY data/megamek/scenarios/ data/megamek/scenarios/
+COPY apps/api/src/mtf.mjs apps/api/src/mtf.mjs
 COPY packages/engine/ packages/engine/
 COPY packages/ui/mech-toggle/mech-toggle.js packages/ui/mech-toggle/mech-toggle.js
 COPY scripts/build-web.mjs scripts/build-web.mjs
