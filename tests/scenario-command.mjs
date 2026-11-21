@@ -2,7 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {Game} from '../packages/engine/engine.js';
 import {AuthError} from '../apps/api/src/auth.mjs';
-import {runScenarioRoomCommand,canControlScenarioUnit} from
+import {runScenarioRoomCommand,canControlScenarioUnit,
+ canResolveScenarioPendingChoice} from
  '../apps/api/src/scenario-command.mjs';
 
 function ready(){
@@ -129,4 +130,53 @@ test('AGoAC Ch11 p.48: server enforces alternating defending initiative controll
   'wrong_initiative_controller');
  assert(runScenarioRoomCommand(h,'recon',{type:'next'}).ok);
  assert.equal(h.scenario.sharedLances.initiativeRound,2);
+});
+
+
+test('AGoAC Ch11 p.48: pending LOS/damage decisions belong to the real signed unit owner',()=>{
+ const g=ready();
+ const pending=(unitId,team=1)=>({
+  scope:'los',kind:'los-path',team,unitId,key:'choice-key',
+  options:[{id:'0',label:'front'},{id:'1',label:'left'}]
+ });
+ g.phase='fire';
+ g.pendingChoice=pending(2);
+ assert(canResolveScenarioPendingChoice(g,'command'));
+ assert.equal(canResolveScenarioPendingChoice(g,'recon'),false);
+ assert.equal(canResolveScenarioPendingChoice(g,'attacker'),false);
+ blocked(()=>runScenarioRoomCommand(g,'recon',{
+  type:'next',choice:{key:'choice-key',option:'0'}}),
+  'scenario_resolution_not_owned');
+ blocked(()=>runScenarioRoomCommand(g,'attacker',{
+  type:'next',choice:{key:'choice-key',option:'1'}}),
+  'scenario_resolution_not_owned');
+ assert.equal(g.pendingChoice.unitId,2,'denied choice must remain pending');
+ // A defending unit wounded or destroyed during resolution retains its
+ // designated account as the decision-maker, even when it cannot act.
+ g.unit(2).dead=true;
+ assert(canResolveScenarioPendingChoice(g,'command'));
+ g.unit(2).dead=false;
+ g.pendingChoice=pending(3);
+ assert(canResolveScenarioPendingChoice(g,'recon'));
+ assert.equal(canResolveScenarioPendingChoice(g,'command'),false);
+ g.pendingChoice=pending(0,0);
+ assert(canResolveScenarioPendingChoice(g,'attacker'));
+ assert.equal(canResolveScenarioPendingChoice(g,'command'),false);
+ assert.equal(canResolveScenarioPendingChoice(g,'recon'),false);
+ g.pendingChoice=pending(2,0);
+ assert.equal(canResolveScenarioPendingChoice(g,'command'),false,
+  'forged metadata cannot route a defender choice to the attacker');
+ assert.equal(canResolveScenarioPendingChoice(g,'attacker'),false);
+ g.pendingChoice=pending(2);
+ g.scenario.sharedLances.decided={round:g.round,phase:g.phase,
+  controller:'recon',unitId:3};
+ assert(canResolveScenarioPendingChoice(g,'recon'),
+  '2D6 winning defender owns entire defending side for that phase');
+ assert.equal(canResolveScenarioPendingChoice(g,'command'),false);
+ g.phase='physical';
+ assert(canResolveScenarioPendingChoice(g,'command'),
+  'phase-only arbitration cannot leak into later physical decisions');
+ assert.equal(canResolveScenarioPendingChoice(g,'recon'),false);
+ g.pendingChoice={...pending(2),unitId:99};
+ assert.equal(canResolveScenarioPendingChoice(g,'command'),false);
 });
