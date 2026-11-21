@@ -58,7 +58,7 @@ export function assertScenario3SourceMap(game){
    'scenario_source_terrain_mismatch');
   const coordinates=part.hexes.map(h=>h.q+','+h.r);
   check(coordinates.length===new Set(coordinates).size&&
-   part.q===part.hexes[0].q&&part.r===part.hexes[0].r,
+   part.hexes.some(h=>h.q===part.q&&h.r===part.r),
    'scenario_source_terrain_mismatch');
   for(const h of part.hexes){
    const key=h.q+','+h.r,t=byHex.get(key);
