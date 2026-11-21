@@ -657,7 +657,7 @@ export class Game extends Legacy{
   if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
    ![0,1].includes(this.scenario?.defenderTeam)||this.scenario.placement||
    this.scenario.campaign||!sourceGame||sourceGame===this||
-   sourceGame.scenario?.id!=='final-exam'||sourceGame.winner===null||
+   sourceGame.scenario?.id!=='final-exam'||![0,1,'draw'].includes(sourceGame.winner)||
    ![0,1].includes(sourceGame.scenario?.defenderTeam)||
    !Array.isArray(sourceGame.units)||!Array.isArray(sourceIds)||
    !sourceIds.length||sourceIds.length>4||
@@ -709,7 +709,7 @@ export class Game extends Legacy{
    return fail('Нужны выбранные стороны сценария и две горизонтальные карты');
   const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario.id];
   if(!manifest)return fail('Неизвестный сценарий');
-  const actual=this.units.filter(u=>!u.dead&&!u.notFielded);
+  const actual=this.units.filter(u=>!u.dead&&!u.notFielded&&!u.scenarioArrivalRound);
   const encode=u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??''].join('|');
   const sortedRoster=units=>units.map(encode).sort((a,b)=>a.localeCompare(b)).join(';');
   for(const team of [0,1]){

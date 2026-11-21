@@ -6826,6 +6826,15 @@ test('CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defend
    'pilotWounds','heat','gyroHits'])assert.deepEqual(u[field],prior[field],
    field+' must carry source damage and ammunition');
  }
+ const preview=printedDeploymentFixture('divide-and-conquer').g;
+ const linked=preview.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:survivors.map(u=>u.id)
+ });
+ assert(linked.ok);
+ const printed=preview.beginPrintedScenarioPlacement();
+ assert(printed.ok,'campaign reserves must not invalidate the six-vs-four published setup');
+ assert.equal(printed.steps,10);
+ for(const id of linked.unitIds)assert.equal(preview.unit(id).deployed,false);
  assert.notEqual(imported[0].armor,survivors[0].armor,'campaign state is detached');
  const before=imported[0].armor.CT;survivors[0].armor.CT--;
  assert.equal(imported[0].armor.CT,before,'source cannot mutate registered reinforcement');
@@ -6874,6 +6883,9 @@ test('CAT3500D pp.47-48: other scenarios and invalid campaign sources cannot cla
  assert(target.g.configureLinkedScenarioReinforcements({
   sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok);
  const bad=printedDeploymentFixture('divide-and-conquer');
+ source.g.winner=undefined;
+ assert.equal(bad.g.configureLinkedScenarioReinforcements({sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok,false,
+  'an absent result is not a finished scenario');
  source.g.winner=null;
  assert.equal(bad.g.configureLinkedScenarioReinforcements({
   sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok,false,
