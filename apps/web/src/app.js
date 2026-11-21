@@ -15,7 +15,7 @@ const scenarioRoomId=requestParams.get('room');
 const roomMode=scenarioRoomId!==null;
 const remoteMode=operationId!==null||roomMode;
 let remoteVersion=0,remoteReady=false,remoteFinished=false;
-let remoteRole=null,roomPollHandle=null;
+let remoteRole=null,roomPollHandle=null,roomSceneInitialized=false;
 let selected=0,target=null,mode='walk',busy=remoteMode,hotseat=false,team=0,angle=Math.PI/4,zoom=12,reach=[],picked=new Set(),records=new Map(),effects=[];
 let sharedDefenderController='command';
 const scene=new THREE.Scene();scene.background=new THREE.Color('#28362d');scene.fog=new THREE.Fog('#28362d',30,65);
@@ -110,6 +110,17 @@ function applyServerState(state){
       !state.scenario?.placement?.complete)
       throw Error('invalid_source_room_snapshot');
     const previous=selected;
+    // The demo initially constructed four placeholder records. Their
+    // variant/model scale is NOT the same as the source scenario roster.
+    // Rebuild those 3D records exactly once on first room activation.
+    if(!roomSceneInitialized){
+      for(const rec of records.values()){
+        rec.mixer.stopAllAction();
+        scene.remove(rec.root);rec.label.remove();
+      }
+      records.clear();
+      roomSceneInitialized=true;
+    }
     Object.assign(game,state);game.rebuildMap();
     // Original printed maps have 544 hexes and 7/10 units rather than
     // the legacy four-unit demo. Rebuild actual scene geometry and models.
