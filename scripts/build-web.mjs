@@ -32,7 +32,7 @@ async function expectedBytes(source) {
       return {...entry,raw:await readFile(resolve(root,'data/megamek/scenarios',entry.file),'utf8')};
     }));
     return Buffer.from(JSON.stringify({sourceRepository:manifest.sourceRepository,
-      sourceRevision:manifest.sourceRevision,licenseId:manifest.licenseId,records})+'\\n');
+      sourceRevision:manifest.sourceRevision,licenseId:manifest.licenseId,records})+'\n');
   }
   return body;
 }
