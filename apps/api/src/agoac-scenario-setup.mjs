@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {importMtf} from './mtf.mjs';
-import {AGOAC_PRINTED_SCENARIOS} from '../../../packages/engine/engine.js';
+import {AGOAC_PRINTED_SCENARIOS,AGOAC_SCENARIO_VARIATIONS} from '../../../packages/engine/engine.js';
 import {outOfBookEquipment} from '../../../packages/engine/rulebook.js';
 
 // The manifest and source MTFs are bundled in the repository; no live
@@ -13,9 +13,13 @@ export const AGOAC_PINNED_RECORD_SOURCE=Object.freeze({
  revision:manifest.sourceRevision,license:manifest.licenseId,
  repository:manifest.sourceRepository
 });
-export function loadAgoacPrintedDesigns(scenarioId){
- const scenario=AGOAC_PRINTED_SCENARIOS[scenarioId];
- if(!scenario)throw Error('unknown_agoac_scenario');
+export function loadAgoacPrintedDesigns(scenarioId,{variation=null}={}){
+ const original=AGOAC_PRINTED_SCENARIOS[scenarioId];
+ if(!original)throw Error('unknown_agoac_scenario');
+ if(variation!==null&&(scenarioId!=='divide-and-conquer'||variation!=='shortened'))
+  throw Error('unsupported_printed_scenario_variation');
+ const scenario=variation==='shortened'?
+  AGOAC_SCENARIO_VARIATIONS['divide-and-conquer'].shortened:original;
  const unique=[...new Set([...scenario.attacker,...scenario.defender].map(u=>u.variant))];
  const designs={};
  for(const variant of unique){
@@ -37,7 +41,7 @@ export function prepareAgoacPrintedScenario(game,scenarioId,{rotations=[0,0]}={}
  const map=game.configurePrintedScenarioMap({rotations});
  if(!map.ok)throw Error('printed_map:'+map.error);
  const records=game.configurePrintedScenarioForces({
-  designs:loadAgoacPrintedDesigns(scenarioId)});
+  designs:loadAgoacPrintedDesigns(scenarioId,{variation:game.scenario.forceVariation??null})});
  if(!records.ok)throw Error('printed_records:'+records.error);
  return {map,records};
 }
