@@ -11,7 +11,7 @@ const mappings = [
   ...['app.js','terrain-level-labels.js','hub.js','scenario-room-ui.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','auth.css','cockpit.css','dice.js','index.html','mechlab.html',
       'mechlab.js','record-sheet.js','style.css','agoac-scenario-loader.js']
     .map(name => ['apps/web/src/' + name, 'dist/' + name]),
-  ...['engine.js','agoac-boards.js','legacy-engine.js','construction.js','equipment.js','rulebook.js','component-damage.js','fire-arcs.js']
+  ...['engine.js','agoac-boards.js','agoac-scenario3-figure.js','legacy-engine.js','construction.js','equipment.js','rulebook.js','component-damage.js','fire-arcs.js']
     .map(name => ['packages/engine/' + name, 'dist/' + name])
 ];
 const check = process.argv.includes('--check');
