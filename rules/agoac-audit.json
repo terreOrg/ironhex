@@ -10379,6 +10379,10 @@
         {
           "file": "tests/scenario-rooms.mjs",
           "test": "CAT3500D p.48: invite and acceptance API use authenticated sessions, never a forged actor"
+        },
+        {
+          "file": "tests/scenario-rooms.mjs",
+          "test": "CAT3500D p.48: PostgreSQL room transitions require three distinct consenting accounts"
         }
       ]
     },
