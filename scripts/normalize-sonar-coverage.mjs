@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 // Preserve individual coverage records; SonarJS aggregates source-file records.
 const defaultRoot=fileURLToPath(new URL('../',import.meta.url));
 const engine=new Set(['engine.js','agoac-boards.js','legacy-engine.js','construction.js','equipment.js','rulebook.js','component-damage.js','fire-arcs.js']);
-const web=new Set(['app.js','hub.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','dice.js','mechlab.js','record-sheet.js']);
+const web=new Set(['app.js','hub.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','dice.js','mechlab.js','record-sheet.js','agoac-scenario-loader.js']);
 
 export async function normalizeLcov(text,root=defaultRoot){
   let mapped=0;
@@ -18,11 +18,16 @@ export async function normalizeLcov(text,root=defaultRoot){
     const path=isAbsolute(value)?relative(root,value):value.replace(/^\.\//,'');
     if(!path.startsWith('dist/')){lines.push(line);continue;}
     const file=basename(path);
-    const source=file==='mech-toggle.js'?'packages/ui/mech-toggle/mech-toggle.js':engine.has(file)?'packages/engine/'+file:web.has(file)?'apps/web/src/'+file:null;
+    const source=file==='mech-toggle.js'?'packages/ui/mech-toggle/mech-toggle.js':
+      file==='agoac-mtf.js'?'apps/api/src/mtf.mjs':
+      engine.has(file)?'packages/engine/'+file:web.has(file)?'apps/web/src/'+file:null;
     if(!source||path!=='dist/'+file)throw new Error('Unmapped generated coverage source: '+path);
     if(!validated.has(path)){
       const [original,generated]=await Promise.all([readFile(resolve(root,source)),readFile(resolve(root,path))]);
-      if(!original.equals(generated))throw new Error('Coverage source differs from generated copy: '+path);
+      const expected=file==='agoac-mtf.js'?Buffer.from(original.toString('utf8')
+        .replaceAll('../../../packages/engine/construction.js','./construction.js')
+        .replaceAll('../../../packages/engine/equipment.js','./equipment.js')):original;
+      if(!expected.equals(generated))throw new Error('Coverage source differs from generated copy: '+path);
       validated.add(path);
     }
     lines.push('SF:'+source);
