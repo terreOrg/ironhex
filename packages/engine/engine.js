@@ -650,11 +650,12 @@ export class Game extends Legacy{
   if(!manifest)return fail('Неизвестный сценарий');
   const actual=this.units.filter(u=>!u.dead&&!u.notFielded);
   const encode=u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??''].join('|');
+  const sortedRoster=units=>units.map(encode).sort((a,b)=>a.localeCompare(b)).join(';');
   for(const team of [0,1]){
    const wanted=team===this.scenario.defenderTeam?manifest.defender:manifest.attacker;
    const ours=actual.filter(u=>u.team===team);
    if(wanted.length!==ours.length||
-    wanted.map(encode).sort().join(';')!==ours.map(encode).sort().join(';'))
+    sortedRoster(wanted)!==sortedRoster(ours))
     return fail('До развёртывания нужен точный опубликованный список пилотов и вариантов мехов');
   }
   const defender=this.scenario.defenderTeam,attacker=this.scenario.attackerTeam;
