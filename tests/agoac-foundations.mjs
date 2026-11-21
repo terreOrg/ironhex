@@ -6559,6 +6559,7 @@ test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER
  const [commander,recon]=[g.units[2],g.units[3]];
  commander.lance='command';recon.lance='recon';
  g.phase='move';
+ g.phaseRolls.push({kind:'existing attack roll',total:7});
  assert.equal(g.arbitrateSharedDefenderChoice({
   commandChoice:g.units[0].id,reconChoice:recon.id}).ok,false,'attacker cannot arbitrate');
  assert.equal(g.arbitrateSharedDefenderChoice({
@@ -6568,11 +6569,18 @@ test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER
  const first=g.arbitrateSharedDefenderChoice({commandChoice:commander.id,reconChoice:recon.id});
  assert(first.ok);assert.equal(first.controller,'recon');assert.equal(first.unitId,recon.id);
  assert.equal(first.reused,false);assert.equal(first.rolls.length,4);
+ assert.equal(g.phaseRolls[0].kind,'existing attack roll','arbitration preserves previous combat rolls');
  assert.equal(dice.length,0);
  g.rng=()=>{throw Error('same-phase dispute must NOT reroll');};
  const repeat=g.arbitrateSharedDefenderChoice({commandChoice:commander.id,reconChoice:recon.id});
  assert(repeat.ok);assert.equal(repeat.reused,true);
  assert.equal(repeat.controller,'recon');assert.equal(repeat.rolls.length,0);
+ // The same winning player may select a different 'Mech later in the phase.
+ const reserve=structuredClone(recon);reserve.id=g.units.length;reserve.lance='recon';
+ g.units.push(reserve);
+ const continuing=g.arbitrateSharedDefenderChoice({commandChoice:commander.id,reconChoice:reserve.id});
+ assert(continuing.ok);assert.equal(continuing.reused,true);
+ assert.equal(continuing.unitId,reserve.id);
  g.phase='fire';
  const fireDice=[...diceFor(12),...diceFor(2)];
  g.rng=()=>{assert(fireDice.length);return fireDice.shift();};

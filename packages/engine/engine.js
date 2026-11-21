@@ -620,9 +620,11 @@ export class Game extends Legacy{
    return fail('Каждый игрок предлагает мех только своего лэнса защитников');
   const prev=state.decided;
   if(prev?.round===this.round&&prev?.phase===this.phase)
-   return {ok:true,controller:prev.controller,unitId:prev.unitId,
+   return {ok:true,controller:prev.controller,
+    unitId:prev.controller==='command'?commandChoice:reconChoice,
     rolls:[],reused:true};
-  this.phaseRolls=[];let a,b,n=0;
+  const startingRoll=this.phaseRolls.length;
+  let a,b,n=0;
   do{
    a=this.roll('Арбитраж: командный лэнс (2D6)');
    b=this.roll('Арбитраж: разведывательный лэнс (2D6)');
@@ -631,7 +633,7 @@ export class Game extends Legacy{
   const controller=a>b?'command':'recon';
   const unitId=controller==='command'?commandChoice:reconChoice;
   state.decided={round:this.round,phase:this.phase,controller,unitId};
-  return {ok:true,controller,unitId,reused:false,rolls:[...this.phaseRolls]};
+  return {ok:true,controller,unitId,reused:false,rolls:this.phaseRolls.slice(startingRoll)};
  }
  // CAT3500D p.48: only one MechWarrior Card on each team, equal cost,
  // optionally selected by floor(D6/2), and mirrored pilot improvement.
