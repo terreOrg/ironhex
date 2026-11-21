@@ -6601,13 +6601,12 @@ test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER
 });
 
 
-const printedDeploymentFixture=(name)=>{
+const printedDeploymentFixture=(name,sheets=[{id:'clear',rotation:0},{id:'clear',rotation:0}])=>{
  const g=fresh();
  assert(g.configureScenario(name).ok);
  g.scenario.sideRollWinner=0;
  assert(g.chooseScenarioSide(0,'attacker').ok);
- assert(g.configureRectangularSheets('horizontal',[
-  {id:'clear',rotation:0},{id:'clear',rotation:0}]).ok);
+ assert(g.configureRectangularSheets('horizontal',sheets).ok);
  const bases=g.units.map(u=>structuredClone(u));
  const manifest=AGOAC_PRINTED_SCENARIOS[name];
  const units=[];
@@ -6691,24 +6690,97 @@ test('CAT3500D p.47: Trial by Fire attacker-first clear/level-zero setup and def
  assert.equal(g.initiativeWinner,1,'defender wins first-turn initiative automatically');
 });
 
-test('CAT3500D p.48 / errata v8.01: two defender lances deploy first, attacker row 1510-1517 stays guarded',()=>{
+test('CAT3500D p.48 / errata v8.01: defenders first, attacker chooses one numbered row',()=>{
  const {g,place,defenders,attackers}=printedDeploymentFixture('divide-and-conquer');
  assert.equal(defenders.length,6);assert.equal(attackers.length,4);
  assert(g.beginPrintedScenarioPlacement().ok);
  assert.equal(g.scenario.placement.steps.length,10);
- assert.equal(place(attackers[0].id,31,15).ok,false,'attacker must wait');
+ assert.equal(g.chooseDivideAndConquerAttackerRow('east').ok,false,'no choice before both defender lances');
+ assert.equal(place(attackers[0].id,31,15).ok,false,'attacker must wait for both defending lances');
  assert.equal(place(defenders[3].id,31,0).ok,false,'recon cannot replace first command lance');
- for(let i=0;i<3;i++)assert(place(defenders[i].id,i,16-i).ok,'command NW placements');
- assert.equal(place(defenders[0].id,1,16).ok,false,'already deployed');
- for(let i=3;i<6;i++)assert(place(defenders[i].id,31-(i-3),i-3).ok,'recon SE placements');
- assert.equal(g.scenario.placement.placed.length,6);
+ for(let k=0;k<3;k++)assert(place(defenders[k].id,k,16-k).ok,'command NW placements');
+ for(let k=3;k<6;k++)assert(place(defenders[k].id,31-(k-3),k-3).ok,'recon SE placements');
  assert.deepEqual(g.scenario.placement.placed.map(p=>p.lance),
   ['command','command','command','recon','recon','recon']);
- assert.equal(place(attackers[0].id,31,15).ok,false,'no invented mapsheet row coordinate');
- assert.equal(g.nextPhase().ok,false,'source row mapping still missing');
- assert.equal(g.scenario.placement.complete,false);
+ assert.equal(place(attackers[0].id,31,15).ok,false,'no arbitrary attacker entry');
+ assert.equal(g.nextPhase().ok,false,'cannot start before attacker placement');
+ const east=g.divideAndConquerPrintedRow('east'),west=g.divideAndConquerPrintedRow('west');
+ assert.deepEqual(east.map(h=>h.printedHex),[1510,1511,1512,1513,1514,1515,1516,1517]);
+ assert.equal(east.length,8);assert.equal(west.length,8);
+ assert.equal(g.chooseDivideAndConquerAttackerRow('north').ok,false,'no invented third zone');
+ const choice=g.chooseDivideAndConquerAttackerRow('east');
+ assert(choice.ok);assert.deepEqual(choice.hexes,east);
+ assert.equal(g.chooseDivideAndConquerAttackerRow('west').ok,false,'no change or mixed deployment');
+ assert.equal(g.scenarioZoneAllowed(0,west[0].q,west[0].r),false);
+ assert.equal(g.placePrintedScenarioMech(attackers[0].id,west[0].q,west[0].r).ok,false);
+ assert(g.placePrintedScenarioMech(attackers[0].id,east[0].q,east[0].r,5).ok);
+ assert.equal(g.placePrintedScenarioMech(attackers[1].id,east[0].q,east[0].r).ok,false,'collision');
+ for(let k=1;k<4;k++)assert(g.placePrintedScenarioMech(attackers[k].id,east[k].q,east[k].r,k).ok);
+ assert(g.scenario.placement.complete);
+ assert.equal(g.scenario.placement.exactMapImplemented,false,'authentic terrain not fabricated');
+ assert.equal(g.scenario.placement.recordSheetsImported,false,'original unit sheets still absent');
+ assert.equal(g.chooseDivideAndConquerAttackerRow('east').ok,false);
+ g.rng=()=>0.96;
+ assert(g.nextPhase().ok,'full ten-Mech placement permits first Initiative');
+ assert.equal(g.phase,'move');
 });
 
+test('CAT3500D p.48: 1510–1517 mapsheet coordinates rotate independently by 180 degrees',()=>{
+ for(const [westRot,eastRot,side,col,firstRow]of [
+  [0,0,'west',14,9],[0,0,'east',30,9],
+  [3,0,'west',1,7],[0,3,'east',17,7]
+ ]){
+  const {g}=printedDeploymentFixture('divide-and-conquer',[
+   {id:'clear',rotation:westRot},{id:'clear',rotation:eastRot}
+  ]);
+  const hexes=g.divideAndConquerPrintedRow(side);
+  assert.equal(hexes.length,8);
+  for(const [k,h]of hexes.entries()){
+   assert.equal(h.printedHex,1510+k);
+   assert.equal(h.sheet,side);
+   const tile=g.tile(h.q,h.r);
+   assert.equal(tile.sheet,side==='west'?0:1);
+   assert.equal(h.q+Math.floor(h.r/2)+16,col);
+   assert.equal(h.r+8,firstRow+(firstRow===7?-k:k));
+  }
+  assert.equal(new Set(hexes.map(h=>h.q+','+h.r)).size,8);
+ }
+ const {g}=printedDeploymentFixture('final-exam');
+ assert.deepEqual(g.divideAndConquerPrintedRow('east'),[],'no foreign-scenario row');
+});
+
+test('CAT3500D p.48: shared defender Initiative alternates by turn, not by tie reroll',()=>{
+ const {g}=printedDeploymentFixture('divide-and-conquer');
+ assert.equal(g.configureSharedDefenderLances({
+  commandController:'captain',reconController:'scout',firstInitiativeController:'unknown'}).ok,false);
+ assert(g.configureSharedDefenderLances({
+  commandController:'captain',reconController:'scout',firstInitiativeController:'recon'}).ok);
+ const first=[...diceFor(5),...diceFor(7),...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(first.length,'unexpected dice');return first.shift();};
+ g.initiative();
+ assert.equal(g.scenario.sharedLances.initiativeController,'recon');
+ assert.equal(g.scenario.sharedLances.initiativeRound,1);
+ assert.equal(g.phaseRolls.length,4,'one tied Initiative requires one reroll');
+ for(const roll of [g.phaseRolls[1],g.phaseRolls[3]]){
+  assert.equal(roll.defenderInitiativeController,'recon');
+  assert.equal(roll.defenderInitiativePlayer,'scout');
+  assert.equal(roll.scenarioModifier,-2);
+ }
+ assert.equal(first.length,0);
+ for(const [round,expected,player]of [[2,'command','captain'],[3,'recon','scout']]){
+  g.round=round;g.phase='initiative';
+  const dice=[...diceFor(12),...diceFor(2)];
+  g.rng=()=>{assert(dice.length);return dice.shift();};
+  g.initiative();
+  assert.equal(g.scenario.sharedLances.initiativeController,expected);
+  assert.equal(g.scenario.sharedLances.initiativeRound,round);
+  assert.equal(g.phaseRolls[1].defenderInitiativeController,expected);
+  assert.equal(g.phaseRolls[1].defenderInitiativePlayer,player);
+  assert.equal(g.phaseRolls[1].scenarioModifier,-2);
+  assert.equal(dice.length,0);
+ }
+ assert.equal(g.scenario.sharedLances.serverAuthorizationImplemented,false);
+});
 
 test('CAT3500D pp.45-48: printed force comparison is order-independent and locale-aware',()=>{
  const {g}=printedDeploymentFixture('final-exam');

@@ -9773,8 +9773,18 @@
         48
       ],
       "statement": "Scenario 3 defender places command lance first within 6 hexes of north and west edges and recon lance within 6 hexes of south and east edges (errata v8.01), then attacker chooses the printed northeast east-sheet or southwest west-sheet deployment row numbered 1510–1517.",
-      "status": "known_missing",
-      "reviewNote": "No corrected two-lance deployment rectangles/ordered setup; standard symmetric entry rules are not equivalent. 21.11.2026 source correction: earlier inventory reversed deployment order; official errata v8.01 requires defender FIRST. Still Known Missing. 2026-11-21 PR#238: command first then recon defender-lance stages implemented/tested, attacker remains explicitly blocked until the printed 1510-1517 mapsheet coordinate row is faithfully imported. Remains Known Missing."
+      "status": "tested_case",
+      "reviewNote": "2026-11-21: chapter 11 numbered deployment implemented and guarded. Errata v8.01 command then recon defender setup, explicit selection of one east or west mapsheet, exact printed column 15 / rows 10–17 (labels 1510–1517) converted for local 16×17 sheet coordinates under 0°/180° rotation. The four attackers cannot mix sides, overlap, act before defenders, or skip initial placement. Source-linked regression tests cover both sheets, rotation, collision and initiative handoff. TESTED CASE only; authentic Desert #2 / Grassland #3 terrain elevations/artwork, die-cut terrain arrangements, Mech record sheets and playable authenticated scenario UI remain absent.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48 / errata v8.01: defenders first, attacker chooses one numbered row"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: 1510–1517 mapsheet coordinates rotate independently by 180 degrees"
+        }
+      ]
     },
     {
       "id": "agoac-152",
@@ -9853,11 +9863,15 @@
       ],
       "statement": "Scenario 3 shorter-force variation and three-player shared defender-lance control include independent alternation and 2D6 tie arbitration for each disputed phase.",
       "status": "tested_case",
-      "reviewNote": "No scenario alternate force roster or shared two-person control with 2D6 dispute arbitration. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated.",
+      "reviewNote": "No scenario alternate force roster or shared two-person control with 2D6 dispute arbitration. 2026-11-21 PR#237: source-exact variant metadata and deterministic shared-player phase arbitration tests. NOT VERIFIED until exact chassis designs and mapsheets, three-player authenticated turn control, and full scenario startup are integrated. 2026-11-21: every defender Initiative is attributed to alternating command/recon controller each turn, with consistent controller across tie rerolls, optional first commander, and unchanged -2 scenario modifier. Regression added. Automated roll attribution is not authenticated 3-player command authorization; remains TESTED CASE.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER phase"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: shared defender Initiative alternates by turn, not by tie reroll"
         }
       ]
     },
