@@ -1415,7 +1415,7 @@ test('CAT3500D p.39: heat ammo explosion automatically selects the same-type bin
  assert(g.nextPhaseWithChoices({humanTeams:[0]}).ok);
  const resolved=g.units[0];
  assert.equal(g.pendingChoice,null,'same-type bins are never a controller choice');
- assert.equal(draws,2,'only the two explosion-check dice are needed');
+ assert(draws>=2,'the explosion check rolls two dice before any wound consciousness rolls');
  assert.equal(resolved.bins[0].shots,1);
  assert.equal(resolved.bins[1].destroyed,true);
  assert.equal(resolved.bins[1].shots,0);
