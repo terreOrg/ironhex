@@ -11,7 +11,7 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12.",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12. Ch11 existing weather certification 21.11.2026: 4/25 atomic requirements independently Verified on exact main e12ebe6 and four-way quality gates; 21 remain Known Missing; chapter open.",
   "currentTopicId": "agoac-scenarios",
   "topics": [
     {
@@ -623,7 +623,7 @@
         48
       ],
       "status": "known_missing",
-      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit.",
+      "reviewNote": "Carry forward explicit p.6 reference: audit each printed scenario's specified mapsheet arrangement, force roster/record sheets, special deployment and victory conditions on pp.45–48; no claim of parity yet. Native local setup maps and preplaced software mode are not substitutes for printed scenarios. 21.11.2026 first Ch11 source-first inventory of all printed CAT3500D pp.45–48 + official v8.01 corrections: 25 atomic requirements 140–164; 4 already implemented weather subrules have new exact deterministic tests awaiting CI; 21 scenario/orchestration/optional-specific gaps are Known Missing (including night jump surcharge). Existing generic map/pilot/victory/operation features are NOT substitutions for the three source-accurate published scenarios. No Chapter12 implementation or deploy. Do not mark weather Verified until exact first integration and source audit. 21.11.2026 first four atomic existing planetary-condition rules source-to-code Verified on green main e12ebe6: ground lunar MP, lunar weapon/heat, gale weapon classes and gale PSR. Exact CI 44896909451, Browser 44896909461, Smoke 44896909396, strict Sonar 44896909440 all successful. Remaining 21 Known Missing; chapter stays open, pointer stays agoac-scenarios. No scenario implementation or deploy.",
       "audit": {
         "sourceChecked": true,
         "edgeCasesChecked": false,
@@ -656,7 +656,7 @@
           "agoac-163",
           "agoac-164"
         ],
-        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending."
+        "review": "Three printed scenarios, common side selection, special victory/crippling/deployment, two optional planetary conditions, MechWarrior Card costs, loose terrain and campaign example inventoried. General skirmish/operations functions must not count as exact scenario compliance; 4 weather subrules tested case, 21 known missing. Exact CI and final main verification pending. VERIFIED SUBSET: 4 already-implemented weather requirements with source and test coverage on exact four-way green main e12ebe6; all missing scenario/game setup and optional functionality remain unverified. 4 Verified, 21 Known Missing."
       }
     },
     {
@@ -9724,14 +9724,47 @@
         48
       ],
       "statement": "Full Moon Night charges one extra MP per ground-entered hex including ordinary and difficult terrain, roads and water.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: Full Moon Night adds one movement point per ground-entered hex"
         }
       ],
-      "reviewNote": "Game.terrainCost applies +1 to all ground entry types; deterministic ground-cost boundary test added, but full night mode still has an unresolved jumping movement path."
+      "reviewNote": "Game.terrainCost applies +1 to all ground entry types; deterministic ground-cost boundary test added, but full night mode still has an unresolved jumping movement path. VERIFIED 2026-11-21: narrow source-to-code correctness audited and exact main quality gates proven. Printed CAT3500D p.48: +1 MP per hex for moonlit ground travel. Source code Game.terrainCost is used for ground movement and adds weather.night exactly once after road, terrain, depth and building costs. Deterministic plain/woods/heavy/rough/rubble/depth1/depth2 and connected-road boundaries passed. This narrows certification to ground movement; all-mode jump surcharge remains explicitly missing in agoac-158.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed Scenario Additional Variations p.48; AGoAC errata v8.01 (no changes to weather rules)",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "testedTree": "7f72a5fd3bd5eab40a9aab7f41732b5d5ce4f0a1",
+        "mergedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44896909451,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44896909461,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44896909396,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44896909440,
+          "conclusion": "success",
+          "headSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685"
+        },
+        "review": "Printed CAT3500D p.48: +1 MP per hex for moonlit ground travel. Source code Game.terrainCost is used for ground movement and adds weather.night exactly once after road, terrain, depth and building costs. Deterministic plain/woods/heavy/rough/rubble/depth1/depth2 and connected-road boundaries passed. This narrows certification to ground movement; all-mode jump surcharge remains explicitly missing in agoac-158."
+      }
     },
     {
       "id": "agoac-158",
@@ -9750,14 +9783,47 @@
         48
       ],
       "statement": "Full Moon Night gives +2 to weapon Target Numbers (not physical attacks), reduced by 1 for each full 20 heat points on the target, minimum 0.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: Full Moon Night weapon penalty decreases at 20-point target heat thresholds"
         }
       ],
-      "reviewNote": "Game.preview mods.night uses exactly max(0,2-floor(target.heat/20)); new deterministic heat-threshold and physical separation tests."
+      "reviewNote": "Game.preview mods.night uses exactly max(0,2-floor(target.heat/20)); new deterministic heat-threshold and physical separation tests. VERIFIED 2026-11-21: narrow source-to-code correctness audited and exact main quality gates proven. Printed CAT3500D p.48: +2 to weapon attacks, -1 per complete 20 heat on target, floor 0; physical attacks excluded. Game.preview mods.night implements exact target heat thresholds and Game.specialPhysicalTN has no lunar penalty. Deterministic heat 0/1/19/20/21/39/40/41/60 target-number deltas and physical negative control passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed Scenario Additional Variations p.48; AGoAC errata v8.01 (no changes to weather rules)",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "testedTree": "7f72a5fd3bd5eab40a9aab7f41732b5d5ce4f0a1",
+        "mergedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44896909451,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44896909461,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44896909396,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44896909440,
+          "conclusion": "success",
+          "headSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685"
+        },
+        "review": "Printed CAT3500D p.48: +2 to weapon attacks, -1 per complete 20 heat on target, floor 0; physical attacks excluded. Game.preview mods.night implements exact target heat thresholds and Game.specialPhysicalTN has no lunar penalty. Deterministic heat 0/1/19/20/21/39/40/41/60 target-number deltas and physical negative control passed."
+      }
     },
     {
       "id": "agoac-160",
@@ -9766,14 +9832,47 @@
         48
       ],
       "statement": "Strong Gale applies +2 Target Number modifier to missile attacks, +1 to autocannon and machine-gun attacks, and no such gale modifier to energy attacks.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: Strong Gale modifies missiles and ballistic weapons but not energy fire"
         }
       ],
-      "reviewNote": "Game.preview mods.wind uses rack/magazine classification; deterministic missile/AC/laser matrix added."
+      "reviewNote": "Game.preview mods.wind uses rack/magazine classification; deterministic missile/AC/laser matrix added. VERIFIED 2026-11-21: narrow source-to-code correctness audited and exact main quality gates proven. Printed CAT3500D p.48: missile +2, autocannon/machine gun +1, energy 0. Source Game.preview mods.wind uses w.rack, w.ammo and no wind for null magazine energy; deterministic SRM 6, AC/5, Machine Gun A and Medium Laser attack target-number deltas passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed Scenario Additional Variations p.48; AGoAC errata v8.01 (no changes to weather rules)",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "testedTree": "7f72a5fd3bd5eab40a9aab7f41732b5d5ce4f0a1",
+        "mergedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44896909451,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44896909461,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44896909396,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44896909440,
+          "conclusion": "success",
+          "headSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685"
+        },
+        "review": "Printed CAT3500D p.48: missile +2, autocannon/machine gun +1, energy 0. Source Game.preview mods.wind uses w.rack, w.ammo and no wind for null magazine energy; deterministic SRM 6, AC/5, Machine Gun A and Medium Laser attack target-number deltas passed."
+      }
     },
     {
       "id": "agoac-161",
@@ -9782,14 +9881,47 @@
         48
       ],
       "statement": "Strong Gale applies +1 to all Piloting Skill Rolls, stacking with actuator and gyro damage modifiers.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: Strong Gale adds one to Piloting Skill Roll modifiers"
         }
       ],
-      "reviewNote": "Game.psrMod adds gale +1 before all other modifiers; deterministic intact/gyro/actuator matrix added."
+      "reviewNote": "Game.psrMod adds gale +1 before all other modifiers; deterministic intact/gyro/actuator matrix added. VERIFIED 2026-11-21: narrow source-to-code correctness audited and exact main quality gates proven. Printed CAT3500D p.48: all Piloting Skill Rolls gain +1 gale modifier. Source Game.psrMod adds +1 before cumulative gyro/leg/actuator modifiers and Game.psr uses that total for immediate and deferred PSR. Deterministic 0/1/2 gyro criticals and leg actuator damage with falling PSRs passed.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "CAT3500D (2018), printed Scenario Additional Variations p.48; AGoAC errata v8.01 (no changes to weather rules)",
+        "verifiedOn": "2026-11-21",
+        "testedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "testedTree": "7f72a5fd3bd5eab40a9aab7f41732b5d5ce4f0a1",
+        "mergedSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 44896909451,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 44896909461,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 44896909396,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 44896909440,
+          "conclusion": "success",
+          "headSha": "e12ebe6988fb7d1432c2c706f4b48e2cd5efa685"
+        },
+        "review": "Printed CAT3500D p.48: all Piloting Skill Rolls gain +1 gale modifier. Source Game.psrMod adds +1 before cumulative gyro/leg/actuator modifiers and Game.psr uses that total for immediate and deferred PSR. Deterministic 0/1/2 gyro criticals and leg actuator damage with falling PSRs passed."
+      }
     },
     {
       "id": "agoac-162",
