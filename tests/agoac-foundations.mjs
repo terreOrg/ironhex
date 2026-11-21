@@ -6391,11 +6391,12 @@ test('CAT3500D p.46: Trial by Fire inflicts exactly four front 5-point hits, rer
  const result=g.applyTrialByFirePreDamage(u.id);assert(result.ok);
  assert.equal(dice.length,0);
  assert.equal(result.rolls.length,5,'one head reroll');
- assert.deepEqual(result.hits.map(x=>x.location),['CT','RA','RL','CT']);
+ assert.deepEqual(result.hits.map(x=>x.location),['CT','RA','RT','LT']);
  assert.deepEqual(result.hits.map(x=>x.damage),[5,5,5,5]);
  assert.equal(u.structure.CT,originalStructure-5);
  assert.equal(u.armor.RA,before.RA-5);
- assert.equal(u.armor.RL,before.RL-5);
+ assert.equal(u.armor.RT,before.RT-5);
+ assert.equal(u.armor.LT,before.LT-5);
  assert.equal(u.phaseDamage,0,'pre-battle damage must not trigger phase PSR');
  assert.equal(u.pilotWounds,0);
  assert.equal(g.scenario.preDamageApplied,true);
