@@ -47,7 +47,10 @@ jobs:
           print('SCENARIO_PAGES',pages)
           assert pages, 'No readable Scenario 3 figure page'
           page=d[pages[0]]
-          pix=page.get_pixmap(matrix=fitz.Matrix(1.6,1.6),alpha=False)
+          # Magnify only the printed source-grid section. The original page
+          # is ~603x783 PDF points, with the figure at its lower right.
+          pix=page.get_pixmap(matrix=fitz.Matrix(4.5,4.5),
+              clip=fitz.Rect(230,580,575,733),alpha=False)
           pix.save('/tmp/agoac-figure.png')
           print('FIGURE_DIMENSIONS',pix.width,pix.height)
           PY
