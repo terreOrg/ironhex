@@ -8036,10 +8036,10 @@ test('CAT3500D pp.45-48: five source-certified scenario and loose-terrain cases 
  const cases=reg.requirements.filter(r=>r.topicId==='agoac-scenarios');
  const verified=cases.filter(r=>r.status==='verified');
  const pending=cases.filter(r=>r.status!=='verified');
- assert.equal(verified.length,22,'do not close unverified scenario cases');
- assert.deepEqual(pending.map(r=>r.id),['agoac-150','agoac-151','agoac-154']);
+ assert.equal(verified.length,23,'do not close unverified scenario cases');
+ assert.deepEqual(pending.map(r=>r.id),['agoac-150','agoac-151']);
  assert.equal(reg.topics.find(t=>t.id==='agoac-scenarios').status,'known_missing',
-  'the chapter cannot close with an unverified figure or three-player authorization');
+  'the chapter cannot close with an unverified source figure');
  const audited=['agoac-141','agoac-144','agoac-145','agoac-162','agoac-163'];
  const expectedSha='c81c2e41fc97515e8ba7f1734aa0c8af1df601a5';
  const expectedTree='61da074b6f775be28598793fa9bfc8b903b91414';
