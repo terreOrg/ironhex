@@ -730,7 +730,7 @@ test('AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear
   g.hit=(victim,amount,side,table)=>{events.push(['packet',victim.id,amount,side,table]);return {damage:amount,hits:[]};};
   g.fall=(victim,levels,tn,side)=>{events.push(['fall',victim.id,victim.q,victim.r,levels,side]);victim.prone=true;};
   g.psr=(victim,mod,reason,immediate)=>{events.push(['psr',victim.id,mod,reason,immediate]);return true;};
-  const expected=submerged?10:21;
+  const expected=submerged?14:28;
   assert(g.displace(u,0));
   assert.equal(g.phaseRolls[0].target,submerged?8:9);
   const packets=events.filter(v=>v[0]==='packet');
@@ -741,6 +741,75 @@ test('AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear
   assert.equal(distance(u,t),1);assert.notEqual(t.q+','+t.r,'0,0');
  }
 });
+test('CAT3500D pp.42-43: all six falling facings select the exact new hexside and hit-location arc',()=>{
+ const arcs=['front','right','right','rear','left','left'];
+ for(let die=1;die<=6;die++){
+  const g=fresh(),u=g.units[0],before=4;
+  for(const v of g.units.slice(1))v.dead=true;
+  Object.assign(u,{facing:before,tonnage:65});
+  const sequence=[(die-.5)/6,...diceFor(12)],impacts=[];
+  g.rng=()=>{assert(sequence.length,'Unexpected additional die');return sequence.shift();};
+  g.packets=(victim,damage,side)=>{assert.equal(victim,u);impacts.push([damage,side]);};
+  g.fall(u,0);
+  assert.equal(u.prone,true);
+  assert.equal(u.facing,(before-(die-1)+6)%6);
+  assert.equal(u.lastFallSide,arcs[die-1]);
+  assert.deepEqual(impacts,[[7,arcs[die-1]]]);
+  assert.equal(sequence.length,0);
+ }
+});
+
+test('CAT3500D p.43: dry falling damage matches tonnage, level and exact 5-point packets',()=>{
+ for(const tonnage of [20,25,50,65,70,85,100])for(const levels of [0,1,2,3,4]){
+  const g=fresh(),u=g.units[0],packets=[];
+  for(const v of g.units.slice(1))v.dead=true;
+  Object.assign(u,{q:0,r:0,tonnage,facing:0});
+  Object.assign(g.tile(0,0),{type:'plain',height:0,depth:0,surface:0});
+  g.rng=()=>.99;
+  g.hit=(victim,damage,side,table)=>{
+   assert.equal(victim,u);assert.equal(side,'left');
+   packets.push(damage);return {damage,hits:[]};
+  };
+  g.fall(u,levels);
+  const expected=Math.ceil(tonnage/10)*(levels+1);
+  const expectedPackets=Array(Math.floor(expected/5)).fill(5);
+  if(expected%5)expectedPackets.push(expected%5);
+  assert.deepEqual(packets,expectedPackets,
+   'Dry fall tonnage='+tonnage+' levels='+levels);
+  assert.equal(u.prone,true);
+ }
+});
+
+test('CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/prone level and submersion matrix',()=>{
+ for(const drop of [2,3,5])for(const tonnage of [20,65,85])
+ for(const prone of [false,true])for(const depth of [0,1,2]){
+  const g=fresh(),[u,target,a,b]=g.units,impacts=[],falls=[],checks=[];
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0,tonnage,facing:0});
+  Object.assign(target,{q:1,r:0,prone,facing:3,distanceMoved:0,moveMode:'walk'});
+  a.dead=b.dead=true;
+  Object.assign(g.tile(0,0),{height:drop,surface:drop});
+  Object.assign(g.tile(1,0),{type:depth?'water':'plain',depth,surface:depth?depth:0});
+  g.rng=()=>.99;
+  g.hit=(victim,amount,side,table)=>{
+   assert.equal(victim,target);assert.equal(table,'punch');
+   impacts.push(amount);return {damage:amount,hits:[]};
+  };
+  g.fall=(victim,levels,tn,side)=>{falls.push([victim.id,levels,side]);victim.prone=true;};
+  g.psr=(victim,modifier,reason,immediate)=>{checks.push([victim.id,modifier,reason,immediate]);return true;};
+  assert(g.displace(u,0));
+  const base=Math.ceil(tonnage/10)*(drop-(prone?0:1));
+  const expected=depth>=(prone?1:2)?Math.floor(base/2):base;
+  const expectedPackets=Array(Math.floor(expected/5)).fill(5);
+  if(expected%5)expectedPackets.push(expected%5);
+  assert.deepEqual(impacts,expectedPackets,
+   'Impact drop='+drop+' tonnage='+tonnage+' prone='+prone+' depth='+depth);
+  assert.deepEqual(falls,[[u.id,drop,'rear']]);
+  assert.deepEqual(checks,[[target.id,2,'Падение сверху',true]]);
+  assert.notDeepEqual([u.q,u.r],[target.q,target.r]);
+ }
+});
+
 test('AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys the falling Mech',()=>{
  for(const blocked of [false,true]){
   const g=fresh(),[u,t,a,b]=g.units;
