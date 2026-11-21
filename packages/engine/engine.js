@@ -1016,7 +1016,7 @@ export class Game extends Legacy{
   if(pictured?.required){
    const pieceIndex=setup.pieces.length,expected=pieceIndex%2===0?2:3;
    if(footprint.length!==expected||
-    !['sublevel1','sublevel2','depth1','depth2'].includes(terrainType)||
+    !(expected===2?['depth1','depth2']:['sublevel1','sublevel2']).includes(terrainType)||
     this.tile(q,r)?.sheet!==Math.floor(pieceIndex/2)||
     expected===3&&footprint.some((h,i)=>footprint.some((v,j)=>
      i!==j&&distance(h,v)!==1)))
@@ -1101,7 +1101,7 @@ export class Game extends Legacy{
    return fail('Арбитраж возможен только для следующего элемента схемы');
   const isPair=pieceIndex%2===0;
   const valid=c=>c&&typeof c==='object'&&!Array.isArray(c)&&
-   ['sublevel1','sublevel2','depth1','depth2'].includes(c.terrainType)&&
+   (isPair?['depth1','depth2']:['sublevel1','sublevel2']).includes(c.terrainType)&&
    (isPair?Number.isInteger(c.orientation)&&c.orientation>=0&&c.orientation<6:
     c.orientation===null);
   if(!valid(first)||!valid(second)||
