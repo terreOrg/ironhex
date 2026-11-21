@@ -9966,11 +9966,15 @@
       ],
       "statement": "Scenario 2 chase variant starts the defender alone, grants one full movement turn, then has attackers enter from west during Movement on Turn 2 with first complete hex counted.",
       "status": "tested_case",
-      "reviewNote": "No delayed turn-two attacker reinforcement and no chase-variant activation. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated.",
+      "reviewNote": "No delayed turn-two attacker reinforcement and no chase-variant activation. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.47: source Trial by Fire chase provides defender-only turn and west attacker arrival on second Movement"
         }
       ]
     },
@@ -10153,11 +10157,19 @@
       ],
       "statement": "MechWarrior Cards attach to no more than one Mech per side, have equal cost on opposing sides, and use floor(D6/2) when the players cannot agree on cost.",
       "status": "tested_case",
-      "reviewNote": "Pilot data/skills are configurable, but physical MechWarrior Card limits, cost and fallback roll are absent. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "reviewNote": "Pilot data/skills are configurable, but physical MechWarrior Card limits, cost and fallback roll are absent. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: card-cost disagreement uses exactly one D6 and floor(D6/2)"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: all D6 card costs are binding on actual source Mech rosters with no double roll"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D pp.47-48: source setup rejects premature campaign import and forged card identities"
         }
       ]
     },
@@ -10169,11 +10181,15 @@
       ],
       "statement": "Card-specified Piloting and Gunnery replace the scenario pilot skills; the opposing side receives an equivalent skill improvement to preserve balance.",
       "status": "tested_case",
-      "reviewNote": "Generic custom pilot skill assignment exists; no card-aware mirrored balance adjustment or scenario pilot replacement. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited.",
+      "reviewNote": "Generic custom pilot skill assignment exists; no card-aware mirrored balance adjustment or scenario pilot replacement. 2026-11-21 next packet: new deterministic engine functions and regression. Status remains unverified until physical card values, actual scenario record sheets, asset-backed terrain pieces and terrain effects are integrated and audited. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: equal-cost MechWarrior Cards replace pilot values and mirror improvement to opponent"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: source-backed Final Exam permits equal-cost cards and mirrored pilot skills before printed deployment"
         }
       ]
     },
@@ -10462,11 +10478,15 @@
       ],
       "statement": "Linked campaign play can transfer surviving Mechs with persistent damage from Scenario 1 into Scenario 3 as west-edge reinforcements in the Movement Phase of Turn 5.",
       "status": "tested_case",
-      "reviewNote": "Economy operations persist damage and ammunition but there is no AGoAC scenario linking, survivor transfer or turn-five reinforcements. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated.",
+      "reviewNote": "Economy operations persist damage and ammunition but there is no AGoAC scenario linking, survivor transfer or turn-five reinforcements. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated. 2026-11-21 candidate packet: source-backed end-to-end regression now covers the actual MTF printed scenarios, adversarial inputs, and phase gates; promotion awaits exact-head three-way CI and subsequent four-way main QA evidence. No Verified claim yet.",
       "evidence": [
         {
           "file": "tests/agoac-foundations.mjs",
           "test": "CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: source Final Exam survivor damage and ammunition enter real Divide on Turn 5 west edge"
         }
       ]
     }
