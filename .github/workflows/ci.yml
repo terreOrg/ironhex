@@ -91,3 +91,33 @@ jobs:
           retention-days: 7
       - name: Publish rulebook coverage audit to job log
         run: node scripts/rules-coverage.mjs --json
+      - name: Identify exact open SonarQube reliability violations
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 2 \
+            --user "${SONAR_TOKEN}:" \
+            --get "${SONAR_HOST_URL%/}/api/issues/search" \
+            --data-urlencode "componentKeys=ironhex" \
+            --data-urlencode "resolved=false" \
+            --data-urlencode "ps=30" |
+            node -e '
+              let body="";
+              process.stdin.on("data",chunk=>body+=chunk);
+              process.stdin.on("end",()=>{
+                const result=JSON.parse(body);
+                console.log("Outstanding Sonar issues:",result.total);
+                for(const issue of result.issues||[]){
+                  console.log(JSON.stringify({
+                    rule:issue.rule,severity:issue.severity,
+                    impacts:issue.impacts,component:issue.component,
+                    line:issue.line,message:issue.message,status:issue.status
+                  }));
+                }
+              });
+            '
