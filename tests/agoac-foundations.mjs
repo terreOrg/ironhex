@@ -730,7 +730,7 @@ test('AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear
   g.hit=(victim,amount,side,table)=>{events.push(['packet',victim.id,amount,side,table]);return {damage:amount,hits:[]};};
   g.fall=(victim,levels,tn,side)=>{events.push(['fall',victim.id,victim.q,victim.r,levels,side]);victim.prone=true;};
   g.psr=(victim,mod,reason,immediate)=>{events.push(['psr',victim.id,mod,reason,immediate]);return true;};
-  const expected=submerged?10:21;
+  const expected=submerged?14:28;
   assert(g.displace(u,0));
   assert.equal(g.phaseRolls[0].target,submerged?8:9);
   const packets=events.filter(v=>v[0]==='packet');
@@ -741,6 +741,118 @@ test('AGoAC p.44: accidental fall uses movement and terrain, punch packets, rear
   assert.equal(distance(u,t),1);assert.notEqual(t.q+','+t.r,'0,0');
  }
 });
+test('CAT3500D p.41: PSR situation table modifiers use the printed target numbers',()=>{
+ const cases=[
+  ['Удар ногой',0],['Толчок',0],['Промах ногой',0],
+  ['Таран',2],['Попадание тарана',2],
+  ['Посадка DFA',4],['Попадание DFA',2],
+  ['Подъём',0],['Обломки',0],
+  ['Вода глубина 1',-1],['Вода глубина 2',0],['Вода глубина 3',1],
+  ['Отключение реактора',3]
+ ];
+ for(const [reason,modifier] of cases){
+  const g=fresh(),u=g.units[0];
+  for(const other of g.units.slice(1))other.dead=true;
+  u.piloting=5;g.rng=()=>.99;
+  assert.equal(g.psr(u,modifier,reason,true,0,reason==='Отключение реактора'),true,reason);
+  assert.equal(g.phaseRolls.at(-1).target,5+modifier,reason);
+ }
+ for(const [source,setup,expected] of [
+  ['gyro hit',u=>{u.gyroHits=1;},3],
+  ['hip hit',u=>{u.actuators.LL.hip=true;},2],
+  ['lower leg actuator',u=>{u.actuators.LL.lower=true;},1],
+  ['destroyed biped leg',u=>{u.structure.LL=0;},5],
+  ['gyro and hip',u=>{u.gyroHits=1;u.actuators.LL.hip=true;},5]
+ ]){
+  const g=fresh(),u=g.units[0];for(const other of g.units.slice(1))other.dead=true;
+  u.piloting=5;setup(u);g.rng=()=>.99;
+  assert.equal(g.psrMod(u,true),expected,source);
+  assert.equal(g.psr(u,0,source,true),true,source);
+  assert.equal(g.phaseRolls.at(-1).target,5+expected,source);
+ }
+ // Every PSR at the end of one attack phase shares the cumulative TN.
+ // The 20+ damage row adds only one event, even if more than 20 was taken.
+ const g=fresh(),u=g.units[0];
+ for(const other of g.units.slice(1))other.dead=true;
+ u.piloting=5;u.phaseDamage=43;
+ u.psrs.push({modifier:0,reason:'Удар ногой'},{modifier:2,reason:'Попадание тарана'});
+ g.rng=()=>.99;
+ g.endPSR();
+ assert.equal(g.phaseRolls.length,3);
+ assert.deepEqual(g.phaseRolls.map(r=>r.target),[8,8,8]);
+ assert.deepEqual(u.psrs,[]);
+ assert.equal(u.phaseDamage,0);
+});
+
+test('CAT3500D pp.42-43: all six falling facings select the exact new hexside and hit-location arc',()=>{
+ const arcs=['front','right','right','rear','left','left'];
+ for(let die=1;die<=6;die++){
+  const g=fresh(),u=g.units[0],before=4;
+  for(const v of g.units.slice(1))v.dead=true;
+  Object.assign(u,{facing:before,tonnage:65});
+  const sequence=[(die-.5)/6,...diceFor(12)],impacts=[];
+  g.rng=()=>{assert(sequence.length,'Unexpected additional die');return sequence.shift();};
+  g.packets=(victim,damage,side)=>{assert.equal(victim,u);impacts.push([damage,side]);};
+  g.fall(u,0);
+  assert.equal(u.prone,true);
+  assert.equal(u.facing,(before-(die-1)+6)%6);
+  assert.equal(u.lastFallSide,arcs[die-1]);
+  assert.deepEqual(impacts,[[7,arcs[die-1]]]);
+  assert.equal(sequence.length,0);
+ }
+});
+
+test('CAT3500D p.43: dry falling damage matches tonnage, level and exact 5-point packets',()=>{
+ for(const tonnage of [20,25,50,65,70,85,100])for(const levels of [0,1,2,3,4]){
+  const g=fresh(),u=g.units[0],packets=[];
+  for(const v of g.units.slice(1))v.dead=true;
+  Object.assign(u,{q:0,r:0,tonnage,facing:0});
+  Object.assign(g.tile(0,0),{type:'plain',height:0,depth:0,surface:0});
+  g.rng=()=>.99;
+  g.hit=(victim,damage,side,table)=>{
+   assert.equal(victim,u);assert.equal(side,'left');
+   packets.push(damage);return {damage,hits:[]};
+  };
+  g.fall(u,levels);
+  const expected=Math.ceil(tonnage/10)*(levels+1);
+  const expectedPackets=Array(Math.floor(expected/5)).fill(5);
+  if(expected%5)expectedPackets.push(expected%5);
+  assert.deepEqual(packets,expectedPackets,
+   'Dry fall tonnage='+tonnage+' levels='+levels);
+  assert.equal(u.prone,true);
+ }
+});
+
+test('CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/prone level and submersion matrix',()=>{
+ for(const drop of [2,3,5])for(const tonnage of [20,65,85])
+ for(const prone of [false,true])for(const depth of [0,1,2]){
+  const g=fresh(),[u,target,a,b]=g.units,impacts=[],falls=[],checks=[];
+  for(const tile of g.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+  Object.assign(u,{q:0,r:0,tonnage,facing:0});
+  Object.assign(target,{q:1,r:0,prone,facing:3,distanceMoved:0,moveMode:'walk'});
+  a.dead=b.dead=true;
+  Object.assign(g.tile(0,0),{height:drop,surface:drop});
+  Object.assign(g.tile(1,0),{type:depth?'water':'plain',depth,surface:depth?depth:0});
+  g.rng=()=>.99;
+  g.hit=(victim,amount,side,table)=>{
+   assert.equal(victim,target);assert.equal(table,'punch');
+   impacts.push(amount);return {damage:amount,hits:[]};
+  };
+  g.fall=(victim,levels,tn,side)=>{falls.push([victim.id,levels,side]);victim.prone=true;};
+  g.psr=(victim,modifier,reason,immediate)=>{checks.push([victim.id,modifier,reason,immediate]);return true;};
+  assert(g.displace(u,0));
+  const base=Math.ceil(tonnage/10)*(drop-(prone?0:1));
+  const expected=depth>=(prone?1:2)?Math.floor(base/2):base;
+  const expectedPackets=Array(Math.floor(expected/5)).fill(5);
+  if(expected%5)expectedPackets.push(expected%5);
+  assert.deepEqual(impacts,expectedPackets,
+   'Impact drop='+drop+' tonnage='+tonnage+' prone='+prone+' depth='+depth);
+  assert.deepEqual(falls,[[u.id,drop,'rear']]);
+  assert.deepEqual(checks,[[target.id,2,'Падение сверху',true]]);
+  assert.notDeepEqual([u.q,u.r],[target.q,target.r]);
+ }
+});
+
 test('AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys the falling Mech',()=>{
  for(const blocked of [false,true]){
   const g=fresh(),[u,t,a,b]=g.units;

@@ -2035,7 +2035,9 @@ export class Game extends Legacy{
  }
  accidentalFallHit(u,target,old,destination,depth){
   const drop=old.height-destination.height;
-  const impactLevels=Math.max(0,drop-(target.prone?1:2));
+  // CAT3500D p.44 / official AGoAC errata v8.01: target impact level is
+  // the underlying hex + target's level - 1 (standing: 1; prone: 0).
+  const impactLevels=Math.max(0,drop-(target.prone?0:1));
   const raw=Math.ceil(u.tonnage/10)*impactLevels;
   const damage=destination.depth>=(target.prone?1:2)?Math.floor(raw/2):raw;
   this.packets(target,damage,this.hitSide(target,u),'punch');
