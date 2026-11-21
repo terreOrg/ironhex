@@ -762,7 +762,7 @@ export class Game extends Legacy{
      id==='final-exam'&&variation==='alternate-forces'))
    return fail('Разрешённую вариацию состава выбирают один раз до загрузки карт и мехов');
   this.scenario.forceVariation=variation;
-  return {ok:true,variation,defender:id==='divide-and-conquer'?4:4,
+  return {ok:true,variation,defender:4,
    attacker:id==='divide-and-conquer'?3:4};
  }
  printedScenarioRoster(){
