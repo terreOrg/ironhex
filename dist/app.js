@@ -806,8 +806,9 @@ function showIllustratedTerrainDispute(pieceIndex){
  const pictured=game.scenario?.picturedTerrain,setup=game.scenario?.looseTerrain;
  if(!pictured?.required||!setup||setup.pieces.length!==pieceIndex)return;
  const isPair=pieceIndex%2===0;
- const faceOptions='<option value="sublevel1">Субуровень −1</option><option value="sublevel2">Субуровень −2</option>'+
-  '<option value="depth1">Глубина 1</option><option value="depth2">Глубина 2</option>';
+ const faceOptions=isPair?
+  '<option value="depth1">Глубина 1</option><option value="depth2">Глубина 2</option>':
+  '<option value="sublevel1">Субуровень −1</option><option value="sublevel2">Субуровень −2</option>';
  const dirOptions=DIRS.map(([q,r],i)=>'<option value="'+i+'">'+
   (i*60)+'° ('+q+','+r+')</option>').join('');
  replaceScenarioModal('<h2>Спор о фигурном элементе · 2D6</h2>'+
@@ -818,8 +819,8 @@ function showIllustratedTerrainDispute(pieceIndex){
    (isPair?'<label>Разворот<select id="pictured-dispute-rotation'+team+'">'+
     dirOptions+'</select></label>':'')).join('')+
   '<button class="primary" id="pictured-dispute-roll">РАЗРЕШИТЬ СПОР · 2D6</button>');
- $('#pictured-dispute-type0').value='depth1';
- $('#pictured-dispute-type1').value='sublevel1';
+ $('#pictured-dispute-type0').value=isPair?'depth1':'sublevel1';
+ $('#pictured-dispute-type1').value=isPair?'depth2':'sublevel2';
  $('#pictured-dispute-roll').onclick=()=>{
   const proposal=team=>({
    terrainType:$('#pictured-dispute-type'+team).value,
@@ -862,7 +863,8 @@ function showPrintedPlacementStep(){
   scenarioHexOptions($('#scenario-terrain-hex'),game.tiles.filter(t=>
    game.looseTerrainZoneAllowed(t.q,t.r)&&(!pictured||t.sheet===Math.floor(pieceIndex/2))));
   if(pictured){
-   const allowed=new Set(['sublevel1','sublevel2','depth1','depth2']);
+   const allowed=new Set(pieceIndex%2===0?
+    ['depth1','depth2']:['sublevel1','sublevel2']);
    for(const option of [...$('#scenario-terrain-type').options])
     if(!allowed.has(option.value))option.remove();
    const ruling=scenario.picturedTerrain.disputes?.[pieceIndex]?.choice;
