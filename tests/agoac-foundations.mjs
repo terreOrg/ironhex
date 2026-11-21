@@ -853,6 +853,50 @@ test('CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/pr
  }
 });
 
+test('CAT3500D p.44: struck target random legal displacement and forbidden-hex destruction',()=>{
+ for(const choice of ['first','last','blocked']){
+  const g=fresh(),[falling,target,a,b]=g.units;
+  for(const hex of g.tiles)Object.assign(hex,{type:'plain',height:4,depth:0,surface:4});
+  Object.assign(falling,{q:0,r:0,facing:0,tonnage:20});
+  Object.assign(target,{q:1,r:0,facing:3,prone:false});
+  a.dead=b.dead=true;
+  Object.assign(g.tile(0,0),{height:5,surface:5});
+  Object.assign(g.tile(1,0),{height:0,surface:0});
+  const neighbors=DIRS.map(([dq,dr])=>g.tile(1+dq,dr))
+   .filter(hex=>hex&&!(hex.q===0&&hex.r===0));
+  assert(neighbors.length>=2);
+  if(choice!=='blocked')for(const hex of neighbors.slice(0,2))
+   Object.assign(hex,{height:0,surface:0});
+  const legal=g.fallNeighborOptions(g.tile(1,0));
+  assert.equal(legal.length,choice==='blocked'?0:2);
+  const hits=[],falls=[],checks=[];
+  g.hit=(victim,amount,side,table)=>{
+   assert.equal(victim,target);assert.equal(table,'punch');
+   hits.push(amount);return {damage:amount,hits:[]};
+  };
+  g.fall=(victim,levels,tn,side)=>{
+   falls.push([victim.id,levels,side]);victim.prone=true;
+  };
+  g.psr=(victim,modifier,reason,immediate)=>{
+   checks.push([victim.id,modifier,reason,immediate]);return true;
+  };
+  g.rng=()=>choice==='first'?0.01:0.99;
+  g.accidentalFallHit(falling,target,g.tile(0,0),g.tile(1,0),0);
+  assert.deepEqual(hits,[5,3]);
+  assert.deepEqual(falls,[[falling.id,5,'rear']]);
+  assert.deepEqual([falling.q,falling.r],[1,0]);
+  if(choice==='blocked'){
+   assert.equal(target.dead,true);
+   assert.deepEqual(checks,[]);
+  }else{
+   const expected=legal[choice==='first'?0:1].tile;
+   assert.equal(target.dead,false);
+   assert.deepEqual([target.q,target.r],[expected.q,expected.r]);
+   assert.deepEqual(checks,[[target.id,2,'Падение сверху',true]]);
+  }
+ }
+});
+
 test('AGoAC p.44: missed accidental fall selects a nearest legal hex or destroys the falling Mech',()=>{
  for(const blocked of [false,true]){
   const g=fresh(),[u,t,a,b]=g.units;
@@ -5922,7 +5966,7 @@ test('CAT3500D pp.37–39: completed Heat chapter retains twelve source-reviewed
  assert.equal(chapter.audit.mainQualityGate.conclusion,'success');
  assert.deepEqual(chapter.audit.checks.map(x=>x.name).sort(),['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
  assert(chapter.audit.checks.every(x=>x.conclusion==='success'&&Number.isInteger(x.runId)));
- assert.equal(reg.currentTopicId,'agoac-psr');
+ assert.equal(reg.currentTopicId,reg.topics.find(t=>t.status!=='verified')?.id??null);
  const suite=readFileSync(new URL('./agoac-foundations.mjs',import.meta.url),'utf8');
  const required={
   'agoac-118':['CAT3500D p.39: heat ammo explosion automatically selects the same-type bin with most shots','CAT3500D p.39: identical-shot ammo bins use RNG, never controller choice','CAT3500D pp.38–39: tied damage across types allows controller choice, but not same-type bin choice'],
@@ -5936,5 +5980,34 @@ test('CAT3500D pp.37–39: completed Heat chapter retains twelve source-reviewed
    assert(suite.includes("test('"+name+"'"),id+' missing deterministic regression');
   }
  }
- assert.equal(reg.topics.filter(x=>x.status==='verified').length,9);
+ assert(reg.topics.slice(0,9).every(x=>x.status==='verified'),
+  'The first nine chapters through Heat must remain source-verified');
+});
+
+test('CAT3500D pp.40–44: completed Piloting chapter keeps 19 source-reviewed rules and exact main quality gates',()=>{
+ const reg=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
+ const chapter=reg.topics.find(x=>x.id==='agoac-psr');
+ const requirements=reg.requirements.filter(x=>x.topicId==='agoac-psr');
+ assert.equal(chapter.status,'verified');
+ assert.equal(chapter.audit.inventoryComplete,true);
+ assert(chapter.audit.sourceChecked&&chapter.audit.edgeCasesChecked);
+ assert.equal(requirements.length,19);
+ assert.deepEqual(requirements.map(x=>x.id),Array.from({length:19},(_,i)=>'agoac-'+(i+121)));
+ assert.deepEqual(chapter.audit.requirementIds,requirements.map(x=>x.id));
+ assert(requirements.every(x=>x.status==='verified'&&x.audit?.sourceChecked&&x.audit?.edgeCasesChecked&&x.evidence?.length));
+ assert.equal(chapter.audit.testedSha,chapter.audit.mergedSha);
+ assert.equal(chapter.audit.mainQualityGate.headSha,chapter.audit.mergedSha);
+ assert.equal(chapter.audit.mainQualityGate.conclusion,'success');
+ assert.deepEqual(chapter.audit.checks.map(x=>x.name).sort(),
+  ['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
+ assert(chapter.audit.checks.every(x=>x.conclusion==='success'&&Number.isInteger(x.runId)));
+ assert.equal(reg.currentTopicId,'agoac-scenarios');
+ const suite=readFileSync(new URL('./agoac-foundations.mjs',import.meta.url),'utf8');
+ for(const title of [
+  'CAT3500D p.41: PSR situation table modifiers use the printed target numbers',
+  'CAT3500D pp.42-43: all six falling facings select the exact new hexside and hit-location arc',
+  'CAT3500D p.43: dry falling damage matches tonnage, level and exact 5-point packets',
+  'CAT3500D p.44 + errata v8.01: accidental impact uses corrected standing/prone level and submersion matrix',
+  'CAT3500D p.44: struck target random legal displacement and forbidden-hex destruction'
+ ])assert(suite.includes("test('"+title+"'"),title);
 });
