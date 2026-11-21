@@ -525,8 +525,8 @@ export class Game extends Legacy{
    column({q:u.q+d[0],r:u.r+d[1]})>max;
  }
  // CAT3500D pp.45–48. These are geometric filters, NOT complete mission deployment.
- // Scenario 3 attacker must use the printed mapsheet row 1510–1517; that
- // sheet-coordinate conversion is intentionally not guessed here.
+ // Scenario 3 attacker uses one chosen 1510–1517 row per mapsheet;
+ // printed coordinates are converted with the selected sheet rotation.
  scenarioZoneAllowed(team,q,r,{lance=null,facing=null}={}){
   if(!this.scenario||![0,1].includes(team)||
    ![0,1].includes(this.scenario.defenderTeam)||
@@ -545,9 +545,10 @@ export class Game extends Legacy{
    return defender?west<=3:east<=6&&tile.type==='plain'&&tile.height===0&&
     tile.depth===0&&!tile.building?.cf;
   }
-  if(this.scenario.id==='divide-and-conquer'&&defender){
-   return lance==='command'?west<=6&&north<=6:
+  if(this.scenario.id==='divide-and-conquer'){
+   if(defender)return lance==='command'?west<=6&&north<=6:
     lance==='recon'?east<=6&&south<=6:false;
+   return this.scenario.placement?.attackerRow?.hexes.some(h=>h.q===q&&h.r===r)??false;
   }
   return false;
  }
@@ -587,20 +588,22 @@ export class Game extends Legacy{
  // The roll arbitrates the *rest of the current phase*, not a single
  // unit and not the next phase. This returns the decision for the UI to
  // enforce; authenticated multi-player command routing remains separate.
- configureSharedDefenderLances({commandController,reconController}={}){
+ configureSharedDefenderLances({commandController,reconController,firstInitiativeController='command'}={}){
   if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
    ![0,1].includes(this.scenario?.defenderTeam)||this.scenario.sharedLances||
    typeof commandController!=='string'||!commandController.trim()||
    commandController.length>80||typeof reconController!=='string'||
    !reconController.trim()||reconController.length>80||
-   commandController===reconController)
+   commandController===reconController||!['command','recon'].includes(firstInitiativeController))
    return fail('Нужно назначить двух разных игроков командирами разных лэнсов до игры');
   this.scenario.sharedLances={
    commandController:commandController.trim(),
    reconController:reconController.trim(),
-   decided:null,serverAuthorizationImplemented:false
+   decided:null,firstInitiativeController,initiativeController:null,
+   initiativeRound:null,serverAuthorizationImplemented:false
   };
-  return {ok:true,commandController:commandController.trim(),reconController:reconController.trim()};
+  return {ok:true,commandController:commandController.trim(),reconController:reconController.trim(),
+   firstInitiativeController};
  }
  // The source only permits settling a disagreement about who moves or
  // declares fire. Do not silently turn this into control of attacker,
@@ -701,6 +704,42 @@ export class Game extends Legacy{
  // initiative, not by ordinary offboard entry in the Movement Phase.
  // This is intentionally a geometry/turn-order engine, not an importer
  // of the missing physical mapsheets or exact BattleMech record sheets.
+ // CAT3500D p.48: 1510–1517 denotes physical sheet column 15,
+ // rows 10–17. Convert one 16×17 sheet at a time; a 180° rotation
+ // transforms both local axes. This does not supply missing map artwork.
+ divideAndConquerPrintedRow(side){
+  if(this.scenario?.id!=='divide-and-conquer'||
+   this.setupMap?.id!=='sheets'||this.setupMap.layout!=='horizontal'||
+   this.setupMap.width!==32||this.setupMap.height!==17||
+   !['west','east'].includes(side))return [];
+  const index=side==='west'?0:1,sheet=this.setupMap.sheets?.[index];
+  if(!sheet||![0,3].includes(sheet.rotation))return [];
+  const hexes=[];
+  for(let number=1510;number<=1517;number++){
+   const sourceCol=14,sourceRow=number%100-1;
+   const localCol=sheet.rotation===3?15-sourceCol:sourceCol;
+   const localRow=sheet.rotation===3?16-sourceRow:sourceRow;
+   const col=index*16+localCol,row=localRow,r=row-8;
+   const q=col-16-Math.floor(r/2),tile=this.tile(q,r);
+   if(!tile||tile.sheet!==index)return [];
+   hexes.push({printedHex:number,sheet:side,q,r});
+  }
+  return hexes;
+ }
+ // v8.01 errata: after six defenders have placed, choose ONE
+ // attacker row for the whole lance; no mixing two locations.
+ chooseDivideAndConquerAttackerRow(side){
+  const state=this.scenario?.placement;
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
+   !state||state.complete||state.attackerRow||state.placed.length!==6||
+   !['west','east'].includes(side))
+   return fail('Сначала расставьте оба лэнса защитников, затем выберите одну сторону 1510–1517');
+  const hexes=this.divideAndConquerPrintedRow(side);
+  if(hexes.length!==8||new Set(hexes.map(h=>h.q+','+h.r)).size!==8)
+   return fail('Строка 1510–1517 не соответствует выбранной ориентации карт');
+  state.attackerRow={side,hexes};
+  return {ok:true,side,hexes:structuredClone(hexes)};
+ }
  beginPrintedScenarioPlacement(){
   if(!this.scenarioSetupOpen()||!this.scenario||
    this.scenario.placement||this.setupMap?.id!=='sheets'||
@@ -727,9 +766,9 @@ export class Game extends Legacy{
    (this.scenario.chase?repeat(defender,1):
     [...repeat(attacker,3),...repeat(defender,1)]):
    [...repeat(defender,3,'command'),...repeat(defender,3,'recon'),
-    ...repeat(attacker,4,'printed-row-unavailable')];
+    ...repeat(attacker,4,'printed-row')];
   this.scenario.placement={
-   steps,placed:[],complete:false,
+   steps,placed:[],complete:false,attackerRow:null,
    exactMapImplemented:false,recordSheetsImported:false
   };
   for(const u of actual){
@@ -752,12 +791,10 @@ export class Game extends Legacy{
   const step=state.steps[state.placed.length];
   if(!step||step.team!==unit.team||
    step.lance!==null&&step.lance!==unit.lance&&
-   step.lance!=='printed-row-unavailable')
+   step.lance!=='printed-row')
    return fail('Другая сторона или лэнс должен размещаться первым');
-  // The printed 1510–1517 mapsheet row has not been converted into
-  // authoritative digital coordinates. Never silently accept a guess.
-  if(step.lance==='printed-row-unavailable')
-   return fail('Для атаки Divide and Conquer нужна подлинная строка 1510–1517 карты');
+  if(step.lance==='printed-row'&&!state.attackerRow)
+   return fail('Атакующий должен выбрать одну из опубликованных строк 1510–1517');
   if(!this.scenarioZoneAllowed(unit.team,q,r,{lance:step.lance,facing}))
    return fail('Гекс вне опубликованной зоны размещения');
   if(state.placed.some(p=>p.q===q&&p.r===r))
@@ -1293,6 +1330,16 @@ export class Game extends Legacy{
   if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))
    throw Error('Стороны сценария должны быть определены до инициативы');
   this.phaseRolls=[];let a,b,tries=0;
+  // Shared defending commanders alternate Initiative each ROUND, not each
+  // tie reroll. Multiplayer authorization is not handled in this engine.
+  const sharedInitiative=this.scenario?.id==='divide-and-conquer'?this.scenario.sharedLances:null;
+  const initiativeController=sharedInitiative?
+   (this.round%2===1?sharedInitiative.firstInitiativeController:
+    sharedInitiative.firstInitiativeController==='command'?'recon':'command'):null;
+  if(sharedInitiative){
+   sharedInitiative.initiativeController=initiativeController;
+   sharedInitiative.initiativeRound=this.round;
+  }
   if(this.scenario?.id==='trial-by-fire'&&this.round===1){
    // CAT3500D p.47: defender always wins first-turn initiative; no roll.
    this.initiativeWinner=this.scenario.defenderTeam;
@@ -1307,6 +1354,12 @@ export class Game extends Legacy{
     if(penalized!==null){
      Object.assign(this.phaseRolls.at(-2),{scenarioModifier:penalized===0?-2:0,adjustedTotal:a});
      Object.assign(this.phaseRolls.at(-1),{scenarioModifier:penalized===1?-2:0,adjustedTotal:b});
+     if(sharedInitiative){
+      const record=this.phaseRolls.at(penalized===0?-2:-1);
+      record.defenderInitiativeController=initiativeController;
+      record.defenderInitiativePlayer=sharedInitiative[
+       initiativeController==='command'?'commandController':'reconController'];
+     }
     }
    }while(a===b&&++tries<10000);
    if(a===b)throw Error('Генератор выдаёт только ничьи инициативы');
