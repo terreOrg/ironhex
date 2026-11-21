@@ -1,5 +1,5 @@
 import {randomBytes} from 'node:crypto';
-import {Game} from '../../../packages/engine/engine.js';
+import {Game,AGOAC_SCENARIO3_FIGURE, matchesAgoacScenario3Figure} from '../../../packages/engine/engine.js';
 import {prepareAgoacPrintedScenario} from './agoac-scenario-setup.mjs';
 import {AuthError} from './auth.mjs';
 import {runScenarioRoomCommand} from './scenario-command.mjs';
@@ -46,6 +46,10 @@ export function assertScenario3SourceMap(game){
  check(counts[0]===272&&counts[1]===272,'scenario_source_map_mismatch');
  const setup=game.scenario.looseTerrain,pictured=game.scenario.picturedTerrain;
  if(!pictured?.required||!setup)return;
+ check(JSON.stringify(pictured.counters)===JSON.stringify(
+  AGOAC_SCENARIO3_FIGURE.map(p=>({
+   sheet:p.sheet,shape:p.shape,printedHexes:[...p.printedHexes]}))),
+  'scenario_source_terrain_mismatch');
  const parts=setup.pieces;
  check(Array.isArray(parts)&&parts.length<=4,'scenario_source_terrain_mismatch');
  const byHex=new Map(game.tiles.map(t=>[t.q+','+t.r,t]));
@@ -54,7 +58,8 @@ export function assertScenario3SourceMap(game){
   const expectedSize=index%2===0?2:3;
   const allowed=index%2===0?['depth1','depth2']:['sublevel1','sublevel2'];
   check(part&&allowed.includes(part.terrainType)&&
-   Array.isArray(part.hexes)&&part.hexes.length===expectedSize,
+   Array.isArray(part.hexes)&&part.hexes.length===expectedSize&&
+   matchesAgoacScenario3Figure(game,index,part),
    'scenario_source_terrain_mismatch');
   const coordinates=part.hexes.map(h=>h.q+','+h.r);
   check(coordinates.length===new Set(coordinates).size&&
