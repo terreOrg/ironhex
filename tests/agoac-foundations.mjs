@@ -6458,6 +6458,8 @@ test('CAT3500D p.48: card-cost disagreement uses exactly one D6 and floor(D6/2)'
  assert.equal(miss.ok,false);assert.equal(miss.chosenCost,3);
  assert.equal(JSON.stringify(g.units),before,'mismatch must not mutate units');
  assert.equal(g.scenario.cardSetup,undefined);
+ assert.deepEqual(g.scenario.cardCostRoll,{die:6,cost:3});
+ g.rng=()=>{throw Error('Cannot reroll an already settled card cost');};
  assert(g.configureScenarioCards({cards:cards.map(c=>({...c,cost:3})),mirrors}).ok);
 });
 

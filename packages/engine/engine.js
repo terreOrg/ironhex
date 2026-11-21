@@ -608,8 +608,19 @@ export class Game extends Legacy{
     return fail('Недостаточно навыка для равного встречного бонуса');
    deltas.set(team,delta);
   }
-  const die=agreedCost===null?this.d6('Цена карточек: D6'):null;
-  const chosenCost=die===null?agreedCost:Math.floor(die/2);
+  if(agreedCost!==null&&this.scenario.cardCostRoll)
+   return fail('Цена уже выбрана жребием; нельзя заменить её соглашением');
+  let die=null,chosenCost=agreedCost;
+  if(agreedCost===null){
+   // Once players fall back to a D6 the result is binding. Retrying
+   // with a different card cannot reroll an inconvenient cost.
+   if(!this.scenario.cardCostRoll){
+    const rolled=this.d6('Цена карточек: D6');
+    this.scenario.cardCostRoll={die:rolled,cost:Math.floor(rolled/2)};
+   }
+   die=this.scenario.cardCostRoll.die;
+   chosenCost=this.scenario.cardCostRoll.cost;
+  }
   if(chosenCost!==cost)return {ok:false,
    error:'Стоимость карточек не совпала с результатом D6',die,chosenCost};
   // Validate before committing: a bad second card never mutates first.
