@@ -1003,7 +1003,7 @@ export class Game extends Legacy{
    !Number.isInteger(q)||!Number.isInteger(r)||
    typeof label!=='string'||!label.trim()||label.length>80||
    terrainType!==null&&!['woods','heavy','rough','rubble',
-    'level1','level2','depth1','depth2'].includes(terrainType)||
+    'level1','level2','sublevel1','sublevel2','depth1','depth2'].includes(terrainType)||
    !Array.isArray(footprint)||!footprint.length||footprint.length>32||
    !footprint.every(h=>h&&Number.isInteger(h.q)&&Number.isInteger(h.r)&&
     Math.abs(h.q)<=15&&Math.abs(h.r)<=16)||
@@ -1016,7 +1016,7 @@ export class Game extends Legacy{
   if(pictured?.required){
    const pieceIndex=setup.pieces.length,expected=pieceIndex%2===0?2:3;
    if(footprint.length!==expected||
-    !['level1','level2','depth1','depth2'].includes(terrainType)||
+    !['sublevel1','sublevel2','depth1','depth2'].includes(terrainType)||
     this.tile(q,r)?.sheet!==Math.floor(pieceIndex/2)||
     expected===3&&footprint.some((h,i)=>footprint.some((v,j)=>
      i!==j&&distance(h,v)!==1)))
@@ -1068,7 +1068,12 @@ export class Game extends Legacy{
    t.baseTerrainHeight??=t.height;
    t.baseTerrainDepth??=t.depth;
    t.baseTerrainSurface??=t.surface;
-   if(terrainType.startsWith('level')){
+   if(terrainType.startsWith('sublevel')){
+    // Source figure labels SUBLEVEL, not positive LEVEL: these dry
+    // sinkholes sit BELOW zero and must affect movement and LOS.
+    const sublevel=Number(terrainType.slice(8));
+    t.type='plain';t.depth=0;t.height=-sublevel;t.surface=-sublevel;
+   }else if(terrainType.startsWith('level')){
     const level=Number(terrainType.slice(5));
     t.type='plain';t.depth=0;t.height=level;t.surface=level;
    }else if(terrainType.startsWith('depth')){
@@ -1096,7 +1101,7 @@ export class Game extends Legacy{
    return fail('Арбитраж возможен только для следующего элемента схемы');
   const isPair=pieceIndex%2===0;
   const valid=c=>c&&typeof c==='object'&&!Array.isArray(c)&&
-   ['level1','level2','depth1','depth2'].includes(c.terrainType)&&
+   ['sublevel1','sublevel2','depth1','depth2'].includes(c.terrainType)&&
    (isPair?Number.isInteger(c.orientation)&&c.orientation>=0&&c.orientation<6:
     c.orientation===null);
   if(!valid(first)||!valid(second)||
