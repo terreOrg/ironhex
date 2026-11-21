@@ -262,14 +262,14 @@ async function serverCommand(order){
   if(!remoteReady||busy||remoteFinished)return;
   if(!order){toast('Этот приказ пока не подключён к серверу.');return;}
   if(roomMode&&!['move','hold','fire','physical','next',
-    'propose-dispute','withdraw-dispute'].includes(order.type)){
+    'rotate','stand','drop','minimum','charge','twist','flip',
+    'brace','dump','shutdown','club','propose-dispute',
+    'withdraw-dispute'].includes(order.type)){
     toast('Этот приказ пока не разрешён в серверном сценарии.');return;
   }
-  // The first networked 3D slice deliberately uses engine-default
-  // movement facing. The server action schema rejects unsupported
-  // option fields rather than accepting unaudited combat mutations.
-  const command=roomMode&&order.type==='move'?
-    {type:'move',id:order.id,q:order.q,r:order.r,mode:order.mode}:order;
+  // Scenario room validates all command parameters and game permissions
+  // again on the signed server. Preserve explicit jump-facing choices.
+  const command=order;
   busy=true;renderUI();
   try{
     const endpoint=roomMode?
@@ -491,7 +491,11 @@ const armorRatio=(sum(u.armor)+sum(u.rear))/(sum(u.maxArmor)+sum(u.maxRear));
 $('#annunciator').innerHTML=`<div class="panel-serial">СИСТЕМЫ / ${String(u.id+1).padStart(2,'0')}<span>DIAGNOSTIC BUS</span></div><div class="warning-bank">${[[u.dead||u.shutdown?'alarm':u.engineHits?'caution':'ready','РЕАКТОР',u.dead?'ПОТЕРЯН':u.shutdown?'OFF':u.engineHits?'ПОВРЕЖДЁН':'ONLINE'],[u.heat>=14?'alarm':u.heat>=8?'caution':'ready','ТЕМПЕРАТУРА',u.heat+'°'],[u.gyroHits?'alarm':u.prone?'caution':'ready','ГИРОСКОП',u.gyroHits?'ПОВРЕЖДЁН':u.prone?'ЛЁЖА':'СТАБИЛЕН'],[u.unconscious||u.pilotWounds>=6?'alarm':u.pilotWounds?'caution':'ready','ПИЛОТ',u.unconscious?'БЕЗ СОЗНАНИЯ':u.pilotWounds+'/6 РАНЕНИЙ']].map(([state,label,value])=>`<div class="system-lamp ${state}"><i aria-hidden="true"></i><span>${label}<b>${value}</b></span></div>`).join('')}</div><div class="telemetry"><label>БРОНЯ <b>${Math.round(armorRatio*100)}%</b></label><meter min="0" max="1" value="${armorRatio}"></meter><label>ТЕПЛОВАЯ НАГРУЗКА <b>${u.heat} / 30</b></label><meter class="thermal" min="0" max="30" value="${Math.min(30,u.heat)}"></meter></div>`;
 const a=$('#actions');if(game.phase==='setup'){a.innerHTML='<p class="hint">Развёртывание AGoAC: бросок обоих отрядов определит, кто выбирает сторону входа. Первый игровой раунд начнётся отдельной инициативой.</p>';}else if(game.phase==='initiative'){a.innerHTML='<p class="hint">Оба отряда бросают 2d6. Проигравший действует первым. Приказы чередуются по одному меху.</p>';}else if(game.phase==='heat'){a.innerHTML='<p class="hint">Следующий шаг разрешит нагрев, отключения и перегрев боезапаса.</p>';}else if(game.phase==='end'){
  a.innerHTML='<div class="controltitle">КОНЕЦ ХОДА · РЕАКТОРЫ</div><p class="hint">По желанию назначьте или отмените отключение/перезапуск. Аварийный перезапуск разрешается в фазе нагрева.</p>';
- for(const unit of game.units.filter(v=>(hotseat||v.team===0)&&game.canOrderShutdown(v))){
+ for(const unit of game.units.filter(v=>(roomMode?
+  (remoteRole==='attacker'?v.team===game.scenario?.attackerTeam:
+   v.team===game.scenario?.defenderTeam&&
+   game.sharedDefenderCanControl(v,remoteRole)):
+  (hotseat||v.team===0))&&game.canOrderShutdown(v))){
   const field=document.createElement('label');field.className='switch-line';
   const toggle=document.createElement('mech-toggle');toggle.dataset.endShutdown=String(unit.id);
   const caption=unit.name+' · '+(unit.shutdown?'Перезапустить реактор':'Отключить реактор');
@@ -543,15 +547,7 @@ if(!remoteMode&&hotseat&&game.victoryTerms?.condition){
   button.onclick=showVictoryAdjudication;a.append(button);
  }
 }
-$('#night').disabled=$('#gale').disabled=game.round!==1||game.phase!=='initiative'||remoteMode&&!remoteReady;if(acting&&u.deployed!==false&&!roomMode)advancedControls(u,a);if(roomMode){
- for(const id of ['#turnleft','#turnright','#stance']){
-  const control=$(id);if(control){control.disabled=true;control.title='Команда ещё не подключена к сетевому сценарию';}
- }
- for(const control of document.querySelectorAll('[data-twist]')){
-  control.disabled=true;control.title='Команда ещё не подключена к сетевому сценарию';
- }
-}
-renderRoomDispute(a);
+$('#night').disabled=$('#gale').disabled=game.round!==1||game.phase!=='initiative'||remoteMode&&!remoteReady;if(acting&&u.deployed!==false)advancedControls(u,a);renderRoomDispute(a);
 if(game.pendingChoice)renderResolutionChoice(a,game.pendingChoice);$('#next').disabled=busy||game.winner!==null||game.queue.length>0||!!game.pendingChoice||remoteMode&&!remoteReady||roomMode&&!roomCanAdvance();$('#next').textContent=busy?'ВЫПОЛНЕНИЕ ПРИКАЗА…':game.phase==='setup'?'БРОСИТЬ РАЗВЁРТЫВАНИЕ':game.phase==='initiative'?'БРОСИТЬ ИНИЦИАТИВУ':game.phase==='fire'?'РАЗРЕШИТЬ СТРЕЛЬБУ':game.phase==='physical'?'РАЗРЕШИТЬ БЛИЖНИЙ БОЙ':game.phase==='heat'?'РАССЧИТАТЬ НАГРЕВ':game.phase==='end'?'ЗАВЕРШИТЬ ХОД':'К СТРЕЛЬБЕ →';$('#log').innerHTML=game.log.slice(-18).reverse().map(s=>`<p>${s}</p>`).join('');$('#status').textContent=`${PHASES[game.phase]} / ${game.activeTeam===null?'Все приказы приняты':game.activeTeam?'Красный отряд':'Зелёный отряд'}`;if(remoteMode)$('#status').textContent+=remoteReady?' · SERVER VERIFIED / v'+remoteVersion:' · ПОДКЛЮЧЕНИЕ К СЕРВЕРУ';refreshHighlights();if(!busy)syncModels();if(game.winner!==null)toast(game.winner==='draw'?'НИЧЬЯ':`ПОБЕДА: ${game.winner?'КРАСНЫЙ':'ЗЕЛЁНЫЙ'} ОТРЯД`);
 }
 // AGoAC p.12: select landing orientation before resolving the landing PSR.
@@ -654,7 +650,7 @@ function renderResolutionChoice(panel,choice){
  }
 }
 function advancedControls(u,a){const panel=document.createElement('details');panel.className='advanced';panel.innerHTML='<summary>Дополнительные приказы</summary>';if(game.phase==='move'){panel.innerHTML+=`<p class="hint">${target!==null?'Цель: '+game.units[target].name:'Выберите врага для тарана/DFA'}</p><div class="segments"><button id="charge">Таран</button><button id="dfa">DFA</button></div><button id="minimum">Минимальный шаг</button><label class="switch-line"><mech-toggle id="shutdown" label="Отключить реактор в конце хода" ${u.shutdownNext?'checked':''}></mech-toggle> Отключить в конце хода</label><label class="hint">Сброс боезапаса<select id="dumpbin"><option value="">— выбрать бункер —</option>${u.bins.map((b,i)=>`<option value="${i}">${b.location}: ${u.weapons[b.weapon].name} · ${b.shots}</option>`).join('')}</select></label>`;a.appendChild(panel);$('#charge').onclick=()=>specialMove('charge');$('#dfa').onclick=()=>specialMove('dfa');$('#minimum').onclick=()=>action(()=>game.minimumMove(selected),true,{type:'minimum',id:selected});$('#shutdown').onchange=event=>{event.target.checked=!!u.shutdownNext;return action(()=>game.orderShutdown(selected),false,{type:'shutdown',id:selected});};$('#dumpbin').onchange=()=>{const v=$('#dumpbin').value;if(v!=='')action(()=>game.orderDump(selected,+v),false,{type:'dump',id:selected,bin:+v}).catch(reportActionError);};}else if(game.phase==='fire'){panel.innerHTML+=`<label class="switch-line"><mech-toggle id="flip" label="Руки развёрнуты назад" ${u.flip?'checked':''}></mech-toggle> Разворот рук назад</label><label class="hint">Опорная рука лёжа<select id="brace"><option value="LA">Левая</option><option value="RA">Правая</option></select></label>`;panel.innerHTML+=`${u.weapons.some(w=>w.name==='Flamer')?'<label class="hint"><mech-toggle id="flamerheat" label="Огнемёт: нагрев вместо урона"></mech-toggle> Огнемёт: +2 нагрева вместо урона</label>':''}${u.weapons.map((w,i)=>w.ammo!==null?`<label class="hint">Бункер: ${w.name}<select data-binweapon="${i}"><option value="">Автоматически</option>${u.bins.map((b,j)=>b.weapon===(w.shared??i)?`<option value="${j}" ${weaponBins[i]===j?'selected':''}>${b.location} / слот ${b.slot+1}: ${b.shots}</option>`:'').join('')}</select></label>`:'').join('')}`;a.appendChild(panel);panel.querySelectorAll('[data-binweapon]').forEach(el=>el.onchange=()=>{weaponBins[el.dataset.binweapon]=el.value===''?null:+el.value;});if($('#flamerheat')){$('#flamerheat').checked=flamerHeat;$('#flamerheat').onchange=()=>{flamerHeat=$('#flamerheat').checked;};}$('#flip').onchange=event=>{const enabled=event.target.checked;event.target.checked=!!u.flip;return action(()=>game.flipArms(selected,enabled),false,{type:'flip',id:selected,enabled});};$('#brace').value=u.brace||'LA';$('#brace').onchange=()=>action(()=>game.setBrace(selected,$('#brace').value),false,{type:'brace',id:selected,limb:$('#brace').value});}}
-async function specialMove(type){if(game.pendingChoice)return;if(remoteMode)return serverCommand({type:'charge',id:selected,target,attack:type});if(target===null){toast('Сначала выберите врага.');return;}const id=selected,r=game.chargeWithChoices(id,target,type,{humanTeams:hotseat?[0,1]:[0]});return finishLocalMove(id,r,true);}
+async function specialMove(type){if(game.pendingChoice)return;if(target===null){toast('Сначала выберите врага.');return;}if(remoteMode)return serverCommand({type:'charge',id:selected,target,attack:type,mode:'run'});const id=selected,r=game.chargeWithChoices(id,target,type,{humanTeams:hotseat?[0,1]:[0]});return finishLocalMove(id,r,true);}
 function selectUnit(id){if(busy)return;const u=game.units[id];if(['move','fire','physical'].includes(game.phase)&&game.canAct(game.units[selected])&&owned(game.units[selected])&&u.team!==game.units[selected].team&&game.onMap(u)&&!u.dead){target=id;renderUI();return;}selected=id;arcWeapon='all';target=null;weaponTargets={};weaponBins={};weaponSpotters={};weaponAims={};flamerHeat=false;primaryTarget=null;picked=new Set(u.weapons.map((_,i)=>i));mode=u.moveMode==='stand'?'walk':u.moveMode;renderUI();}
 async function showRolls(rolls){for(const r of rolls||[])await animateRoll(r,PHASES[game.phase]);}
 function chooseActive(){if(game.activeTeam!==null){const u=game.units.find(u=>game.canAct(u)&&(!roomMode||roomControls(u)));if(u){selected=u.id;arcWeapon='all';mode=u.moveMode==='stand'?'walk':u.moveMode;}}target=null;weaponTargets={};weaponBins={};weaponSpotters={};weaponAims={};flamerHeat=false;primaryTarget=null;picked=new Set(game.units[selected].weapons.map((_,i)=>i));}

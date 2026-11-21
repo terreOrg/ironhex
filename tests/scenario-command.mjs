@@ -180,3 +180,58 @@ test('AGoAC Ch11 p.48: pending LOS/damage decisions belong to the real signed un
  g.pendingChoice={...pending(2),unitId:99};
  assert.equal(canResolveScenarioPendingChoice(g,'command'),false);
 });
+
+
+test('AGoAC Ch11: server routes facing, stance and torso commands only for signed owners',()=>{
+ const g=ready(),before=g.unit(2).facing;
+ blocked(()=>runScenarioRoomCommand(g,'recon',
+  {type:'rotate',id:2,delta:1,mode:'walk'}),'scenario_lance_not_owned');
+ assert.equal(g.unit(2).facing,before);
+ blocked(()=>runScenarioRoomCommand(g,'command',
+  {type:'rotate',id:2,delta:0,mode:'walk'}),'invalid_scenario_command');
+ blocked(()=>runScenarioRoomCommand(g,'command',
+  {type:'rotate',id:2,delta:1,mode:'jump'}),'invalid_scenario_command');
+ assert(runScenarioRoomCommand(g,'command',
+  {type:'rotate',id:2,delta:1,mode:'walk'}).ok);
+ assert.notEqual(g.unit(2).facing,before);
+ const h=ready();
+ blocked(()=>runScenarioRoomCommand(h,'recon',
+  {type:'drop',id:2,mode:'walk'}),'scenario_lance_not_owned');
+ assert(runScenarioRoomCommand(h,'command',
+  {type:'drop',id:2,mode:'walk'}).ok);
+ assert(h.unit(2).prone);
+ blocked(()=>runScenarioRoomCommand(h,'command',
+  {type:'stand',id:2,facing:6,mode:'walk',minimum:false}),'invalid_scenario_command');
+ const j=ready();j.phase='fire';j.activeTeam=1;j.queue=[1,0];
+ blocked(()=>runScenarioRoomCommand(j,'recon',
+  {type:'twist',id:2,twist:1}),'scenario_lance_not_owned');
+ blocked(()=>runScenarioRoomCommand(j,'command',
+  {type:'twist',id:2,twist:9}),'invalid_scenario_command');
+ assert(runScenarioRoomCommand(j,'command',{type:'twist',id:2,twist:1}).ok);
+ assert.equal(j.unit(2).twist,1);
+});
+test('AGoAC Ch11: full tactical order schema rejects forged options atomically',()=>{
+ const g=ready(),before=JSON.stringify(g.units);
+ for(const action of [
+  {type:'move',id:2,q:0,r:0,mode:'jump',facing:6},
+  {type:'stand',id:2,facing:0,mode:'run',minimum:'true'},
+  {type:'charge',id:2,target:0,attack:'dfa',mode:'warp'},
+  {type:'flip',id:2,enabled:1},
+  {type:'brace',id:2,limb:'CT'},
+  {type:'dump',id:2,bin:-1},
+  {type:'fire',id:2,shots:[{index:0,target:'hex:999,999'}]},
+  {type:'physical',id:2,target:0,attack:'kick',limb:'RL',rightTarget:1},
+  {type:'physical',id:2,target:0,attack:'punch',limb:'both',rightTarget:99}
+ ]){
+  blocked(()=>runScenarioRoomCommand(g,'command',action),'invalid_scenario_command');
+ }
+ assert.equal(JSON.stringify(g.units),before,'invalid commands must not mutate battle units');
+ blocked(()=>runScenarioRoomCommand(g,'recon',
+  {type:'shutdown',id:2}),'scenario_lance_not_owned');
+ const h=ready();h.phase='end';h.activeTeam=null;h.queue=[];
+ blocked(()=>runScenarioRoomCommand(h,'recon',
+  {type:'shutdown',id:2}),'scenario_lance_not_owned');
+ const beforeShutdown=h.unit(2).shutdownNext;
+ const after=runScenarioRoomCommand(h,'command',{type:'shutdown',id:2});
+ assert(after.ok);assert.notEqual(h.unit(2).shutdownNext,beforeShutdown);
+});
