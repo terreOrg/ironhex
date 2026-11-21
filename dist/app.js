@@ -489,13 +489,31 @@ function refreshHighlights(){updateArcs();reach=(!busy&&game.phase==='move'&&own
 function card(u){const ap=sum(u.armor)+sum(u.rear),max=sum(u.maxArmor)+sum(u.maxRear);return `<button class="unitcard ${u.team?'enemy':''} ${u.id===selected?'active':''} ${u.dead?'dead':''}" data-unit="${u.id}"><strong>${u.name.toUpperCase()}</strong><span class="badge">${u.tonnage} T</span><small>${u.variant} / ${u.dead?'УНИЧТОЖЕН':u.deployed===false?'ЗА ПРЕДЕЛАМИ ПОЛЯ':u.unconscious?'ПИЛОТ БЕЗ СОЗНАНИЯ':u.shutdown?'ОТКЛЮЧЕН':u.prone?'ЛЕЖИТ':game.canAct(u)?'ВАША ОЧЕРЕДЬ':game.done(u)?'ПРИКАЗ ПРИНЯТ':'ОЖИДАНИЕ'}</small><div class="bar"><span style="width:${ap/max*100}%"></span></div><div class="cardmeta"><span>БРОНЯ ${ap}/${max}</span><span>НАГРЕВ ${u.heat}°</span></div></button>`;}
 function renderRoomDispute(panel){
  if(!roomMode||!remoteReady||busy||
-  !['command','recon'].includes(remoteRole)||
-  !['move','fire'].includes(game.phase)||
-  game.activeTeam!==game.scenario?.defenderTeam||
-  game.pendingChoice||game.winner!==null)return;
+  !['move','fire'].includes(game.phase)||game.winner!==null)return;
  const state=game.scenario?.sharedLances;
- if(!state||state.decided?.round===game.round&&
-  state.decided?.phase===game.phase)return;
+ if(!state)return;
+ // A resolved 2D6 dispute must remain visible to ALL three signed seats.
+ // The authoritative ruling comes from the persisted shared room snapshot,
+ // never a local dice roll or a mutable client-side role selection.
+ const ruling=state.decided?.round===game.round&&
+  state.decided?.phase===game.phase?state.decided:null;
+ if(ruling){
+  const section=document.createElement('section');
+  section.id='room-dispute-result';section.className='advanced';
+  section.setAttribute('aria-label','Результат спора 2D6');
+  const title=document.createElement('div');
+  title.className='controltitle';title.textContent='СПОР ЗАЩИТНИКОВ · 2D6';
+  const result=document.createElement('p');
+  result.className='hint';
+  const winner=ruling.controller==='command'?'командный':'разведывательный';
+  const phase=game.phase==='move'?'движения':'стрельбы';
+  result.textContent='Победил '+winner+' лэнс. Его командир управляет обоими лэнсами защитников до конца фазы '+phase+'.';
+  section.append(title,result);panel.append(section);
+  return;
+ }
+ if(!['command','recon'].includes(remoteRole)||
+  game.activeTeam!==game.scenario?.defenderTeam||
+  game.pendingChoice)return;
  const proposal=state.pendingServerDispute?.round===game.round&&
   state.pendingServerDispute?.phase===game.phase?
   state.pendingServerDispute:null;
