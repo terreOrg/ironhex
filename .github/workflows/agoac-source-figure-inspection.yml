@@ -1,0 +1,57 @@
+name: AGoAC source figure inspection (temporary)
+on:
+  push:
+    branches: ['source/agoac-figure-inspection-*']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch publicly published AGoAC book
+        shell: bash
+        run: |
+          set -euo pipefail
+          urls=(
+            "https://battletech.com/wp-content/uploads/2025/07/BattleTech-A-Game-of-Armored-Combat-Rulebook-1st-SLDF-Print.pdf"
+            "https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d%2Bbattletech%2Ba%2Bgame%2Bof%2Barmored%2Bcombat%2Brulebook.pdf"
+          )
+          for u in "${urls[@]}"; do
+            echo "Trying publisher/source: ${u%%/*}"
+            if curl -fLsS --max-time 55 --retry 1 -A "Mozilla/5.0" "$u" -o /tmp/agoac-source.pdf &&
+               head -c 4 /tmp/agoac-source.pdf | grep -q '%PDF'; then
+              echo 'PDF_ACQUIRED'
+              ls -lh /tmp/agoac-source.pdf
+              break
+            fi
+          done
+          test -s /tmp/agoac-source.pdf
+          head -c 4 /tmp/agoac-source.pdf | grep -q '%PDF'
+      - name: Render original Scenario 3 figure for source-coordinate inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/agoac-view
+          /tmp/agoac-view/bin/pip -q install pymupdf
+          /tmp/agoac-view/bin/python - <<'PY'
+          import fitz
+          d=fitz.open('/tmp/agoac-source.pdf')
+          print('PDF_PAGES',len(d))
+          pages=[]
+          for i,p in enumerate(d):
+              text=p.get_text()
+              if 'DIVIDE AND CONQUER' in text.upper() and ('GAME SET-UP' in text.upper() or 'SITUATION' in text.upper()):
+                  pages.append(i)
+          print('SCENARIO_PAGES',pages)
+          assert pages, 'No readable Scenario 3 figure page'
+          page=d[pages[0]]
+          pix=page.get_pixmap(matrix=fitz.Matrix(1.6,1.6),alpha=False)
+          pix.save('/tmp/agoac-figure.png')
+          print('FIGURE_DIMENSIONS',pix.width,pix.height)
+          PY
+          echo AGoAC_PNG_START
+          base64 -w0 /tmp/agoac-figure.png
+          echo
+          echo AGoAC_PNG_END
