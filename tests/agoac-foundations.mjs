@@ -7328,6 +7328,140 @@ test('CAT3500D p.48: shortened roster selection rejects mismatched full force re
  assert.equal(g.setupForces.variants.length,7);
 });
 
+
+test('CAT3500D pp.45-46: Final Exam optional source-based alternative forces are 4v4, not substituted demo units',async()=>{
+ const {prepareAgoacPrintedScenario,loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const {construct}=await import('../packages/engine/construction.js');
+ assert.throws(()=>loadAgoacPrintedDesigns('trial-by-fire',{variation:'alternate-forces'}),/unsupported_printed/);
+ const designs=loadAgoacPrintedDesigns('final-exam',{variation:'alternate-forces'});
+ assert.deepEqual(Object.keys(designs).sort(),
+  ['COM-2D','COM-3A','GRF-1N','LCT-1E','LCT-1V','TDR-5S','TDR-5SE','WVR-6R'].sort());
+ for(const [variant,design]of Object.entries(designs)){
+  const result=construct(design);
+  assert.equal(result.errors.length,0,'source chassis '+variant+': '+result.errors.join('; '));
+  assert(result.unit.tonnage>=20&&result.unit.tonnage<=100);
+ }
+ for(const role of ['attacker','defender']){
+  const g=fresh();
+  assert(g.configureScenario('final-exam').ok);
+  g.scenario.sideRollWinner=0;
+  assert(g.chooseScenarioSide(0,role).ok);
+  assert.equal(g.configurePrintedScenarioVariation('shortened').ok,false);
+  assert(g.configurePrintedScenarioVariation('alternate-forces').ok);
+  assert.equal(g.configurePrintedScenarioVariation('alternate-forces').ok,false);
+  const loaded=prepareAgoacPrintedScenario(g,'final-exam');
+  assert.equal(loaded.records.units,8);
+  assert.deepEqual(g.units.filter(u=>u.team===g.scenario.defenderTeam).map(u=>u.variant),
+   ['TDR-5S','GRF-1N','LCT-1E','COM-2D']);
+  assert.deepEqual(g.units.filter(u=>u.team===g.scenario.attackerTeam).map(u=>u.variant),
+   ['TDR-5SE','WVR-6R','LCT-1V','COM-3A']);
+  assert(g.units.every(u=>u.recordSource==='MegaMek/mm-data'&&u.piloting===5&&u.gunnery===4));
+  assert.equal(g.configurePrintedScenarioVariation('alternate-forces').ok,false,'locked after technical source import');
+  assert(g.beginPrintedScenarioPlacement().ok);
+  assert.equal(g.scenario.placement.steps.length,8);
+ }
+});
+test('CAT3500D p.46: Final Exam reshapes authentic source maps to short edges and keeps printed rotations',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ for(const rotations of [[0,0],[3,0],[0,3],[3,3]]){
+  const g=fresh();
+  assert(g.configureScenario('final-exam').ok);
+  g.scenario.sideRollWinner=0;
+  assert(g.chooseScenarioSide(0,'defender').ok);
+  const loaded=prepareAgoacPrintedScenario(g,'final-exam',{rotations,layout:'vertical'});
+  assert.equal(loaded.map.tiles,544);
+  assert.equal(g.setupMap.layout,'vertical');
+  assert.equal(g.setupMap.width,16);
+  assert.equal(g.setupMap.height,34);
+  assert.deepEqual(g.setupMap.sheets.map(s=>s.name),['Desert #3','Grassland #2']);
+  assert.equal(new Set(g.tiles.map(t=>t.q+','+t.r)).size,544,'no overlap after short-side join');
+  assert.deepEqual(g.tiles.map(t=>t.sheet).reduce((acc,s)=>(acc[s]=(acc[s]??0)+1,acc),{}),
+   {0:272,1:272});
+  for(const index of [0,1]){
+   const sheet=g.tiles.filter(t=>t.sheet===index);
+   assert.equal(new Set(sheet.map(t=>t.printedHex)).size,272);
+   assert(sheet.every(t=>t.printedSheet===(index?'Grassland #2':'Desert #3')));
+  }
+  assert.equal(g.configurePrintedScenarioMap({layout:'horizontal'}).ok,false,'no second layout');
+  assert(g.beginPrintedScenarioPlacement().ok);
+  const defender=g.units.find(u=>u.team===g.scenario.defenderTeam&&!u.deployed);
+  const west=g.tiles.find(t=>t.q+Math.floor(t.r/2)===-8);
+  assert(west&&g.scenarioZoneAllowed(defender.team,west.q,west.r));
+  assert(g.placePrintedScenarioMech(defender.id,west.q,west.r).ok);
+ }
+ const trial=fresh();
+ assert(trial.configureScenario('trial-by-fire').ok);
+ trial.scenario.sideRollWinner=0;assert(trial.chooseScenarioSide(0,'attacker').ok);
+ assert.equal(trial.configurePrintedScenarioMap({layout:'vertical'}).ok,false,
+  'short-side published alternative is limited to Final Exam');
+});
+test('CAT3500D p.48: optional playable terrain overlays change movement and LOS terrain, with atomic geometry and type rejection',()=>{
+ const g=looseSheetFixture();
+ assert(g.startScenarioLooseTerrain({piecesPerTeam:1,startingTeam:0}).ok);
+ const at=(col,row)=>atSheetCoord(g,col,row);
+ const first=at(5,8),second=at(23,8);
+ const a=g.tile(first.q,first.r),b=g.tile(second.q,second.r);
+ const beforeA=a.type,beforeB=b.type;
+ assert.equal(g.placeScenarioLooseTerrain({team:0,q:first.q,r:first.r,label:'wrong',terrainType:'lava'}).ok,false);
+ assert.equal(g.placeScenarioLooseTerrain({team:0,q:first.q,r:first.r,label:'woods',
+  terrainType:'heavy',footprint:[{q:0,r:0},{q:2,r:0}]}).ok,false,'disconnected overlay');
+ assert.equal(a.type,beforeA,'invalid placement has no terrain effect');
+ assert(g.placeScenarioLooseTerrain({team:0,q:first.q,r:first.r,label:'Heavy woods',
+  terrainType:'heavy'}).ok);
+ assert.equal(g.tile(first.q,first.r).type,'heavy','engine reads actual heavy woods');
+ assert.equal(g.tile(first.q,first.r).baseTerrainType,beforeA);
+ assert.equal(g.placeScenarioLooseTerrain({team:1,q:second.q,r:second.r,label:'Rubble',
+  terrainType:'rubble'}).ok,true);
+ assert.equal(g.tile(second.q,second.r).type,'rubble');
+ assert.equal(g.tile(second.q,second.r).baseTerrainType,beforeB);
+ assert(g.scenario.looseTerrain.complete);
+ assert(g.scenario.looseTerrain.pieces.every(p=>p.terrainType!==null));
+ assert.equal(g.scenario.looseTerrain.visualAssetsLoaded,false,'licensed punch-out graphics not fabricated');
+});
+
+
+test('CAT3500D Ch11 browser technical manifest uses identical source MTF constructor data for every printed variation',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const {loadAgoacBrowserDesigns}=await import('../dist/agoac-scenario-loader.js');
+ const {AGOAC_BOARD_SOURCE}=await import('../packages/engine/agoac-boards.js');
+ const bundle=JSON.parse(readFileSync(new URL('../dist/agoac-records.json',import.meta.url),'utf8'));
+ assert.equal(bundle.sourceRevision,AGOAC_BOARD_SOURCE.revision);
+ assert.equal(bundle.licenseId,'CC-BY-NC-SA-4.0');
+ assert.equal(bundle.records.length,14);
+ for(const [id,variation]of [['final-exam',null],['final-exam','alternate-forces'],
+  ['trial-by-fire',null],['divide-and-conquer',null],['divide-and-conquer','shortened']]){
+  const actual=await loadAgoacBrowserDesigns(id,{variation,readCatalog:async()=>bundle});
+  const expected=loadAgoacPrintedDesigns(id,{variation});
+  assert.deepEqual(Object.keys(actual).sort(),Object.keys(expected).sort());
+  for(const variant of Object.keys(expected))
+   assert.deepEqual(actual[variant],expected[variant],id+' '+(variation||'original')+' '+variant);
+ }
+ await assert.rejects(()=>loadAgoacBrowserDesigns('final-exam',{
+  readCatalog:async()=>({...bundle,sourceRevision:'untrusted'})}),/revision/);
+ await assert.rejects(()=>loadAgoacBrowserDesigns('trial-by-fire',{variation:'shortened',
+  readCatalog:async()=>bundle}),/unsupported_printed/);
+});
+
+test('CAT3500D p.46: Final Exam substitute terrain variation uses only independently pinned boards',async()=>{
+ const {prepareAgoacPrintedScenario}=await import('../apps/api/src/agoac-scenario-setup.mjs');
+ const g=fresh();
+ assert(g.configureScenario('final-exam').ok);
+ g.scenario.sideRollWinner=0;assert(g.chooseScenarioSide(0,'attacker').ok);
+ assert.equal(g.configurePrintedScenarioMap({names:['Fake #0','Grassland #3']}).ok,false);
+ assert.equal(g.setupMap,null,'unknown source maps must not commit setup');
+ const loaded=prepareAgoacPrintedScenario(g,'final-exam',{
+  layout:'vertical',rotations:[3,0],names:['Desert #2','Grassland #3']});
+ assert.equal(loaded.records.units,8);
+ assert.deepEqual(g.setupMap.sheets.map(s=>s.name),['Desert #2','Grassland #3']);
+ assert(g.tiles.filter(t=>t.sheet===0).every(t=>t.printedSheet==='Desert #2'));
+ assert(g.tiles.filter(t=>t.sheet===1).every(t=>t.printedSheet==='Grassland #3'));
+ assert(g.beginPrintedScenarioPlacement().ok);
+ const trial=fresh();assert(trial.configureScenario('trial-by-fire').ok);
+ trial.scenario.sideRollWinner=0;assert(trial.chooseScenarioSide(0,'attacker').ok);
+ assert.equal(trial.configurePrintedScenarioMap({names:['Desert #2','Grassland #2']}).ok,false);
+});
+
 test('CAT3500D p.48: Awesome AWS-8Q source MTF retains lower arm actuator but omits hand',async()=>{
  const {loadAgoacPrintedDesigns}=await import('../apps/api/src/agoac-scenario-setup.mjs');
  const {construct}=await import('../dist/construction.js');

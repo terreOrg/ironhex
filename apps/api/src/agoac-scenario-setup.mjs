@@ -16,10 +16,17 @@ export const AGOAC_PINNED_RECORD_SOURCE=Object.freeze({
 export function loadAgoacPrintedDesigns(scenarioId,{variation=null}={}){
  const original=AGOAC_PRINTED_SCENARIOS[scenarioId];
  if(!original)throw Error('unknown_agoac_scenario');
- if(variation!==null&&(scenarioId!=='divide-and-conquer'||variation!=='shortened'))
+ if(variation!==null&&!(scenarioId==='divide-and-conquer'&&variation==='shortened'||
+  scenarioId==='final-exam'&&variation==='alternate-forces'))
   throw Error('unsupported_printed_scenario_variation');
  const scenario=variation==='shortened'?
-  AGOAC_SCENARIO_VARIATIONS['divide-and-conquer'].shortened:original;
+  AGOAC_SCENARIO_VARIATIONS['divide-and-conquer'].shortened:
+  variation==='alternate-forces'?{
+   defender:original.defender.map((u,i)=>({...u,variant:
+    AGOAC_SCENARIO_VARIATIONS['final-exam'].alternateForces.defender[i]})),
+   attacker:original.attacker.map((u,i)=>({...u,variant:
+    AGOAC_SCENARIO_VARIATIONS['final-exam'].alternateForces.attacker[i]}))
+  }:original;
  const unique=[...new Set([...scenario.attacker,...scenario.defender].map(u=>u.variant))];
  const designs={};
  for(const variant of unique){
@@ -34,11 +41,11 @@ export function loadAgoacPrintedDesigns(scenarioId,{variation=null}={}){
  }
  return designs;
 }
-export function prepareAgoacPrintedScenario(game,scenarioId,{rotations=[0,0]}={}){
+export function prepareAgoacPrintedScenario(game,scenarioId,{rotations=[0,0],layout='horizontal',names=null}={}){
  if(!game?.scenario||game.scenario.id!==scenarioId||
   ![0,1].includes(game.scenario.defenderTeam))
   throw Error('select_printed_scenario_sides_first');
- const map=game.configurePrintedScenarioMap({rotations});
+ const map=game.configurePrintedScenarioMap({rotations,layout,names});
  if(!map.ok)throw Error('printed_map:'+map.error);
  const records=game.configurePrintedScenarioForces({
   designs:loadAgoacPrintedDesigns(scenarioId,{variation:game.scenario.forceVariation??null})});

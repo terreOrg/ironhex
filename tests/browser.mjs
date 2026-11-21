@@ -164,6 +164,86 @@ async function loaded(page) {
   }, null, { timeout:60000 });
 }
 
+
+test('AGoAC Ch11 browser: Final Exam alternate exact MTFs, vertical source maps, full interactive deployment',async()=>{
+ await withPage('agoac-book-final-exam',{},async page=>{
+  await page.locator('#new').click();
+  await page.locator('#setup-printed').click();
+  await page.locator('#scenario-book-variant').selectOption('alternate-forces');
+  await page.locator('#scenario-book-layout').selectOption('vertical');
+  await page.locator('#scenario-book-rotation0').selectOption('3');
+  await page.locator('#scenario-book-start').click();
+  await page.locator('#scenario-book-attacker').waitFor({state:'visible',timeout:30000});
+  await page.locator('#scenario-book-attacker').click();
+  await page.locator('#scenario-placement-place').waitFor({state:'visible',timeout:30000});
+  assert.match(await page.locator('#battle-map-label').textContent(),/16×34/);
+  const names=await page.locator('#scenario-placement-unit option').allTextContents();
+  assert(names.some(x=>x.includes('Horace')||x.includes('Pushkin')));
+  for(let i=0;i<8;i++){
+   assert.equal(await page.locator('#scenario-placement-place').isEnabled(),true,'step '+i);
+   await page.locator('#scenario-placement-place').click();
+  }
+  assert.equal(await page.locator('#modal').evaluate(el=>el.open),false);
+  assert.equal(await page.locator('[data-unit]').count(),8);
+  const allText=await page.locator('#allies').textContent()+' '+await page.locator('#enemies').textContent();
+  assert.match(allText,/TDR-5S/);
+  assert.match(allText,/WVR-6R/);
+  assert.match(allText,/LCT-1E/);
+  assert.match(allText,/GRF-1N/);
+ });
+});
+test('AGoAC Ch11 browser: Trial by Fire real pre-damage, printed force deployment and source sheet labels',async()=>{
+ await withPage('agoac-book-trial',{},async page=>{
+  await page.locator('#new').click();
+  await page.locator('#setup-printed').click();
+  await page.locator('#scenario-book-id').selectOption('trial-by-fire');
+  await page.locator('#scenario-book-start').click();
+  await page.locator('#scenario-book-defender').waitFor({state:'visible',timeout:30000});
+  await page.locator('#scenario-book-defender').click();
+  await page.locator('#scenario-placement-place').waitFor({state:'visible',timeout:30000});
+  for(let i=0;i<4;i++)await page.locator('#scenario-placement-place').click();
+  assert.equal(await page.locator('#modal').evaluate(el=>el.open),false);
+  assert.equal(await page.locator('[data-unit]').count(),4);
+  const text=await page.locator('#allies').textContent()+' '+await page.locator('#enemies').textContent();
+  assert.match(text,/BLR-1G/);
+  assert.match(text,/WVR-6M/);
+  assert.match(await page.locator('#battle-map-label').textContent(),/32×17/);
+ });
+});
+test('AGoAC Ch11 browser: Divide and Conquer shortened source, optional terrain and hotseat shared lances',async()=>{
+ await withPage('agoac-book-divide',{},async page=>{
+  await page.locator('#new').click();
+  await page.locator('#setup-printed').click();
+  await page.locator('#scenario-book-id').selectOption('divide-and-conquer');
+  await page.locator('#scenario-book-variant').selectOption('shortened');
+  await page.locator('#scenario-book-three').check();
+  await page.locator('#scenario-book-terrain').selectOption('1');
+  await page.locator('#scenario-book-start').click();
+  await page.locator('#scenario-book-attacker').waitFor({state:'visible',timeout:30000});
+  await page.locator('#scenario-book-attacker').click();
+  await page.locator('#scenario-terrain-place').waitFor({state:'visible',timeout:30000});
+  await page.locator('#scenario-terrain-type').selectOption('rough');
+  // Two widely separated sheets satisfy the published spacing requirement.
+  await page.locator('#scenario-terrain-hex').selectOption({index:0});
+  await page.locator('#scenario-terrain-place').click();
+  await page.locator('#scenario-terrain-place').waitFor({state:'visible'});
+  await page.locator('#scenario-terrain-hex').selectOption({
+   index:(await page.locator('#scenario-terrain-hex option').count())-1});
+  await page.locator('#scenario-terrain-place').click();
+  await page.locator('#scenario-placement-place').waitFor({state:'visible',timeout:30000});
+  for(let i=0;i<4;i++)await page.locator('#scenario-placement-place').click();
+  await page.locator('#scenario-row-east').waitFor({state:'visible'});
+  await page.locator('#scenario-row-east').click();
+  for(let i=0;i<3;i++)await page.locator('#scenario-placement-place').click();
+  assert.equal(await page.locator('#modal').evaluate(el=>el.open),false);
+  assert.equal(await page.locator('[data-unit]').count(),7);
+  const text=await page.locator('#allies').textContent()+' '+await page.locator('#enemies').textContent();
+  assert.match(text,/AWS-8Q/);
+  assert.match(text,/CPLT-K2/);
+  assert.doesNotMatch(text,/TDR-5SE/);
+ });
+});
+
 test('Bundled GLB files contain meshes and animation clips', () => {
   for (const file of ['atlas-09.glb','aether-02.glb']) {
     const b = readFileSync(join(dist,file));

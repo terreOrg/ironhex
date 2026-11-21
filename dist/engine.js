@@ -1,6 +1,6 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
 import {construct} from './construction.js';
-import {AGOAC_BOARD_SOURCE,buildAgoacSheet} from './agoac-boards.js';
+import {AGOAC_BOARD_SOURCE,AGOAC_BOARD_NAMES,buildAgoacSheet} from './agoac-boards.js';
 export {LOCATIONS,DIRS,distance};
 // AGoAC pp.3–4: logical game scale; visual model dimensions remain illustrative.
 // Digital battlefield presets, not reproductions of the printed mapsheets.
@@ -531,8 +531,10 @@ export class Game extends Legacy{
  scenarioZoneAllowed(team,q,r,{lance=null,facing=null}={}){
   if(!this.scenario||![0,1].includes(team)||
    ![0,1].includes(this.scenario.defenderTeam)||
-   this.setupMap?.id!=='sheets'||this.setupMap.layout!=='horizontal'||
-   this.setupMap.width!==32||this.setupMap.height!==17||
+   this.setupMap?.id!=='sheets'||
+   !(this.setupMap.layout==='horizontal'&&this.setupMap.width===32&&this.setupMap.height===17||
+     this.scenario.id==='final-exam'&&this.setupMap.layout==='vertical'&&
+     this.setupMap.width===16&&this.setupMap.height===34)||
    facing!==null&&(!Number.isInteger(facing)||facing<0||facing>5))return false;
   const tile=this.tile(q,r);if(!tile)return false;
   const col=t=>t.q+Math.floor(t.r/2);
@@ -748,32 +750,44 @@ export class Game extends Legacy{
   state.attackerRow={side,hexes};
   return {ok:true,side,hexes:structuredClone(hexes)};
  }
- // CAT3500D p.48: choose the published smaller-force option before map,
- // record sheets, MechWarrior cards and any placement are initialized.
+ // CAT3500D pp.46,48: optional printed alternatives are selected once
+ // before map or source record import, never mid-deployment.
  configurePrintedScenarioVariation(variation){
-  if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
-   ![0,1].includes(this.scenario.defenderTeam)||
+  const id=this.scenario?.id;
+  if(!this.scenarioSetupOpen()||
+   ![0,1].includes(this.scenario?.defenderTeam)||
    this.scenario.forceVariation||this.setupMap||this.setupForces||
    this.scenario.placement||this.scenario.cardSetup||this.scenario.campaign||
-   variation!=='shortened')
-   return fail('Сокращённый состав выбирают один раз до загрузки карт и мехов');
-  this.scenario.forceVariation='shortened';
-  return {ok:true,variation,defender:4,attacker:3};
+   !(id==='divide-and-conquer'&&variation==='shortened'||
+     id==='final-exam'&&variation==='alternate-forces'))
+   return fail('Разрешённую вариацию состава выбирают один раз до загрузки карт и мехов');
+  this.scenario.forceVariation=variation;
+  return {ok:true,variation,defender:id==='divide-and-conquer'?4:4,
+   attacker:id==='divide-and-conquer'?3:4};
  }
  printedScenarioRoster(){
-  const original=AGOAC_PRINTED_SCENARIOS[this.scenario?.id];
+  const id=this.scenario?.id,original=AGOAC_PRINTED_SCENARIOS[id];
   if(!original)return null;
-  if(this.scenario?.forceVariation==='shortened')
-   return AGOAC_SCENARIO_VARIATIONS['divide-and-conquer'].shortened;
+  if(id==='divide-and-conquer'&&this.scenario.forceVariation==='shortened')
+   return AGOAC_SCENARIO_VARIATIONS[id].shortened;
+  if(id==='final-exam'&&this.scenario.forceVariation==='alternate-forces'){
+   const variants=AGOAC_SCENARIO_VARIATIONS[id].alternateForces;
+   return {sheets:original.sheets,
+    defender:original.defender.map((u,i)=>({...u,variant:variants.defender[i]})),
+    attacker:original.attacker.map((u,i)=>({...u,variant:variants.attacker[i]}))};
+  }
   return original;
  }
  beginPrintedScenarioPlacement(){
   if(!this.scenarioSetupOpen()||!this.scenario||
    this.scenario.placement||
    this.scenario.looseTerrain&&!this.scenario.looseTerrain.complete||
-   this.setupMap?.id!=='sheets'||this.setupMap.layout!=='horizontal'||this.setupMap.width!==32||
-   this.setupMap.height!==17||![0,1].includes(this.scenario.defenderTeam))
-   return fail('Нужны выбранные стороны сценария и две горизонтальные карты');
+   this.setupMap?.id!=='sheets'||
+   !(this.setupMap.layout==='horizontal'&&this.setupMap.width===32&&this.setupMap.height===17||
+    this.scenario.id==='final-exam'&&this.setupMap.layout==='vertical'&&
+    this.setupMap.width===16&&this.setupMap.height===34)||
+   ![0,1].includes(this.scenario.defenderTeam))
+   return fail('Нужны выбранные стороны сценария и две исходные карты');
   const manifest=this.printedScenarioRoster();
   if(!manifest)return fail('Неизвестный сценарий');
   const actual=this.units.filter(u=>!u.dead&&!u.notFielded&&!u.scenarioArrivalRound);
@@ -965,12 +979,13 @@ export class Game extends Legacy{
  // Footprint offsets are relative axial hexes supplied by a piece catalog.
  // A multi-hex piece is one turn, one quota item and one connected footprint.
  // No fabricated punch-out art or undocumented terrain effects are assumed.
- placeScenarioLooseTerrain({team,q,r,label,footprint=[{q:0,r:0}]}={}){
+ placeScenarioLooseTerrain({team,q,r,label,terrainType=null,footprint=[{q:0,r:0}]}={}){
   const setup=this.scenario?.looseTerrain;
   if(!this.scenarioSetupOpen()||!setup||setup.complete||
    this.scenario.placement||![0,1].includes(team)||team!==setup.nextTeam||
    !Number.isInteger(q)||!Number.isInteger(r)||
    typeof label!=='string'||!label.trim()||label.length>80||
+   terrainType!==null&&!['woods','heavy','rough','rubble'].includes(terrainType)||
    !Array.isArray(footprint)||!footprint.length||footprint.length>32||
    !footprint.every(h=>h&&Number.isInteger(h.q)&&Number.isInteger(h.r)&&
     Math.abs(h.q)<=15&&Math.abs(h.r)<=16)||
@@ -1000,7 +1015,19 @@ export class Game extends Legacy{
    return fail('Между всеми краями элементов необходимо три пустых гекса');
   if(setup.pieces.filter(p=>p.team===team).length>=setup.piecesPerTeam)
    return fail('Превышена равная квота элементов');
-  setup.pieces.push({team,q,r,label:label.trim(),hexes});
+  // Physical markers have no combat effect until their printed terrain
+  // type is explicitly specified. Do not guess die-cut shapes from names.
+  if(terrainType!==null&&hexes.some(h=>{
+   const t=this.tile(h.q,h.r);
+   return t.depth>0||t.bridge||t.overlayTerrain!=null;
+  }))return fail('Эту местность нельзя наложить на воду, мост или другую накладку');
+  setup.pieces.push({team,q,r,label:label.trim(),hexes,terrainType});
+  if(terrainType!==null)for(const hex of hexes){
+   const t=this.tile(hex.q,hex.r);
+   t.baseTerrainType??=t.type;
+   t.type=terrainType;
+   t.overlayTerrain={label:label.trim(),terrainType,team};
+  }
   setup.complete=setup.pieces.length===setup.piecesPerTeam*2;
   setup.nextTeam=setup.complete?null:1-team;
   return {ok:true,complete:setup.complete,nextTeam:setup.nextTeam,
@@ -1191,21 +1218,36 @@ export class Game extends Legacy{
  // left-to-right arrangement. Unlike generic synthetic presets, every
  // elevation, water/rough/woods hex and physical label comes from the
  // pinned source board files. No printed artwork is embedded.
- configurePrintedScenarioMap({rotations=[0,0]}={}){
+ configurePrintedScenarioMap({rotations=[0,0],layout='horizontal',names=null}={}){
   if(!this.scenarioSetupOpen()||!this.scenario||
    ![0,1].includes(this.scenario.defenderTeam)||this.setupMap||
    this.setupForces||this.scenario.placement||
+   !(layout==='horizontal'||layout==='vertical'&&this.scenario.id==='final-exam')||
    !Array.isArray(rotations)||rotations.length!==2||
    rotations.some(n=>![0,3].includes(n)))
    return fail('Сначала выберите сценарий, стороны и допустимый поворот обеих карт');
   const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario.id];
   if(!manifest)return fail('Неизвестный сценарий AGoAC');
+  // CAT3500D p.46 suggests substituting alternative board terrain only
+  // in Final Exam. All substituted tiles still come from pinned true maps.
+  if(names!==null&&(this.scenario.id!=='final-exam'||
+   !Array.isArray(names)||names.length!==2||
+   names.some(name=>!AGOAC_BOARD_NAMES.includes(name))))
+   return fail('Допустима только явная замена двумя известными листами Final Exam');
   const named=manifest.sheets.map((sheet,i)=>({
-   name:sheet.name,side:sheet.side,rotation:rotations[i]}));
-  const preset=this.configureRectangularSheets('horizontal',[
+   name:names?.[i]??sheet.name,side:sheet.side,rotation:rotations[i]}));
+  const preset=this.configureRectangularSheets(layout,[
    {id:'clear',rotation:rotations[0]},{id:'clear',rotation:rotations[1]}]);
   if(!preset.ok)return preset;
-  this.tiles=named.flatMap((m,i)=>buildAgoacSheet(m.name,{sheet:i,rotation:m.rotation}));
+  this.tiles=named.flatMap((m,i)=>buildAgoacSheet(m.name,{sheet:i,rotation:m.rotation})
+   .map(tile=>{
+    if(layout!=='vertical')return tile;
+    // Reproject independently rotated 16x17 source sheets to one
+    // continuous 16x34 playing area, retaining original hex labels.
+    const col=tile.q+16+Math.floor(tile.r/2)-i*16;
+    const row=i*17+tile.r+8,r=row-17;
+    return {...tile,q:col-8-Math.floor(r/2),r};
+   }));
   this.rebuildMap();
   this.setupMap={...this.setupMap,printedScenario:this.scenario.id,
    sourceRevision:AGOAC_BOARD_SOURCE.revision,

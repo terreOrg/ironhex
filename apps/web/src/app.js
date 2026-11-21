@@ -5,12 +5,15 @@ import {animateRoll,clearDice} from './dice.js';
 import * as THREE from 'three';
 import {GLTFLoader} from './GLTFLoader.js';
 import {clone} from './SkeletonUtils.js';
-import {Game,LOCATIONS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,rangeMeters,elapsedBattleSeconds} from './engine.js';
+import {Game,LOCATIONS,distance,PHASES,AGOAC_SCALE,AGOAC_MAP_PRESETS,AGOAC_PRINTED_SCENARIOS,rangeMeters,elapsedBattleSeconds} from './engine.js';
+import {loadAgoacBrowserDesigns} from './agoac-scenario-loader.js';
+import {AGOAC_BOARD_NAMES} from './agoac-boards.js';
 const $=s=>document.querySelector(s),game=new Game();
 const operationId=new URLSearchParams(location.search).get('operation');
 const remoteMode=operationId!==null;
 let remoteVersion=0,remoteReady=false,remoteFinished=false;
 let selected=0,target=null,mode='walk',busy=remoteMode,hotseat=false,team=0,angle=Math.PI/4,zoom=12,reach=[],picked=new Set(),records=new Map(),effects=[];
+let sharedDefenderController='command';
 const scene=new THREE.Scene();scene.background=new THREE.Color('#28362d');scene.fog=new THREE.Fog('#28362d',30,65);
 const camera=new THREE.OrthographicCamera(-15,15,15,-15,.1,240);let software=false;let renderer;try{renderer=new THREE.WebGLRenderer({antialias:true});}catch(e){software=true;const canvas=document.createElement('canvas');renderer={domElement:canvas,shadowMap:{},setPixelRatio(){},setSize(w,h){canvas.width=w;canvas.height=h;},render(){drawFallback();}};}renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;$('#viewport').appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xc6ddbf,0x394332,2.5));const sun=new THREE.DirectionalLight(0xffe1a1,3.6);sun.position.set(-10,22,8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:65});sun.shadow.bias=-.001;scene.add(sun);
@@ -39,7 +42,7 @@ function refreshMapLabel(){
   $('#allies').previousElementSibling.before(label);
  }
  const layout=game.setupMap??{id:'frontier',rotation:0};
- const name=layout.id==='sheets'?layout.sheets.map(s=>AGOAC_MAP_PRESETS.find(p=>p.id===s.id)?.name??s.id).join(' + '):AGOAC_MAP_PRESETS.find(p=>p.id===layout.id)?.name??layout.id;
+ const name=layout.id==='sheets'?layout.sheets.map(s=>s.name??AGOAC_MAP_PRESETS.find(p=>p.id===s.id)?.name??s.id).join(' + '):AGOAC_MAP_PRESETS.find(p=>p.id===layout.id)?.name??layout.id;
  $('#viewport').dataset.mapLayout=layout.id;
  $('#viewport').dataset.mapRotation=String(layout.rotation);$('#viewport').dataset.sheetLayout=layout.layout??'hex';$('#viewport').dataset.hexCount=String(game.tiles.length);
  const label=$('#battle-map-label');
@@ -213,7 +216,14 @@ async function serverCommand(order){
   }
 }
 
-function owned(u){return !!u&&!u.dead&&(hotseat?u.team===game.activeTeam:u.team===0);}
+function owned(u){
+ if(!u||u.dead||!(hotseat?u.team===game.activeTeam:u.team===0))return false;
+ const shared=game.scenario?.sharedLances;
+ if(!hotseat||!shared||u.team!==game.scenario.defenderTeam)return true;
+ const decided=shared.decided?.round===game.round&&shared.decided.phase===game.phase?
+  shared.decided.controller:sharedDefenderController;
+ return u.lance===decided;
+}
 function readCustomDesign(){
  try{const d=JSON.parse(localStorage.getItem('ironhex-design'));if(!d?.config)return null;
   const result=construct(d.config);return result.errors.length?null:{...d,name:result.unit.name};
@@ -257,6 +267,29 @@ $('#allies').innerHTML=game.units.filter(u=>u.team===0&&!u.notFielded).map(card)
 $('#round').textContent=`РАУНД ${String(game.round).padStart(2,'0')}`;$('#round').title=`Завершённое игровое время: ${elapsedBattleSeconds(game.round)} с · ${AGOAC_SCALE.turnSeconds} с/ход`;
 $('#phase').textContent=PHASES[game.phase].toUpperCase();
 $('#selected').innerHTML=`<h2>${u.name.toUpperCase()}</h2><div class="sub">${u.variant} · ${u.tonnage} тонн · Пилот ${u.gunnery}/${u.piloting} · Ранения ${u.pilotWounds}/6</div><div class="stats"><div><b>${sum(u.armor)+sum(u.rear)}</b><small>БРОНЯ</small></div><div><b>${u.heat}<span style="font-size:12px;color:#d9ae6c">+${u.pendingHeat}</span></b><small>НАГРЕВ</small></div><div><b>${game.mp(u,'walk')}/${game.mp(u,'run')}/${game.mp(u,'jump')}</b><small>ХОД / БЕГ / ПРЫЖОК</small></div></div><button class="sheetbtn" id="sheet">▤ &nbsp; ОТКРЫТЬ ЛИСТ МЕХА ↗</button>`;$('#sheet').onclick=()=>sheet(u);
+if(hotseat&&game.scenario?.sharedLances&&game.activeTeam===game.scenario.defenderTeam&&
+ ['move','fire'].includes(game.phase)){
+ const state=game.scenario.sharedLances;
+ const locked=state.decided?.round===game.round&&state.decided.phase===game.phase;
+ const ctrl=document.createElement('select');ctrl.id='scenario-defender-controller';
+ for(const id of ['command','recon']){
+  const option=document.createElement('option');option.value=id;
+  option.textContent=id==='command'?'Командный лэнс: '+state.commandController:
+    'Разведывательный лэнс: '+state.reconController;
+  ctrl.append(option);
+ }
+ ctrl.value=locked?state.decided.controller:sharedDefenderController;
+ ctrl.disabled=locked;
+ ctrl.onchange=()=>{sharedDefenderController=ctrl.value;renderUI();};
+ $('#selected').append(ctrl);
+ if(!locked){
+  const arbitration=document.createElement('button');
+  arbitration.id='scenario-arbitrate';arbitration.className='sheetbtn';
+  arbitration.textContent='СПОР О ПОРЯДКЕ ХОДА — 2D6';
+  arbitration.onclick=showScenarioDispute;
+  $('#selected').append(arbitration);
+ }
+}
 const recordList=document.createElement('button');
 recordList.type='button';recordList.className='sheetbtn';recordList.id='all-records';recordList.textContent='▤  ВСЕ ЛИСТЫ МЕХОВ ↗';
 recordList.onclick=openRecordList;$('#selected').appendChild(recordList);
@@ -552,7 +585,7 @@ function showBattleSetup({preferCustom=false}={}){
   '<label><mech-toggle id="setup-approve-red" label="Красная сторона согласна"></mech-toggle> Красная сторона согласна</label></div>'+
   '<label class="hint">Условия победы<select id="setup-victory"><option value="standard">Стандартные AGoAC</option><option value="limit">Ничья по лимиту раундов (по соглашению)</option><option value="custom">Свои условия (два игрока)</option></select></label>'+
   '<div id="setup-victory-consent" hidden><label id="setup-limit-label">Лимит раундов <input type="number" id="setup-round-limit" min="1" max="1000" value="12"></label><label id="setup-condition-label" hidden>Условие победы (итог подтверждают оба игрока между раундами или после окончания боя)<textarea id="setup-condition" maxlength="500"></textarea></label><label><mech-toggle id="setup-victory-green" label="Зелёная сторона согласна с условиями победы"></mech-toggle> Зелёная сторона согласна</label><label><mech-toggle id="setup-victory-red" label="Красная сторона согласна с условиями победы"></mech-toggle> Красная сторона согласна</label></div>'+
-  '<button class="primary" id="confirmstandard">СТАНДАРТНОЕ РАЗВЁРТЫВАНИЕ AGoAC</button><button id="confirmreset">НАЧАТЬ ЗАНОВО · ГОТОВАЯ РАССТАНОВКА</button>');
+  '<button class="primary" id="confirmstandard">СТАНДАРТНОЕ РАЗВЁРТЫВАНИЕ AGoAC</button><button id="confirmreset">НАЧАТЬ ЗАНОВО · ГОТОВАЯ РАССТАНОВКА</button><button id="setup-printed" type="button">СЦЕНАРИИ ИЗ КНИГИ · ГЛАВА 11</button>');
  for(const id of ['#setup-map','#setup-map-2'])for(const p of AGOAC_MAP_PRESETS){const option=document.createElement('option');option.value=p.id;option.textContent=p.name;$(id).append(option);}
  function updateLayout(){
   const layout=$('#setup-layout').value;
@@ -638,8 +671,265 @@ function showBattleSetup({preferCustom=false}={}){
   if(reset(standard,{slots,extra,custom,approvals,map,victoryTerms}))$('#modal').close();
  }
  $('#confirmstandard').onclick=()=>begin(true);
- $('#confirmreset').onclick=()=>begin(false);update();
+ $('#confirmreset').onclick=()=>begin(false);
+ $('#setup-printed').onclick=showPrintedScenarioSetup;update();
 }
+
+function replaceScenarioModal(html){
+ if($('#modal').open)$('#modal').close();
+ modal(html);
+}
+function showPrintedScenarioSetup(){
+ if(remoteMode||busy)return;
+ replaceScenarioModal('<h2>Сценарии · A Game of Armored Combat</h2>'+
+  '<p>Три печатных сценария, настоящие карты и исходные MTF-записи. Игра вдвоём на одном устройстве; отдельного сетевого управления тремя игроками пока нет.</p>'+
+  '<label>Сценарий<select id="scenario-book-id"><option value="final-exam">1 · Final Exam</option>'+
+  '<option value="trial-by-fire">2 · Trial by Fire</option><option value="divide-and-conquer">3 · Divide and Conquer</option></select></label>'+
+  '<label>Вариант состава<select id="scenario-book-variant"></select></label>'+
+  '<label>Соединение карт<select id="scenario-book-layout"><option value="horizontal">Длинные стороны · как в книге</option>'+
+  '<option value="vertical">Короткие стороны · Final Exam, вариация</option></select></label>'+
+  '<label>Поворот первой карты<select id="scenario-book-rotation0"><option value="0">0°</option><option value="3">180°</option></select></label>'+
+  '<label>Поворот второй карты<select id="scenario-book-rotation1"><option value="0">0°</option><option value="3">180°</option></select></label>'+
+  '<label id="scenario-book-replace-wrap"><input id="scenario-book-replace" type="checkbox"> Заменить печатные карты на другие исходные листы</label>'+
+  '<label id="scenario-book-board-wrap" hidden>Левый/верхний лист<select id="scenario-book-board0"></select>'+
+  'Правый/нижний лист<select id="scenario-book-board1"></select></label>'+
+  '<label>Дополнительные элементы местности на игрока<select id="scenario-book-terrain">'+
+  '<option value="0">Без накладок</option><option value="1">По одному</option><option value="2">По два</option></select></label>'+
+  '<label><input id="scenario-book-three" type="checkbox"> Два отдельных игрока защищают командный и разведывательный лэнсы (локально)</label>'+
+  '<button class="primary" id="scenario-book-start">БРОСИТЬ 2D6 И ВЫБРАТЬ СТОРОНУ</button>');
+ for(const [i,preset] of ['Desert #3','Grassland #2'].entries()){
+  const sel=$('#scenario-book-board'+i);
+  for(const name of AGOAC_BOARD_NAMES)sel.append(new Option(name,name));
+  sel.value=preset;
+ }
+ $('#scenario-book-replace').onchange=()=>{
+  $('#scenario-book-board-wrap').hidden=!$('#scenario-book-replace').checked;
+ };
+ const update=()=>{
+  const id=$('#scenario-book-id').value,variant=$('#scenario-book-variant');
+  const previous=variant.value;variant.replaceChildren();
+  for(const [value,label]of [['','Исходный состав'],...(id==='final-exam'?
+   [['alternate-forces','Другой печатный состав · 4 против 4']]:
+   id==='divide-and-conquer'?[['shortened','Сокращённый состав · 4 против 3']]:[])]){
+   const option=new Option(label,value);variant.append(option);
+  }
+  variant.value=[...variant.options].some(o=>o.value===previous)?previous:'';
+  const layout=$('#scenario-book-layout');
+  layout.querySelector('[value="vertical"]').disabled=id!=='final-exam';
+  if(id!=='final-exam')layout.value='horizontal';
+  $('#scenario-book-replace').disabled=id!=='final-exam';
+  if(id!=='final-exam')$('#scenario-book-replace').checked=false;
+  $('#scenario-book-board-wrap').hidden=!$('#scenario-book-replace').checked;
+  $('#scenario-book-three').disabled=id!=='divide-and-conquer';
+  if(id!=='divide-and-conquer')$('#scenario-book-three').checked=false;
+ };
+ $('#scenario-book-id').onchange=update;update();
+ $('#scenario-book-start').onclick=async()=>{
+  const id=$('#scenario-book-id').value,variation=$('#scenario-book-variant').value||null;
+  const options={id,variation,layout:$('#scenario-book-layout').value,
+   rotations:[Number($('#scenario-book-rotation0').value),Number($('#scenario-book-rotation1').value)],
+   terrainCount:Number($('#scenario-book-terrain').value),
+   names:$('#scenario-book-replace').checked?
+    [$('#scenario-book-board0').value,$('#scenario-book-board1').value]:null,
+   shared:$('#scenario-book-three').checked};
+  const button=$('#scenario-book-start');button.disabled=true;
+  try{
+   const designs=await loadAgoacBrowserDesigns(id,{variation});
+   const trial=new Game(),configured=trial.configureScenario(id);
+   if(!configured.ok)throw Error(configured.error);
+   const rolled=trial.rollScenarioSides();
+   if(!rolled.ok)throw Error(rolled.error);
+   replaceScenarioModal('<h2>Выбор стороны · '+id+'</h2><p>Победитель броска 2D6: '+
+    (rolled.winner===0?'Зелёные':'Красные')+
+    ' (зелёные '+rolled.green+', красные '+rolled.red+'). Победитель выбирает роль.</p>'+
+    '<button id="scenario-book-attacker" class="primary">ВЫБРАТЬ АТАКУЮЩЕГО</button>'+
+    '<button id="scenario-book-defender">ВЫБРАТЬ ЗАЩИТНИКА</button>');
+   for(const role of ['attacker','defender'])
+    $('#scenario-book-'+role).onclick=()=>installPrintedScenario(trial,rolled.winner,role,options,designs);
+  }catch(error){toast('Исходный сценарий не загружен: '+error.message);
+   button.disabled=false;}
+ };
+}
+function installPrintedScenario(trial,winner,role,options,designs){
+ const choose=trial.chooseScenarioSide(winner,role);
+ if(!choose.ok)return void toast(choose.error);
+ if(options.variation){
+  const variation=trial.configurePrintedScenarioVariation(options.variation);
+  if(!variation.ok)return void toast(variation.error);
+ }
+ const sourceMap=trial.configurePrintedScenarioMap({
+  rotations:options.rotations,layout:options.layout,names:options.names});
+ if(!sourceMap.ok)return void toast(sourceMap.error);
+ const loaded=trial.configurePrintedScenarioForces({designs});
+ if(!loaded.ok)return void toast(loaded.error);
+ if(options.shared){
+  const shared=trial.configureSharedDefenderLances({
+   commandController:'Игрок командного лэнса',
+   reconController:'Игрок разведывательного лэнса'});
+  if(!shared.ok)return void toast(shared.error);
+ }
+ if(options.terrainCount){
+  const started=trial.startScenarioLooseTerrain({piecesPerTeam:options.terrainCount});
+  if(!started.ok)return void toast(started.error);
+ }else{
+  const placement=trial.beginPrintedScenarioPlacement();
+  if(!placement.ok)return void toast(placement.error);
+ }
+ clearDice();
+ for(const rec of records.values()){
+  rec.mixer.stopAllAction();scene.remove(rec.root);rec.label.remove();
+ }
+ records.clear();
+ Object.assign(game,trial);game.rebuildMap();
+ hotseat=true;$('#gamemode').value='hotseat';sharedDefenderController='command';
+ selected=0;target=null;mode='walk';arcWeapon='all';
+ picked=new Set(game.units[0].weapons.map((_,i)=>i));
+ buildTerrain();buildArcMeshes();reconcileModelRecords();syncModels();
+ zoom=fitBoard();cam();renderUI();
+ showPrintedPlacementStep();
+}
+function scenarioHexOptions(select,tiles){
+ for(const tile of tiles){
+  const option=document.createElement('option');
+  option.value=tile.q+','+tile.r;
+  const col=tile.q+Math.floor(tile.r/2)+Math.floor(game.setupMap.width/2)+1;
+  const row=tile.r+Math.floor(game.setupMap.height/2)+1;
+  option.textContent=(tile.printedSheet||'Карта')+' · '+
+   (tile.printedHex||String(col).padStart(2,'0')+String(row).padStart(2,'0'))+
+   ' · поле '+col+','+row;
+  select.append(option);
+ }
+}
+function showPrintedPlacementStep(){
+ const scenario=game.scenario,terrain=scenario?.looseTerrain;
+ if(!scenario)return;
+ if(terrain&&!terrain.complete){
+  const next=terrain.nextTeam;
+  replaceScenarioModal('<h2>Дополнительная местность · шаг '+(terrain.pieces.length+1)+
+   ' из '+(terrain.piecesPerTeam*2)+'</h2><p>Ход '+(next===0?'зелёных':'красных')+
+   '. Дистанция между отдельными элементами — три пустых гекса, от края каждого листа — более двух.</p>'+
+   '<label>Тип элемента<select id="scenario-terrain-type">'+
+   '<option value="woods">Лёгкий лес</option><option value="heavy">Густой лес</option>'+
+   '<option value="rough">Пересечённая местность</option><option value="rubble">Обломки</option></select></label>'+
+   '<label>Размер<select id="scenario-terrain-shape">'+
+   '<option value="1">Один гекс</option><option value="2">Два соседних гекса</option>'+
+   '<option value="custom">Контур реального элемента — свои смещения</option></select></label>'+
+   '<label id="scenario-terrain-custom-wrap" hidden>Смещения q,r через точку с запятой '+
+   '<input id="scenario-terrain-offsets" value="0,0;1,0;1,-1"></label>'+
+   '<label>Исходный гекс<select id="scenario-terrain-hex"></select></label>'+
+   '<button class="primary" id="scenario-terrain-place">РАЗМЕСТИТЬ ЭЛЕМЕНТ</button>');
+  scenarioHexOptions($('#scenario-terrain-hex'),game.tiles.filter(t=>
+   game.looseTerrainZoneAllowed(t.q,t.r)));
+  $('#scenario-terrain-shape').onchange=()=>{
+   $('#scenario-terrain-custom-wrap').hidden=$('#scenario-terrain-shape').value!=='custom';
+  };
+  $('#scenario-terrain-place').onclick=()=>{
+   const [q,r]=$('#scenario-terrain-hex').value.split(',').map(Number);
+   const terrainType=$('#scenario-terrain-type').value;
+   let footprint=[{q:0,r:0}];
+   if($('#scenario-terrain-shape').value==='2')footprint=[{q:0,r:0},{q:1,r:0}];
+   if($('#scenario-terrain-shape').value==='custom'){
+    const segments=$('#scenario-terrain-offsets').value.split(';');
+    if(segments.length>32||!segments.every(s=>/^\s*-?\d+,\s*-?\d+\s*$/.test(s)))
+     return void toast('Контур: до 32 координат в формате q,r; q,r');
+    footprint=segments.map(s=>{
+     const [dq,dr]=s.split(',').map(Number);return {q:dq,r:dr};
+    });
+   }
+   const placed=game.placeScenarioLooseTerrain({team:next,q,r,label:terrainType,
+    terrainType,footprint});
+   if(!placed.ok)return void toast(placed.error);
+   buildTerrain();renderUI();
+   if(placed.complete){
+    const began=game.beginPrintedScenarioPlacement();
+    if(!began.ok)return void toast(began.error);
+   }
+   showPrintedPlacementStep();
+  };
+  return;
+ }
+ const state=scenario.placement;
+ if(!state||state.complete){
+  if(scenario.id==='trial-by-fire'&&!scenario.preDamageApplied){
+   const defender=game.units.find(u=>u.team===scenario.defenderTeam);
+   const pre=game.applyTrialByFirePreDamage(defender.id);
+   if(!pre.ok)return void toast(pre.error);
+  }
+  if($('#modal').open)$('#modal').close();
+  syncModels();renderUI();
+  toast('Исходный сценарий готов: все мехи выставлены. Начните фазу инициативы.');
+  return;
+ }
+ const step=state.steps[state.placed.length];
+ if(step.lance==='printed-row'&&!state.attackerRow){
+  replaceScenarioModal('<h2>Divide and Conquer · сторона атаки</h2>'+
+   '<p>После обоих лэнсов защиты выберите одну строку 1510–1517. Смешивать стороны нельзя.</p>'+
+   '<button id="scenario-row-west">ЗАПАД · SW</button>'+
+   '<button id="scenario-row-east">ВОСТОК · NE</button>');
+  for(const side of ['west','east'])$('#scenario-row-'+side).onclick=()=>{
+   const chosen=game.chooseDivideAndConquerAttackerRow(side);
+   if(!chosen.ok)return void toast(chosen.error);
+   showPrintedPlacementStep();
+  };
+  return;
+ }
+ const available=game.units.filter(u=>!u.dead&&u.deployed===false&&u.team===step.team&&
+  (!step.lance||step.lance==='printed-row'||u.lance===step.lance));
+ const tiles=game.tiles.filter(t=>game.scenarioZoneAllowed(step.team,t.q,t.r,{
+  lance:step.lance,facing:0})&&!state.placed.some(p=>p.q===t.q&&p.r===t.r));
+ replaceScenarioModal('<h2>Размещение · '+(state.placed.length+1)+'/'+state.steps.length+'</h2>'+
+  '<p>'+ (step.team===0?'Зелёные':'Красные')+
+  (step.lance&&step.lance!=='printed-row'?' · лэнс '+step.lance:'')+
+  '. Выберите пилота и разрешённый правилами гекс.</p>'+
+  '<label>Мех<select id="scenario-placement-unit"></select></label>'+
+  '<label>Гекс<select id="scenario-placement-hex"></select></label>'+
+  '<label>Курс<select id="scenario-placement-facing"></select></label>'+
+  '<button class="primary" id="scenario-placement-place">РАЗМЕСТИТЬ МЕХА</button>');
+ const unitSelect=$('#scenario-placement-unit');
+ for(const u of available){
+  const option=new Option(u.pilot+' · '+u.variant,String(u.id));unitSelect.append(option);
+ }
+ scenarioHexOptions($('#scenario-placement-hex'),tiles);
+ for(let facing=0;facing<6;facing++)
+  $('#scenario-placement-facing').append(new Option(String(facing*60)+'°',String(facing)));
+ const place=$('#scenario-placement-place');
+ place.disabled=!available.length||!tiles.length;
+ place.onclick=()=>{
+  const id=Number(unitSelect.value);
+  const [q,r]=$('#scenario-placement-hex').value.split(',').map(Number);
+  const facing=Number($('#scenario-placement-facing').value);
+  const placed=game.placePrintedScenarioMech(id,q,r,facing);
+  if(!placed.ok)return void toast(placed.error);
+  syncModels();renderUI();
+  showPrintedPlacementStep();
+ };
+}
+function showScenarioDispute(){
+ const shared=game.scenario?.sharedLances;
+ if(!shared||!hotseat||!['move','fire'].includes(game.phase)||
+  game.activeTeam!==game.scenario.defenderTeam)return;
+ const candidates=lance=>game.units.filter(u=>u.lance===lance&&!u.dead&&
+  !u.notFielded&&u.deployed!==false&&u.team===game.scenario.defenderTeam);
+ replaceScenarioModal('<h2>Арбитраж · два игрока защиты</h2>'+
+  '<p>Оба игрока выбирают мех своего лэнса. При споре каждый бросает 2D6, ничьи перебрасываются.</p>'+
+  '<label>Командный лэнс<select id="scenario-dispute-command"></select></label>'+
+  '<label>Разведывательный лэнс<select id="scenario-dispute-recon"></select></label>'+
+  '<button class="primary" id="scenario-dispute-roll">АРБИТРАЖ 2D6</button>');
+ for(const lance of ['command','recon'])for(const u of candidates(lance))
+  $('#scenario-dispute-'+lance).append(new Option(u.pilot+' · '+u.variant,String(u.id)));
+ $('#scenario-dispute-roll').onclick=()=>{
+  const result=game.arbitrateSharedDefenderChoice({
+   commandChoice:Number($('#scenario-dispute-command').value),
+   reconChoice:Number($('#scenario-dispute-recon').value)});
+  if(!result.ok)return void toast(result.error);
+  sharedDefenderController=result.controller;
+  if($('#modal').open)$('#modal').close();
+  selectUnit(result.unitId);renderUI();
+  toast('2D6: порядок фазы определяет '+(result.controller==='command'?
+   shared.commandController:shared.reconController));
+ };
+}
+
 $('#new').onclick=()=>{
  if(remoteMode){toast('Перезапуск серверной операции недоступен. Откройте новый боевой контракт в штабе.');return;}
  if(busy)return;showBattleSetup();
