@@ -52,6 +52,30 @@ test('AGoAC Ch11: three-user server start rolls source sides and loads exact pin
   assert(!Object.hasOwn(publicScenarioRoomGame(captured),'rngState'));
  }
 });
+test('AGoAC Ch11 errata v8.01: persisted scenario 3 cannot restore obsolete or tampered source maps',()=>{
+ const runtime=begin();
+ const stored=captureScenarioRoomGame(runtime.game,runtime.rng);
+ const accepted=restoreScenarioRoomGame(stored);
+ assert.deepEqual(accepted.game.setupMap.sheets.map(s=>s.name),
+  ['Desert #2','Grassland #3']);
+ const rejectTamper=mutate=>{
+  const bad=structuredClone(stored);mutate(bad.game);
+  blocked(()=>restoreScenarioRoomGame(bad),'scenario_source_map_mismatch');
+ };
+ rejectTamper(g=>{g.setupMap.sheets[0].name='Desert #3';});
+ rejectTamper(g=>{g.setupMap.sheets[0].side='east';});
+ rejectTamper(g=>{g.setupMap.sheets.reverse();});
+ rejectTamper(g=>{g.tiles[0].printedSheet='Desert #3';});
+ rejectTamper(g=>{g.tiles[0].sheet=1;});
+ rejectTamper(g=>{g.tiles.pop();});
+ const original=runtime.game.setupMap.sheets[0].name;
+ runtime.game.setupMap.sheets[0].name='Desert #3';
+ blocked(()=>captureScenarioRoomGame(runtime.game,runtime.rng),
+  'scenario_source_map_mismatch');
+ runtime.game.setupMap.sheets[0].name=original;
+ assert.deepEqual(captureScenarioRoomGame(runtime.game,runtime.rng),stored);
+});
+
 test('AGoAC Ch11: logged-in attacker and designated defenders place four source counters',()=>{
  const {game}=begin();
  blocked(()=>applyScenarioRoomSetup(game,'attacker',{type:'place-mech',

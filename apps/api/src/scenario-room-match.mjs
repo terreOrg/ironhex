@@ -21,7 +21,32 @@ const rngFrom=initial=>{
 };
 const safeJson=x=>JSON.parse(JSON.stringify(x,(key,value)=>
  key==='map'||key==='rng'?undefined:value));
+// Official AGoAC v8.01 p.5 is authoritative over the superseded p.47
+// printing. This invariant also protects persisted, independently restored
+// three-account sessions from accidentally loading the obsolete mapsheet.
+const scenario3Sheets=Object.freeze(['Desert #2','Grassland #3']);
+function assertScenario3SourceMap(game){
+ if(game?.scenario?.id!=='divide-and-conquer'||game.setupMap==null)return;
+ const map=game.setupMap,sheets=map.sheets;
+ check(map.id==='sheets'&&map.printedScenario==='divide-and-conquer'&&
+  map.layout==='horizontal'&&map.width===32&&map.height===17&&
+  Array.isArray(sheets)&&sheets.length===2&&
+  sheets.every((s,i)=>s?.name===scenario3Sheets[i]&&
+   s.side===(i===0?'west':'east')),
+  'scenario_source_map_mismatch');
+ const counts=[0,0];
+ check(Array.isArray(game.tiles)&&game.tiles.length===544,
+  'scenario_source_map_mismatch');
+ for(const tile of game.tiles){
+  check((tile.sheet===0||tile.sheet===1)&&
+   tile.printedSheet===scenario3Sheets[tile.sheet],
+   'scenario_source_map_mismatch');
+  counts[tile.sheet]++;
+ }
+ check(counts[0]===272&&counts[1]===272,'scenario_source_map_mismatch');
+}
 export function captureScenarioRoomGame(game,rng){
+ assertScenario3SourceMap(game);
  return {rngState:rng.state(),game:safeJson(game)};
 }
 export function restoreScenarioRoomGame(saved){
@@ -30,6 +55,7 @@ export function restoreScenarioRoomGame(saved){
  const rng=rngFrom(saved.rngState),game=new Game({rng:()=>rng.next()});
  const {map:_map,rng:_rng,...state}=saved.game;
  Object.assign(game,structuredClone(state));
+ assertScenario3SourceMap(game);
  game.rebuildMap();
  game.rng=()=>rng.next();
  return {game,rng};
