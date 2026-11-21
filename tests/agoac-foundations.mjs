@@ -6722,3 +6722,173 @@ test('CAT3500D pp.45-48: printed force comparison is order-independent and local
  assert.equal(invalid.g.beginPrintedScenarioPlacement().ok,false,
   'matching variants with unprinted pilot skills cannot bypass roster verification');
 });
+
+
+test('CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1',()=>{
+ const {g,place,defenders,attackers}=printedDeploymentFixture('trial-by-fire');
+ assert(g.configureTrialByFireChase().ok);
+ assert.equal(g.nextPhase().ok,false,'chase cannot start without lone-defender placement');
+ assert.equal(g.configureTrialByFireChase().ok,false,'no second chase setup');
+ const start=g.beginPrintedScenarioPlacement();
+ assert(start.ok);assert.equal(start.steps,1,'only the defender is placed before battle');
+ assert.equal(g.scenario.placement.complete,false);
+ assert.equal(place(attackers[0].id,0,7).ok,false,'attacker cannot deploy in chase setup');
+ assert(place(defenders[0].id,3,8,5).ok);
+ assert(g.scenario.placement.complete,'defender-only initial placement is complete');
+ for(const u of attackers){
+  assert.equal(u.deployed,false);
+  assert.equal(u.scenarioArrivalRound,2);
+  assert.equal(u.scenarioReserve,'trial-by-fire-chase');
+ }
+ assert.equal(g.nextPhase().ok,false,'pre-damage still mandatory in chase');
+ assert(g.applyTrialByFirePreDamage(defenders[0].id).ok);
+ attackers[0].heat=9;attackers[0].pendingHeat=2;
+ assert(g.nextPhase().ok);
+ assert.equal(g.phase,'move');assert.equal(g.round,1);
+ assert.deepEqual(g.queue,[1],'only lone defender receives first-turn movement');
+ assert.equal(g.canAct(attackers[0]),false);
+ assert.equal(g.deploymentEntryRoutes(attackers[0],'walk').length,0);
+ assert(g.hold(defenders[0].id).ok);
+ assert(g.nextPhase().ok,'future attackers must not block first-turn movement');
+ assert.equal(g.phase,'fire');assert.deepEqual(g.queue,[1],'no attacker weapons before turn two');
+ assert(g.hold(defenders[0].id).ok);
+ assert(g.nextPhase().ok);
+ assert.equal(g.phase,'physical');assert.deepEqual(g.queue,[1]);
+ assert(g.hold(defenders[0].id).ok);
+ assert(g.nextPhase().ok);assert.equal(g.phase,'heat');
+ assert(g.nextPhase().ok);assert.equal(g.phase,'end');
+ assert.equal(attackers[0].heat,9,'off-board reserves do not overheat');
+ assert.equal(attackers[0].pendingHeat,2,'off-board reserves keep their pending state');
+ assert(g.nextPhase().ok);
+ assert.equal(g.round,2);assert.equal(g.phase,'initiative');
+ const dice=[...diceFor(12),...diceFor(2)];
+ g.rng=()=>{assert(dice.length);return dice.shift();};
+ assert(g.nextPhase().ok);
+ assert.equal(dice.length,0);assert.equal(g.phase,'move');
+ assert.equal(g.queue.filter(t=>t===0).length,3,'three attackers join the second-turn Movement queue');
+ assert.equal(g.queue.filter(t=>t===1).length,1);
+ g.activeTeam=0;g.actingId=null;
+ const route=g.deploymentEntryRoutes(attackers[0],'walk').find(p=>p.cost===1);
+ assert(route,'a full west-edge entry is available with one MP on clear ground');
+ const western=g.deploymentEdgeTiles(0).some(t=>t.q===route.q&&t.r===route.r);
+ assert(western,'route starts on the printed west edge');
+ const enter=g.enterDeployment(attackers[0],route.q,route.r,'walk');
+ assert(enter.ok);assert.equal(enter.entry,true);
+ assert.equal(attackers[0].deployed,true);
+ assert.equal(attackers[0].distanceMoved,1,'first full hex is the first movement hex');
+ assert.equal(attackers[0].spent,1,'first full hex costs ordinary movement MP');
+ assert.deepEqual(attackers[0].moveStart,route.entryFrom);
+ assert.equal(g.enterDeployment(attackers[0],route.q,route.r,'walk').ok,false,'cannot enter twice');
+ assert(g.hold(attackers[0].id).ok);
+});
+
+test('CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge',()=>{
+ const origin=printedDeploymentFixture('final-exam');
+ const source=origin.g,sourceTeam=source.scenario.defenderTeam;
+ const survivors=origin.defenders.slice(0,2),lost=origin.defenders[2];
+ source.winner=sourceTeam;
+ survivors[0].armor.CT-=7;
+ survivors[0].rear.CT-=3;
+ survivors[0].structure.LA-=1;
+ survivors[0].crit.LA[0]=true;
+ survivors[0].pilotWounds=1;
+ survivors[0].heat=9;
+ assert(survivors[0].bins.length,'source uses real engine ammo container');
+ survivors[0].bins[0].shots=Math.max(0,survivors[0].bins[0].shots-4);
+ survivors[1].gyroHits=1;
+ lost.dead=true;
+ const original=survivors.map(u=>structuredClone({
+  armor:u.armor,rear:u.rear,structure:u.structure,crit:u.crit,bins:u.bins,
+  pilotWounds:u.pilotWounds,heat:u.heat,gyroHits:u.gyroHits
+ }));
+ const target=printedDeploymentFixture('divide-and-conquer').g;
+ assert.equal(target.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:[lost.id]}).ok,false,'destroyed units never reinforce');
+ assert.equal(target.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:[survivors[0].id,survivors[0].id]}).ok,false,'no duplicate transfers');
+ const result=target.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:survivors.map(u=>u.id)
+ });
+ assert(result.ok);assert.equal(result.arrivalRound,5);assert.equal(result.entryEdge,0);
+ assert.equal(target.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:[survivors[0].id]}).ok,false,'cannot import a second time');
+ assert.equal(target.scenario.campaign.damageCarried,true);
+ assert.equal(target.scenario.campaign.exactMapImplemented,false);
+ assert.equal(target.scenario.campaign.recordSheetsImported,false);
+ const imported=result.unitIds.map(id=>target.unit(id));
+ assert.equal(imported.length,2);
+ for(let i=0;i<imported.length;i++){
+  const u=imported[i],prior=original[i];
+  assert.equal(u.team,target.scenario.defenderTeam);
+  assert.equal(u.deployed,false);
+  assert.equal(u.scenarioArrivalRound,5);
+  assert.equal(u.scenarioReserve,'linked-scenario');
+  for(const field of ['armor','rear','structure','crit','bins',
+   'pilotWounds','heat','gyroHits'])assert.deepEqual(u[field],prior[field],
+   field+' must carry source damage and ammunition');
+ }
+ const preview=printedDeploymentFixture('divide-and-conquer').g;
+ const linked=preview.configureLinkedScenarioReinforcements({
+  sourceGame:source,sourceIds:survivors.map(u=>u.id)
+ });
+ assert(linked.ok);
+ const printed=preview.beginPrintedScenarioPlacement();
+ assert(printed.ok,'campaign reserves must not invalidate the six-vs-four published setup');
+ assert.equal(printed.steps,10);
+ for(const id of linked.unitIds)assert.equal(preview.unit(id).deployed,false);
+ assert.notEqual(imported[0].armor,survivors[0].armor,'campaign state is detached');
+ const before=imported[0].armor.CT;survivors[0].armor.CT--;
+ assert.equal(imported[0].armor.CT,before,'source cannot mutate registered reinforcement');
+ target.phase='initiative';target.round=4;target.initiative();
+ assert.equal(target.phase,'move');assert.equal(target.queue.length,10,'Turn 4 roster excludes both waiting reinforcements');
+ target.activeTeam=target.scenario.defenderTeam;target.actingId=null;
+ assert.equal(target.canAct(imported[0]),false,'reinforcement cannot act on Turn 4');
+ assert.equal(target.deploymentEntryRoutes(imported[0],'walk').length,0);
+ target.phase='heat';target.heatPhase();
+ assert.equal(imported[0].heat,9,'waiting reinforcements do not cool or gain heat offboard');
+ target.phase='end';target.endPhase();
+ assert.equal(target.round,5);
+ assert.equal(imported[0].heat,9);
+ assert.equal(imported[0].armor.CT,before);
+ target.phase='initiative';target.initiative();
+ assert.equal(target.phase,'move');
+ assert.equal(target.queue.length,12,'Turn 5 Movement includes both reinforcements');
+ target.activeTeam=target.scenario.defenderTeam;target.actingId=null;
+ const paths=target.deploymentEntryRoutes(imported[0],'walk');
+ const route=paths.find(t=>t.cost===1);
+ assert(route,'clear western edge offers a standard one-MP first-hex entry');
+ assert(target.deploymentEdgeTiles(0).some(t=>t.q===route.q&&t.r===route.r));
+ const entry=target.enterDeployment(imported[0],route.q,route.r,'walk');
+ assert(entry.ok);assert.equal(entry.entry,true);
+ assert.equal(imported[0].deployed,true);assert.equal(imported[0].spent,1);
+ assert.equal(imported[0].distanceMoved,1);
+ assert.deepEqual(imported[0].moveStart,route.entryFrom);
+ assert.equal(imported[0].armor.CT,before);
+ assert.deepEqual(imported[0].bins,original[0].bins);
+ assert(target.hold(imported[0].id).ok,'reinforcement can complete normal Turn 5 movement');
+});
+
+test('CAT3500D pp.47-48: other scenarios and invalid campaign sources cannot claim scheduled reinforcements',()=>{
+ const ordinary=fresh();
+ assert.equal(ordinary.configureTrialByFireChase().ok,false);
+ assert.equal(ordinary.configureLinkedScenarioReinforcements({}).ok,false);
+ const trial=printedDeploymentFixture('trial-by-fire');
+ const source=printedDeploymentFixture('final-exam');
+ source.g.winner=source.g.scenario.defenderTeam;
+ assert.equal(trial.g.configureLinkedScenarioReinforcements({
+  sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok,false);
+ const target=printedDeploymentFixture('divide-and-conquer');
+ assert.equal(target.g.configureLinkedScenarioReinforcements({
+  sourceGame:source.g,sourceIds:[source.attackers[0].id]}).ok,false,
+ 'default source team is Scenario 1 defender; cross-team imports are rejected');
+ assert(target.g.configureLinkedScenarioReinforcements({
+  sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok);
+ const bad=printedDeploymentFixture('divide-and-conquer');
+ source.g.winner=undefined;
+ assert.equal(bad.g.configureLinkedScenarioReinforcements({sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok,false,
+  'an absent result is not a finished scenario');
+ source.g.winner=null;
+ assert.equal(bad.g.configureLinkedScenarioReinforcements({
+  sourceGame:source.g,sourceIds:[source.defenders[0].id]}).ok,false,
+ 'unfinished Scenario 1 cannot provide certified survivors');
+});

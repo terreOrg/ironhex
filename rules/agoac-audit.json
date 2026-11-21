@@ -9747,8 +9747,14 @@
         47
       ],
       "statement": "Scenario 2 chase variant starts the defender alone, grants one full movement turn, then has attackers enter from west during Movement on Turn 2 with first complete hex counted.",
-      "status": "known_missing",
-      "reviewNote": "No delayed turn-two attacker reinforcement and no chase-variant activation."
+      "status": "tested_case",
+      "reviewNote": "No delayed turn-two attacker reinforcement and no chase-variant activation. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.47: Trial by Fire chase places defender alone, reserves attackers through Turn 1"
+        }
+      ]
     },
     {
       "id": "agoac-150",
@@ -10171,8 +10177,14 @@
         48
       ],
       "statement": "Linked campaign play can transfer surviving Mechs with persistent damage from Scenario 1 into Scenario 3 as west-edge reinforcements in the Movement Phase of Turn 5.",
-      "status": "known_missing",
-      "reviewNote": "Economy operations persist damage and ammunition but there is no AGoAC scenario linking, survivor transfer or turn-five reinforcements."
+      "status": "tested_case",
+      "reviewNote": "Economy operations persist damage and ammunition but there is no AGoAC scenario linking, survivor transfer or turn-five reinforcements. 2026-11-21 PR#241: timed reserve arrivals integrated into active Movement/weapon/physical selection, standard west-edge deployment MP and team queue; deterministic source-linked test CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge. Not VERIFIED until authentic source map variants, recorded technical Mech sheets, authenticated scenario launcher and campaign end-to-end flow are integrated.",
+      "evidence": [
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "CAT3500D p.48: linked Final Exam survivors carry damage and ammo to defender reinforcements on Turn 5 west edge"
+        }
+      ]
     }
   ]
 }

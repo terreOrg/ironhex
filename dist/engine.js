@@ -303,7 +303,7 @@ export class Game extends Legacy{
  // surviving torso weapons are not disabled by a movement-only restriction.
  isImmobile(u){return !this.mobile(u)||['LA','RA','LL','RL'].every(l=>u.structure?.[l]===0);}
  done(u){return this.phase==='move'?u.moved:this.phase==='fire'?u.fired:u.physicalDone;}
- canAct(u){return !!u&&this.winner===null&&!u.dead&&u.team===this.activeTeam&&!this.done(u)&&(this.actingId===null||this.actingId===u.id);}
+ canAct(u){return !!u&&this.winner===null&&!u.dead&&!this.scenarioReserveWaiting(u)&&u.team===this.activeTeam&&!this.done(u)&&(this.actingId===null||this.actingId===u.id);}
  // AGoAC p.7: ratios are established before each declaration pair,
  // not continuously while the two sides are completing that pair.
  selectionPlan(remaining){
@@ -327,7 +327,7 @@ export class Game extends Legacy{
   this.activeTeam=this.queue[0]??null;
  }
  buildQueue(){
-  const remaining=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead).length);
+  const remaining=[0,1].map(t=>this.units.filter(u=>u.team===t&&!u.dead&&!this.scenarioReserveWaiting(u)).length);
   const {slots,firstPair}=this.selectionPlan(remaining);
   this.queue=slots;this.actingId=null;this.saveSelectionPlan(firstPair);
  }
@@ -336,7 +336,7 @@ export class Game extends Legacy{
  // Older saves without pair metadata retain their existing order until
  // the next phase rather than guessing where their partial pair began.
  skipExhaustedSelections(pairLength=null){
-  const remaining=[0,1].map(team=>this.units.filter(v=>v.team===team&&!v.dead&&!this.done(v)).length);
+  const remaining=[0,1].map(team=>this.units.filter(v=>v.team===team&&!v.dead&&!this.scenarioReserveWaiting(v)&&!this.done(v)).length);
   const keep=team=>{
    if(remaining[team]<=0)return false;
    remaining[team]--;return true;
@@ -636,6 +636,67 @@ export class Game extends Legacy{
   return {ok:true,controller,unitId,reused:false,rolls:this.phaseRolls.slice(startingRoll)};
  }
 
+
+ // CAT3500D p.47: optional Trial by Fire chase. The defender is placed
+ // first, moves alone in Turn 1; the three attackers enter from the WEST
+ // during Turn 2 Movement with ordinary entry MP and no teleport.
+ configureTrialByFireChase(){
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='trial-by-fire'||
+   ![0,1].includes(this.scenario?.defenderTeam)||
+   this.scenario.chase||this.scenario.placement)
+   return fail('Погоню можно выбрать один раз до размещения Trial by Fire');
+  this.scenario.chase={attackerArrivalRound:2,entryEdge:0,
+   printedFirstHexCostsMP:true};
+  return {ok:true,attackerArrivalRound:2,entryEdge:0};
+ }
+ // CAT3500D p.48: optional linked Scenario 1 -> 3 reinforcements.
+ // Import the survivors' actual technical state, not replacement stock
+ // 'Mechs. Damage, destroyed slots, pilot injuries and ammunition persist.
+ // A defeated or offboard source unit is not a surviving reinforcement.
+ configureLinkedScenarioReinforcements({sourceGame,sourceIds,sourceTeam}={}){
+  if(!this.scenarioSetupOpen()||this.scenario?.id!=='divide-and-conquer'||
+   ![0,1].includes(this.scenario?.defenderTeam)||this.scenario.placement||
+   this.scenario.campaign||!sourceGame||sourceGame===this||
+   sourceGame.scenario?.id!=='final-exam'||![0,1,'draw'].includes(sourceGame.winner)||
+   ![0,1].includes(sourceGame.scenario?.defenderTeam)||
+   !Array.isArray(sourceGame.units)||!Array.isArray(sourceIds)||
+   !sourceIds.length||sourceIds.length>4||
+   sourceIds.some(id=>!Number.isInteger(id)||id<0)||
+   new Set(sourceIds).size!==sourceIds.length)
+   return fail('Нужно завершённое Final Exam и от одного до четырёх сохранившихся мехов');
+  const team=sourceTeam===undefined?sourceGame.scenario.defenderTeam:sourceTeam;
+  if(![0,1].includes(team))return fail('Неверная сторона первого сценария');
+  const selected=sourceIds.map(id=>sourceGame.units.find(u=>u.id===id));
+  if(selected.some(u=>!u||u.team!==team||u.dead||u.notFielded||
+   u.escaped||u.deployed===false||!u.structure||!u.armor||
+   !Array.isArray(u.weapons)||!Array.isArray(u.bins)))
+   return fail('Подкреплениями могут быть только сохранившиеся мехи одной стороны');
+  const newUnits=selected.map((v,i)=>{
+   const u=structuredClone(v);
+   Object.assign(u,{id:this.units.length+i,team:this.scenario.defenderTeam,
+    deployed:false,scenarioArrivalRound:5,scenarioReserve:'linked-scenario',
+    moved:false,fired:false,physicalDone:false,spent:0,moveMode:'stand',
+    moveEndedByLegLoss:false,proneAtStart:!!u.prone,moveStart:{q:u.q,r:u.r},
+    distanceMoved:0,phaseDamage:0,psrs:[],consciousChecks:0,
+    firedLocations:[],charge:null,twist:0,flip:false});
+   return u;
+  });
+  this.units.push(...newUnits);
+  this.scenario.campaign={
+   sourceScenario:'final-exam',sourceTeam:team,
+   sourceIds:[...sourceIds],unitIds:newUnits.map(u=>u.id),
+   arrivalRound:5,entryEdge:0,damageCarried:true,
+   exactMapImplemented:false,recordSheetsImported:false
+  };
+  return {ok:true,unitIds:newUnits.map(u=>u.id),
+   arrivalRound:5,entryEdge:0};
+ }
+ // A scheduled offboard reinforcement is excluded from every active
+ // selection, PSR and heat phase until its printed arrival round.
+ scenarioReserveWaiting(u){
+  return Number.isInteger(u?.scenarioArrivalRound)&&
+   u.scenarioArrivalRound>this.round&&u.deployed===false;
+ }
  // CAT3500D pp.46–48: printed scenarios set units on the board BEFORE
  // initiative, not by ordinary offboard entry in the Movement Phase.
  // This is intentionally a geometry/turn-order engine, not an importer
@@ -648,7 +709,7 @@ export class Game extends Legacy{
    return fail('Нужны выбранные стороны сценария и две горизонтальные карты');
   const manifest=AGOAC_PRINTED_SCENARIOS[this.scenario.id];
   if(!manifest)return fail('Неизвестный сценарий');
-  const actual=this.units.filter(u=>!u.dead&&!u.notFielded);
+  const actual=this.units.filter(u=>!u.dead&&!u.notFielded&&!u.scenarioArrivalRound);
   const encode=u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??''].join('|');
   const sortedRoster=units=>units.map(encode).sort((a,b)=>a.localeCompare(b)).join(';');
   for(const team of [0,1]){
@@ -663,14 +724,21 @@ export class Game extends Legacy{
   const steps=this.scenario.id==='final-exam'?
    Array.from({length:4},()=>[{team:defender,lance:null},{team:attacker,lance:null}]).flat():
    this.scenario.id==='trial-by-fire'?
-   [...repeat(attacker,3),...repeat(defender,1)]:
+   (this.scenario.chase?repeat(defender,1):
+    [...repeat(attacker,3),...repeat(defender,1)]):
    [...repeat(defender,3,'command'),...repeat(defender,3,'recon'),
     ...repeat(attacker,4,'printed-row-unavailable')];
   this.scenario.placement={
    steps,placed:[],complete:false,
    exactMapImplemented:false,recordSheetsImported:false
   };
-  for(const u of actual)u.deployed=false;
+  for(const u of actual){
+   u.deployed=false;
+   if(this.scenario.id==='trial-by-fire'&&this.scenario.chase&&u.team===attacker){
+    u.scenarioArrivalRound=2;
+    u.scenarioReserve='trial-by-fire-chase';
+   }
+  }
   return {ok:true,steps:steps.length,next:structuredClone(steps[0]),
    exactMapImplemented:false,recordSheetsImported:false};
  }
@@ -1093,7 +1161,9 @@ export class Game extends Legacy{
  }
  deploymentEntryRoutes(u,mode){
   if(this.phase!=='move'||!this.canAct(u)||u.deployed!==false||this.isImmobile(u)||
-   u.prone||!['walk','run','jump','minimum'].includes(mode)||!this.deployment?.edges||u.spent)return [];
+   u.prone||!['walk','run','jump','minimum'].includes(mode)||u.spent||
+   (!this.deployment?.edges&&!(u.scenarioArrivalRound===this.round&&this.setupMap?.id==='sheets')))
+   return [];
   const legs=u.config==='Quad'?['LA','RA','LL','RL']:['LL','RL'],lost=legs.filter(l=>!u.structure[l]).length;
   if(mode==='run'&&lost>=(u.config==='Quad'?2:1))return [];
   if(mode==='jump'&&u.proneAtStart)return [];
@@ -1104,7 +1174,8 @@ export class Game extends Legacy{
   const max=mode==='minimum'?Math.max(1,this.mp(u,'run')):this.mp(u,mode);
   const jumpCost=this.weather.night?2:1,jumpHexes=Math.floor(max/jumpCost);
   if(max<1||mode==='jump'&&jumpHexes<1)return [];
-  const edge=this.deployment.edges[u.team],d=DIRS[edge],routes=new Map();
+  const edge=u.scenarioArrivalRound===this.round&&this.setupMap?.id==='sheets'?
+   0:this.deployment.edges[u.team],d=DIRS[edge],routes=new Map();
   const add=(tile,cost,from,transit=null)=>{
    if(this.occupied(tile.q,tile.r,u.id))return;
    const k=key(tile.q,tile.r),existing=routes.get(k);
@@ -2853,7 +2924,7 @@ export class Game extends Legacy{
  heatPhase(){
   this.phaseRolls=[];
   for(const u of this.units){
-   if(u.dead)continue;
+   if(u.dead||this.scenarioReserveWaiting(u))continue;
    const t=this.tile(u.q,u.r),sinks=Math.max(0,u.sinks-u.sinksLost-this.floodedSlots(u,'sink'));
    const sub=t.depth>=(u.prone?1:2);
    const legSinks=Object.keys(u.slots).filter(l=>mechLegLocation(u,l))
@@ -2879,7 +2950,7 @@ export class Game extends Legacy{
   }
   this.endPSR();this.removeDestroyedMechs();
  }
- endPhase(){this.phaseRolls=[];for(const u of this.units){if(u.dead)continue;if(u.lifeSupport&&this.tile(u.q,u.r).depth>=(u.prone?1:2))this.wound(u,1);this.consciousness(u);if(u.dead)continue;if(u.unconscious&&u.wasUnconscious&&this.roll(u.name+' · Пробуждение',conscious[u.pilotWounds])>=conscious[u.pilotWounds]){
+ endPhase(){this.phaseRolls=[];for(const u of this.units){if(u.dead||this.scenarioReserveWaiting(u))continue;if(u.lifeSupport&&this.tile(u.q,u.r).depth>=(u.prone?1:2))this.wound(u,1);this.consciousness(u);if(u.dead)continue;if(u.unconscious&&u.wasUnconscious&&this.roll(u.name+' · Пробуждение',conscious[u.pilotWounds])>=conscious[u.pilotWounds]){
    u.unconscious=false;
    // The pilot was unavailable at the pre-resolution End Phase UI.
    // Offer the newly available voluntary reactor decision now.
@@ -2979,7 +3050,7 @@ export class Game extends Legacy{
    return {ok:true,pending:true};
   }
  }
- nextPhase(){if(this.scenario?.placement&&!this.scenario.placement.complete&&this.phase==='initiative')return fail('Сначала разместите всех мехов по условиям сценария');if(this.scenario?.placement?.complete&&this.scenario.id==='trial-by-fire'&&this.phase==='initiative'&&!this.scenario.preDamageApplied)return fail('Сначала нанесите четыре предварительных попадания BattleMaster');if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))return fail('Сначала бросьте кубики и выберите сторону сценария');this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
+ nextPhase(){if(this.scenario?.chase&&this.round===1&&this.phase==='initiative'&&!this.scenario.placement)return fail('Сначала разместите единственного защитника погони');if(this.scenario?.placement&&!this.scenario.placement.complete&&this.phase==='initiative')return fail('Сначала разместите всех мехов по условиям сценария');if(this.scenario?.placement?.complete&&this.scenario.id==='trial-by-fire'&&this.phase==='initiative'&&!this.scenario.preDamageApplied)return fail('Сначала нанесите четыре предварительных попадания BattleMaster');if(this.pendingChoice)return fail('Сначала завершите ожидающее решение');if(this.winner!==null)return fail('Бой окончен');if(['move','fire','physical'].includes(this.phase)&&this.queue.length)return fail('Сначала завершите приказы всех мехов');if(this.phase==='move'&&this.units.some(u=>!u.dead&&u.deployed===false&&!this.scenarioReserveWaiting(u)))return fail('Не все мехи вошли на поле');this.phaseRolls=[];this.resolution=[];this.afterRolls=[];if(this.phase==='setup')return this.resolveDeploymentSetup();if(this.phase==='initiative'){if(this.scenario&&![0,1].includes(this.scenario.defenderTeam))return fail('Сначала бросьте кубики и выберите сторону сценария');this.initiative();return {ok:true};}if(this.phase==='move'){// Resolve remaining movement-phase damage checks before fire; never carry damage between phases.
  this.endPSR();this.afterRolls=[...this.phaseRolls];this.removeDestroyedMechs();this.checkWin();if(this.winner===null){this.phase='fire';this.buildQueue();}}else if(this.phase==='fire'){this.resolveFire();this.checkWin();if(this.winner===null){this.phase='physical';this.buildQueue();}}else if(this.phase==='physical'){this.resolvePhysical();this.checkWin();this.activeTeam=null;if(this.winner===null)this.phase='heat';}else if(this.phase==='heat'){this.heatPhase();this.checkWin();if(this.winner===null)this.phase='end';}else{this.endPhase();this.checkWin({stalemate:true});if(this.winner===null)this.phase='initiative';}if(this.winner===null)this.note(`Раунд ${this.round}: ${PHASES[this.phase]}.`);else{this.activeTeam=null;this.actingId=null;}return {ok:true};}
  aiMove(id){const u=this.unit(id);if(!this.canAct(u))return fail('Не очередь ИИ');if(u.deployed===false){const choices=this.deploymentOptions(u);const best=choices.sort((a,b)=>Number(a.mode==='minimum')-Number(b.mode==='minimum')||distance(a,{q:0,r:0})-distance(b,{q:0,r:0})||a.cost-b.cost)[0];if(!best)return {...fail('Нет допустимого входа: требуется изменить условия сценария'),code:'deployment_blocked'};const result=this.enterDeployment(u,best.q,best.r,best.mode);if(result.ok&&!result.ended)this.hold(id);return result;}if(this.isImmobile(u))return this.hold(id);if(u.prone){const s=this.stand(id);if(!s.ok||u.prone)return this.hold(id);}const options=['walk','run',...(this.mp(u,'jump')?['jump']:[])].flatMap(m=>this.reachable(u,m).map(p=>({...p,mode:m})));let best=null,score=-Infinity;const enemies=this.units.filter(t=>t.team!==u.team&&!t.dead&&t.deployed!==false);for(const p of options){const old={q:u.q,r:u.r,facing:u.facing};u.q=p.q;u.r=p.r;u.facing=p.facing;let value=-Infinity;for(const t of enemies){let v=u.weapons.reduce((n,w,i)=>n+this.preview(id,t.id,i).chance*(w.rack?w.rack*.6*w.damage:w.damage)/100,0)-Math.abs(distance(u,t)-5)*.5;if(p.mode==='jump')v-=1;value=Math.max(value,v);}Object.assign(u,old);if(value>score){score=value;best=p;}}const r=best?this.move(id,best.q,best.r,best.mode):{ok:true};this.hold(id);return r;}
  planAiFire(u){
