@@ -6292,7 +6292,7 @@ test('CAT3500D pp.45-48 plus errata v8.01: printed scenario manifests carry exac
  const {AGOAC_PRINTED_SCENARIOS:s}=await import('../dist/engine.js');
  assert.deepEqual(Object.keys(s),['final-exam','trial-by-fire','divide-and-conquer']);
  assert.deepEqual(Object.values(s).map(x=>x.sheets.map(y=>y.name)),[
-  ['Desert #3','Grassland #2'],['Desert #2','Grassland #3'],['Desert #3','Grassland #3']
+  ['Desert #3','Grassland #2'],['Desert #2','Grassland #3'],['Desert #2','Grassland #3']
  ]);
  assert.deepEqual(Object.values(s).map(x=>[x.defender.length,x.attacker.length]),[[4,4],[1,3],[6,4]]);
  const tuples=x=>x.map(u=>[u.pilot,u.variant,u.piloting,u.gunnery,u.lance??null]);
@@ -7057,12 +7057,15 @@ test('CAT3500D pp.47-48: other scenarios and invalid campaign sources cannot cla
  'unfinished Scenario 1 cannot provide certified survivors');
 });
 
-test('CAT3500D printed p.47: Scenario 3 uses Desert #3 and Grassland #3, not Desert #2',async()=>{
+// The 2018 p.47 body says Desert #3, but official errata v8.01 p.5
+// supersedes it with Desert #2; the updated 2025 official printing agrees.
+// https://battletech.com/wp-content/uploads/2025/06/64_A-Game-of-Armored-Combat-2023-09-17-v8.01.pdf
+test('CAT3500D errata v8.01: Scenario 3 uses Desert #2 + Grassland #3, not obsolete Desert #3',async()=>{
  const g=await chapter11SourceGame('divide-and-conquer');
  assert.deepEqual(g.setupMap.sheets.map(s=>s.name),
-  ['Desert #3','Grassland #3']);
+  ['Desert #2','Grassland #3']);
  assert.equal(g.tiles.length,544);
- for(const [index,name]of ['Desert #3','Grassland #3'].entries()){
+ for(const [index,name]of ['Desert #2','Grassland #3'].entries()){
   const sheet=g.tiles.filter(t=>t.sheet===index);
   assert.equal(sheet.length,272);
   assert(sheet.every(t=>t.printedSheet===name),

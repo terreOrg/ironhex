@@ -41,7 +41,7 @@ export const AGOAC_PRINTED_SCENARIOS=Object.freeze({
    printedMech('Lucas','COM-3A',6,5)]
  ),
  'divide-and-conquer':printedScenario(
-  [{name:'Desert #3',side:'west'},{name:'Grassland #3',side:'east'}],
+  [{name:'Desert #2',side:'west'},{name:'Grassland #3',side:'east'}],
   [printedMech('Blake','CPLT-K2',3,2,'command'),
    printedMech('Petersen','TDR-5S',4,3,'command'),
    printedMech('Lee','SHD-2H',5,4,'command'),
