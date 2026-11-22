@@ -194,3 +194,15 @@ console.log('AGoAC Ch12 user-visible rule/page diagnostics and illegal design ga
   'two compatible magazines must form one correctly counted shared pool');
  assert(design.unit.weapons.every(w=>w.ammo===90));
 }
+
+const running=construct(example);
+assert.equal(running.unit.run,8,'CAT3500D p.51: walk 5 -> run 8');
+{
+ const design=structuredClone(example);design.tonnage=100;design.walk=3;
+ design.jump=0;design.sinks=10;design.equipment=[];
+ const result=construct(design);
+ assert.equal(result.unit.run,5,'CAT3500D p.51: walk 3 -> run 5');
+ assert.equal(result.unit.tonnage,100);
+ assert(result.remaining>=0,'unallocated tonnage is counted as wasted');
+}
+console.log('AGoAC Ch12 running MP and remaining design tonnage checked');

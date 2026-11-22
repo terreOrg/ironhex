@@ -86,3 +86,22 @@ test('Box construction: engine weight, integral sinks, jump mass and armor',()=>
     '275-rated engine holds eleven integral heat sinks, leaving one exposed');
   assert.equal(built.unit.weapons.find(w=>w.name==='PPC').min,3);
 });
+
+test('CAT3500D p.55: supplementary CASE and CASE II never pass as base AGoAC',()=>{
+ for(const type of ['case','case2']){
+  const cfg={name:'Base box only',tonnage:100,walk:3,jump:0,sinks:10,
+   armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+   rear:{CT:0,LT:0,RT:0},equipment:[{type,location:'RT',slot:1}]};
+  assert.deepEqual(construct(cfg).errors,[],
+   'Supplemental technology still works under its own future rulebook');
+  assert.deepEqual(outOfBookEquipment(cfg),[type]);
+  assert.throws(()=>validateDesign({config:cfg}),error=>
+   error.status===422&&error.code==='unsupported_rulebook_equipment'&&
+   error.details?.length===1&&error.details[0].field==='equipment.0.type'&&
+   error.details[0].step===7&&error.details[0].page===55&&
+   error.details[0].message.includes(type));
+ }
+ assert.deepEqual(outOfBookEquipment({equipment:[
+  {type:'hatchet'},{type:'sink'},{type:'ammo'},{type:'jump'}]}),[],
+  'Hatchet and Heat Sink are printed on p.55');
+});

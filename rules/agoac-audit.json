@@ -727,9 +727,9 @@
           "agoac-185",
           "agoac-186"
         ],
-        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks."
+        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review."
       },
-      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work."
+      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work. 2026-11-22 second packet source-checked p.51/54/55, post-merge checks pending."
     },
     {
       "id": "agoac-equipment",
@@ -11255,9 +11255,14 @@
         51
       ],
       "statement": "Running MP equals ceiling(1.5 × Walking MP), independent of Jump MP.",
-      "status": "known_missing",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/construction.mjs",
+          "test": "AGoAC Ch12 running MP and remaining design tonnage checked"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: Constructor returns run=ceil(walk*1.5) and record sheet uses it; independent tests cover 5→8 and 3→5. Not Verified before exact post-merge evidence."
     },
     {
       "id": "agoac-172",
@@ -11409,9 +11414,14 @@
         54
       ],
       "statement": "Final record sheet shows every component, location, armor, ammunition shots, movement and heat sink tally; unused weight is wasted.",
-      "status": "known_missing",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Record sheet (record). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/market.mjs",
+          "test": "AGoAC p.54 MechLab source-derived record sheet displays all construction locations"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Record sheet (record). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: MechLab technical record displays armor, rear armor, internal structure, weapons, ammunition shots, all critical slots, walk/run/jump, heat sinks and unused weight directly from canonical constructor. Invalid designs marked Draft. Source p.54. Not Verified before exact post-merge evidence."
     },
     {
       "id": "agoac-186",

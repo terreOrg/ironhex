@@ -190,3 +190,15 @@ test('AGoAC Ch12 MechLab exposes engine and server construction feedback in UI',
  assert(html.includes('removeHandLA')&&html.includes('removeHandRA'),
   'hand actuator removal must be independently selectable');
 });
+
+test('AGoAC p.54 MechLab source-derived record sheet displays all construction locations',()=>{
+ const ui=readFileSync(new URL('../apps/web/src/mechlab.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../apps/web/src/mechlab.html',import.meta.url),'utf8');
+ assert(ui.includes('function renderDesignRecord(result,diagnostics)'));
+ assert(ui.includes('const u=result.unit;'),'record must use canonical constructor result');
+ assert(ui.includes('Object.entries(u.slots)'),'every critical location present');
+ assert(ui.includes("u.walk+'/'+u.run+'/'+u.jump"),'running MP must be source-derived');
+ assert(ui.includes('result.remaining'),'unused mass recorded from engine');
+ assert(ui.includes('diagnostics.length'),'failed design remains a draft');
+ assert(html.includes('id="design-record"')&&html.includes('id="design-sheet"'));
+});

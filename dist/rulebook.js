@@ -16,13 +16,17 @@ export const BASE_WEAPONS=Object.freeze([
   'LRM 5','LRM 10','LRM 15','LRM 20',
   'SRM 2','SRM 4','SRM 6'
 ]);
+// CAT3500D (2018) p.55: the standard table includes Hatchet and Heat Sink.
+// Jump jets and ammo appear in the construction steps. CASE/CASE II do not.
+export const BASE_SYSTEMS=Object.freeze(['ammo','jump','sink','hatchet']);
+const allowedSystems=new Set(BASE_SYSTEMS);
 const approved=new Set(BASE_WEAPONS);
 export const isBaseWeapon=name=>approved.has(name);
 export function outOfBookEquipment(config){
   return [...new Set((config?.equipment||[])
     .map(item=>item?.type)
     .filter(type=>type&&type!=='ammo'&&
-      !['jump','sink','hatchet','case','case2'].includes(type)&&!approved.has(type)))];
+      !allowedSystems.has(type)&&!approved.has(type)))];
 }
 // BattleMech Manual and TechManual cover supplementary technology. Keep
 // advanced definitions for continued engineering work, but do not silently

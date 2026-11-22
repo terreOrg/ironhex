@@ -33,8 +33,17 @@ export function validateDesign(input) {
       !Number.isFinite(result.remaining) || result.remaining < -0.001) {
     throw new AuthError(422,'invalid_design',result.diagnostics||[]);
   }
-  if(outOfBookEquipment(c).length)
-    throw new AuthError(422,'unsupported_rulebook_equipment');
+  const supplemental=outOfBookEquipment(c);
+  if(supplemental.length){
+    const details=c.equipment.flatMap((item,index)=>
+      supplemental.includes(item.type)?[{
+        code:'not_in_box_rulebook',field:'equipment.'+index+'.type',
+        step:7,page:55,
+        message:item.type+' отсутствует в таблице A Game of Armored Combat '+
+          '(с. 55). Уберите компонент или используйте отдельные расширенные правила.'
+      }]:[]);
+    throw new AuthError(422,'unsupported_rulebook_equipment',details);
+  }
   const callsign = input.callsign == null || input.callsign === '' ? null : input.callsign;
   if (callsign != null && (typeof callsign !== 'string' ||
       callsign.trim().length > 40 || callsign.trim().length < 1 ||
