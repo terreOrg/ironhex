@@ -11,8 +11,8 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12. Ch11 existing weather certification 21.11.2026: 4/25 atomic requirements independently Verified on exact main e12ebe6 and four-way quality gates; 21 remain Known Missing; chapter open. Ch11 rule batch 21.11.2026: scenario sides, initiative effects and moonlit jump MP added to source/dist; four named regression suites pending CI/merge checks. No full scenario/deployment/exit integration. AGoAC Ch11 package verified 2026-11-21: agoac-140,153,158 promoted on exact four-way green main 249f3ba; 7/25 verified, 1 tested_case (148), 17 known_missing. No deploy, no Ch12. Ch11 PR#234 code/test package remains scoped to scenario victory/crippling/map exits with new tests, no deployment; registry Tested Case reflects partial code, not final certification. 7 Verified / 4 Tested Case / 14 Known Missing on branch only. FINAL 2026-11-22: Chapter 11 Scenarios closed 25/25 Verified; now 11 of 13 chapters Verified. Next pointer agoac-construction is NOT authorization to begin Chapter 12. Desert #2 WEST and Grassland #3 EAST permanently fixed; no deployment.",
-  "currentTopicId": "agoac-construction",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12. Ch11 existing weather certification 21.11.2026: 4/25 atomic requirements independently Verified on exact main e12ebe6 and four-way quality gates; 21 remain Known Missing; chapter open. Ch11 rule batch 21.11.2026: scenario sides, initiative effects and moonlit jump MP added to source/dist; four named regression suites pending CI/merge checks. No full scenario/deployment/exit integration. AGoAC Ch11 package verified 2026-11-21: agoac-140,153,158 promoted on exact four-way green main 249f3ba; 7/25 verified, 1 tested_case (148), 17 known_missing. No deploy, no Ch12. Ch11 PR#234 code/test package remains scoped to scenario victory/crippling/map exits with new tests, no deployment; registry Tested Case reflects partial code, not final certification. 7 Verified / 4 Tested Case / 14 Known Missing on branch only. FINAL 2026-11-22: Chapter 11 Scenarios closed 25/25 Verified; now 11 of 13 chapters Verified. Next pointer agoac-construction is NOT authorization to begin Chapter 12. Desert #2 WEST and Grassland #3 EAST permanently fixed; no deployment. 2026-11-23: Chapter 12 Construction 22/22 and its parent formally VERIFIED on publisher CAT3500D pp.14-15,49-55, exact green branch/main CI (678), Browser (52), Container and Sonar; main SHA f17526102169608480686e5e34e6742d28784c49. Next topic pointer agoac-equipment identifies still-not-audited Chapter 13 but does NOT authorize starting it; no deployment.",
+  "currentTopicId": "agoac-equipment",
   "topics": [
     {
       "id": "agoac-foundations",
@@ -697,10 +697,10 @@
         49,
         55
       ],
-      "status": "known_missing",
+      "status": "verified",
       "audit": {
         "sourceChecked": true,
-        "edgeCasesChecked": false,
+        "edgeCasesChecked": true,
         "inventoryComplete": true,
         "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), Construction pp.49–55; Weapons and Equipment Table p.55",
         "requirementIds": [
@@ -727,9 +727,9 @@
           "agoac-185",
           "agoac-186"
         ],
-        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review. Third subpacket: p.54 per-gun ammo minimum now enforced only for user-authored designs, while frozen original printed scenario MTFs preserve canonical shared SRM-6 ammo source. No premature certification; full CI and source regression required. Fourth packet: constructor-to-live-combat split AC/20 arc and ammo consumption, individual ammo bin masses/shots on the technical record, and defensive input validation. Verification remains pending. Direct page-54 source comparison corrected previously incorrect claim that rear arm mounts are prohibited. Constructor and regression now permit them. Fifth packet implements actual constructor and technical-sheet fixes, not only tests: order-independent weapons/ammo; safe per-bin weight; specific API/UI field diagnostics; rear-mounted weapon arc on record and Roll Again placeholders. No scenario, chapter 13 or deployment changes. Sixth packet addresses direct constructor trust boundary: basic AGoAC-only equipment checked within strict engine, not just API and MechLab; native overmass maps to final record step and printed page; E2E/CI/PG/Sonar pending. Historic non-strict MTF import remains separate. 2026-11-22: 18/22 independently source/edge-reviewed children promoted Verified on identical PR/main tree evidence; all 77 engine masses, 17 structure rows, 17 standard weapon rows compared to publisher CAT3500D. Four pending child IDs: 182,183,185,186; remain tested_case. See rules/agoac-ch12-source-review.md. Seventh packet: complete missing Heat Data markers and 0–30 scale in MechLab construction record, correct stale ammunition entry instructions, and browser check real rendering; #185 remains tested_case pending full record comparison. Eighth engine packet centralizes p.55 unsupported-equipment diagnostics across MechLab and authenticated API; explicit malicious/advanced input regression. #186 stays tested_case until all categories audited. 2026-11-22 unified p.14-15/54-55 gap packet: arc flip/twist exclusivity; pinned COM-3A actual ammo preservation; full record diagrams, rear labels and shots; canonical metadata reasons, safe corrupt draft, refusal of unsupported custom launch. One commit planned; 4 child requirements still tested_case pending gates. Report rules/agoac-ch12-gap-batch.md."
+        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review. Third subpacket: p.54 per-gun ammo minimum now enforced only for user-authored designs, while frozen original printed scenario MTFs preserve canonical shared SRM-6 ammo source. No premature certification; full CI and source regression required. Fourth packet: constructor-to-live-combat split AC/20 arc and ammo consumption, individual ammo bin masses/shots on the technical record, and defensive input validation. Verification remains pending. Direct page-54 source comparison corrected previously incorrect claim that rear arm mounts are prohibited. Constructor and regression now permit them. Fifth packet implements actual constructor and technical-sheet fixes, not only tests: order-independent weapons/ammo; safe per-bin weight; specific API/UI field diagnostics; rear-mounted weapon arc on record and Roll Again placeholders. No scenario, chapter 13 or deployment changes. Sixth packet addresses direct constructor trust boundary: basic AGoAC-only equipment checked within strict engine, not just API and MechLab; native overmass maps to final record step and printed page; E2E/CI/PG/Sonar pending. Historic non-strict MTF import remains separate. 2026-11-22: 18/22 independently source/edge-reviewed children promoted Verified on identical PR/main tree evidence; all 77 engine masses, 17 structure rows, 17 standard weapon rows compared to publisher CAT3500D. Four pending child IDs: 182,183,185,186; remain tested_case. See rules/agoac-ch12-source-review.md. Seventh packet: complete missing Heat Data markers and 0–30 scale in MechLab construction record, correct stale ammunition entry instructions, and browser check real rendering; #185 remains tested_case pending full record comparison. Eighth engine packet centralizes p.55 unsupported-equipment diagnostics across MechLab and authenticated API; explicit malicious/advanced input regression. #186 stays tested_case until all categories audited. 2026-11-22 unified p.14-15/54-55 gap packet: arc flip/twist exclusivity; pinned COM-3A actual ammo preservation; full record diagrams, rear labels and shots; canonical metadata reasons, safe corrupt draft, refusal of unsupported custom launch. One commit planned; 4 child requirements still tested_case pending gates. Report rules/agoac-ch12-gap-batch.md. 2026-11-23 FINAL SOURCE/EDGE CERTIFICATION against publisher CAT3500D printed pp.14–15,49,54–55. Independently reviewed live engine arc logic, MTF import and ammo consumption, MechLab technical record, typed Hangar/game admission and corrupt saved-draft refusal. Original source-specific stock importer exception is NOT a grant of new-design legality. Merged code main f17526102169608480686e5e34e6742d28784c49 is tree-identical to passing PR #291 head 51a54380bfaeac7d85511d236d49db4f06a231df; main CI 45073556998 (678/678), Browser 45073557010 (52/52), Container/PG 45073556988, Sonar 45073556971 (QUALITY GATE PASSED, new coverage 92.0%, overall 87.4%) all success. Independent audit evidence in rules/agoac-ch12-source-review.md. All 22/22 atomic requirements now verified; source pages and named test evidence checked; no changes to game rules in the certification-only patch. Chapter 13 remains not_audited."
       },
-      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work. 2026-11-22 second packet source-checked p.51/54/55, post-merge checks pending. 2026-11-22: 18 of 22 individual requirements source-certified; chapter remains known_missing pending #182/#183/#185/#186."
+      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work. 2026-11-22 second packet source-checked p.51/54/55, post-merge checks pending. 2026-11-22: 18 of 22 individual requirements source-certified; chapter remains known_missing pending #182/#183/#185/#186. 2026-11-23: 22/22 atomic Chapter 12 requirements VERIFIED on independent source-to-engine review and exact successful main CI/Browser/Container/Sonar evidence (f175261; see rules/agoac-ch12-source-review.md)."
     },
     {
       "id": "agoac-equipment",
@@ -12112,10 +12112,12 @@
       "id": "agoac-182",
       "topicId": "agoac-construction",
       "pages": [
+        14,
+        15,
         54
       ],
       "statement": "Torso, head, leg and arm weapons may be mounted forward or rearward as allowed by CAT3500D p.54; the resulting fire arc must follow the printed arm/torso/leg rules.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
@@ -12134,16 +12136,55 @@
           "test": "CAT3500D p.15: torso twist and reversed arms cannot be combined through toggle sequencing"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapon_arc). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. CORRECTION after direct printed p.54 source examination: arm rear-mounts are explicitly permitted. Removed inaccurate prior prohibition in construction engine, corrected test and rule inventory. Keep tested_case until all branch and main gates pass. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapon_arc). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. CORRECTION after direct printed p.54 source examination: arm rear-mounts are explicitly permitted. Removed inaccurate prior prohibition in construction engine, corrected test and rule inventory. Keep tested_case until all branch and main gates pass. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance. Printed p.14 front+side biped arm, legs aligned to feet; p.15 strict rear-only mounts, twist follows upper body not legs, flipping both qualified arms, forbidden simultaneous twist/flip. Six-position target matrix, split AC/20, toggling loophole and End Phase reset checked against Game.arc/twist/flipArms and named regressions. 2026-11-23 FINAL SOURCE/EDGE CERTIFICATION against publisher CAT3500D printed pp.14–15,49,54–55. Independently reviewed live engine arc logic, MTF import and ammo consumption, MechLab technical record, typed Hangar/game admission and corrupt saved-draft refusal. Original source-specific stock importer exception is NOT a grant of new-design legality. Merged code main f17526102169608480686e5e34e6742d28784c49 is tree-identical to passing PR #291 head 51a54380bfaeac7d85511d236d49db4f06a231df; main CI 45073556998 (678/678), Browser 45073557010 (52/52), Container/PG 45073556988, Sonar 45073556971 (QUALITY GATE PASSED, new coverage 92.0%, overall 87.4%) all success. Independent audit evidence in rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), publisher PDF printed pp.14–15,49–55",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "51a54380bfaeac7d85511d236d49db4f06a231df",
+        "testedTree": "59840fda24afc07e65e7d4cb817e527f7a408940",
+        "mergedSha": "f17526102169608480686e5e34e6742d28784c49",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45072565945,
+            "jobId": 137362585712,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45072565934,
+            "jobId": 137362585857,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45072565952,
+            "jobId": 137362585875,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45073556971,
+          "jobId": 137365688820,
+          "conclusion": "success",
+          "headSha": "f17526102169608480686e5e34e6742d28784c49"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "CAT3500D pp.14–15,54: biped arm front + side arc, rear weapon rear-only, torso twist leaves leg arc unchanged, both flipped arms share rear arc, no twist and flip same turn even if toggle reset; AC/20 split uses torso arc. Six-direction live Game tests and end-turn reset."
+      }
     },
     {
       "id": "agoac-183",
       "topicId": "agoac-construction",
       "pages": [
-        54
+        54,
+        55
       ],
       "statement": "Ballistic/missile ammunition must have the correct compatible type, integral shots and legal bins; reconcile printed p.54 per-weapon minimum wording with stock COM-3A shared-SRM6 magazine without regressing Scenario 3.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/construction.mjs",
@@ -12174,7 +12215,45 @@
           "test": "CAT3500D p.54: missing ammo points at affected gun, not a generic equipment row"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_minimum). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 independent full/shortened printed scenario smoke exposed shared SRM6 bin in original COM-3A source MTF: hard per-weapon-ton rule broke Chapter 11 with HTTP 500; reverted the incorrect generalization and explicitly retained source canonical shared pooling. Resolve apparent p.54 shorthand conflict before any verified status; do not break source records. 2026-11-22: CAT3500D printed p.54 minimum is enforced for every user-created MechLab/custom API/game plan via strictAgoac constructor mode. The official scenario import intentionally preserves canonical pinned COM-3A shared magazine (default trusted source mode). Independent tests verify two AC2 minimum 2 tons, two MG minimum 1 ton, shared ammo storage legality, and explicit authenticated 422 step/page diagnostic. Not Verified until original-stock exception and exact CI/Browser/PG/Sonar source-to-code tests reviewed. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_minimum). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 independent full/shortened printed scenario smoke exposed shared SRM6 bin in original COM-3A source MTF: hard per-weapon-ton rule broke Chapter 11 with HTTP 500; reverted the incorrect generalization and explicitly retained source canonical shared pooling. Resolve apparent p.54 shorthand conflict before any verified status; do not break source records. 2026-11-22: CAT3500D printed p.54 minimum is enforced for every user-created MechLab/custom API/game plan via strictAgoac constructor mode. The official scenario import intentionally preserves canonical pinned COM-3A shared magazine (default trusted source mode). Independent tests verify two AC2 minimum 2 tons, two MG minimum 1 ton, shared ammo storage legality, and explicit authenticated 422 step/page diagnostic. Not Verified until original-stock exception and exact CI/Browser/PG/Sonar source-to-code tests reviewed. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance. Printed p.54 one ton ammunition per authored ballistic/missile weapon, half-ton Machine Gun exception; p.55 exact rounds/ton. Strict new designs enforce minimum and reject missing incompatible ammo. Pinned COM-3A MTF trusted source import has two SRM6 launchers with one physical 15-shot bin; BOTH live shots decrement shared storage to 13 without being mis-certified as newly buildable. Row-order independent, correct failed-bin weight and per-row reasons checked. 2026-11-23 FINAL SOURCE/EDGE CERTIFICATION against publisher CAT3500D printed pp.14–15,49,54–55. Independently reviewed live engine arc logic, MTF import and ammo consumption, MechLab technical record, typed Hangar/game admission and corrupt saved-draft refusal. Original source-specific stock importer exception is NOT a grant of new-design legality. Merged code main f17526102169608480686e5e34e6742d28784c49 is tree-identical to passing PR #291 head 51a54380bfaeac7d85511d236d49db4f06a231df; main CI 45073556998 (678/678), Browser 45073557010 (52/52), Container/PG 45073556988, Sonar 45073556971 (QUALITY GATE PASSED, new coverage 92.0%, overall 87.4%) all success. Independent audit evidence in rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), publisher PDF printed pp.14–15,49–55",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "51a54380bfaeac7d85511d236d49db4f06a231df",
+        "testedTree": "59840fda24afc07e65e7d4cb817e527f7a408940",
+        "mergedSha": "f17526102169608480686e5e34e6742d28784c49",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45072565945,
+            "jobId": 137362585712,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45072565934,
+            "jobId": 137362585857,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45072565952,
+            "jobId": 137362585875,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45073556971,
+          "jobId": 137365688820,
+          "conclusion": "success",
+          "headSha": "f17526102169608480686e5e34e6742d28784c49"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "CAT3500D pp.54–55: new-custom ballistic/missile ammo minima, 0.5t MG exception, compatible shared-type bins, one slot per bin, exact rounds/ton, line-order neutrality, actual combat depletion. Original pinned COM-3A two SRM6 guns share one source bin; protected ONLY in trusted historical MTF mode. 15 -> 13 after two shots."
+      }
     },
     {
       "id": "agoac-184",
@@ -12241,7 +12320,7 @@
         54
       ],
       "statement": "Final record sheet shows every component, location, armor, ammunition shots, movement and heat sink tally; unused weight is wasted.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/market.mjs",
@@ -12256,16 +12335,57 @@
           "test": "AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromium UI"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Record sheet (record). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: MechLab technical record displays armor, rear armor, internal structure, weapons, ammunition shots, all critical slots, walk/run/jump, heat sinks and unused weight directly from canonical constructor. Invalid designs marked Draft. Source p.54. Not Verified before exact post-merge evidence. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance. 2026-11-22 Ch12 engine patch: strict constructor itself rejects out-of-box equipment with exact p.55 row, UI consumes the same canonical reason, Hangar preserves authenticated 422 contract, and overmass is classified as Step 8 on p.54. Pending branch+main gates and full source audit; not yet Verified. 2026-11-22 new actual UI implementation: AGoAC p.54 HEAT DATA now includes precise printed/extra installed heat-sink circles and full 0–30 scale, sourced from constructed unit, with Browser E2E. Still tested_case pending complete record diagrams and battle sheet cross-review. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Record sheet (record). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: MechLab technical record displays armor, rear armor, internal structure, weapons, ammunition shots, all critical slots, walk/run/jump, heat sinks and unused weight directly from canonical constructor. Invalid designs marked Draft. Source p.54. Not Verified before exact post-merge evidence. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance. 2026-11-22 Ch12 engine patch: strict constructor itself rejects out-of-box equipment with exact p.55 row, UI consumes the same canonical reason, Hangar preserves authenticated 422 contract, and overmass is classified as Step 8 on p.54. Pending branch+main gates and full source audit; not yet Verified. 2026-11-22 new actual UI implementation: AGoAC p.54 HEAT DATA now includes precise printed/extra installed heat-sink circles and full 0–30 scale, sourced from constructed unit, with Browser E2E. Still tested_case pending complete record diagrams and battle sheet cross-review. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance. Printed p.54 Step 8 requires name, mass, Walk/Run/Jump, full component/critical table incl (R), ammo shots per bin, unused slots Roll Again, all unused internal/armor circles blacked out incl rear torso, 0–30 heat data and sink circles, unspent tonnage wasted. Engine data, MechLab HTML and Chromium regression reviewed; torso front/rear share one diagram capacity, not duplicated. 2026-11-23 FINAL SOURCE/EDGE CERTIFICATION against publisher CAT3500D printed pp.14–15,49,54–55. Independently reviewed live engine arc logic, MTF import and ammo consumption, MechLab technical record, typed Hangar/game admission and corrupt saved-draft refusal. Original source-specific stock importer exception is NOT a grant of new-design legality. Merged code main f17526102169608480686e5e34e6742d28784c49 is tree-identical to passing PR #291 head 51a54380bfaeac7d85511d236d49db4f06a231df; main CI 45073556998 (678/678), Browser 45073557010 (52/52), Container/PG 45073556988, Sonar 45073556971 (QUALITY GATE PASSED, new coverage 92.0%, overall 87.4%) all success. Independent audit evidence in rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), publisher PDF printed pp.14–15,49–55",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "51a54380bfaeac7d85511d236d49db4f06a231df",
+        "testedTree": "59840fda24afc07e65e7d4cb817e527f7a408940",
+        "mergedSha": "f17526102169608480686e5e34e6742d28784c49",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45072565945,
+            "jobId": 137362585712,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45072565934,
+            "jobId": 137362585857,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45072565952,
+            "jobId": 137362585875,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45073556971,
+          "jobId": 137365688820,
+          "conclusion": "success",
+          "headSha": "f17526102169608480686e5e34e6742d28784c49"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "CAT3500D p.54 Step 8: canonical name, mass, movement, full critical record incl (R) rear mounts, ammo shots, Roll Again, front/rear/internal structure crossed unused circles, heat sink markers/scale and wasted remaining tonnage. Chromium tests confirm shared torso template budget and actual Griffin diagrams."
+      }
     },
     {
       "id": "agoac-186",
       "topicId": "agoac-construction",
       "pages": [
-        49
+        49,
+        52,
+        54,
+        55
       ],
       "statement": "MechLab and authenticated hangar API reject invalid construction identically with a rule-specific explanation; no save or battle launch on failure.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
@@ -12298,9 +12418,51 @@
         {
           "file": "tests/browser.mjs",
           "test": "AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromium UI"
+        },
+        {
+          "file": "tests/market.mjs",
+          "test": "CAT3500D p.52: strict engine, Hangar and custom battle block malformed armor fields"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22: second packet local battle launch revalidates trusted custom config with strictAgoac and outOfBookEquipment; Game.configureSetupForces checks both too, while immutable original printed MTF scenario import preserves source values. Additional static regressions ensure both paths cannot be bypassed by localStorage or direct game setup. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.49: invalid equipment locations reject with diagnostics instead of throwing; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance. 2026-11-22 Ch12 engine patch: strict constructor itself rejects out-of-box equipment with exact p.55 row, UI consumes the same canonical reason, Hangar preserves authenticated 422 contract, and overmass is classified as Step 8 on p.54. Pending branch+main gates and full source audit; not yet Verified. 2026-11-22 shared error implementation: new rulebookEquipmentDetail provider is reused verbatim by strict constructor diagnostics and authenticated Hangar for unknown or supplemental equipment, exposing exact equipment row, p.55 and human reason; source and dist synchronized. Still tested_case: all invalid design classes and save/battle parity remain open. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22: second packet local battle launch revalidates trusted custom config with strictAgoac and outOfBookEquipment; Game.configureSetupForces checks both too, while immutable original printed MTF scenario import preserves source values. Additional static regressions ensure both paths cannot be bypassed by localStorage or direct game setup. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.49: invalid equipment locations reject with diagnostics instead of throwing; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance. 2026-11-22 Ch12 engine patch: strict constructor itself rejects out-of-box equipment with exact p.55 row, UI consumes the same canonical reason, Hangar preserves authenticated 422 contract, and overmass is classified as Step 8 on p.54. Pending branch+main gates and full source audit; not yet Verified. 2026-11-22 shared error implementation: new rulebookEquipmentDetail provider is reused verbatim by strict constructor diagnostics and authenticated Hangar for unknown or supplemental equipment, exposing exact equipment row, p.55 and human reason; source and dist synchronized. Still tested_case: all invalid design classes and save/battle parity remain open. 2026-11-22 consolidated ONE-COMMIT gap batch with source-based engine/UI/API implementation and exact named regressions. Detailed defect inventory rules/agoac-ch12-gap-batch.md. Remains tested_case until all PR and merged-main checks and independent edge audit confirm compliance. Printed pp.49–55 invalid placements, engine and source equipment boundaries must be refused with actionable field/page; shared metadata gate and strict construct are applied in Hangar 422, MechLab save/launch, localStorage and direct custom battle setup. Reviewed malicious identifiers, arrays, unsupported equipment, typed armor/rear fields, missing ammo, overmass, hand/lower actuator restrictions and the previously discovered check-button bypass; named unit/API/Chromium regressions pass. 2026-11-23 FINAL SOURCE/EDGE CERTIFICATION against publisher CAT3500D printed pp.14–15,49,54–55. Independently reviewed live engine arc logic, MTF import and ammo consumption, MechLab technical record, typed Hangar/game admission and corrupt saved-draft refusal. Original source-specific stock importer exception is NOT a grant of new-design legality. Merged code main f17526102169608480686e5e34e6742d28784c49 is tree-identical to passing PR #291 head 51a54380bfaeac7d85511d236d49db4f06a231df; main CI 45073556998 (678/678), Browser 45073557010 (52/52), Container/PG 45073556988, Sonar 45073556971 (QUALITY GATE PASSED, new coverage 92.0%, overall 87.4%) all success. Independent audit evidence in rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), publisher PDF printed pp.14–15,49–55",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "51a54380bfaeac7d85511d236d49db4f06a231df",
+        "testedTree": "59840fda24afc07e65e7d4cb817e527f7a408940",
+        "mergedSha": "f17526102169608480686e5e34e6742d28784c49",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45072565945,
+            "jobId": 137362585712,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45072565934,
+            "jobId": 137362585857,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45072565952,
+            "jobId": 137362585875,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45073556971,
+          "jobId": 137365688820,
+          "conclusion": "success",
+          "headSha": "f17526102169608480686e5e34e6742d28784c49"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "CAT3500D pp.49,52–55: centralized source-cited field/step/page validation for strict engine, authenticated Hangar 422, UI save/launch, custom Game setup and invalid localStorage. Regresions cover malformed armor types/sections and Check-button bypass plus malicious equipment, ammo, actuators, collisions, overweight."
+      }
     }
   ]
 }

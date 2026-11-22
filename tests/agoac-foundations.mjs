@@ -8054,7 +8054,8 @@ test('CAT3500D pp.45-48: 25 independently source-certified Chapter 11 cases reta
  const chapter=reg.topics.find(t=>t.id==='agoac-scenarios');
  assert.equal(chapter.status,'verified');
  assert(chapter.audit.sourceChecked&&chapter.audit.edgeCasesChecked);
- assert.equal(reg.currentTopicId,'agoac-construction','next chapter is a pointer only');
+ assert.equal(reg.currentTopicId,reg.topics.find(t=>t.status!=='verified')?.id??null,
+  'next chapter is a pointer only, even when later chapters have been verified');
  for(const id of ['agoac-150','agoac-151']){
   const rule=cases.find(r=>r.id===id);
   assert.equal(rule.status,'verified',id);
