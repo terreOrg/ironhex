@@ -43,6 +43,11 @@ export function constructionDiagnostics(errors,config={}){
     (message.startsWith('Боезапас #')?
       (message.includes('Бункер:')?'.mass':'.weapon'):'');
   }
+  const ammoMinimum=message.match(/^(.+): требуется не менее /);
+  if(ammoMinimum){
+   const row=(config.equipment||[]).findIndex(e=>e?.type===ammoMinimum[1]);
+   if(row>=0)field='equipment.'+row+'.type';
+  }
   return {code,field,step,page,message};
  });
 }
@@ -82,7 +87,76 @@ export function quadStructuralLayout(tonnage){
  return {config:'Quad',structure,slots,legLocations:{...QUAD_LEG_LOCATIONS}};
 }
 export const EQUIPMENT=WEAPON_NAMES;
+
+// Metadata gate shared by MechLab, Hangar and the custom battle launcher.
+// The source's mechanical rules still live in strict construct().
+const SUBMISSION_KEYS=new Set(['name','config','tonnage','walk','jump','sinks',
+ 'armor','rear','equipment','removeActuators','removeHandActuators']);
+export function designSubmissionDiagnostics(c){
+ const errors=[];
+ const issue=(message,field,step=8,page=54,code='invalid_design')=>
+  errors.push({code,field,step,page,message});
+ if(!c||typeof c!=='object'||Array.isArray(c)){
+  issue('Проект должен быть объектом данных меха.','config');
+  return errors;
+ }
+ for(const key of Object.keys(c))if(!SUBMISSION_KEYS.has(key))
+  issue('Неизвестное поле проекта: '+key+'.','config',8,54,'unknown_design_field');
+ if(typeof c.name!=='string'||!c.name.trim())
+  issue('Название меха обязательно перед сохранением.','name',8,54,'name_required');
+ else if(c.name.trim().length>30)
+  issue('Название меха не должно превышать 30 символов.','name',8,54,'name_too_long');
+ if(c.config!==undefined&&!['Biped','Quad'].includes(c.config))
+  issue('Допустимая конфигурация: Biped или Quad.','config',1,49,'unsupported_design');
+ if(!Array.isArray(c.equipment))
+  issue('Оборудование должно быть списком компонентов.','equipment',7,54,'equipment_list');
+ else{
+  if(c.equipment.length>80)
+   issue('Допускается не более 80 строк оборудования.','equipment',7,54,'equipment_rows');
+  c.equipment.forEach((e,i)=>{
+   if(!e||typeof e!=='object'||Array.isArray(e))
+    issue('Оборудование #'+i+': нужен объект компонента.',
+     'equipment.'+i,7,54,'equipment_row');
+  });
+ }
+ for(const name of ['armor','rear']){
+  const values=c[name],valid=new Set(name==='rear'?['CT','LT','RT']:LOCS);
+  if(!values||typeof values!=='object'||Array.isArray(values)){
+   issue('Раздел '+name+' должен быть объектом распределения брони.',
+    name,5,52,'armor_shape');
+   continue;
+  }
+  for(const [loc,points] of Object.entries(values)){
+   const field=name+'.'+loc;
+   if(!valid.has(loc))
+    issue('Броня: недопустимая секция '+loc+'.',field,5,52,'armor_location');
+   else if(!Number.isInteger(points)||points<0)
+    issue((name==='rear'?'Кормовая броня ':'Броня ')+loc+
+     ': значение должно быть целым неотрицательным числом.',
+     field,5,52,'armor_points');
+  }
+ }
+ for(const name of ['removeActuators','removeHandActuators']){
+  const values=c[name];
+  if(values!==undefined&&(!Array.isArray(values)||values.length>2||
+    values.some(v=>!['LA','RA'].includes(v))))
+   issue('Актуаторы: допустимы только LA и RA, не более двух.',
+    name,1,49,'actuators');
+ }
+ try{
+  if(JSON.stringify(c).length>6400)
+   issue('Размер проекта превышает допустимые 6400 символов.',
+    'config',8,54,'design_size');
+ }catch{issue('Проект не сериализуется.','config',8,54,'design_size');}
+ return errors;
+}
 export function construct(c,{auditQuad=false,strictAgoac=false}={}){
+ // User-authored strict plans must never coerce arrays, strings or booleans
+ // to zero armor. Historical imported printed records remain non-strict.
+ const invalidArmor=strictAgoac?designSubmissionDiagnostics(c).filter(d=>
+  ['armor_shape','armor_location','armor_points'].includes(d.code)):[];
+ if(invalidArmor.length)return {errors:invalidArmor.map(d=>d.message),
+  diagnostics:invalidArmor};
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
  const chassisConfig=c.config??'Biped';
  const quirks=c.quirks??{};

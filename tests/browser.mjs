@@ -497,6 +497,16 @@ test('AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromiu
   assert.equal(await sheet.locator('[data-heat-sink][data-installed="false"]').count(),3);
   assert.equal(await sheet.locator('[data-heat-level]').count(),31);
   assert.match(await sheet.textContent(),/Охлаждение: −12 тепла за ход/);
+  // CAT3500D p.54: structure and torso front/rear diagrams have *actual*
+  // invested points and all unused generic-template circles crossed out.
+  assert.equal(await sheet.locator('[data-diagram="CT:structure"] [data-filled="true"]').count(),18);
+  assert.equal(await sheet.locator('[data-diagram="CT:structure"] [data-filled="false"]').count(),13);
+  assert.equal(await sheet.locator('[data-diagram="CT:front"] [data-filled="true"]').count(),20);
+  assert.equal(await sheet.locator('[data-diagram="CT:rear"] [data-filled="true"]').count(),7);
+  assert.equal(await sheet.locator('[data-diagram="CT:front"] [data-point]').count()+
+   await sheet.locator('[data-diagram="CT:rear"] [data-point]').count(),62,
+   'torso has one 62-point template budget, not duplicate front/rear budgets');
+  assert.match(await sheet.textContent(),/Боезапас LRM 10 \(12 выстр\.\)/);
   const head=page.locator('[data-armor="HD"]');
   await head.fill('10');await page.locator('#check').click();
   assert.match(await page.locator('#results').textContent(),/с\. 52/);
@@ -539,6 +549,56 @@ test('AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromiu
   assert.match(await page.locator('#results').textContent(),/с\. 54.*не менее 2 т/);
   assert.equal(await page.locator('#launch').isDisabled(),true);
   assert.equal(await page.locator('#save-copy').isDisabled(),true);
+  await page.evaluate(()=>{
+   const config={name:'Rear arm sheet',tonnage:100,walk:3,jump:0,sinks:10,
+    armor:{HD:9,CT:10,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+    rear:{CT:5,LT:0,RT:0},
+    equipment:[{type:'Medium Laser',location:'RA',slot:5,rear:true}]};
+   localStorage.setItem('ironhex-design',JSON.stringify({config}));
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await sheet.waitFor({state:'visible'});
+  assert.match(await sheet.textContent(),/Medium Laser \(R\)/);
+  assert.equal(await page.locator('#launch').isEnabled(),true);
+  // Invalid saved metadata must block launch in exactly the way Hangar does.
+  await page.evaluate(()=>{
+   const config=JSON.parse(localStorage.getItem('ironhex-design')).config;
+   config.name='x'.repeat(31);
+   localStorage.setItem('ironhex-design',JSON.stringify({config}));
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await sheet.waitFor({state:'visible'});
+  assert.match(await page.locator('#results').textContent(),/30 символов/);
+  assert.equal(await page.locator('#launch').isDisabled(),true);
+  await page.evaluate(()=>{
+   const config={name:'Broken saved design',tonnage:100,walk:3,jump:0,sinks:10,
+    armor:{HD:9},rear:{CT:0,LT:0,RT:0},equipment:[null]};
+   localStorage.setItem('ironhex-design',JSON.stringify({config}));
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await sheet.waitFor({state:'visible'});
+  assert.match(await page.locator('#results').textContent(),/нужен объект компонента/);
+  assert.equal(await page.locator('#launch').isDisabled(),true);
+  assert.equal(await page.locator('#save-hangar').isDisabled(),true);
+  const corrupted=await page.evaluate(()=>localStorage.getItem('ironhex-design'));
+  await page.locator('#check').click();
+  assert.match(await page.locator('#results').textContent(),/нужен объект компонента/);
+  assert.equal(await page.locator('#launch').isDisabled(),true);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('ironhex-design')),corrupted);
+  await page.evaluate(()=>{
+   const config={name:'Invalid armor',tonnage:100,walk:3,jump:0,sinks:10,
+    armor:{HD:9,CT:[],LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+    rear:{CT:0,LT:0,RT:0},equipment:[]};
+   localStorage.setItem('ironhex-design',JSON.stringify({config}));
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await sheet.waitFor({state:'visible'});
+  assert.match(await page.locator('#results').textContent(),/Броня CT.*целым/);
+  await page.locator('#check').click();
+  assert.equal(await page.locator('#launch').isDisabled(),true);
+  await page.locator('#example').click();
+  assert.equal(await page.locator('#launch').isEnabled(),true);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('ironhex-design')),null);
  });
 });
 

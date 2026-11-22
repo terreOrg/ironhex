@@ -461,3 +461,57 @@ test('CAT3500D pp.50,54: excess mass is diagnosed at final sheet step 8, not cha
  assert(r.diagnostics.some(d=>d.code==='overweight'&&d.step===8&&
   d.page===54&&d.field==='tonnage'));
 });
+
+
+test('CAT3500D pp.14-15,54: six true hex bearings enforce front, side, rear and leg arcs',()=>{
+ const g=new Game(),u=g.units[0],target=g.units[2];
+ Object.assign(u,{q:0,r:0,facing:0,twist:0,flip:false,config:'Biped'});
+ const bearings=[[2,0],[2,-2],[0,-2],[-2,0],[-2,2],[0,2]];
+ const cases=[
+  ['CT',false,[1,1,0,0,0,1]],
+  ['HD',false,[1,1,0,0,0,1]],
+  ['LT',false,[1,1,0,0,0,1]],
+  ['LA',false,[1,1,1,0,0,1]],
+  ['RA',false,[1,1,0,0,1,1]],
+  ['LL',false,[1,1,0,0,0,1]],
+  ['RL',false,[1,1,0,0,0,1]],
+  ['CT',true,[0,0,1,1,1,0]],
+  ['RA',true,[0,0,1,1,1,0]],
+  ['LL',true,[0,0,1,1,1,0]]
+ ];
+ for(const [loc,rear,expected] of cases){
+  const w={location:loc,rear};
+  const observed=bearings.map(([q,r])=>Number(g.arc(u,Object.assign(target,{q,r}),w)));
+  assert.deepEqual(observed,expected,loc+(rear?' (R)':''));
+ }
+ u.twist=1;
+ const tilted=bearings.map(([q,r])=>Number(g.arc(u,Object.assign(target,{q,r}),{location:'CT',rear:false})));
+ assert.deepEqual(tilted,[1,1,1,0,0,0],'upper body must follow the twisted torso');
+ const leg=bearings.map(([q,r])=>Number(g.arc(u,Object.assign(target,{q,r}),{location:'RL',rear:false})));
+ assert.deepEqual(leg,[1,1,0,0,0,1],'leg weapons must stay aligned to the feet');
+ const split={location:'LA',locations:['LA','LT'],rear:false};
+ assert.deepEqual(bearings.map(([q,r])=>Number(g.arc(u,Object.assign(target,{q,r}),split))),tilted,
+  'split AC/20 uses more restrictive torso arc');
+ u.twist=0;u.flip=true;
+ const flipped=bearings.map(([q,r])=>Number(g.arc(u,Object.assign(target,{q,r}),{location:'LA',rear:false})));
+ assert.deepEqual(flipped,[0,0,1,1,1,0],'flipped arm uses rear arc');
+});
+
+test('CAT3500D p.15: torso twist and reversed arms cannot be combined through toggle sequencing',()=>{
+ const g=new Game(),u=g.units[0];
+ for(const l of ['LA','RA']){u.slots[l][2]=null;u.slots[l][3]=null;}
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert.equal(g.twist(u.id,1).ok,true);
+ assert.equal(g.twist(u.id,0).ok,true);
+ const rejected=g.flipArms(u.id,true);
+ assert.equal(rejected.ok,false);
+ assert.match(rejected.error||rejected.reason||'',/поворота|поворот/i);
+ assert.equal(u.flip,false);
+ g.endPhase();g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert.equal(g.flipArms(u.id,true).ok,true);
+ assert.equal(g.flipArms(u.id,false).ok,true);
+ assert.equal(g.twist(u.id,-1).ok,false);
+ assert.equal(u.twist,0);
+ g.endPhase();g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert.equal(g.twist(u.id,-1).ok,true);
+});
