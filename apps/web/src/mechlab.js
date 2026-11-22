@@ -98,6 +98,8 @@ async function saveToHangar(copy=false) {
     });
     const data=await response.json();
     if(!response.ok) throw Error(
+      (data.error==='invalid_design'&&Array.isArray(data.details)&&data.details.length?
+        data.details.map(d=>d.message+' (шаг '+d.step+', с. '+d.page+')').join('; '):
       ({invalid_design:'Недопустимая конструкция',hangar_full:'Ангар заполнен',
         unauthorized:'Необходимо войти в аккаунт',
         insufficient_equipment:'Недостаточно оружия или систем на складе. Приобретите оборудование на рынке.',
@@ -105,7 +107,7 @@ async function saveToHangar(copy=false) {
         factory_frame_locked:'У купленного меха нельзя менять базовый каркас, двигатель, броню или штатные системы.',
         mech_assigned_operation:'Мех уже назначен на активную операцию.',
         mech_needs_repair:'Перед переоборудованием отремонтируйте меха.',
-        mech_needs_component_repair:'Перед переоборудованием замените повреждённые компоненты в ангаре.'})[data.error]||data.error||'HTTP '+response.status
+        mech_needs_component_repair:'Перед переоборудованием замените повреждённые компоненты в ангаре.'})[data.error]||data.error||'HTTP '+response.status)
     );
     currentHangarId=data.item.id;
     marketOwned=data.item.marketOwned===true;
