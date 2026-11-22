@@ -17,7 +17,7 @@ export function constructionDiagnostics(errors,config={}){
   else if(/актуатор|руки|Актуатор/.test(message)){step=1;page=50;field='removeActuators';code='actuators';}
   else if(/разделение|AC\/20/.test(message)){step=7;page=54;code='ac20_split';}
   else if(/задн|Назад|арки/.test(message)){step=7;page=54;code='weapon_arc';}
-  else if(/Бункер|Боезапас|боезапас/.test(message)){step=7;page=54;code='ammunition';}
+  else if(/Бункер|Боезапас|боезапас|боеприпас/.test(message)){step=7;page=54;code='ammunition';}
   else if(/Превышение массы/.test(message)){step=8;page=54;field='tonnage';code='overweight';}
   const slot=message.match(/^([A-Z]{2}) (\d+):/);
   if(slot){
@@ -145,6 +145,19 @@ export function construct(c,{auditQuad=false}={}){
      if(!w.ammo)errors.push(w.name+': нужен боезапас.');
    }
  });
+ // CAT3500D p.54: a shared ammo pool does not waive the minimum
+ // tonnage per ballistic or missile weapon. Only Machine Gun bins can
+ // satisfy their per-gun minimum with half-ton allocations.
+ for(const [type,master] of pools){
+  const count=weapons.filter(w=>w.name===type).length;
+  const required=count*(type==='Machine Gun'?0.5:1);
+  const perTon=data[type][8];
+  const actual=bins.filter(b=>b.weapon===master)
+   .reduce((mass,bin)=>mass+bin.shots/perTon,0);
+  if(actual<required)
+   errors.push(type+': необходимо не менее '+required+' т боеприпасов для '+
+    count+' оружия (CAT3500D, с. 54); установлено '+actual+' т.');
+ }
  // Optional BMM p.83 directional mounts are design attributes, not
  // phantom weapons. Validate every referenced actual installed gun.
  const mountInputs=Array.isArray(quirks.directionalTorsoMounts)?
