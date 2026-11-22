@@ -482,6 +482,59 @@ test('Hotseat completes all battle phases and returns to initiative', { timeout:
   });
 });
 
+test('AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromium UI',
+ {timeout:120000},async()=>{
+ await withPage('mechlab-agoac-ch12',{path:'/mechlab.html',noWebGL:true},async page=>{
+  const sheet=page.locator('#design-record');
+  await sheet.waitFor({state:'visible'});
+  assert.match(await sheet.textContent(),/Ходьба\/бег\/прыжок/);
+  assert.match(await sheet.textContent(),/Критические слоты/);
+  assert.match(await sheet.textContent(),/Нераспределённая масса/);
+  const head=page.locator('[data-armor="HD"]');
+  await head.fill('10');await page.locator('#check').click();
+  assert.match(await page.locator('#results').textContent(),/с\. 52/);
+  assert.equal(await head.getAttribute('aria-invalid'),'true');
+  assert(await page.locator('#launch').isDisabled());
+  assert(await page.locator('#save-hangar').isDisabled());
+  assert(await page.locator('#save-copy').isDisabled());
+  assert.match(await sheet.textContent(),/ЧЕРНОВИК/);
+  await head.fill('9');await page.locator('#check').click();
+  assert(await page.locator('#launch').isEnabled());
+  // Test loading a persisted unsupported advanced configuration without
+  // offering CASE as an AGoAC base-book dropdown option.
+  await page.evaluate(()=>{
+   const config={name:'CASE is supplementary',tonnage:100,walk:3,jump:0,sinks:10,
+    armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+    rear:{CT:0,LT:0,RT:0},
+    equipment:[{type:'case',location:'RT',slot:1}]};
+   localStorage.setItem('ironhex-design',JSON.stringify({config}));
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#design-record').waitFor({state:'visible'});
+  assert.match(await page.locator('#results').textContent(),/с\. 55.*case/i);
+  assert.equal(await page.locator('#launch').isDisabled(),true);
+  assert.equal(await page.locator('#save-hangar').isDisabled(),true);
+  // Printed p.54 1 ton per cannon: direct localStorage tampering must
+  // fail the exact same strict constructor used by authenticated API.
+  await page.evaluate(()=>{
+   const config={name:'Needs more ammunition',tonnage:100,walk:3,jump:0,sinks:10,
+    armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+    rear:{CT:0,LT:0,RT:0},
+    equipment:[
+     {type:'AC/2',location:'LA',slot:5},
+     {type:'AC/2',location:'RA',slot:5},
+     {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}
+    ]};
+   localStorage.setItem('ironhex-design',JSON.stringify({config}));
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.locator('#design-record').waitFor({state:'visible'});
+  assert.match(await page.locator('#results').textContent(),/с\. 54.*не менее 2 т/);
+  assert.equal(await page.locator('#launch').isDisabled(),true);
+  assert.equal(await page.locator('#save-copy').isDisabled(),true);
+ });
+});
+
 test('Mechlab validates and launches a custom chassis', { timeout:120000 }, async () => {
   await withPage('mechlab',{path:'/mechlab.html'},async page => {
     await page.locator('#name').fill('IRONHEX CI');

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {test} from 'node:test';
 import {construct,example} from '../dist/construction.js';
 import {WEAPON_NAMES,WEAPON_SPECS} from '../dist/equipment.js';
 import {Game} from '../dist/engine.js';
@@ -194,3 +195,86 @@ console.log('AGoAC Ch12 user-visible rule/page diagnostics and illegal design ga
   'two compatible magazines must form one correctly counted shared pool');
  assert(design.unit.weapons.every(w=>w.ammo===90));
 }
+
+const running=construct(example);
+assert.equal(running.unit.run,8,'CAT3500D p.51: walk 5 -> run 8');
+{
+ const design=structuredClone(example);design.tonnage=100;design.walk=3;
+ design.jump=0;design.sinks=10;design.equipment=[];
+ const result=construct(design);
+ assert.equal(result.unit.run,5,'CAT3500D p.51: walk 3 -> run 5');
+ assert.equal(result.unit.tonnage,100);
+ assert(result.remaining>=0,'unallocated tonnage is counted as wasted');
+}
+console.log('AGoAC Ch12 running MP and remaining design tonnage checked');
+
+// The construction textbook's explicit ammunition minimum is required for
+// user-created MechLab designs. Legacy source MTFs remain loadable intact
+// in the locked Chapter 11 printed scenarios (not a custom-design loophole).
+{
+ const cfg={name:'Two AC2 design',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[
+   {type:'AC/2',location:'RA',slot:5},
+   {type:'AC/2',location:'LA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}
+  ]
+ };
+ assert.deepEqual(construct(cfg).errors,[],
+  'trusted printed MTF import must preserve canonical shared-ammo behavior');
+ const strict=construct(cfg,{strictAgoac:true});
+ assert(strict.errors.some(e=>e.includes('не менее 2 т')||
+   e.includes('требуется не менее 2 т')),'AGoAC p.54 at least one ton per weapon');
+ assert(strict.diagnostics.some(d=>d.code==='ammunition'&&d.page===54));
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ const valid=construct(cfg,{strictAgoac:true});
+ assert.deepEqual(valid.errors,[],'shared magazine storage remains legal if minimum met');
+ assert(valid.unit.weapons.every(w=>w.ammo===90));
+}
+{
+ const cfg={name:'Two MG design',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[
+   {type:'Machine Gun',location:'RA',slot:5},
+   {type:'Machine Gun',location:'LA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:0.5}
+  ]
+ };
+ assert(construct(cfg,{strictAgoac:true}).errors.some(e=>e.includes('требуется не менее 1 т')),
+  'two machine guns require a total of one ton');
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:0.5});
+ assert.deepEqual(construct(cfg,{strictAgoac:true}).errors,[],
+  'two half-ton bins satisfy both machine guns');
+}
+console.log('AGoAC Ch12 strict custom-only ammunition minima verified');
+
+test('AGoAC Ch12 running MP and remaining design tonnage checked',()=>{
+ const original=construct(example);
+ assert.deepEqual(original.errors,[]);
+ assert.equal(original.unit.run,8,'walk=5 must result in running=8');
+ const design=structuredClone(example);
+ Object.assign(design,{tonnage:100,walk:3,jump:0,sinks:10,equipment:[]});
+ const result=construct(design);
+ assert.deepEqual(result.errors,[]);
+ assert.equal(result.unit.run,5,'walk=3 must result in running=5');
+ assert(result.remaining>=0);
+});
+
+test('AGoAC Ch12 strict custom-only ammunition minima verified',()=>{
+ const config={name:'Two AC/2',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[{type:'AC/2',location:'RA',slot:5},
+   {type:'AC/2',location:'LA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}]};
+ assert.deepEqual(construct(config).errors,[],
+  'pinned printed MTF sources may reuse shared bins without a custom-design gate');
+ const blocked=construct(config,{strictAgoac:true});
+ assert(blocked.errors.some(msg=>msg.includes('не менее 2 т')),
+  'custom two-AC2 design requires two tons');
+ assert(blocked.diagnostics.some(d=>d.code==='ammunition'&&d.step===7&&d.page===54));
+ config.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ assert.deepEqual(construct(config,{strictAgoac:true}).errors,[]);
+});

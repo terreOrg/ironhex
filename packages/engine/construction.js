@@ -10,7 +10,7 @@ export function constructionDiagnostics(errors,config={}){
   else if(/Рейтинг двигателя/.test(message)){step=2;page=51;field='walk';code='engine_rating';}
   else if(/Прыжок:|прыжковых двигателей|Прыжковые двигатели/.test(message)){step=3;page=51;field='jump';code='jump_jets';}
   else if(/теплоотводов|Теплоотвод/.test(message)){step=6;page=53;field='sinks';code='heat_sinks';}
-  else if(/:.*брон|предел брони/.test(message)){
+  else if((message.includes(':')&&message.includes('брон'))||message.includes('предел брони')){
    step=5;page=52;field=(/кормовая броня/.test(message)?'rear.':'armor.')+message.slice(0,2);
    code='armor_limit';
   }
@@ -68,7 +68,7 @@ export function quadStructuralLayout(tonnage){
  return {config:'Quad',structure,slots,legLocations:{...QUAD_LEG_LOCATIONS}};
 }
 export const EQUIPMENT=WEAPON_NAMES;
-export function construct(c,{auditQuad=false}={}){
+export function construct(c,{auditQuad=false,strictAgoac=false}={}){
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
  const chassisConfig=c.config??'Biped';
  const quirks=c.quirks??{};
@@ -145,6 +145,23 @@ export function construct(c,{auditQuad=false}={}){
      if(!w.ammo)errors.push(w.name+': нужен боезапас.');
    }
  });
+ // CAT3500D (2018) p.54: user-created designs must allocate one ton
+ // per ballistic/missile weapon (MG: 0.5 ton each). Identical weapons
+ // can share magazines, but sharing cannot reduce the minimum load.
+ // Imported printed MTF scenario sheets retain their source-authoritative
+ // ammo allotments; they use the default (non-custom) validation mode.
+ if(strictAgoac){
+  for(const [name,master] of pools){
+   const count=weapons.filter(w=>w.name===name).length;
+   const required=count*(name==='Machine Gun'?0.5:1);
+   const roundsPerTon=data[name][8];
+   const actual=bins.filter(b=>b.weapon===master)
+     .reduce((tons,b)=>tons+b.shots/roundsPerTon,0);
+   if(actual+1e-9<required)
+    errors.push(name+': требуется не менее '+required+' т боеприпасов на '+
+      count+' оружия (шаг 7, с. 54); размещено '+actual+' т.');
+  }
+ }
  // Optional BMM p.83 directional mounts are design attributes, not
  // phantom weapons. Validate every referenced actual installed gun.
  const mountInputs=Array.isArray(quirks.directionalTorsoMounts)?
@@ -182,6 +199,6 @@ export function construct(c,{auditQuad=false}={}){
   ...(quadLayout?{actuators:Object.fromEntries(
     Object.keys(QUAD_LEG_LOCATIONS).map(loc=>[loc,
       {hip:false,upper:false,lower:false,foot:false}]))}:{}),
-  name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
+  name:String(c.name||'Custom').replace(/[<>&"']/g,'').slice(0,30),variant:'CUSTOM',tonnage:ton,walk,run:Math.ceil(walk*1.5),jump,sinks,armor,rear,maxArmor:{...armor},maxRear:{...rear},structure,maxStructure:{...structure},weapons,bins,hatchets,slots,crit:Object.fromEntries(Object.entries(slots).map(([l,a])=>[l,a.map(()=>false)]))}};
 }
 export const example={name:'Griffin custom',tonnage:55,walk:5,jump:5,sinks:12,armor:{HD:9,CT:20,LT:20,RT:20,LA:14,RA:14,LL:18,RL:18},rear:{CT:7,LT:6,RT:6},equipment:[{type:'PPC',location:'RA',slot:5},{type:'LRM 10',location:'RT',slot:3},{type:'ammo',location:'RT',slot:5,weapon:1,mass:1},{type:'ammo',location:'RT',slot:6,weapon:1,mass:1},{type:'jump',location:'LT',slot:1},{type:'jump',location:'LT',slot:2},{type:'jump',location:'RT',slot:1},{type:'jump',location:'RT',slot:2},{type:'jump',location:'CT',slot:12},{type:'sink',location:'CT',slot:11}]};

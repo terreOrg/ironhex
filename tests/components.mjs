@@ -55,7 +55,8 @@ test('CASE is a marketable, BattleMech Manual sourced system with a combat imple
  assert.equal(item.tons,0.5);assert.equal(item.slots,1);
  assert.equal(item.rulebook.status,'verified_supplement');
  assert.equal(item.rulebook.book,'BattleMech Manual');
- assert.deepEqual(outOfBookEquipment({equipment:[{type:'case',location:'RT',slot:4}]}),[]);
+ assert.deepEqual(outOfBookEquipment({equipment:[{type:'case',location:'RT',slot:4}]}),['case'],
+   'CASE is implemented under BMM but forbidden in base AGoAC construction');
 });
 
 
@@ -64,7 +65,8 @@ test('CASE II is a sourced, purchasable, rules-enabled component',()=>{
  assert(item);assert.equal(item.tons,1);assert.equal(item.slots,1);
  assert.equal(item.price,100000);assert.equal(item.rulebook.page,119);
  assert.equal(item.rulebook.status,'verified_supplement');
- assert.deepEqual(outOfBookEquipment({equipment:[{type:'case2',location:'HD',slot:4}]}),[]);
+ assert.deepEqual(outOfBookEquipment({equipment:[{type:'case2',location:'HD',slot:4}]}),['case2'],
+   'CASE II is supplemental, not a legal box-book construction item');
 });
 test('CASE II inapplicable critical slots are omitted from campaign damage and repair',()=>{
  const config=structuredClone(example);

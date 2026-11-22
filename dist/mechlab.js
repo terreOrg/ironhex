@@ -18,8 +18,50 @@ function draw(){
  for(const l of ['LA','RA']){ $('#remove'+l).disabled=marketOwned; $('#removeHand'+l).disabled=marketOwned; }
  check();}
 function read(){for(const k of ['tonnage','walk','jump','sinks'])c[k]=+$('#'+k).value;c.name=$('#name').value;for(const el of document.querySelectorAll('[data-armor]'))c.armor[el.dataset.armor]=+el.value;for(const el of document.querySelectorAll('[data-rear]'))c.rear[el.dataset.rear]=+el.value;c.removeActuators=['LA','RA'].filter(l=>$('#remove'+l).checked);c.removeHandActuators=['LA','RA'].filter(l=>$('#removeHand'+l).checked);for(const row of document.querySelectorAll('[data-row]'))for(const el of row.querySelectorAll('[data-key]')){const key=el.dataset.key;c.equipment[+row.dataset.row][key]=el.localName==='mech-toggle'?el.checked:['slot','weapon','mass','splitCount','splitSlot'].includes(key)?+el.value:el.value;}}
+// Chapter 12 p.54. The in-progress technical record is always derived
+// from the exact same constructor result that validates the saved unit.
+function renderDesignRecord(result,diagnostics){
+ const target=$('#design-record');
+ if(!target)return;
+ const u=result.unit;
+ if(!u){target.textContent='Сначала исправьте массу, двигатель и конфигурацию шасси.';return;}
+ const slotLabel=s=>{
+  if(!s)return 'Свободно';
+  if(s.startsWith('w:'))return u.weapons[Number(s.slice(2))]?.name||'Оружие';
+  if(s.startsWith('ammo:'))return 'Боезапас '+(u.weapons[Number(s.split(':')[1])]?.name||'оружия');
+  return ({life:'Жизнеобеспечение',sensors:'Датчики',cockpit:'Кабина',
+   engine:'Двигатель',gyro:'Гироскоп',shoulder:'Плечо',upper:'Верхний актуатор',
+   lower:'Нижний актуатор',hand:'Кисть',hip:'Бедро',foot:'Стопа',
+   jump:'Прыжковый двигатель',sink:'Теплоотвод',hatchet:'Топор'}[s]||s);
+ };
+ const criticals=Object.entries(u.slots).map(([loc,slots])=>
+  '<section><h4>'+esc(loc)+' · структура '+esc(u.structure[loc])+'</h4><ol>'+
+  slots.map(value=>'<li>'+esc(slotLabel(value))+'</li>').join('')+'</ol></section>').join('');
+ const armor=LOCS.map(loc=>'<tr><th>'+loc+'</th><td>'+u.armor[loc]+'</td><td>'+
+  (['CT','LT','RT'].includes(loc)?u.rear[loc]:'—')+'</td><td>'+
+  u.structure[loc]+'</td></tr>').join('');
+ const weapons=u.weapons.map(w=>'<tr><td>'+esc(w.name)+'</td><td>'+
+  esc((w.locations||[w.location]).join('/'))+'</td><td>'+w.heat+
+  '</td><td>'+esc(w.ranges.join('/'))+'</td><td>'+
+  (w.ammo===null?'∞':w.ammo)+'</td></tr>').join('');
+ const remaining=Number.isFinite(result.remaining)?result.remaining.toFixed(1):'—';
+ target.innerHTML='<p role="status"><b>'+
+  (diagnostics.length?'ЧЕРНОВИК — НАРУШЕНИЯ ПРАВИЛ':'ПРОЕКТ ПРОШЁЛ ТЕКУЩИЕ ПРОВЕРКИ')+
+  '</b></p><div class="design-facts"><span>Мех: <b>'+esc(u.name)+'</b></span>'+
+  '<span>Масса: <b>'+u.tonnage+' т</b></span><span>Ходьба/бег/прыжок: <b>'+
+  u.walk+'/'+u.run+'/'+u.jump+'</b></span><span>Двигатель: <b>'+
+  result.rating+'</b></span><span>Теплоотводы: <b>'+u.sinks+
+  '</b></span><span>Нераспределённая масса: <b>'+remaining+' т</b></span></div>'+
+  '<h4>Броня и структура</h4><table><thead><tr><th>Секция</th><th>Передняя</th>'+
+  '<th>Задняя</th><th>Структура</th></tr></thead><tbody>'+armor+'</tbody></table>'+
+  '<h4>Оружие и боезапас</h4><table><thead><tr><th>Оружие</th><th>Секция</th>'+
+  '<th>Тепло</th><th>Дальности</th><th>Выстрелов</th></tr></thead><tbody>'+
+  weapons+'</tbody></table><h4>Критические слоты</h4>'+
+  '<div class="design-criticals">'+criticals+'</div>'+
+  '<p class="hint">Лист проекта по шагу 8, с. 54. При наличии ошибок сохранение и бой запрещены.</p>';
+}
 function check(){
- const r=construct(c),notInBook=outOfBookEquipment(c);
+ const r=construct(c,{strictAgoac:true}),notInBook=outOfBookEquipment(c);
  const diagnostics=[...(r.diagnostics||[])];
  if(!String(c.name||'').trim()){
   const message='Название меха обязательно перед сохранением.';
@@ -27,9 +69,13 @@ function check(){
   diagnostics.push({code:'name_required',field:'name',step:8,page:54,message});
  }
  if(notInBook.length){
-  const message='Не входит в базовую книгу A Game of Armored Combat: '+notInBook.join(', ')+'. Удалите это оборудование или используйте отдельные расширенные правила.';
-  r.errors.push(message);
-  diagnostics.push({code:'unsupported_equipment',field:'equipment',step:7,page:55,message});
+  for(const [index,item] of c.equipment.entries()){
+   if(!notInBook.includes(item.type))continue;
+   const message=item.type+': отсутствует в таблице A Game of Armored Combat (с. 55). Снимите компонент или используйте расширенные правила.';
+   r.errors.push(message);
+   diagnostics.push({code:'unsupported_equipment',
+    field:'equipment.'+index+'.type',step:7,page:55,message});
+  }
  }
  document.querySelectorAll('[aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
  for(const d of diagnostics){
@@ -51,6 +97,7 @@ function check(){
  const reasons=diagnostics.map(d=>`<li><strong>Шаг ${d.step} · с. ${d.page}</strong>: ${esc(d.message)}</li>`).join('');
  $('#results').innerHTML=`<b>${diagnostics.length?'Нельзя сохранить или запустить: исправьте '+diagnostics.length+' нарушений':'Конструкция допустима по проверенным правилам'}</b>${weightInfo}${reasons?'<ol class="violations">'+reasons+'</ol>':''}`;
  for(const id of ['launch','save-hangar','save-copy'])$('#'+id).disabled=diagnostics.length>0;
+ renderDesignRecord(r,diagnostics);
  $('#slotmap').innerHTML=r.unit?Object.entries(r.unit.slots).map(([l,a])=>`<p><b>${l}</b>: ${a.map((slot,i)=>`${i+1} ${slot||'свободно'}`).join(' · ')}</p>`).join(''):'';
  renderWarehouse();return r;
 }
@@ -98,7 +145,7 @@ async function saveToHangar(copy=false) {
     });
     const data=await response.json();
     if(!response.ok) throw Error(
-      (data.error==='invalid_design'&&Array.isArray(data.details)&&data.details.length?
+      (['invalid_design','unsupported_rulebook_equipment'].includes(data.error)&&Array.isArray(data.details)&&data.details.length?
         data.details.map(d=>d.message+' (шаг '+d.step+', с. '+d.page+')').join('; '):
       ({invalid_design:'Недопустимая конструкция',hangar_full:'Ангар заполнен',
         unauthorized:'Необходимо войти в аккаунт',

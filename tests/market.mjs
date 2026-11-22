@@ -190,3 +190,43 @@ test('AGoAC Ch12 MechLab exposes engine and server construction feedback in UI',
  assert(html.includes('removeHandLA')&&html.includes('removeHandRA'),
   'hand actuator removal must be independently selectable');
 });
+
+test('AGoAC p.54 MechLab source-derived record sheet displays all construction locations',()=>{
+ const ui=readFileSync(new URL('../apps/web/src/mechlab.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../apps/web/src/mechlab.html',import.meta.url),'utf8');
+ assert(ui.includes('function renderDesignRecord(result,diagnostics)'));
+ assert(ui.includes('const u=result.unit;'),'record must use canonical constructor result');
+ assert(ui.includes('Object.entries(u.slots)'),'every critical location present');
+ assert(ui.includes("u.walk+'/'+u.run+'/'+u.jump"),'running MP must be source-derived');
+ assert(ui.includes('result.remaining'),'unused mass recorded from engine');
+ assert(ui.includes('diagnostics.length'),'failed design remains a draft');
+ assert(html.includes('id="design-record"')&&html.includes('id="design-sheet"'));
+});
+
+test('CAT3500D p.54 authenticated custom designs reject insufficient ammo with explicit rule reason',()=>{
+ const cfg={name:'Custom stock',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[{type:'AC/2',location:'LA',slot:5},
+   {type:'AC/2',location:'RA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}]};
+ assert.throws(()=>validateDesign({config:cfg}),error=>
+  error.status===422&&error.code==='invalid_design'&&
+  error.details.some(d=>d.code==='ammunition'&&d.step===7&&d.page===54&&
+   d.message.includes('не менее 2 т')),'server must reject even direct POST/PATCH');
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ assert.doesNotThrow(()=>validateDesign({config:cfg}));
+});
+
+test('CAT3500D p.55: saved-browser and engine custom setup both fail closed on unsupported components',()=>{
+ const app=readFileSync(new URL('../apps/web/src/app.js',import.meta.url),'utf8');
+ const engine=readFileSync(new URL('../packages/engine/engine.js',import.meta.url),'utf8');
+ assert(app.includes("outOfBookEquipment(d.config).length"),
+  'browser battle launch must revalidate localStorage, not trust MechLab state');
+ assert(engine.includes("outOfBookEquipment(custom.config).length"),
+  'direct engine custom setup must not bypass the box rulebook');
+ assert(engine.includes("construct(custom.config,{strictAgoac:true})"),
+  'engine user-created forces must enforce book ammo minimum');
+ assert(engine.includes("construct(design);"),
+  'printed source MTFs are intentionally imported without custom-only restrictions');
+});

@@ -727,9 +727,9 @@
           "agoac-185",
           "agoac-186"
         ],
-        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks."
+        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review. Third subpacket: p.54 per-gun ammo minimum now enforced only for user-authored designs, while frozen original printed scenario MTFs preserve canonical shared SRM-6 ammo source. No premature certification; full CI and source regression required."
       },
-      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work."
+      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work. 2026-11-22 second packet source-checked p.51/54/55, post-merge checks pending."
     },
     {
       "id": "agoac-equipment",
@@ -11255,9 +11255,14 @@
         51
       ],
       "statement": "Running MP equals ceiling(1.5 × Walking MP), independent of Jump MP.",
-      "status": "known_missing",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/construction.mjs",
+          "test": "AGoAC Ch12 running MP and remaining design tonnage checked"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: Constructor returns run=ceil(walk*1.5) and record sheet uses it; independent tests cover 5→8 and 3→5. Not Verified before exact post-merge evidence."
     },
     {
       "id": "agoac-172",
@@ -11387,9 +11392,18 @@
         54
       ],
       "statement": "Ballistic/missile ammunition must have the correct compatible type, integral shots and legal bins; reconcile printed p.54 per-weapon minimum wording with stock COM-3A shared-SRM6 magazine without regressing Scenario 3.",
-      "status": "known_missing",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_minimum). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 independent full/shortened printed scenario smoke exposed shared SRM6 bin in original COM-3A source MTF: hard per-weapon-ton rule broke Chapter 11 with HTTP 500; reverted the incorrect generalization and explicitly retained source canonical shared pooling. Resolve apparent p.54 shorthand conflict before any verified status; do not break source records."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/construction.mjs",
+          "test": "AGoAC Ch12 strict custom-only ammunition minima verified"
+        },
+        {
+          "file": "tests/market.mjs",
+          "test": "CAT3500D p.54 authenticated custom designs reject insufficient ammo with explicit rule reason"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_minimum). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 independent full/shortened printed scenario smoke exposed shared SRM6 bin in original COM-3A source MTF: hard per-weapon-ton rule broke Chapter 11 with HTTP 500; reverted the incorrect generalization and explicitly retained source canonical shared pooling. Resolve apparent p.54 shorthand conflict before any verified status; do not break source records. 2026-11-22: CAT3500D printed p.54 minimum is enforced for every user-created MechLab/custom API/game plan via strictAgoac constructor mode. The official scenario import intentionally preserves canonical pinned COM-3A shared magazine (default trusted source mode). Independent tests verify two AC2 minimum 2 tons, two MG minimum 1 ton, shared ammo storage legality, and explicit authenticated 422 step/page diagnostic. Not Verified until original-stock exception and exact CI/Browser/PG/Sonar source-to-code tests reviewed."
     },
     {
       "id": "agoac-184",
@@ -11409,9 +11423,14 @@
         54
       ],
       "statement": "Final record sheet shows every component, location, armor, ammunition shots, movement and heat sink tally; unused weight is wasted.",
-      "status": "known_missing",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Record sheet (record). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+      "status": "tested_case",
+      "evidence": [
+        {
+          "file": "tests/market.mjs",
+          "test": "AGoAC p.54 MechLab source-derived record sheet displays all construction locations"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Record sheet (record). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: MechLab technical record displays armor, rear armor, internal structure, weapons, ammunition shots, all critical slots, walk/run/jump, heat sinks and unused weight directly from canonical constructor. Invalid designs marked Draft. Source p.54. Not Verified before exact post-merge evidence."
     },
     {
       "id": "agoac-186",
@@ -11422,7 +11441,7 @@
       "statement": "MechLab and authenticated hangar API reject invalid construction identically with a rule-specific explanation; no save or battle launch on failure.",
       "status": "tested_case",
       "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22: second packet local battle launch revalidates trusted custom config with strictAgoac and outOfBookEquipment; Game.configureSetupForces checks both too, while immutable original printed MTF scenario import preserves source values. Additional static regressions ensure both paths cannot be bypassed by localStorage or direct game setup."
     }
   ]
 }

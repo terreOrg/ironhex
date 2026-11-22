@@ -1,5 +1,6 @@
 import {firingArcTiles} from './fire-arcs.js';
 import {construct} from './construction.js';
+import {outOfBookEquipment} from './rulebook.js';
 import {recordSheet} from './record-sheet.js';
 import {animateRoll,clearDice} from './dice.js';
 import * as THREE from 'three';
@@ -451,7 +452,7 @@ function owned(u){
 }
 function readCustomDesign(){
  try{const d=JSON.parse(localStorage.getItem('ironhex-design'));if(!d?.config)return null;
-  const result=construct(d.config);return result.errors.length?null:{...d,name:result.unit.name};
+  const result=construct(d.config,{strictAgoac:true});return result.errors.length||outOfBookEquipment(d.config).length?null:{...d,name:result.unit.name};
  }catch{return null;}
 }
 let weaponAims={},weaponBins={},weaponSpotters={},flamerHeat=false,weaponTargets={},primaryTarget=null,physicalType='kick',physicalLimb='RL',physicalRightTarget=null,physicalLocationTable='normal';
