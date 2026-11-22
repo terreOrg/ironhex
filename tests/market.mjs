@@ -199,6 +199,10 @@ test('AGoAC p.54 MechLab source-derived record sheet displays all construction l
  assert(ui.includes('Object.entries(u.slots)'),'every critical location present');
  assert(ui.includes("u.walk+'/'+u.run+'/'+u.jump"),'running MP must be source-derived');
  assert(ui.includes('result.remaining'),'unused mass recorded from engine');
+ assert(ui.includes('u.bins.map')&&ui.includes('b.mass')&&ui.includes('b.shots'),
+  'technical sheet shows each individual ammo bin, tonnage and shots');
+ assert(ui.includes('Бункеры боеприпасов'),
+  'ammo bins have their own record-sheet table');
  assert(ui.includes('diagnostics.length'),'failed design remains a draft');
  assert(html.includes('id="design-record"')&&html.includes('id="design-sheet"'));
 });
