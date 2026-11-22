@@ -697,7 +697,39 @@
         49,
         55
       ],
-      "status": "not_audited"
+      "status": "known_missing",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": false,
+        "inventoryComplete": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), Construction pp.49–55; Weapons and Equipment Table p.55",
+        "requirementIds": [
+          "agoac-165",
+          "agoac-166",
+          "agoac-167",
+          "agoac-168",
+          "agoac-169",
+          "agoac-170",
+          "agoac-171",
+          "agoac-172",
+          "agoac-173",
+          "agoac-174",
+          "agoac-175",
+          "agoac-176",
+          "agoac-177",
+          "agoac-178",
+          "agoac-179",
+          "agoac-180",
+          "agoac-181",
+          "agoac-182",
+          "agoac-183",
+          "agoac-184",
+          "agoac-185",
+          "agoac-186"
+        ],
+        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: strict ammo per-gun minimum, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks."
+      },
+      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work."
     },
     {
       "id": "agoac-equipment",
@@ -11149,6 +11181,248 @@
         },
         "review": "Source p.48 linked Final Exam to Divide and Conquer: actual surviving Catapult/Locust retain armor, rear, structure, crit, ammo, heat and pilot wounds through deep-copy transfer. Turn 1-4 reserves cannot act or cool, turn 5 allows west-edge Movement entry with true first-hex MP; base 6+4 roster unchanged and dead/duplicate/early imports rejected."
       }
+    },
+    {
+      "id": "agoac-165",
+      "topicId": "agoac-construction",
+      "pages": [
+        49
+      ],
+      "statement": "Standard Biped BattleMech chassis uses 20–100 t in 5-ton increments and 10% structure mass.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (tonnage). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-166",
+      "topicId": "agoac-construction",
+      "pages": [
+        50
+      ],
+      "statement": "Internal Structure Table maps standard tonnage to fixed head/torso/arm/leg structure points; locations cannot redistribute structure.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (structure). Checked CAT3500D original printed p.50 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-167",
+      "topicId": "agoac-construction",
+      "pages": [
+        49
+      ],
+      "statement": "Preassigned critical slots reserve life support, sensors, cockpit, fusion engine, gyro, limb actuators; unoccupied slots remain free.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-168",
+      "topicId": "agoac-construction",
+      "pages": [
+        49
+      ],
+      "statement": "Critical slots may hold at most one component, and all multi-slot items must occupy contiguous slots within their allowed location.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-169",
+      "topicId": "agoac-construction",
+      "pages": [
+        49
+      ],
+      "statement": "The hand actuator may be removed alone; removing the lower arm actuator always removes its hand, freeing the correct critical slots.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Actuators (removeHandActuators). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-170",
+      "topicId": "agoac-construction",
+      "pages": [
+        51
+      ],
+      "statement": "Standard fusion engine rating equals tonnage × Walking MP with published rating/weight table 20–400.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (walk). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-171",
+      "topicId": "agoac-construction",
+      "pages": [
+        51
+      ],
+      "statement": "Running MP equals ceiling(1.5 × Walking MP), independent of Jump MP.",
+      "status": "known_missing",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+    },
+    {
+      "id": "agoac-172",
+      "topicId": "agoac-construction",
+      "pages": [
+        51
+      ],
+      "statement": "Each jump jet provides exactly one Jump MP, count ≤ Walking MP, and weighs 0.5/1/2 tons by chassis mass band.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-173",
+      "topicId": "agoac-construction",
+      "pages": [
+        51
+      ],
+      "statement": "Jump jets require one separate slot each, only in torso or leg locations; desired Jump MP equals installed count.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump_slots). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-174",
+      "topicId": "agoac-construction",
+      "pages": [
+        52
+      ],
+      "statement": "Standard gyro mass equals ceiling(engine rating/100) tons, reserves four center torso critical slots.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (gyro). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-175",
+      "topicId": "agoac-construction",
+      "pages": [
+        52
+      ],
+      "statement": "Standard cockpit weighs 3 tons and occupies mandatory head location alongside support and sensors.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (cockpit). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-176",
+      "topicId": "agoac-construction",
+      "pages": [
+        52
+      ],
+      "statement": "Armor head cap is nine; other locations cap front+rear total at twice internal structure, including torso rear allocation.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-177",
+      "topicId": "agoac-construction",
+      "pages": [
+        53
+      ],
+      "statement": "Standard armor provides 16 points/ton in 0.5-ton increments (eight points per half-ton); unassigned points become unused.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor_weight). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-178",
+      "topicId": "agoac-construction",
+      "pages": [
+        53
+      ],
+      "statement": "Fusion engine provides ten free heat sinks; additional sinks weigh one ton and engine integral capacity equals floor(rating/25).",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sinks). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-179",
+      "topicId": "agoac-construction",
+      "pages": [
+        53
+      ],
+      "statement": "Each heat sink exceeding integral capacity uses exactly one critical slot in any legal open location; free sinks may also need critical space.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sink_slots). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-180",
+      "topicId": "agoac-construction",
+      "pages": [
+        54
+      ],
+      "statement": "Weapons must use published standard tonnage and critical capacity and be installed contiguously in permitted sections.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapons). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-181",
+      "topicId": "agoac-construction",
+      "pages": [
+        54
+      ],
+      "statement": "Only AC/20 may be split between adjacent torso/arm sections (never legs), with more restrictive firing arc.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (ac20_split). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-182",
+      "topicId": "agoac-construction",
+      "pages": [
+        54
+      ],
+      "statement": "Torso, head and leg weapons may face forward/rear; arm weapons follow the arm firing arc and cannot be rear-fixed.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapon_arc). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-183",
+      "topicId": "agoac-construction",
+      "pages": [
+        54
+      ],
+      "statement": "All ballistic/missile weapons require compatible ammunition under the book minimum, with exact type/shot accounting and no phantom bins.",
+      "status": "known_missing",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_minimum). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+    },
+    {
+      "id": "agoac-184",
+      "topicId": "agoac-construction",
+      "pages": [
+        54
+      ],
+      "statement": "Ammo bins consume one slot each, full 1-ton bins except machine guns optionally 0.5 ton; total and shots must be finite.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_bins). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+    },
+    {
+      "id": "agoac-185",
+      "topicId": "agoac-construction",
+      "pages": [
+        54
+      ],
+      "statement": "Final record sheet shows every component, location, armor, ammunition shots, movement and heat sink tally; unused weight is wasted.",
+      "status": "known_missing",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Record sheet (record). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+    },
+    {
+      "id": "agoac-186",
+      "topicId": "agoac-construction",
+      "pages": [
+        49
+      ],
+      "statement": "MechLab and authenticated hangar API reject invalid construction identically with a rule-specific explanation; no save or battle launch on failure.",
+      "status": "tested_case",
+      "evidence": [],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
     }
   ]
 }
