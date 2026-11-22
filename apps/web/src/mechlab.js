@@ -26,7 +26,7 @@ function renderDesignRecord(result,diagnostics){
  const u=result.unit;
  if(!u){target.textContent='Сначала исправьте массу, двигатель и конфигурацию шасси.';return;}
  const slotLabel=s=>{
-  if(!s)return 'Свободно';
+  if(!s)return 'Roll Again';
   if(s.startsWith('w:'))return u.weapons[Number(s.slice(2))]?.name||'Оружие';
   if(s.startsWith('ammo:'))return 'Боезапас '+(u.weapons[Number(s.split(':')[1])]?.name||'оружия');
   return ({life:'Жизнеобеспечение',sensors:'Датчики',cockpit:'Кабина',
@@ -41,7 +41,8 @@ function renderDesignRecord(result,diagnostics){
   (['CT','LT','RT'].includes(loc)?u.rear[loc]:'—')+'</td><td>'+
   u.structure[loc]+'</td></tr>').join('');
  const weapons=u.weapons.map(w=>'<tr><td>'+esc(w.name)+'</td><td>'+
-  esc((w.locations||[w.location]).join('/'))+'</td><td>'+w.heat+
+  esc((w.locations||[w.location]).join('/'))+'</td><td>'+
+  (w.rear?'Назад':'Вперёд')+'</td><td>'+w.heat+
   '</td><td>'+esc(w.ranges.join('/'))+'</td><td>'+
   (w.ammo===null?'∞':w.ammo)+'</td></tr>').join('');
  const bins=u.bins.map(b=>'<tr><td>'+esc(u.weapons[b.weapon]?.name||'Оружие')+
@@ -57,7 +58,7 @@ function renderDesignRecord(result,diagnostics){
   '</b></span><span>Нераспределённая масса: <b>'+remaining+' т</b></span></div>'+
   '<h4>Броня и структура</h4><table><thead><tr><th>Секция</th><th>Передняя</th>'+
   '<th>Задняя</th><th>Структура</th></tr></thead><tbody>'+armor+'</tbody></table>'+
-  '<h4>Оружие и боезапас</h4><table><thead><tr><th>Оружие</th><th>Секция</th>'+
+  '<h4>Оружие и боезапас</h4><table><thead><tr><th>Оружие</th><th>Секция</th><th>Арка</th>'+
   '<th>Тепло</th><th>Дальности</th><th>Выстрелов</th></tr></thead><tbody>'+
   weapons+'</tbody></table><h4>Бункеры боеприпасов</h4>'+
   '<table><thead><tr><th>Оружие</th><th>Секция</th><th>Слот</th>'+

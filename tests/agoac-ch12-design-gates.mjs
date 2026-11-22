@@ -364,3 +364,69 @@ test('CAT3500D p.54: rear-arm mount is legal and obeys rear arc, not forward arc
  const normal=structuredClone(c);normal.equipment[0].rear=false;
  assert.deepEqual(ok(normal).unit.weapons.map(w=>w.rear),[false]);
 });
+
+
+test('CAT3500D p.54: ammo row order never changes installed weapons, magazine state or actual fire',()=>{
+ const base=blank(100,3);
+ const gunA={type:'AC/5',location:'RA',slot:5};
+ const gunB={type:'AC/5',location:'LA',slot:5};
+ const ammoA={type:'ammo',location:'LT',slot:1,weapon:0,mass:1};
+ const ammoB={type:'ammo',location:'LT',slot:2,weapon:1,mass:1};
+ const first=structuredClone(base);
+ first.equipment=[gunA,gunB,ammoA,ammoB];
+ const interleaved=structuredClone(base);
+ interleaved.equipment=[ammoA,gunA,ammoB,gunB];
+ const a=ok(first),b=ok(interleaved);
+ assert.deepEqual(b.weights,a.weights);
+ assert.deepEqual(b.unit.slots,a.unit.slots);
+ assert.deepEqual(b.unit.bins,a.unit.bins);
+ assert.deepEqual(b.unit.weapons,a.unit.weapons);
+ assert.deepEqual(b.unit.weapons.map(w=>w.ammo),[40,40],
+  'both guns draw from the same forty-shot AC/5 magazine pool');
+ const game=new Game({rng:()=>.99});
+ for(const tile of game.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ const attacker=game.units[0],target=game.units[2];
+ Object.assign(attacker,b.unit,{q:0,r:0,facing:0});
+ Object.assign(target,{q:2,r:0});
+ game.phase='fire';game.activeTeam=attacker.team;
+ game.queue=[attacker.team];game.actingId=null;
+ const declared=game.declareFire(0,[{index:0,target:2},{index:1,target:2}]);
+ assert.equal(declared.ok,true,declared.error);
+ assert.deepEqual(attacker.weapons.map(w=>w.ammo),[38,38]);
+ const resolution=game.resolveFire();
+ assert.equal(resolution.length,2);
+ assert.equal(attacker.bins.reduce((n,bin)=>n+bin.shots,0),38);
+});
+
+test('CAT3500D p.54: wrong ammo references receive row-specific reason and do not add phantom weight',()=>{
+ const c=blank(100,3);
+ c.equipment=[
+  {type:'ammo',location:'LT',slot:1,weapon:7,mass:1},
+  {type:'AC/5',location:'RA',slot:5}
+ ];
+ const bad=construct(c,{strictAgoac:true});
+ assert(bad.errors.some(e=>e.includes('Боезапас #0')&&e.includes('ссылаться')));
+ assert(bad.diagnostics.some(d=>d.code==='ammunition'&&d.page===54&&
+  d.field==='equipment.0.weapon'));
+ assert.equal(bad.weights.ammo,0);
+ assert.equal(bad.unit.bins.length,0);
+ const energy=blank(100,3);
+ energy.equipment=[{type:'ammo',location:'LT',slot:1,weapon:0,mass:1},
+  {type:'Medium Laser',location:'RA',slot:5}];
+ const energyResult=construct(energy,{strictAgoac:true});
+ assert(energyResult.diagnostics.some(d=>d.field==='equipment.0.weapon'));
+ const mass=blank(100,3);
+ mass.equipment=[{type:'ammo',location:'LT',slot:1,weapon:0,mass:0.5},
+  {type:'AC/5',location:'RA',slot:5}];
+ const massResult=construct(mass,{strictAgoac:true});
+ assert(massResult.diagnostics.some(d=>d.field==='equipment.0.mass'&&
+  d.code==='ammunition'));
+ const collision=blank(100,3);
+ collision.equipment=[{type:'ammo',location:'RA',slot:5,weapon:0,mass:1},
+  {type:'AC/5',location:'RA',slot:5}];
+ const blocked=construct(collision,{strictAgoac:true});
+ assert(blocked.errors.some(e=>e.includes('RA 5:')));
+ assert.equal(blocked.weights.ammo,0,
+  'occupied ammo slots cannot contribute phantom installed mass');
+ assert.equal(blocked.unit.bins.length,0);
+});

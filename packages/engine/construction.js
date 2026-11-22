@@ -27,7 +27,9 @@ export function constructionDiagnostics(errors,config={}){
    field=index<0?'equipment':`equipment.${index}.slot`;
   }else if(field==='equipment'){
    const match=message.match(/(?:Оружие|Боезапас|Бункер) #(\d+)/);
-   if(match)field='equipment.'+match[1];
+   if(match)field='equipment.'+match[1]+
+    (message.startsWith('Боезапас #')?
+      (message.includes('Бункер:')?'.mass':'.weapon'):'');
   }
   return {code,field,step,page,message};
  });
@@ -115,7 +117,7 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
  const weights={structure:ton/10,engine:masses[(rating-20)/5],gyro:Math.ceil(rating/100),cockpit:3,sinks:sinks-10,case:0,armor:Math.ceil([...Object.values(armor),...Object.values(rear)].reduce((a,b)=>a+b,0)/8)/2,jump:jump*(ton<=55?.5:ton<=85?1:2),weapons:0,ammo:0};
  const weapons=[],bins=[],hatchets=[];let extSinks=0,jets=0;
  function place(l,start,n,value){const a=typeof l==='string'&&Object.hasOwn(slots,l)?slots[l]:null,i=Number(start)-1;if(!a||!Number.isInteger(i)||i<0||i+n>a.length||a.slice(i,i+n).some(Boolean)){errors.push(`${l} ${start}: ${n} слот(а) заняты или вне секции.`);return false;}for(let k=0;k<n;k++)a[i+k]=value;return true;}
- for(const e of c.equipment||[]){const l=e.location;
+ for(const e of c.equipment||[]){if(e.type==='ammo')continue;const l=e.location;
  if(e.type==='hatchet'){const n=Math.ceil(ton/15);weights.weapons+=n;if(quadLayout||!['LA','RA'].includes(l)||slots[l]?.[2]!=='lower')errors.push('Топор требует руки двуногого меха с нижним актуатором.');else if(place(l,e.slot,n,'hatchet'))hatchets.push({location:l,slots:n});}
  else if(e.type==='jump'){jets++;
   if(!['CT','LT','RT','LL','RL',...(quadLayout?['LA','RA']:[])].includes(l))
@@ -124,10 +126,30 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
  else if(e.type==='sink'){extSinks++;place(l,e.slot,1,'sink');}
  else if(e.type==='case'){if(!['CT','LT','RT'].includes(l)){errors.push('CASE: только торс Внутренней Сферы.');continue;}if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE: не более одной системы на секцию '+l+'.');continue;}if(place(l,e.slot,1,'case'))weights.case+=0.5;}
  else if(e.type==='case2'){if(typeof l!=='string'||!Object.hasOwn(slots,l)){errors.push('CASE II: недопустимая секция.');continue;}if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE II: не более одной CASE в секции '+l+'.');continue;}if(place(l,e.slot,1,'case2'))weights.case+=1;}
- else if(e.type==='ammo'){const w=weapons[e.weapon],d=w&&data[w.name],mass=Number(e.mass??1);if(!d?.[8]){errors.push('Боезапас должен ссылаться на уже добавленное оружие.');continue;}if(mass!==1&&!(w.name==='Machine Gun'&&mass===.5)){errors.push('Бункер: 1 т, для пулемёта также 0,5 т.');continue;}weights.ammo+=mass;const shots=d[8]*mass;if(place(l,e.slot,1,`ammo:${e.weapon}:${shots}`))bins.push({location:l,slot:+e.slot-1,weapon:+e.weapon,mass,shots,destroyed:false});}
  else{const d=typeof e.type==='string'&&Object.hasOwn(data,e.type)?data[e.type]:null;if(!d){errors.push('Неизвестное оборудование: '+e.type);continue;}if(e.rear!==undefined&&typeof e.rear!=='boolean'){errors.push('Оружие: задняя арка должна быть логическим значением.');continue;}/* CAT3500D p.54 permits both forward- and rear-mounted arm weapons. */const index=weapons.length;weights.weapons+=d[6];weapons.push({name:e.type,heat:d[0],damage:d[1],min:d[2],ranges:d.slice(3,6),ammo:d[8]?0:null,location:l,rack:d[9],toHit:d[10]||0,rear:!!e.rear,destroyed:false});if(e.splitLocation){const n=Number(e.splitCount),pairs={LA:['LT'],RA:['RT'],LT:['LA','CT'],RT:['RA','CT'],CT:['LT','RT']};if(quadLayout&&([l,e.splitLocation].some(loc=>Object.hasOwn(QUAD_LEG_LOCATIONS,loc))))
  errors.push(`${e.type}: Quad leg cannot split critical slots with torso like a biped arm.`);
  else if(e.type!=='AC/20'||!Number.isInteger(n)||n<1||n>=d[7]||(!Object.hasOwn(pairs,l)||!pairs[l].includes(e.splitLocation)))errors.push(`${e.type}: разделение разрешено только для AC/20 между смежными секциями, кроме ног (CAT3500D, с. 54).`);else{weapons[index].locations=[l,e.splitLocation];place(l,e.slot,n,`w:${index}`);place(e.splitLocation,e.splitSlot,d[7]-n,`w:${index}`);}}else place(l,e.slot,d[7],`w:${index}`);}
+ }
+ // Weapon indices are independent of equipment row order. Ammo bins are
+ // resolved only after all installed weapons have been registered.
+ for(const [row,e] of (c.equipment||[]).entries()){
+  if(e.type!=='ammo')continue;
+  const l=e.location,weaponIndex=e.weapon;
+  const w=Number.isSafeInteger(weaponIndex)&&weaponIndex>=0?weapons[weaponIndex]:null;
+  const d=w&&data[w.name],mass=Number(e.mass??1);
+  if(!d?.[8]){
+   errors.push(`Боезапас #${row}: должен ссылаться на существующее баллистическое или ракетное оружие.`);
+   continue;
+  }
+  if(mass!==1&&!(w.name==='Machine Gun'&&mass===.5)){
+   errors.push(`Боезапас #${row}: Бункер: масса 1 т, для пулемёта также 0,5 т.`);
+   continue;
+  }
+  const shots=d[8]*mass;
+  if(place(l,e.slot,1,`ammo:${weaponIndex}:${shots}`)){
+   weights.ammo+=mass;
+   bins.push({location:l,slot:Number(e.slot)-1,weapon:weaponIndex,mass,shots,destroyed:false});
+  }
  }
  if(jets!==jump)errors.push(`Разместите ${jump} прыжковых двигателей; размещено ${jets}.`);
  const needed=Math.max(0,sinks-Math.floor(rating/25));if(extSinks!==needed)errors.push(`Разместите ${needed} внешних теплоотводов; размещено ${extSinks}.`);
