@@ -7,7 +7,7 @@ import {outOfBookEquipment} from '../../../packages/engine/rulebook.js';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const allowed = new Set(['name','config','tonnage','walk','jump','sinks','armor','rear','equipment','removeActuators']);
+const allowed = new Set(['name','config','tonnage','walk','jump','sinks','armor','rear','equipment','removeActuators','removeHandActuators']);
 
 export function validateDesign(input) {
   const c = input?.config;
@@ -20,7 +20,9 @@ export function validateDesign(input) {
       !c.armor || typeof c.armor !== 'object' || Array.isArray(c.armor) ||
       !c.rear || typeof c.rear !== 'object' || Array.isArray(c.rear) ||
       (c.removeActuators && (!Array.isArray(c.removeActuators) ||
-         c.removeActuators.length > 2 || c.removeActuators.some(l=>!['LA','RA'].includes(l))))) {
+         c.removeActuators.length > 2 || c.removeActuators.some(l=>!['LA','RA'].includes(l)))) ||
+      (c.removeHandActuators && (!Array.isArray(c.removeHandActuators) ||
+         c.removeHandActuators.length > 2 || c.removeHandActuators.some(l=>!['LA','RA'].includes(l))))) {
     throw new AuthError(422,'invalid_design');
   }
   if (JSON.stringify(c).length > 6400) throw new AuthError(422,'invalid_design');
@@ -29,7 +31,7 @@ export function validateDesign(input) {
   catch { throw new AuthError(422,'invalid_design'); }
   if (result.errors.length || !Number.isFinite(result.total) ||
       !Number.isFinite(result.remaining) || result.remaining < -0.001) {
-    throw new AuthError(422,'invalid_design');
+    throw new AuthError(422,'invalid_design',result.diagnostics||[]);
   }
   if(outOfBookEquipment(c).length)
     throw new AuthError(422,'unsupported_rulebook_equipment');
@@ -109,7 +111,9 @@ export function createHangarStore(pool) {
           }
           const compareLocation=(a,b)=>a<b?-1:a>b?1:0;
           if(!same([...(old.removeActuators||[])].sort(compareLocation),
-                   [...(now.removeActuators||[])].sort(compareLocation)))
+                   [...(now.removeActuators||[])].sort(compareLocation)) ||
+             !same([...(old.removeHandActuators||[])].sort(compareLocation),
+                   [...(now.removeHandActuators||[])].sort(compareLocation)))
             throw new AuthError(409,'factory_frame_locked');
           // The shared combat registry models jump MP, cooling and hatchet
           // attacks. Count those real systems alongside weapons so refits
