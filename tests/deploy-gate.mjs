@@ -145,6 +145,12 @@ test('coverage reuse requires exact two-parent merge tree',()=>{
 test('only exact successful audit push with existing artifact can reuse coverage',()=>{
  const run={...success('Ironhex CI'),head_branch:'audit/agoac-test',id:42};
  assert.equal(reusableRun([run],sha,run.name),42);
+ assert.equal(reusableRun([{...run,head_branch:'feat/agoac-ch12-recordsheet-source-gates-20261122'}],sha,run.name),42,
+  'trusted chapter-12 source-identical feature runs may supply exact-SHA browser coverage');
+ for(const denied of ['feat/other','feat/agoac-ch13-other','feature/agoac-ch12-x','main']){
+  assert.equal(reusableRun([{...run,head_branch:denied}],sha,run.name),null,
+   'coverage may not be reused from an unrelated branch: '+denied);
+ }
  for(const change of [{head_sha:'b'.repeat(40)},{head_branch:'work/agoac-buffer'},{event:'workflow_dispatch'},{conclusion:'failure'},{status:'queued'}])
   assert.equal(reusableRun([{...run,...change}],sha,run.name),null);
  assert.equal(reusableRun([run,{...run,conclusion:'failure'}],sha,run.name),null);

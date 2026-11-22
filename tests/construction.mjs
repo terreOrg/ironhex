@@ -3,6 +3,7 @@ import {test} from 'node:test';
 import {construct,example} from '../dist/construction.js';
 import {WEAPON_NAMES,WEAPON_SPECS} from '../dist/equipment.js';
 import {Game} from '../dist/engine.js';
+test('AGoAC construction complete existing source and component regression matrix',()=>{
 const r=construct(example);assert.deepEqual(r.errors,[]);assert.equal(r.total,55);assert.equal(r.rating,275);assert.equal(r.unit.weapons[1].ammo,24);
 const c=()=>structuredClone(example);
 let d=c();d.tonnage=50;assert(construct(d).errors.some(e=>e.includes('массы')));
@@ -249,6 +250,8 @@ console.log('AGoAC Ch12 running MP and remaining design tonnage checked');
   'two half-ton bins satisfy both machine guns');
 }
 console.log('AGoAC Ch12 strict custom-only ammunition minima verified');
+
+});
 
 test('AGoAC Ch12 running MP and remaining design tonnage checked',()=>{
  const original=construct(example);
