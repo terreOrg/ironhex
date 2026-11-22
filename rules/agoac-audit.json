@@ -11338,8 +11338,13 @@
       ],
       "statement": "Standard gyro mass equals ceiling(engine rating/100) tons, reserves four center torso critical slots.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (gyro). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.52: gyro mass steps and four mandatory center-torso critical slots"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (gyro). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: gyro mass steps and four mandatory center-torso critical slots; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     },
     {
       "id": "agoac-175",
@@ -11349,8 +11354,13 @@
       ],
       "statement": "Standard cockpit weighs 3 tons and occupies mandatory head location alongside support and sensors.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (cockpit). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.52: three-ton cockpit reserves the printed head slot"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (cockpit). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: three-ton cockpit reserves the printed head slot; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     },
     {
       "id": "agoac-176",
@@ -11360,8 +11370,13 @@
       ],
       "statement": "Armor head cap is nine; other locations cap front+rear total at twice internal structure, including torso rear allocation.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.52: armor enforces nine head points and twice section structure"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: armor enforces nine head points and twice section structure; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     },
     {
       "id": "agoac-177",
@@ -11371,8 +11386,13 @@
       ],
       "statement": "Standard armor provides 16 points/ton in 0.5-ton increments (eight points per half-ton); unassigned points become unused.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor_weight). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.53: standard armor rounds up to eight points per half-ton"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor_weight). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: standard armor rounds up to eight points per half-ton; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     },
     {
       "id": "agoac-178",
@@ -11382,8 +11402,13 @@
       ],
       "statement": "Fusion engine provides ten free heat sinks; additional sinks weigh one ton and engine integral capacity equals floor(rating/25).",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sinks). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.53: ten free sinks and integral capacity floor engine rating over twenty-five"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sinks). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: ten free sinks and integral capacity floor engine rating over twenty-five; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     },
     {
       "id": "agoac-179",
@@ -11393,8 +11418,13 @@
       ],
       "statement": "Each heat sink exceeding integral capacity uses exactly one critical slot in any legal open location; free sinks may also need critical space.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sink_slots). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.53: each nonintegral heat sink occupies a separate open critical slot"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sink_slots). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: each nonintegral heat sink occupies a separate open critical slot; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     },
     {
       "id": "agoac-180",
@@ -11404,8 +11434,13 @@
       ],
       "statement": "Weapons must use published standard tonnage and critical capacity and be installed contiguously in permitted sections.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapons). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.54: standard PPC and medium laser preserve printed mass and contiguous slot sizes"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapons). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.54: standard PPC and medium laser preserve printed mass and contiguous slot sizes; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     },
     {
       "id": "agoac-181",
@@ -11484,8 +11519,13 @@
       ],
       "statement": "MechLab and authenticated hangar API reject invalid construction identically with a rule-specific explanation; no save or battle launch on failure.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22: second packet local battle launch revalidates trusted custom config with strictAgoac and outOfBookEquipment; Game.configureSetupForces checks both too, while immutable original printed MTF scenario import preserves source values. Additional static regressions ensure both paths cannot be bypassed by localStorage or direct game setup."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.49: invalid equipment locations reject with diagnostics instead of throwing"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22: second packet local battle launch revalidates trusted custom config with strictAgoac and outOfBookEquipment; Game.configureSetupForces checks both too, while immutable original printed MTF scenario import preserves source values. Additional static regressions ensure both paths cannot be bypassed by localStorage or direct game setup. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.49: invalid equipment locations reject with diagnostics instead of throwing; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
     }
   ]
 }
