@@ -511,7 +511,7 @@ test('AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromiu
   });
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#design-record').waitFor({state:'visible'});
-  assert.match(await page.locator('#results').textContent(),/case.*с\. 55/i);
+  assert.match(await page.locator('#results').textContent(),/с\. 55.*case/i);
   assert.equal(await page.locator('#launch').isDisabled(),true);
   assert.equal(await page.locator('#save-hangar').isDisabled(),true);
   // Printed p.54 1 ton per cannon: direct localStorage tampering must
@@ -529,7 +529,7 @@ test('AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromiu
   });
   await page.reload({waitUntil:'domcontentloaded'});
   await page.locator('#design-record').waitFor({state:'visible'});
-  assert.match(await page.locator('#results').textContent(),/не менее 2 т.*с\. 54/);
+  assert.match(await page.locator('#results').textContent(),/с\. 54.*не менее 2 т/);
   assert.equal(await page.locator('#launch').isDisabled(),true);
   assert.equal(await page.locator('#save-copy').isDisabled(),true);
  });
