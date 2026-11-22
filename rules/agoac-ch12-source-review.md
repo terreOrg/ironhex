@@ -3,7 +3,7 @@
 **Original source:** Catalyst Game Labs, BattleTech: A Game of Armored Combat, CAT3500D (2018), Construction printed pp.49–55, official PDF:
 https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d+battletech+a+game+of+armored+combat+rulebook.pdf
 
-**Scope:** Inner Sphere, basic biped BattleMech construction, no advanced/Clan/Quad rules. The Chapter 12 heading remains known_missing while four atomic requirements remain unverified.
+**Scope:** Inner Sphere, basic biped BattleMech construction, no advanced/Clan/Quad rules. The 2026-11-22 evidence below documents the first 18 independently certified requirements; the 2026-11-23 final certification section below supersedes its earlier open-gap status. Chapter 12 is now verified, Chapter 13 is not audited.
 
 ## Evidence: identical tested and merged trees
 
@@ -41,11 +41,24 @@ https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e
 
 Source-to-code checks are corroborated by the already-passing, named requirement tests. Compared values derive from the publisher's PDF, not from generating an expected list from the implementation.
 
-## NOT YET Verified: four independent gaps
+## Final independent source/edge certification, 2026-11-23
 
-- agoac-182: full forward/rear arc matrix for torso, head, legs, arms and flipped-arm interactions needs exhaustive source/engine/UI review.
-- agoac-183: verify strict custom-built minimum ammo versus source-authoritative legacy COM-3A shared SRM magazines and complete compatibility/persistence.
-- agoac-185: final record sheet completeness including heat scale/circles, front/rear armor and structure diagrams, individual ammo and component slots remains insufficiently audited.
-- agoac-186: equivalent diagnostics and refusal across MechLab, authenticated Hangar API, direct engine battle launch for all invalid categories remain insufficiently audited.
+**Baseline remains unchanged:** the previously verified 18 construction rules (165–181 and 184) are corroborated by the prior source review above. The four additional rules below were compared directly with the publisher PDF screenshots and code, not merely promoted because the CI is green.
 
-No topic-level certification before every child is Verified. No Chapter 13, no deployment, and immutable Chapter 11 Scenario 3 Desert #2 WEST + Grassland #3 EAST.
+| ID | Printed source | Code path and independent acceptance |
+|---|---|---|
+| agoac-182 | pp.14–15; p.54 | `Game.arc`, `Game.twist`, `Game.flipArms`: six real hex directions, torso forward/side/rear distinctions, flipped arms, leg arc unaffected by twist, rear-mounted weapons and split AC/20 restrictive torso arcs; cannot evade same-turn flip/twist exclusivity by returning the switch to neutral; resets at End Phase. Named independent source-linked `tests/agoac-ch12-design-gates.mjs` and `tests/agoac-foundations.mjs` cases. |
+| agoac-183 | pp.54–55 | `construct(...,{strictAgoac:true})` requires one ton of ballistics/missile ammunition per newly constructed weapon (0.5 t Machine Gun bins permissible), legal slots and finite table-derived shots. The original pinned `data/megamek/scenarios/COM-3A.mtf` remains a trusted historical source imported without new-build strictness: two SRM6s fire successfully from the same 15-shot bin and leave 13; this stock-only exception is explicitly **not** a book-legal construction claim. `tests/market.mjs`, `tests/construction.mjs` and actual `Game` fire tests. |
+| agoac-185 | p.54 Step 8; p.15 rear `(R)` | The live MechLab sheet uses canonical construction data: name, mass, MP, criticals, labels, ammo shots per bin, unused slots `Roll Again`, unused armor/structure points including rear torso, 0–30 heat scale and heat sink data, and wasted unused weight. The shared front/rear torso diagram never double-counts the template's 2×structure capacity; `tests/browser.mjs` asserts actual rendered circles and actual Griffin values. |
+| agoac-186 | pp.49–55 | Uniform typed field/page reasons and strict admission throughout `designSubmissionDiagnostics()`, `construct()`, MechLab, authenticated Hangar (HTTP 422), saved localStorage design and custom battle setup. Source-only stock MTFs unaffected. Review specifically closes prior malformed armor array/object coercion and the Check-button invalid-draft bypass, with named browser and `tests/market.mjs` regressions; invalid configurations cannot save or launch. |
+
+### Exact immutable code and successful gating evidence
+
+- Source-checked PR #291 branch head: `51a54380bfaeac7d85511d236d49db4f06a231df`; squash-merged `main`: `f17526102169608480686e5e34e6742d28784c49`. **Both have exactly identical tree** `59840fda24afc07e65e7d4cb817e527f7a408940`; no deployment.
+- PR branch CI #45072565945, Chromium #45072565934, Container #45072565952: all passed.
+- Merged `main` CI #45073556998: **678 passed, 0 failed**, source/dist synchronized.
+- Merged `main` Chromium E2E #45073557010: **52 passed, 0 failed**, including Chapter 12 technical-sheet and invalid-save flows.
+- Merged `main` Container/PG Smoke #45073556988: **success**, including live PostgreSQL hangar, market, auth, scenario and ammunition integration.
+- Merged `main` SonarQube #45073556971: **Quality Gate PASSED**, 92.0% new-code coverage (80% minimum), 87.4% overall coverage (80% minimum); CI recorded zero outstanding issues.
+
+**Certification:** All 22/22 atomic requirements and parent `agoac-construction` meet source/edge/gate criteria. Chapter 12 `Verified`. The chapter 13 pointer `agoac-equipment` remains `not_audited`; pointer advancement is not authorization to work on it. Scenario 3 board remains immutable: Desert #2 **WEST**, Grassland #3 **EAST**. No production deployment.

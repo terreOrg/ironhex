@@ -1,5 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {construct,LOCS} from '../dist/construction.js';
 import {Game} from '../dist/engine.js';
 
@@ -514,4 +515,36 @@ test('CAT3500D p.15: torso twist and reversed arms cannot be combined through to
  assert.equal(u.twist,0);
  g.endPhase();g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
  assert.equal(g.twist(u.id,-1).ok,true);
+});
+
+test('CAT3500D Chapter 12 final 22-of-22 Verified codifier closure has exact named evidence',()=>{
+ const audit=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
+ const topic=audit.topics.find(t=>t.id==='agoac-construction');
+ const children=audit.requirements.filter(r=>r.topicId==='agoac-construction');
+ assert.equal(topic?.status,'verified');
+ assert.equal(topic.audit.sourceChecked,true);
+ assert.equal(topic.audit.edgeCasesChecked,true);
+ assert.equal(children.length,22);
+ assert.deepEqual([...topic.audit.requirementIds].sort(),children.map(r=>r.id).sort());
+ for(const child of children){
+  assert.equal(child.status,'verified',child.id);
+  assert.equal(child.audit?.sourceChecked,true,child.id+' source not certified');
+  assert.equal(child.audit?.edgeCasesChecked,true,child.id+' edges not certified');
+  assert.match(child.audit?.testedSha||'',/^[0-9a-f]{40}$/,child.id);
+  assert.match(child.audit?.mergedSha||'',/^[0-9a-f]{40}$/,child.id);
+  assert.equal(child.audit?.mainQualityGate?.conclusion,'success',child.id+' missing Sonar proof');
+  assert(child.evidence.length>0,child.id+' lacks executable evidence');
+  assert(child.reviewNote.includes('source')||child.reviewNote.includes('Source'),child.id);
+  for(const named of child.evidence){
+   const source=readFileSync(new URL('../'+named.file,import.meta.url),'utf8');
+   assert(source.includes("test('"+named.test+"'"),
+    child.id+' missing source-linked regression: '+named.test);
+  }
+ }
+ assert.equal(audit.currentTopicId,'agoac-equipment');
+ assert.equal(audit.topics.find(t=>t.id==='agoac-equipment').status,'not_audited');
+ const report=readFileSync(new URL('../rules/agoac-ch12-source-review.md',import.meta.url),'utf8');
+ assert(report.includes('f17526102169608480686e5e34e6742d28784c49'));
+ for(const id of ['agoac-182','agoac-183','agoac-185','agoac-186'])
+  assert(report.includes('| '+id+' |'));
 });
