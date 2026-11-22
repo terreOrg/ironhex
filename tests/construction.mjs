@@ -133,10 +133,11 @@ console.log('Clan tech-base construction safety gate verified');
    x.field==='walk'&&x.page===51));
 }
 {
- const cfg=c();cfg.equipment[0].rear=true; // PPC in right arm
- const result=construct(cfg);
- assert(result.errors.some(x=>x.includes('заднюю арку')));
- assert(result.diagnostics.some(x=>x.code==='weapon_arc'&&x.page===54));
+ const cfg=c();cfg.equipment[0].rear=true; // AGoAC p.54 explicitly permits rear-arm mounting
+ const result=construct(cfg,{strictAgoac:true});
+ assert.deepEqual(result.errors,[]);
+ assert.equal(result.unit.weapons[0].location,'RA');
+ assert.equal(result.unit.weapons[0].rear,true);
 }
 {
  const cfg=c();cfg.equipment.push(
