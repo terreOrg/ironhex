@@ -727,7 +727,7 @@
           "agoac-185",
           "agoac-186"
         ],
-        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: strict ammo per-gun minimum, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks."
+        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks."
       },
       "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work."
     },
@@ -11386,10 +11386,10 @@
       "pages": [
         54
       ],
-      "statement": "All ballistic/missile weapons require compatible ammunition under the book minimum, with exact type/shot accounting and no phantom bins.",
+      "statement": "Ballistic/missile ammunition must have the correct compatible type, integral shots and legal bins; reconcile printed p.54 per-weapon minimum wording with stock COM-3A shared-SRM6 magazine without regressing Scenario 3.",
       "status": "known_missing",
       "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_minimum). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_minimum). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 independent full/shortened printed scenario smoke exposed shared SRM6 bin in original COM-3A source MTF: hard per-weapon-ton rule broke Chapter 11 with HTTP 500; reverted the incorrect generalization and explicitly retained source canonical shared pooling. Resolve apparent p.54 shorthand conflict before any verified status; do not break source records."
     },
     {
       "id": "agoac-184",
