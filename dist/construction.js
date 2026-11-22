@@ -105,14 +105,6 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
  if(c.equipment!==undefined&&(!Array.isArray(c.equipment)||
    c.equipment.some(e=>!e||typeof e!=='object'||Array.isArray(e))))
   errors.push('Список оборудования должен содержать только объекты компонентов.');
- // AGoAC-only building must be enforced in the engine itself. Historical
- // MTF imports intentionally use the non-strict mode.
- if(strictAgoac&&Array.isArray(c.equipment))
-  for(const [index,item] of c.equipment.entries()){
-   if(!item||typeof item!=='object'||Array.isArray(item))continue;
-   if(outOfBookEquipment({equipment:[item]}).length)
-    errors.push(`Оборудование #${index}: ${String(item.type)} вне таблицы AGoAC (с. 55).`);
-  }
  // Preserve a correct but non-combat-ready quad plan for the audit and
  // construction tests. Quad imports and hangar admission still fail closed.
  if(errors.length)return {errors,diagnostics:constructionDiagnostics(errors,c),...(chassisConfig==='Quad'&&Number.isInteger(ton)&&ton>=20&&ton<=100&&ton%5===0?
@@ -233,6 +225,17 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
   directionalTorsoMounts.push({location:m.location,points:m.points,
    facing:m.facing,weaponIndices:[...m.weaponIndices],locked:false});
  }
+ // Gate known advanced equipment after constructing the complete draft, so
+ // unknown components still receive their original diagnostic and the draft
+ // retains finite mass/slot totals. Historical MTF imports are non-strict.
+ if(strictAgoac&&Array.isArray(c.equipment))
+  for(const [index,item] of c.equipment.entries()){
+   if(!item||typeof item!=='object'||Array.isArray(item))continue;
+   const isSupportedAdvanced=Object.hasOwn(WEAPON_SPECS,item.type)||
+    ['case','case2'].includes(item.type);
+   if(isSupportedAdvanced&&outOfBookEquipment({equipment:[item]}).length)
+    errors.push(`Оборудование #${index}: ${String(item.type)} вне таблицы AGoAC (с. 55).`);
+  }
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
  return {errors,diagnostics:constructionDiagnostics(errors,c),total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,
   ...(c.quirks?{quirks:{extendedTorsoTwist:quirks.extendedTorsoTwist===true},
