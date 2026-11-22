@@ -132,8 +132,9 @@ test('CAT3500D p.51: per-jet mass is 0.5/1/2 tons across published tonnage bands
 
 test('CAT3500D p.51: each jump jet requires one torso/leg critical slot and equal Jump MP',()=>{
  for(const location of ['CT','LT','RT','LL','RL']){
-  const c=blank(55,5);c.jump=1;c.equipment=[{type:'jump',location,slot:location==='CT'?11:1}];
-  assert.equal(ok(c).unit.slots[location][location==='CT'?10:0],'jump');
+  const slot=location==='CT'?11:['LL','RL'].includes(location)?5:1;
+  const c=blank(55,5);c.jump=1;c.equipment=[{type:'jump',location,slot}];
+  assert.equal(ok(c).unit.slots[location][slot-1],'jump');
  }
  for(const location of ['HD','LA','RA']){
   const c=blank(55,5);c.jump=1;c.equipment=[{type:'jump',location,slot:location==='HD'?4:5}];
