@@ -6,7 +6,7 @@ export function identicalMergeParent({parents,tree,parentTree}){
  return parents?.length===2&&shaPattern.test(parents[1])&&shaPattern.test(tree)&&tree===parentTree?parents[1]:null;
 }
 export function reusableRun(runs,sha,name){
- const matching=runs.filter(r=>r.name===name&&r.head_sha===sha&&r.event==='push'&&/^audit\/agoac-/.test(r.head_branch));
+ const matching=runs.filter(r=>r.name===name&&r.head_sha===sha&&r.event==='push'&&/^(audit\/agoac-|feat\/agoac-ch12-)/.test(r.head_branch));
  if(matching.some(r=>r.status!=='completed'||!['success','cancelled'].includes(r.conclusion)))return null;
  return matching.find(r=>r.conclusion==='success'&&Number.isSafeInteger(r.id))?.id??null;
 }
