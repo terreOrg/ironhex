@@ -185,12 +185,12 @@ console.log('AGoAC Ch12 user-visible rule/page diagnostics and illegal design ga
   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}
  ];
  let design=construct(cfg);
- assert(design.errors.some(e=>e.includes('не менее 2 т боеприпасов')),
-  'two cannon require at least two tons even when sharing ammo pool');
- assert(design.diagnostics.some(d=>d.code==='ammunition'&&d.page===54));
+ assert.deepEqual(design.errors,[],
+  'printed stock BattleMechs may share one compatible magazine between matching guns');
+ assert(design.unit.weapons.every(w=>w.ammo===45));
  cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
  design=construct(cfg);
  assert.deepEqual(design.errors,[],
-  'two cannon with two tons across shared bins must be legal');
+  'two compatible magazines must form one correctly counted shared pool');
  assert(design.unit.weapons.every(w=>w.ammo===90));
 }
