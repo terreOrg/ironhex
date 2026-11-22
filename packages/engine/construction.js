@@ -10,7 +10,7 @@ export function constructionDiagnostics(errors,config={}){
   else if(/Рейтинг двигателя/.test(message)){step=2;page=51;field='walk';code='engine_rating';}
   else if(/Прыжок:|прыжковых двигателей|Прыжковые двигатели/.test(message)){step=3;page=51;field='jump';code='jump_jets';}
   else if(/теплоотводов|Теплоотвод/.test(message)){step=6;page=53;field='sinks';code='heat_sinks';}
-  else if(/:.*брон|предел брони/.test(message)){
+  else if((message.includes(':')&&message.includes('брон'))||message.includes('предел брони')){
    step=5;page=52;field=(/кормовая броня/.test(message)?'rear.':'armor.')+message.slice(0,2);
    code='armor_limit';
   }
