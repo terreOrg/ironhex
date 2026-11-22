@@ -105,3 +105,12 @@ test('CAT3500D p.55: supplementary CASE and CASE II never pass as base AGoAC',()
   {type:'hatchet'},{type:'sink'},{type:'ammo'},{type:'jump'}]}),[],
   'Hatchet and Heat Sink are printed on p.55');
 });
+
+test('Custom admission with malformed equipment is fail-closed without unhandled errors',()=>{
+ assert.deepEqual(outOfBookEquipment({equipment:{notAnArray:true}}),[],
+  'scope helper does not throw on malformed untrusted equipment');
+ assert.deepEqual(outOfBookEquipment({equipment:null}),[]);
+ const bad={...structuredClone(example),equipment:{notAnArray:true}};
+ assert.throws(()=>validateDesign({config:bad}),error=>
+  error.code==='invalid_design'&&error.status===422);
+});

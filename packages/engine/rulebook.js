@@ -23,7 +23,7 @@ const allowedSystems=new Set(BASE_SYSTEMS);
 const approved=new Set(BASE_WEAPONS);
 export const isBaseWeapon=name=>approved.has(name);
 export function outOfBookEquipment(config){
-  return [...new Set((config?.equipment||[])
+  return [...new Set((Array.isArray(config?.equipment)?config.equipment:[])
     .map(item=>item?.type)
     .filter(type=>type&&type!=='ammo'&&
       !allowedSystems.has(type)&&!approved.has(type)))];
