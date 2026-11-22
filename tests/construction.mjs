@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {test} from 'node:test';
 import {construct,example} from '../dist/construction.js';
 import {WEAPON_NAMES,WEAPON_SPECS} from '../dist/equipment.js';
 import {Game} from '../dist/engine.js';
@@ -248,3 +249,32 @@ console.log('AGoAC Ch12 running MP and remaining design tonnage checked');
   'two half-ton bins satisfy both machine guns');
 }
 console.log('AGoAC Ch12 strict custom-only ammunition minima verified');
+
+test('AGoAC Ch12 running MP and remaining design tonnage checked',()=>{
+ const original=construct(example);
+ assert.deepEqual(original.errors,[]);
+ assert.equal(original.unit.run,8,'walk=5 must result in running=8');
+ const design=structuredClone(example);
+ Object.assign(design,{tonnage:100,walk:3,jump:0,sinks:10,equipment:[]});
+ const result=construct(design);
+ assert.deepEqual(result.errors,[]);
+ assert.equal(result.unit.run,5,'walk=3 must result in running=5');
+ assert(result.remaining>=0);
+});
+
+test('AGoAC Ch12 strict custom-only ammunition minima verified',()=>{
+ const config={name:'Two AC/2',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[{type:'AC/2',location:'RA',slot:5},
+   {type:'AC/2',location:'LA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}]};
+ assert.deepEqual(construct(config).errors,[],
+  'pinned printed MTF sources may reuse shared bins without a custom-design gate');
+ const blocked=construct(config,{strictAgoac:true});
+ assert(blocked.errors.some(msg=>msg.includes('не менее 2 т')),
+  'custom two-AC2 design requires two tons');
+ assert(blocked.diagnostics.some(d=>d.code==='ammunition'&&d.step===7&&d.page===54));
+ config.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ assert.deepEqual(construct(config,{strictAgoac:true}).errors,[]);
+});
