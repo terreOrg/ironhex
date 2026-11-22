@@ -1,11 +1,18 @@
 import {WEAPON_SPECS,WEAPON_NAMES} from './equipment.js';
+import {outOfBookEquipment} from './rulebook.js';
 export const LOCS=['HD','CT','LT','RT','LA','RA','LL','RL'];
 // CAT3500D printed Construction pp.49–54. Diagnostics are shared by
 // the client and the API; the original human-readable errors remain stable.
 export function constructionDiagnostics(errors,config={}){
  return errors.map(message=>{
   let step=7,page=54,field='equipment',code='equipment_rule';
-  if(/Масса:|Превышение массы/.test(message)){step=1;page=49;field='tonnage';code='tonnage';}
+  if(/Превышение массы/.test(message)){step=8;page=54;field='tonnage';code='overweight';}
+  else if(/Масса:/.test(message)){step=1;page=49;field='tonnage';code='tonnage';}
+  else if(/вне таблицы AGoAC/.test(message)){
+   step=7;page=55;code='not_in_box_rulebook';
+   const row=message.match(/Оборудование #(\d+)/);
+   field=row?'equipment.'+row[1]+'.type':'equipment';
+  }
   else if(/Конфигурация|четырёхног|Кланов/.test(message)){step=1;page=49;field='config';code='unsupported_design';}
   else if(/Рейтинг двигателя/.test(message)){step=2;page=51;field='walk';code='engine_rating';}
   else if(/Прыжок:|прыжковых двигателей|Прыжковые двигатели/.test(message)){step=3;page=51;field='jump';code='jump_jets';}
@@ -18,7 +25,6 @@ export function constructionDiagnostics(errors,config={}){
   else if(/разделение|AC\/20/.test(message)){step=7;page=54;code='ac20_split';}
   else if(/задн|Назад|арки/.test(message)){step=7;page=54;code='weapon_arc';}
   else if(/Бункер|Боезапас|боезапас|боеприпас/.test(message)){step=7;page=54;code='ammunition';}
-  else if(/Превышение массы/.test(message)){step=8;page=54;field='tonnage';code='overweight';}
   const slot=message.match(/^([A-Z]{2}) (\d+):/);
   if(slot){
    page=49;code='critical_slots';
@@ -219,6 +225,17 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
   directionalTorsoMounts.push({location:m.location,points:m.points,
    facing:m.facing,weaponIndices:[...m.weaponIndices],locked:false});
  }
+ // Gate known advanced equipment after constructing the complete draft, so
+ // unknown components still receive their original diagnostic and the draft
+ // retains finite mass/slot totals. Historical MTF imports are non-strict.
+ if(strictAgoac&&Array.isArray(c.equipment))
+  for(const [index,item] of c.equipment.entries()){
+   if(!item||typeof item!=='object'||Array.isArray(item))continue;
+   const isSupportedAdvanced=Object.hasOwn(WEAPON_SPECS,item.type)||
+    ['case','case2'].includes(item.type);
+   if(isSupportedAdvanced&&outOfBookEquipment({equipment:[item]}).length)
+    errors.push(`Оборудование #${index}: ${String(item.type)} вне таблицы AGoAC (с. 55).`);
+  }
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
  return {errors,diagnostics:constructionDiagnostics(errors,c),total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,
   ...(c.quirks?{quirks:{extendedTorsoTwist:quirks.extendedTorsoTwist===true},
