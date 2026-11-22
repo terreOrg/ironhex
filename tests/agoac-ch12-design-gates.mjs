@@ -347,3 +347,19 @@ test('CAT3500D p.54: malicious weapon names and split sections reject without cr
  assert(r.errors.some(e=>e.includes('задняя арка должна быть логическим')));
  assert(r.diagnostics.some(d=>d.code==='weapon_arc'&&d.page===54));
 });
+
+
+test('CAT3500D p.54: rear-arm mount is legal and obeys rear arc, not forward arc',()=>{
+ const c=blank(55,5);
+ c.equipment=[{type:'Medium Laser',location:'RA',slot:5,rear:true}];
+ const built=ok(c),weapon=built.unit.weapons[0];
+ assert.equal(weapon.location,'RA');
+ assert.equal(weapon.rear,true);
+ const game=new Game();
+ const attacker=game.units[0];
+ Object.assign(attacker,built.unit,{q:0,r:0,facing:0,twist:0});
+ assert(!game.arc(attacker,{q:2,r:0},weapon));
+ assert(game.arc(attacker,{q:-2,r:0},weapon));
+ const normal=structuredClone(c);normal.equipment[0].rear=false;
+ assert.deepEqual(ok(normal).unit.weapons.map(w=>w.rear),[false]);
+});
