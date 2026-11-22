@@ -178,6 +178,19 @@ export function createHttpServer({
             const item=economyStore.mechDetails(sourcePath);
             return item?json(res,200,{item},head):json(res,404,{error:'mech_not_found'},head);
           }
+          if(path==='/api/v1/economy/equipment'&&(method==='GET'||head)){
+            const url=new URL(req.url,'http://localhost');
+            return json(res,200,economyStore.browseEquipment({
+              query:url.searchParams.get('query')||'',
+              page:url.searchParams.get('page')||1,
+              group:url.searchParams.get('group')||'',limit:36
+            }),head);
+          }
+          if(path==='/api/v1/economy/equipment/detail'&&(method==='GET'||head)){
+            const url=new URL(req.url,'http://localhost');
+            const item=economyStore.equipmentDetails(url.searchParams.get('sku')||'');
+            return item?json(res,200,{item},head):json(res,404,{error:'equipment_not_found'},head);
+          }
           if(path==='/api/v1/economy/mechs/purchase'&&method==='POST'){
             if(!sameOrigin(req,publicOrigin))throw new AuthError(403,'invalid_origin');
             return json(res,201,{item:await economyStore.buyMech(user.id,await readJson(req))},head);

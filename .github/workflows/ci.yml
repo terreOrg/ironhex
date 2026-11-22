@@ -2,7 +2,7 @@ name: Ironhex CI
 
 on:
   push:
-    branches: [main, 'audit/agoac-*', 'feat/agoac-ch12-*']
+    branches: [main, 'audit/agoac-*', 'feat/agoac-ch12-*', 'feat/megamek-*']
   workflow_dispatch:
 
 permissions:

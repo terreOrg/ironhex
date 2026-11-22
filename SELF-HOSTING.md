@@ -361,23 +361,32 @@ In MechLab, **licensed** hangar mechs can be refitted using the current `PATCH /
 
 The NPC dealer is not a player auction, and the `market_listings` schema remains inactive. Prices are noncanonical prototype balancing figures; no selling, scarcity model, transit times, paid assembly, or ammunition accounting is implemented.
 
-## 13. MegaMek Data unit import
+## 13. MegaMek Data complete read-only unit archive
 
-The NPC dealer is now driven by MTF files under `data/megamek/meks/`; source commit and original paths are recorded in `data/megamek/manifest.json`. The data is provided by **The MegaMek Team** under **CC BY-NC-SA 4.0**, with license text, original notices and a modification summary in `data/megamek/`. This is an unofficial, noncommercial game and no MegaMek endorsement is implied.
+`data/megamek/archive/all-units.json.gz` is a lossless archive of **11,248 original technical unit records** from the pinned MegaMek/mm-data revision `5ee1b15ff2877611db4b0ffa864a57d0b9f72938`. It includes all **4,305 previously indexed MTF BattleMechs** and 6,943 other MTF/BLK unit files across vehicles, battle armor, infantry, fighters, dropships, ProtoMechs and other categories. The original files, copyright notices and licensing are preserved verbatim in the compressed archive; original data is **CC BY-NC-SA 4.0**.
 
-`apps/api/src/mtf.mjs` parses standard Inner Sphere biped unit files with supported technology only. It maps mass, walk/jump MP, engine, standard armor/rear armor, single heat sinks, mounted weapon locations and critical slots, and ammunition into the shared battle construction engine. It checks that the resulting unit has no construction errors before offering it. Unsupported/advanced equipment, configurations, or tech are excluded rather than inaccurately converted; import rejections can be inspected in `rejectedMtf` from `apps/api/src/market.mjs`. The import is **offline** from the bundled files: no production dependency on MekBay or GitHub API availability.
+The snapshot is bundled by `apps/api/Dockerfile` via `COPY data/megamek/` and loaded at API startup by `apps/api/src/mm-archive.mjs`. No network access is needed in production. `apps/api/src/mtf.mjs` remains the **separate strict importer** for purchasable, playable standard Inner Sphere biped variants. Do not confuse an archive card with an admitted combat vehicle.
 
-MTF files do not provide final unit C-Bills purchase prices. Prices shown by IronHex are transparent game-balance approximations (mass and armament formula), **not canonical BattleTech values**. Full MekBay mechanics, unit BV, rare tech, live market movements and additional unit classes are future work.
+To rebuild only when the pinned source revision is intentionally updated:
 
-### Full index and server search
+```bash
+git clone --filter=blob:none --no-checkout https://github.com/MegaMek/mm-data.git /tmp/ironhex-mm-data
+git -C /tmp/ironhex-mm-data sparse-checkout init --cone
+git -C /tmp/ironhex-mm-data sparse-checkout set data/mekfiles
+git -C /tmp/ironhex-mm-data fetch --depth=1 origin 5ee1b15ff2877611db4b0ffa864a57d0b9f72938
+git -C /tmp/ironhex-mm-data checkout --detach 5ee1b15ff2877611db4b0ffa864a57d0b9f72938
+node scripts/import-mm-data.mjs --source /tmp/ironhex-mm-data
+```
 
-`data/megamek/full-index.json` is a pinned file-path index of **4,305** MTF variants from MegaMek/mm-data. `GET /api/v1/economy/mechs?query=Atlas&page=1&available=0` is an authenticated, paginated (36 per page) read-only search. Results distinguish reference-only listings (`available=false`) from playable imported units (`available=true`). The default search includes both. Buying an unavailable unit is rejected because it has no valid offer ID. Do not describe all 4,305 source variants as playable yet. Standalone equipment and engine specification expansion is a separate future importer, sourced from MegaMek's GPL-licensed definitions where legally appropriate.
+The script fails if any of the 4,305 indexed MTF paths is missing. It reports per-unit-class counts and the compressed archive size. The archived source content is never interpreted as trusted HTML.
 
-### Market technical dossier and advanced filters
+### Full reference and equipment search
 
-`GET /api/v1/economy/mechs/detail?path=<URL-encoded source path>` requires authentication and accepts only exact paths in the pinned 4,305-entry index. It returns a full server-derived design dossier for imported variants, including walking/running/jumping MP, engine, tonnage, era, heat sinks, component weights, locations, front/rear armor, structure, critical slots, weapon damage/heat/range/ammo and the source attribution. Reference-only variants return explicitly marked incomplete details and a link to the official source MTF. Unknown or traversal paths return 404; the server never uses an input path as a filesystem path.
+`GET /api/v1/economy/mechs?query=Atlas&page=1` searches **all 11,248** unit records and applies filters before pagination. Unavailable MTF/BLK units have their authentic source mass/year/role when available; unknown values remain absent. `GET /api/v1/economy/mechs/detail?path=<encoded pinned path>` returns the unit's original metadata, all fields and technical sections, plus the full raw MTF/BLK. Paths not present in the immutable index return 404.
 
-The paginated `GET /api/v1/economy/mechs` search additionally supports `weightClass=light|medium|heavy|assault`, `tonnageMin`, `tonnageMax`, `eraMin`, `eraMax`, `priceMax`, `role`, `weapon`, and `sort=name|tonnage|year|price`; `query`, `available=1` and `page` continue to work. Filters execute against the complete index before returning the page. Mechs with unknown numerical values are not assigned guessed values: mass, year, price, role and weapon filters exclude reference-only entries that have not yet been imported. Weight class can also be read from an explicit source folder name. The modal is keyboard-accessible and renders trusted text, without injecting source HTML.
+The paginated `GET /api/v1/economy/equipment?query=Laser&page=1&group=laser` lists known engine components and distinct source component labels extracted from unit records; `GET /api/v1/economy/equipment/detail?sku=...` returns a technical card. The source's reference labels are **not** stand-alone MegaMek Java weapon definitions; those detailed definitions are part of the separate GPL-licensed MegaMek codebase and are not copied here. The market uses IronHex's existing engine statistics only for supported entries. Prices are noncanonical game balancing, never sourced from MTF units.
+
+The browser opens a responsive sepia paper-folder dossier showing the original technical fields and a generic mechanical illustration by class. The same laser template is reused across all laser models, the same missile drawing across launchers, and so on. Original source text is placed through `textContent`; no source HTML is injected into the document. Reference-only records never expose a purchase button.
 
 ## 14. Shared component registry and ammo persistence
 

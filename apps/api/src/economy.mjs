@@ -4,7 +4,8 @@ import {ammoBinsFor,normalizedAmmoState,AMMO_PACKS} from '../../../packages/engi
 import {construct} from '../../../packages/engine/construction.js';
 import {damagedComponents,normalizedCriticalDamage} from
   '../../../packages/engine/component-damage.js';
-import {MECH_OFFERS,showMechOffer,EQUIPMENT_CATALOG,searchMechCatalog,getMechDetails} from './market.mjs';
+import {MECH_OFFERS,showMechOffer,EQUIPMENT_CATALOG,REFERENCE_EQUIPMENT_CATALOG,
+  searchMechCatalog,getMechDetails,searchReferenceEquipment,getReferenceEquipmentDetails} from './market.mjs';
 
 export const CONTRACTS=[
   {id:'patrol',name:'Приграничный патруль',victory:32000,enemyGunnery:4},
@@ -69,6 +70,8 @@ export function createEconomyStore(pool){
   return {
     browseMechs(options){return searchMechCatalog(options);},
     mechDetails(path){return getMechDetails(path);},
+    equipmentDetails(sku){return getReferenceEquipmentDetails(sku);},
+    browseEquipment(options){return searchReferenceEquipment(options);},
     summary(owner){
       return inTransaction(pool,async c=>{
         const balance=await ensureWallet(c,owner);
@@ -83,6 +86,7 @@ export function createEconomyStore(pool){
           'WHERE commander_id=$1 ORDER BY id DESC LIMIT 20',[owner]);
         return {balance,stock,equipmentStock,contracts:CONTRACTS,
           catalog:[...CATALOG.map(item=>({...item,kind:'supply'})),...EQUIPMENT_CATALOG],
+          referenceEquipmentCount:REFERENCE_EQUIPMENT_CATALOG.length,
           mechOffers:MECH_OFFERS.map(showMechOffer),
           repairs:mechs.rows.map(m=>repairQuote(m,stock)),
           components:mechs.rows.flatMap(m=>m.state?.config?
