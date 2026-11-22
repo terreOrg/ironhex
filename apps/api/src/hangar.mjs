@@ -3,7 +3,7 @@ import {weaponCounts} from './market.mjs';
 import {ammoBinsFor,normalizedAmmoState,systemCounts} from '../../../packages/engine/equipment.js';
 import {normalizedCriticalDamage,damagedComponents} from
   '../../../packages/engine/component-damage.js';
-import {outOfBookEquipment} from '../../../packages/engine/rulebook.js';
+import {outOfBookEquipment,rulebookEquipmentDetail} from '../../../packages/engine/rulebook.js';
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -29,12 +29,7 @@ export function validateDesign(input) {
   const supplemental=outOfBookEquipment(c);
   if(supplemental.length){
     const details=c.equipment.flatMap((item,index)=>
-      supplemental.includes(item.type)?[{
-        code:'not_in_box_rulebook',field:'equipment.'+index+'.type',
-        step:7,page:55,
-        message:item.type+' отсутствует в таблице A Game of Armored Combat '+
-          '(с. 55). Уберите компонент или используйте отдельные расширенные правила.'
-      }]:[]);
+      supplemental.includes(item.type)?[rulebookEquipmentDetail(item.type,index)]:[]);
     throw new AuthError(422,'unsupported_rulebook_equipment',details);
   }
   let result;
