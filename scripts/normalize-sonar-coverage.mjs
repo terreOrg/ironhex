@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 // build-web.mjs --check verifies byte-identical generated copies in CI.
 // Preserve individual coverage records; SonarJS aggregates source-file records.
 const defaultRoot=fileURLToPath(new URL('../',import.meta.url));
-const engine=new Set(['engine.js','agoac-boards.js','legacy-engine.js','construction.js','equipment.js','rulebook.js','component-damage.js','fire-arcs.js']);
+const engine=new Set(['engine.js','agoac-boards.js','agoac-scenario3-figure.js','legacy-engine.js','construction.js','equipment.js','rulebook.js','component-damage.js','fire-arcs.js']);
 const web=new Set(['app.js','hub.js','operation-ui.js','economy-ui.js','pilot-ui.js','auth-ui.js','dice.js','mechlab.js','record-sheet.js','agoac-scenario-loader.js']);
 
 export async function normalizeLcov(text,root=defaultRoot){
