@@ -8,10 +8,11 @@ const SESSION_TTL = 60 * 60 * 24 * 7;
 const fakeSalt = Buffer.alloc(16).toString('hex');
 
 export class AuthError extends Error {
-  constructor(status, code) {
+  constructor(status, code, details=null) {
     super(code);
     this.status = status;
     this.code = code;
+    if (Array.isArray(details)) this.details = details.slice(0,32);
   }
 }
 
