@@ -203,6 +203,10 @@ test('AGoAC p.54 MechLab source-derived record sheet displays all construction l
   'technical sheet shows each individual ammo bin, tonnage and shots');
  assert(ui.includes('Бункеры боеприпасов'),
   'ammo bins have their own record-sheet table');
+ assert(ui.includes("w.rear?'Назад':'Вперёд'"),
+  'printed p.54: every weapon reports its forward or rearward installation');
+ assert(ui.includes("if(!s)return 'Roll Again'"),
+  'printed p.49/54: empty critical slots show Roll Again on the technical sheet');
  assert(ui.includes('diagnostics.length'),'failed design remains a draft');
  assert(html.includes('id="design-record"')&&html.includes('id="design-sheet"'));
 });
@@ -233,4 +237,31 @@ test('CAT3500D p.55: saved-browser and engine custom setup both fail closed on u
   'engine user-created forces must enforce book ammo minimum');
  assert(engine.includes("construct(design);"),
   'printed source MTFs are intentionally imported without custom-only restrictions');
+});
+
+
+test('CAT3500D p.54: authenticated hangar accepts ammo before guns and locates invalid references',()=>{
+ const cfg={name:'Ammo order',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1},
+   {type:'AC/5',location:'RA',slot:5},
+   {type:'ammo',location:'LT',slot:2,weapon:1,mass:1},
+   {type:'AC/5',location:'LA',slot:5}
+  ]};
+ assert.doesNotThrow(()=>validateDesign({config:cfg}),
+  'legal designs cannot depend on which UI row was entered first');
+ const bad=structuredClone(cfg);
+ bad.equipment[0].weapon=8;
+ assert.throws(()=>validateDesign({config:bad}),error=>
+  error.status===422&&error.code==='invalid_design'&&
+  error.details.some(d=>d.field==='equipment.0.weapon'&&
+   d.code==='ammunition'&&d.page===54));
+ const badMass=structuredClone(cfg);
+ badMass.equipment[2].mass=0.5;
+ assert.throws(()=>validateDesign({config:badMass}),error=>
+  error.status===422&&error.code==='invalid_design'&&
+  error.details.some(d=>d.field==='equipment.2.mass'&&
+   d.code==='ammunition'&&d.page===54));
 });
