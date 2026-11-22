@@ -176,3 +176,21 @@ console.log('Clan tech-base construction safety gate verified');
  assert.equal(result.unit.bins[0].shots,100);
 }
 console.log('AGoAC Ch12 user-visible rule/page diagnostics and illegal design gates verified');
+
+{
+ const cfg=c();cfg.tonnage=100;cfg.walk=3;cfg.jump=0;cfg.sinks=10;
+ cfg.equipment=[
+  {type:'AC/2',location:'RA',slot:5},
+  {type:'AC/2',location:'LA',slot:5},
+  {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}
+ ];
+ let design=construct(cfg);
+ assert(design.errors.some(e=>e.includes('не менее 2 т боеприпасов')),
+  'two cannon require at least two tons even when sharing ammo pool');
+ assert(design.diagnostics.some(d=>d.code==='ammunition'&&d.page===54));
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ design=construct(cfg);
+ assert.deepEqual(design.errors,[],
+  'two cannon with two tons across shared bins must be legal');
+ assert(design.unit.weapons.every(w=>w.ammo===90));
+}
