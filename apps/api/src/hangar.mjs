@@ -27,7 +27,7 @@ export function validateDesign(input) {
   }
   if (JSON.stringify(c).length > 6400) throw new AuthError(422,'invalid_design');
   let result;
-  try { result = construct(c); }
+  try { result = construct(c,{strictAgoac:true}); }
   catch { throw new AuthError(422,'invalid_design'); }
   if (result.errors.length || !Number.isFinite(result.total) ||
       !Number.isFinite(result.remaining) || result.remaining < -0.001) {

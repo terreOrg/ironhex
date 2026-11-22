@@ -68,7 +68,7 @@ export function quadStructuralLayout(tonnage){
  return {config:'Quad',structure,slots,legLocations:{...QUAD_LEG_LOCATIONS}};
 }
 export const EQUIPMENT=WEAPON_NAMES;
-export function construct(c,{auditQuad=false}={}){
+export function construct(c,{auditQuad=false,strictAgoac=false}={}){
  const errors=[],techBase=c.techBase??'Inner Sphere',ton=+c.tonnage,walk=+c.walk,jump=+c.jump,sinks=+c.sinks,rating=ton*walk;
  const chassisConfig=c.config??'Biped';
  const quirks=c.quirks??{};
@@ -145,6 +145,23 @@ export function construct(c,{auditQuad=false}={}){
      if(!w.ammo)errors.push(w.name+': нужен боезапас.');
    }
  });
+ // CAT3500D (2018) p.54: user-created designs must allocate one ton
+ // per ballistic/missile weapon (MG: 0.5 ton each). Identical weapons
+ // can share magazines, but sharing cannot reduce the minimum load.
+ // Imported printed MTF scenario sheets retain their source-authoritative
+ // ammo allotments; they use the default (non-custom) validation mode.
+ if(strictAgoac){
+  for(const [name,master] of pools){
+   const count=weapons.filter(w=>w.name===name).length;
+   const required=count*(name==='Machine Gun'?0.5:1);
+   const roundsPerTon=data[name][8];
+   const actual=bins.filter(b=>b.weapon===master)
+     .reduce((tons,b)=>tons+b.shots/roundsPerTon,0);
+   if(actual+1e-9<required)
+    errors.push(name+': требуется не менее '+required+' т боеприпасов на '+
+      count+' оружия (шаг 7, с. 54); размещено '+actual+' т.');
+  }
+ }
  // Optional BMM p.83 directional mounts are design attributes, not
  // phantom weapons. Validate every referenced actual installed gun.
  const mountInputs=Array.isArray(quirks.directionalTorsoMounts)?

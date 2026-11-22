@@ -202,3 +202,18 @@ test('AGoAC p.54 MechLab source-derived record sheet displays all construction l
  assert(ui.includes('diagnostics.length'),'failed design remains a draft');
  assert(html.includes('id="design-record"')&&html.includes('id="design-sheet"'));
 });
+
+test('CAT3500D p.54 authenticated custom designs reject insufficient ammo with explicit rule reason',()=>{
+ const cfg={name:'Custom stock',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[{type:'AC/2',location:'LA',slot:5},
+   {type:'AC/2',location:'RA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}]};
+ assert.throws(()=>validateDesign({config:cfg}),error=>
+  error.status===422&&error.code==='invalid_design'&&
+  error.details.some(d=>d.code==='ammunition'&&d.step===7&&d.page===54&&
+   d.message.includes('не менее 2 т')),'server must reject even direct POST/PATCH');
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ assert.doesNotThrow(()=>validateDesign({config:cfg}));
+});

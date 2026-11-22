@@ -1466,7 +1466,7 @@ export class Game extends Legacy{
    if(!Array.isArray(approvals)||approvals.length!==2||approvals.some(v=>v!==true))
     return fail('Нужно согласие обеих сторон на нестандартный мех');
    if(!custom||!custom.config||typeof custom.config!=='object')return fail('Нет проекта меха');
-   try{design=construct(custom.config);}catch{return fail('Некорректный проект меха');}
+   try{design=construct(custom.config,{strictAgoac:true});}catch{return fail('Некорректный проект меха');}
    if(!design.unit||design.errors.length)return fail('Некорректный проект меха');
    const p=custom.pilot;
    if(p!=null&&(!Number.isInteger(p.gunnery)||!Number.isInteger(p.piloting)||

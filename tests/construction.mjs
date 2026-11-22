@@ -206,3 +206,45 @@ assert.equal(running.unit.run,8,'CAT3500D p.51: walk 5 -> run 8');
  assert(result.remaining>=0,'unallocated tonnage is counted as wasted');
 }
 console.log('AGoAC Ch12 running MP and remaining design tonnage checked');
+
+// The construction textbook's explicit ammunition minimum is required for
+// user-created MechLab designs. Legacy source MTFs remain loadable intact
+// in the locked Chapter 11 printed scenarios (not a custom-design loophole).
+{
+ const cfg={name:'Two AC2 design',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[
+   {type:'AC/2',location:'RA',slot:5},
+   {type:'AC/2',location:'LA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}
+  ]
+ };
+ assert.deepEqual(construct(cfg).errors,[],
+  'trusted printed MTF import must preserve canonical shared-ammo behavior');
+ const strict=construct(cfg,{strictAgoac:true});
+ assert(strict.errors.some(e=>e.includes('не менее 2 т')||
+   e.includes('требуется не менее 2 т')),'AGoAC p.54 at least one ton per weapon');
+ assert(strict.diagnostics.some(d=>d.code==='ammunition'&&d.page===54));
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ const valid=construct(cfg,{strictAgoac:true});
+ assert.deepEqual(valid.errors,[],'shared magazine storage remains legal if minimum met');
+ assert(valid.unit.weapons.every(w=>w.ammo===90));
+}
+{
+ const cfg={name:'Two MG design',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[
+   {type:'Machine Gun',location:'RA',slot:5},
+   {type:'Machine Gun',location:'LA',slot:5},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:0.5}
+  ]
+ };
+ assert(construct(cfg,{strictAgoac:true}).errors.some(e=>e.includes('требуется не менее 1 т')),
+  'two machine guns require a total of one ton');
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:0.5});
+ assert.deepEqual(construct(cfg,{strictAgoac:true}).errors,[],
+  'two half-ton bins satisfy both machine guns');
+}
+console.log('AGoAC Ch12 strict custom-only ammunition minima verified');

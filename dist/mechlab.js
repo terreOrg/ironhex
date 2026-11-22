@@ -61,7 +61,7 @@ function renderDesignRecord(result,diagnostics){
   '<p class="hint">Лист проекта по шагу 8, с. 54. При наличии ошибок сохранение и бой запрещены.</p>';
 }
 function check(){
- const r=construct(c),notInBook=outOfBookEquipment(c);
+ const r=construct(c,{strictAgoac:true}),notInBook=outOfBookEquipment(c);
  const diagnostics=[...(r.diagnostics||[])];
  if(!String(c.name||'').trim()){
   const message='Название меха обязательно перед сохранением.';
