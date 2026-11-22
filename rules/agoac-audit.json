@@ -727,7 +727,7 @@
           "agoac-185",
           "agoac-186"
         ],
-        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review. Third subpacket: p.54 per-gun ammo minimum now enforced only for user-authored designs, while frozen original printed scenario MTFs preserve canonical shared SRM-6 ammo source. No premature certification; full CI and source regression required. Fourth packet: constructor-to-live-combat split AC/20 arc and ammo consumption, individual ammo bin masses/shots on the technical record, and defensive input validation. Verification remains pending."
+        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review. Third subpacket: p.54 per-gun ammo minimum now enforced only for user-authored designs, while frozen original printed scenario MTFs preserve canonical shared SRM-6 ammo source. No premature certification; full CI and source regression required. Fourth packet: constructor-to-live-combat split AC/20 arc and ammo consumption, individual ammo bin masses/shots on the technical record, and defensive input validation. Verification remains pending. Direct page-54 source comparison corrected previously incorrect claim that rear arm mounts are prohibited. Constructor and regression now permit them."
       },
       "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work. 2026-11-22 second packet source-checked p.51/54/55, post-merge checks pending."
     },
@@ -11464,15 +11464,19 @@
       "pages": [
         54
       ],
-      "statement": "Torso, head and leg weapons may face forward/rear; arm weapons follow the arm firing arc and cannot be rear-fixed.",
+      "statement": "Torso, head, leg and arm weapons may be mounted forward or rearward as allowed by CAT3500D p.54; the resulting fire arc must follow the printed arm/torso/leg rules.",
       "status": "tested_case",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.54: split AC/20 restricts placement and runs in live battle"
+        },
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.54: rear-arm mount is legal and obeys rear arc, not forward arc"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapon_arc). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapon_arc). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. CORRECTION after direct printed p.54 source examination: arm rear-mounts are explicitly permitted. Removed inaccurate prior prohibition in construction engine, corrected test and rule inventory. Keep tested_case until all branch and main gates pass."
     },
     {
       "id": "agoac-183",
