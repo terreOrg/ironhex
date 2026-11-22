@@ -17,7 +17,7 @@ export function constructionDiagnostics(errors,config={}){
   else if(/актуатор|руки|Актуатор/.test(message)){step=1;page=50;field='removeActuators';code='actuators';}
   else if(/разделение|AC\/20/.test(message)){step=7;page=54;code='ac20_split';}
   else if(/задн|Назад|арки/.test(message)){step=7;page=54;code='weapon_arc';}
-  else if(/Бункер|Боезапас|боезапас/.test(message)){step=7;page=54;code='ammunition';}
+  else if(/Бункер|Боезапас|боезапас|боеприпас/.test(message)){step=7;page=54;code='ammunition';}
   else if(/Превышение массы/.test(message)){step=8;page=54;field='tonnage';code='overweight';}
   const slot=message.match(/^([A-Z]{2}) (\d+):/);
   if(slot){
