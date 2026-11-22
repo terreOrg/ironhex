@@ -1,23 +1,37 @@
-import {construct,example,EQUIPMENT,LOCS} from './construction.js';
+import {construct,designSubmissionDiagnostics,example,EQUIPMENT,LOCS} from './construction.js';
 import {ammoBinsFor} from './equipment.js';
 import {BASE_WEAPONS} from './rulebook.js';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let currentHangarId=new URL(location.href).searchParams.get('mech');
 let marketOwned=false,installedConfig=null,equipmentStock={};
-let c=structuredClone(example);try{const saved=JSON.parse(localStorage.getItem('ironhex-design'));if(saved?.config)c=saved.config;}catch{}
+let c=structuredClone(example),rejectedSaved=null;
+try{
+ const saved=JSON.parse(localStorage.getItem('ironhex-design'));
+ if(saved?.config){
+  const issues=designSubmissionDiagnostics(saved.config);
+  if(issues.length){
+   rejectedSaved=issues;
+   // Preserve the invalid original in storage until the user explicitly edits
+   // or restores a template; never crash into an enabled launch button.
+  }else c=saved.config;
+ }
+}catch{
+ rejectedSaved=[{code:'invalid_design',field:'config',step:8,page:54,
+  message:'Сохранённый проект повреждён: загрузите или исправьте конструкцию.'}];
+}
 function draw(){
- $('#core').innerHTML=`<label>Название<input id="name" maxlength="30" value="${esc(c.name)}"></label>`+[['tonnage','Масса, т',20,100,5],['walk','Ходьба, MP',1,20,1],['jump','Прыжок, MP',0,20,1],['sinks','Теплоотводы',10,50,1]].map(([k,label,min,max,step])=>`<label>${label}<input id="${k}" type="number" min="${min}" max="${max}" step="${step}" value="${c[k]}"></label>`).join('');
+ $('#core').innerHTML=`<label>Название<input id="name" maxlength="30" value="${esc(typeof c.name==='string'?c.name:'')}"></label>`+[['tonnage','Масса, т',20,100,5],['walk','Ходьба, MP',1,20,1],['jump','Прыжок, MP',0,20,1],['sinks','Теплоотводы',10,50,1]].map(([k,label,min,max,step])=>`<label>${label}<input id="${k}" type="number" min="${min}" max="${max}" step="${step}" value="${c[k]}"></label>`).join('');
  $('#armor').innerHTML=LOCS.map(l=>`<tr><td>${l}</td><td><input aria-label="Броня ${l}" data-armor="${l}" type="number" min="0" max="100" value="${c.armor[l]}"></td><td>${['CT','LT','RT'].includes(l)?`<input aria-label="Кормовая броня ${l}" data-rear="${l}" type="number" min="0" max="100" value="${c.rear[l]}">`:'—'}</td></tr>`).join('');
  for(const l of ['LA','RA']){ $('#remove'+l).checked=!!c.removeActuators?.includes(l); $('#removeHand'+l).checked=!!c.removeHandActuators?.includes(l); }
  let wi=0;$('#equipment').innerHTML=c.equipment.map((e,i)=>`<tr data-row="${i}"><td>${EQUIPMENT.includes(e.type)?'<small>Оружие №'+wi+++'</small><br>':''}<select data-key="type" aria-label="Оборудование ${i+1}">${[...BASE_WEAPONS,...(EQUIPMENT.includes(e.type)&&!BASE_WEAPONS.includes(e.type)?[e.type]:[]),'ammo','jump','sink','hatchet'].map(t=>`<option ${e.type===t?'selected':''} value="${t}">${({ammo:'Боезапас',jump:'Прыжковый двигатель',sink:'Теплоотвод',hatchet:'Топор'})[t]||t}</option>`).join('')}</select></td><td><select data-key="location" aria-label="Секция ${i+1}">${LOCS.map(l=>`<option ${e.location===l?'selected':''}>${l}</option>`).join('')}</select></td><td><input type="number" min="1" max="12" data-key="slot" aria-label="Слот ${i+1}" value="${e.slot}"></td><td>${e.type==='ammo'?`<label>№ оружия<input type="number" min="0" data-key="weapon" value="${e.weapon??0}"></label><label>Тонны<select data-key="mass"><option value="1">1</option><option value="0.5" ${e.mass===.5?'selected':''}>0,5 (MG)</option></select></label>`:EQUIPMENT.includes(e.type)?`<label><mech-toggle label="Оружие ${i+1}: назад" data-key="rear" ${e.rear?'checked':''}></mech-toggle> Назад</label>${e.type==='AC/20'?`<label>Вторая секция<select data-key="splitLocation"><option value="">Без разделения</option>${['CT','LT','RT','LA','RA'].map(l=>`<option ${e.splitLocation===l?'selected':''}>${l}</option>`).join('')}</select></label><label>Слотов в первой<input type="number" min="1" max="9" data-key="splitCount" value="${e.splitCount??5}"></label><label>Слот во второй<input type="number" min="1" max="12" data-key="splitSlot" value="${e.splitSlot??1}"></label>`:''}`:'—'}</td><td><button data-del="${i}" aria-label="Удалить строку ${i+1}">×</button></td></tr>`).join('');
- $('#equipment').onchange=ev=>{read();if(ev.target.dataset.key==='type')draw();else check();};$('#equipment').onclick=ev=>{if(ev.target.dataset.del!==undefined){read();c.equipment.splice(+ev.target.dataset.del,1);draw();}};$('#core').onchange=()=>{read();check();};$('#armor').onchange=()=>{read();check();};for(const l of ['LA','RA'])for(const id of ['remove'+l,'removeHand'+l])$('#'+id).onchange=()=>{read();check();};
+ $('#equipment').onchange=ev=>{read({userEdit:true});if(ev.target.dataset.key==='type')draw();else check();};$('#equipment').onclick=ev=>{if(ev.target.dataset.del!==undefined){read({userEdit:true});c.equipment.splice(+ev.target.dataset.del,1);draw();}};$('#core').onchange=()=>{read({userEdit:true});check();};$('#armor').onchange=()=>{read({userEdit:true});check();};for(const l of ['LA','RA'])for(const id of ['remove'+l,'removeHand'+l])$('#'+id).onchange=()=>{read({userEdit:true});check();};
  for(const id of ['tonnage','walk'])
    $('#'+id).disabled=marketOwned;
  for(const element of document.querySelectorAll('#armor input'))
    element.disabled=marketOwned;
  for(const l of ['LA','RA']){ $('#remove'+l).disabled=marketOwned; $('#removeHand'+l).disabled=marketOwned; }
  check();}
-function read(){for(const k of ['tonnage','walk','jump','sinks'])c[k]=+$('#'+k).value;c.name=$('#name').value;for(const el of document.querySelectorAll('[data-armor]'))c.armor[el.dataset.armor]=+el.value;for(const el of document.querySelectorAll('[data-rear]'))c.rear[el.dataset.rear]=+el.value;c.removeActuators=['LA','RA'].filter(l=>$('#remove'+l).checked);c.removeHandActuators=['LA','RA'].filter(l=>$('#removeHand'+l).checked);for(const row of document.querySelectorAll('[data-row]'))for(const el of row.querySelectorAll('[data-key]')){const key=el.dataset.key;c.equipment[+row.dataset.row][key]=el.localName==='mech-toggle'?el.checked:['slot','weapon','mass','splitCount','splitSlot'].includes(key)?+el.value:el.value;}}
+function read({userEdit=false}={}){if(userEdit&&rejectedSaved){localStorage.removeItem('ironhex-design');rejectedSaved=null;}for(const k of ['tonnage','walk','jump','sinks'])c[k]=+$('#'+k).value;c.name=$('#name').value;for(const el of document.querySelectorAll('[data-armor]'))c.armor[el.dataset.armor]=+el.value;for(const el of document.querySelectorAll('[data-rear]'))c.rear[el.dataset.rear]=+el.value;c.removeActuators=['LA','RA'].filter(l=>$('#remove'+l).checked);c.removeHandActuators=['LA','RA'].filter(l=>$('#removeHand'+l).checked);for(const row of document.querySelectorAll('[data-row]'))for(const el of row.querySelectorAll('[data-key]')){const key=el.dataset.key;c.equipment[+row.dataset.row][key]=el.localName==='mech-toggle'?el.checked:['slot','weapon','mass','splitCount','splitSlot'].includes(key)?+el.value:el.value;}}
 // Chapter 12 p.54. The in-progress technical record is always derived
 // from the exact same constructor result that validates the saved unit.
 function renderDesignRecord(result,diagnostics){
@@ -27,8 +41,8 @@ function renderDesignRecord(result,diagnostics){
  if(!u){target.textContent='Сначала исправьте массу, двигатель и конфигурацию шасси.';return;}
  const slotLabel=s=>{
   if(!s)return 'Roll Again';
-  if(s.startsWith('w:'))return u.weapons[Number(s.slice(2))]?.name||'Оружие';
-  if(s.startsWith('ammo:'))return 'Боезапас '+(u.weapons[Number(s.split(':')[1])]?.name||'оружия');
+  if(s.startsWith('w:')){const w=u.weapons[Number(s.slice(2))];return w?w.name+(w.rear?' (R)':''):'Оружие';}
+  if(s.startsWith('ammo:')){const [,weapon,shots]=s.split(':');return 'Боезапас '+(u.weapons[Number(weapon)]?.name||'оружия')+' ('+shots+' выстр.)';}
   return ({life:'Жизнеобеспечение',sensors:'Датчики',cockpit:'Кабина',
    engine:'Двигатель',gyro:'Гироскоп',shoulder:'Плечо',upper:'Верхний актуатор',
    lower:'Нижний актуатор',hand:'Кисть',hip:'Бедро',foot:'Стопа',
@@ -40,6 +54,32 @@ function renderDesignRecord(result,diagnostics){
  const armor=LOCS.map(loc=>'<tr><th>'+loc+'</th><td>'+u.armor[loc]+'</td><td>'+
   (['CT','LT','RT'].includes(loc)?u.rear[loc]:'—')+'</td><td>'+
   u.structure[loc]+'</td></tr>').join('');
+ // CAT3500D Step 8 printed p.54: unlike a numerical summary, the actual
+ // technical sheet must cross out all unallocated points, including the
+ // torso rear. A single front/rear pool per torso prevents double-counting.
+ // Generic sheets have circles up to the largest standard biped chassis.
+ const templateStructure={HD:3,CT:31,LT:21,RT:21,LA:17,RA:17,LL:21,RL:21};
+ const drawPoints=(loc,layer,amount,capacity)=>{
+  const count=Math.max(0,Math.trunc(capacity));
+  const used=Math.max(0,Math.min(count,Math.trunc(Number(amount)||0)));
+  return '<section data-diagram="'+loc+':'+layer+'"><b>'+loc+'</b> '+
+   '<small>'+used+' / '+count+' кругов</small><div class="design-points">'+
+   Array.from({length:count},(_,i)=>'<span data-point="'+loc+':'+layer+':'+(i+1)+
+   '" data-filled="'+(i<used)+'" title="'+(i<used?'Распределено':'Лишняя точка зачёркнута')+
+   '">'+(i<used?'○':'●')+'</span>').join('')+'</div></section>';
+ };
+ const torsoPartition=loc=>{
+  const max=2*templateStructure[loc],front=u.armor[loc],rear=u.rear[loc];
+  const rearSlots=Math.max(rear,Math.min(max-front,Math.ceil(max/4)));
+  return {front:max-rearSlots,rear:rearSlots};
+ };
+ const armorFront=LOCS.map(loc=>drawPoints(loc,'front',u.armor[loc],
+  ['CT','LT','RT'].includes(loc)?torsoPartition(loc).front:
+  loc==='HD'?9:2*templateStructure[loc])).join('');
+ const armorRear=['CT','LT','RT'].map(loc=>
+  drawPoints(loc,'rear',u.rear[loc],torsoPartition(loc).rear)).join('');
+ const structures=LOCS.map(loc=>drawPoints(loc,'structure',
+  u.structure[loc],templateStructure[loc])).join('');
  const weapons=u.weapons.map(w=>'<tr><td>'+esc(w.name)+'</td><td>'+
   esc((w.locations||[w.location]).join('/'))+'</td><td>'+
   (w.rear?'Назад':'Вперёд')+'</td><td>'+w.heat+
@@ -67,6 +107,16 @@ function renderDesignRecord(result,diagnostics){
   '</b></span><span>Нераспределённая масса: <b>'+remaining+' т</b></span></div>'+
   '<h4>Броня и структура</h4><table><thead><tr><th>Секция</th><th>Передняя</th>'+
   '<th>Задняя</th><th>Структура</th></tr></thead><tbody>'+armor+'</tbody></table>'+
+  '<h4>ARMOR DIAGRAM / Передняя броня</h4>'+
+  '<div class="design-point-grid">'+armorFront+'</div>'+
+  '<h4>REAR ARMOR / Кормовая броня</h4>'+
+  '<div class="design-point-grid">'+armorRear+'</div>'+
+  '<h4>INTERNAL STRUCTURE / Внутренняя структура</h4>'+
+  '<div class="design-point-grid">'+structures+'</div>'+
+  '<p class="hint">○ распределённая точка · ● лишняя точка зачёркнута. '+
+  'Круги — шаблон максимального стандартного меха; допустимая броня '+
+  'рассчитывается по массе и структуре выбранного корпуса. '+
+  'Передние и кормовые круги торса образуют ОДИН общий резерв.</p>'+
   '<h4>Оружие и боезапас</h4><table><thead><tr><th>Оружие</th><th>Секция</th><th>Арка</th>'+
   '<th>Тепло</th><th>Дальности</th><th>Выстрелов</th></tr></thead><tbody>'+
   weapons+'</tbody></table><h4>Бункеры боеприпасов</h4>'+
@@ -85,12 +135,9 @@ function renderDesignRecord(result,diagnostics){
 }
 function check(){
  const r=construct(c,{strictAgoac:true});
- const diagnostics=[...(r.diagnostics||[])];
- if(!String(c.name||'').trim()){
-  const message='Название меха обязательно перед сохранением.';
-  r.errors.push(message);
-  diagnostics.push({code:'name_required',field:'name',step:8,page:54,message});
- }
+ const inputIssues=[...designSubmissionDiagnostics(c),...(rejectedSaved||[])];
+ for(const issue of inputIssues)r.errors.push(issue.message);
+ const diagnostics=[...(r.diagnostics||[]),...inputIssues];
  document.querySelectorAll('[aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
  for(const d of diagnostics){
   const field=d.field||'equipment';
@@ -115,7 +162,7 @@ function check(){
  $('#slotmap').innerHTML=r.unit?Object.entries(r.unit.slots).map(([l,a])=>`<p><b>${l}</b>: ${a.map((slot,i)=>`${i+1} ${slot||'свободно'}`).join(' · ')}</p>`).join(''):'';
  renderWarehouse();return r;
 }
-$('#add').onclick=()=>{read();c.equipment.push({type:'Medium Laser',location:'LT',slot:1});draw();};$('#check').onclick=()=>{read();check();};$('#example').onclick=()=>{c=structuredClone(example);draw();};$('#launch').onclick=()=>{read();if(check().errors.length)return;localStorage.setItem('ironhex-design',JSON.stringify({config:c,position:+$('#position').value}));location.href='index.html?custom=1';};draw();
+$('#add').onclick=()=>{read({userEdit:true});c.equipment.push({type:'Medium Laser',location:'LT',slot:1});draw();};$('#check').onclick=()=>{read();check();};$('#example').onclick=()=>{c=structuredClone(example);rejectedSaved=null;localStorage.removeItem('ironhex-design');draw();};$('#launch').onclick=()=>{read();if(check().errors.length)return;localStorage.setItem('ironhex-design',JSON.stringify({config:c,position:+$('#position').value}));location.href='index.html?custom=1';};draw();
 
 
 

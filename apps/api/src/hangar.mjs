@@ -1,4 +1,4 @@
-import { construct } from '../../../packages/engine/construction.js';
+import { construct, designSubmissionDiagnostics } from '../../../packages/engine/construction.js';
 import {weaponCounts} from './market.mjs';
 import {ammoBinsFor,normalizedAmmoState,systemCounts} from '../../../packages/engine/equipment.js';
 import {normalizedCriticalDamage,damagedComponents} from
@@ -7,25 +7,10 @@ import {outOfBookEquipment,rulebookEquipmentDetail} from '../../../packages/engi
 import { AuthError } from './auth.mjs';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const allowed = new Set(['name','config','tonnage','walk','jump','sinks','armor','rear','equipment','removeActuators','removeHandActuators']);
-
 export function validateDesign(input) {
   const c = input?.config;
-  if (!c || typeof c !== 'object' || Array.isArray(c) ||
-      !Object.keys(c).every(key=>allowed.has(key)) ||
-      typeof c.name !== 'string' || c.name.trim().length < 1 || c.name.trim().length > 30 ||
-      (c.config !== undefined && !['Biped','Quad'].includes(c.config)) ||
-      !Array.isArray(c.equipment) || c.equipment.length > 80 ||
-      c.equipment.some(e=>!e||typeof e!=='object'||Array.isArray(e)) ||
-      !c.armor || typeof c.armor !== 'object' || Array.isArray(c.armor) ||
-      !c.rear || typeof c.rear !== 'object' || Array.isArray(c.rear) ||
-      (c.removeActuators && (!Array.isArray(c.removeActuators) ||
-         c.removeActuators.length > 2 || c.removeActuators.some(l=>!['LA','RA'].includes(l)))) ||
-      (c.removeHandActuators && (!Array.isArray(c.removeHandActuators) ||
-         c.removeHandActuators.length > 2 || c.removeHandActuators.some(l=>!['LA','RA'].includes(l))))) {
-    throw new AuthError(422,'invalid_design');
-  }
-  if (JSON.stringify(c).length > 6400) throw new AuthError(422,'invalid_design');
+  const inputIssues=designSubmissionDiagnostics(c);
+  if(inputIssues.length)throw new AuthError(422,'invalid_design',inputIssues);
   const supplemental=outOfBookEquipment(c);
   if(supplemental.length){
     const details=c.equipment.flatMap((item,index)=>

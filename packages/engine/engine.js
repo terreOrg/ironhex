@@ -1,5 +1,5 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
-import {construct} from './construction.js';
+import {construct,designSubmissionDiagnostics} from './construction.js';
 import {outOfBookEquipment} from './rulebook.js';
 import {AGOAC_BOARD_SOURCE,AGOAC_BOARD_NAMES,buildAgoacSheet} from './agoac-boards.js';
 import {AGOAC_SCENARIO3_FIGURE,
@@ -709,7 +709,7 @@ export class Game extends Legacy{
     moved:false,fired:false,physicalDone:false,spent:0,moveMode:'stand',
     moveEndedByLegLoss:false,proneAtStart:!!u.prone,moveStart:{q:u.q,r:u.r},
     distanceMoved:0,phaseDamage:0,psrs:[],consciousChecks:0,
-    firedLocations:[],charge:null,twist:0,flip:false});
+    firedLocations:[],charge:null,twist:0,flip:false,armArcMode:null});
    return u;
   });
   this.units.push(...newUnits);
@@ -1469,8 +1469,10 @@ export class Game extends Legacy{
    if(!custom||!custom.config||typeof custom.config!=='object')return fail('Нет проекта меха');
    if(outOfBookEquipment(custom.config).length)
     return fail('Оборудование нестандартного проекта не входит в базовую книгу AGoAC (с. 55)');
+   const inputIssues=designSubmissionDiagnostics(custom.config);
+   if(inputIssues.length)return fail('Проект меха: '+inputIssues[0].message);
    try{design=construct(custom.config,{strictAgoac:true});}catch{return fail('Некорректный проект меха');}
-   if(!design.unit||design.errors.length)return fail('Некорректный проект меха');
+   if(!design.unit||design.errors.length)return fail('Проект меха: '+(design.diagnostics?.[0]?.message||'Некорректный проект меха'));
    const p=custom.pilot;
    if(p!=null&&(!Number.isInteger(p.gunnery)||!Number.isInteger(p.piloting)||
      p.gunnery<0||p.gunnery>8||p.piloting<0||p.piloting>8))return fail('Некорректные навыки пилота');
@@ -2418,7 +2420,16 @@ export class Game extends Legacy{
    }
   }
  }
- twist(id,value){const u=this.unit(id);const limit=u?.config==='Quad'?(u.quirks?.extendedTorsoTwist===true?1:0):(u?.quirks?.extendedTorsoTwist===true?2:1);if(this.phase!=='fire'||!this.canAct(u)||!this.mobile(u)||u.prone||!Number.isInteger(value)||Math.abs(value)>limit||u.flip&&value!==0||(u.config==='Quad'&&limit===0))return fail('Разворот торса недоступен');u.twist=value;return {ok:true};}
+ twist(id,value){const u=this.unit(id);const limit=u?.config==='Quad'?(u.quirks?.extendedTorsoTwist===true?1:0):(u?.quirks?.extendedTorsoTwist===true?2:1);
+  // AGoAC printed p.15: twisting and reversing arms are mutually exclusive
+  // over the whole turn, even if the user toggles a control back to neutral.
+  if(this.phase!=='fire'||!this.canAct(u)||!this.mobile(u)||u.prone||
+     !Number.isInteger(value)||Math.abs(value)>limit||
+     (u.flip||u.armArcMode==='flip')&&value!==0||
+     (u.config==='Quad'&&limit===0))
+   return fail('Разворот торса недоступен: нельзя совместить поворот и переворот рук в одном ходу (AGoAC, с. 15).');
+  u.twist=value;if(value!==0)u.armArcMode='twist';
+  return {ok:true};}
  attack(id,target,indices,opts={}){return this.declareFire(id,indices.map(index=>({index,target,...opts})));}
  // AGoAC p.17: a designated primary must be a declared target and,
  // when any target is in the forward torso arc, one such target is primary.
@@ -3355,7 +3366,7 @@ export class Game extends Legacy{
      {heat:u.heat,shutdown:u.shutdown,roll:{total:roll.total,target:roll.target}});
     u.shutdownNext=selected===action;
    }
-  }for(const i of u.dumping){const b=u.bins[i];if(b)b.shots=0;}u.dumping=u.dumpNext;u.dumpNext=[];this.syncAmmo(u);if(u.shutdownNext){u.shutdownNext=false;if(u.unconscious||u.abandoned){this.note(u.name+': приказ реактору отменён — пилот недоступен.');}else if(!u.shutdown){u.shutdown=true;u.voluntaryShutdown=true;this.note(`${u.name}: добровольное отключение реактора.`);}else if(u.voluntaryShutdown){const tn=shut(u.heat);if(tn!==99&&(tn===0||this.roll(u.name+' · Добровольный перезапуск',tn)>=tn)){u.shutdown=false;u.voluntaryShutdown=false;this.note(`${u.name}: реактор перезапущен.`);}else this.note(`${u.name}: перезапуск не удался.`);}}u.wasUnconscious=u.unconscious;u.proneAtStart=u.prone;u.moveStart={q:u.q,r:u.r};u.moved=false;u.fired=false;u.physicalDone=false;u.spent=0;u.moveMode='stand';u.distanceMoved=0;u.tmmTravel=null;u.tmmReversalOffset=0;u.skidded=false;u.skidDirection=null;u.lastMovementDirection=null;u.skidCollisionPending=null;u.twist=0;u.flip=false;u.firedLocations=[];u.standAttempts=0;u.restrictedStandThisTurn=false;u.moveEndedByLegLoss=false;u.charge=null;}this.removeDestroyedMechs();this.round++;}
+  }for(const i of u.dumping){const b=u.bins[i];if(b)b.shots=0;}u.dumping=u.dumpNext;u.dumpNext=[];this.syncAmmo(u);if(u.shutdownNext){u.shutdownNext=false;if(u.unconscious||u.abandoned){this.note(u.name+': приказ реактору отменён — пилот недоступен.');}else if(!u.shutdown){u.shutdown=true;u.voluntaryShutdown=true;this.note(`${u.name}: добровольное отключение реактора.`);}else if(u.voluntaryShutdown){const tn=shut(u.heat);if(tn!==99&&(tn===0||this.roll(u.name+' · Добровольный перезапуск',tn)>=tn)){u.shutdown=false;u.voluntaryShutdown=false;this.note(`${u.name}: реактор перезапущен.`);}else this.note(`${u.name}: перезапуск не удался.`);}}u.wasUnconscious=u.unconscious;u.proneAtStart=u.prone;u.moveStart={q:u.q,r:u.r};u.moved=false;u.fired=false;u.physicalDone=false;u.spent=0;u.moveMode='stand';u.distanceMoved=0;u.tmmTravel=null;u.tmmReversalOffset=0;u.skidded=false;u.skidDirection=null;u.lastMovementDirection=null;u.skidCollisionPending=null;u.twist=0;u.flip=false;u.armArcMode=null;u.firedLocations=[];u.standAttempts=0;u.restrictedStandThisTurn=false;u.moveEndedByLegLoss=false;u.charge=null;}this.removeDestroyedMechs();this.round++;}
  // Resolve an interactive phase on a detached rules-state copy. A choice
  // commits no partial damage/movement; recorded RNG samples are replayed
  // exactly once, even after restoring an authoritative saved battle.
@@ -3497,7 +3508,21 @@ export class Game extends Legacy{
   this.hold(id);
   return {ok:true,ended:true,from,to:{q:u.q,r:u.r},path:[to],mode:'run',rolls:[...this.phaseRolls]};
  }
- flipArms(id,on){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u)||!this.mobile(u)||u.prone)return fail('Переворот рук недоступен');if(on&&(u.config==='Quad'||['LA','RA'].some(l=>u.slots[l][2]==='lower'||u.slots[l][3]==='hand')||u.weapons.some(w=>w.locations?.some(l=>['LA','RA'].includes(l))&&w.locations?.some(l=>['CT','LT','RT'].includes(l)))))return fail('Нужны руки без нижних и кистевых актуаторов');u.flip=on;u.twist=0;return {ok:true};}
+ flipArms(id,on){const u=this.unit(id);
+  if(this.phase!=='fire'||!this.canAct(u)||!this.mobile(u)||u.prone||
+     typeof on!=='boolean')
+   return fail('Переворот рук недоступен');
+  if(on&&(u.armArcMode==='twist'||u.twist!==0))
+   return fail('Переворот рук запрещён после поворота торса в том же ходу (AGoAC, с. 15).');
+  if(on&&(u.config==='Quad'||
+    ['LA','RA'].some(l=>u.slots[l][2]==='lower'||u.slots[l][3]==='hand')||
+    u.weapons.some(w=>w.locations?.some(l=>['LA','RA'].includes(l))&&
+                       w.locations?.some(l=>['CT','LT','RT'].includes(l)))))
+   return fail('Нужны руки без нижних и кистевых актуаторов и без оружия, разделённого с торсом (AGoAC, с. 15).');
+  u.flip=on;
+  if(on){u.armArcMode='flip';u.twist=0;}
+  return {ok:true};
+ }
  setBrace(id,limb){const u=this.unit(id);if(this.phase!=='fire'||!this.canAct(u)||!this.mobile(u)||!['LA','RA'].includes(limb))return fail('Нельзя выбрать опорную руку');u.brace=limb;return {ok:true};}
  orderDump(id,index){const u=this.unit(id);if(!this.canAct(u)||!this.mobile(u)||this.phase!=='move'||u.moveMode==='run'||u.moveMode==='jump')return fail('Сброс боезапаса: только ходьба или неподвижность');if(!u.bins[index]?.shots)return fail('Бункер пуст');if(!u.dumpNext.includes(index))u.dumpNext.push(index);this.note(`${u.name}: сброс бункера ${index+1} начнётся в конце хода; завершится через ход.`);return {ok:true};}
  // AGoAC pp.7,38: the decision is available during End Phase.

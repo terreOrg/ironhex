@@ -2934,7 +2934,14 @@ test('AGoAC p.15: split arm-torso weapon prevents arm reversal and reversed arms
  w.locations=['LA'];
  assert(g.flipArms(u.id,true).ok);assert.equal(u.flip,true);
  assert(!g.twist(u.id,1).ok);assert.equal(u.twist,0);assert.equal(u.flip,true);
- assert(g.flipArms(u.id,false).ok);assert(g.twist(u.id,1).ok);
+ assert(g.flipArms(u.id,false).ok);
+ assert(!g.twist(u.id,1).ok,'switching arms back to forward may not evade the same-turn rule');
+ g.endPhase();
+ assert.equal(u.armArcMode,null);
+ g.phase='fire';g.activeTeam=u.team;g.queue=[u.team];g.actingId=null;
+ assert(g.twist(u.id,1).ok,'torso twist becomes available after End Phase');
+ assert(!g.flipArms(u.id,true).ok,'twist must block later arm reversal in the same turn');
+ assert.equal(u.twist,1);assert.equal(u.flip,false);
 });
 
 

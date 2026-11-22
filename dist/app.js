@@ -1,5 +1,5 @@
 import {firingArcTiles} from './fire-arcs.js';
-import {construct} from './construction.js';
+import {construct,designSubmissionDiagnostics} from './construction.js';
 import {outOfBookEquipment} from './rulebook.js';
 import {recordSheet} from './record-sheet.js';
 import {animateRoll,clearDice} from './dice.js';
@@ -452,6 +452,7 @@ function owned(u){
 }
 function readCustomDesign(){
  try{const d=JSON.parse(localStorage.getItem('ironhex-design'));if(!d?.config)return null;
+  if(designSubmissionDiagnostics(d.config).length)return null;
   const result=construct(d.config,{strictAgoac:true});return result.errors.length||outOfBookEquipment(d.config).length?null:{...d,name:result.unit.name};
  }catch{return null;}
 }

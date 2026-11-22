@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
-import {construct} from '../packages/engine/construction.js';
+import {construct,designSubmissionDiagnostics} from '../packages/engine/construction.js';
+import {Game} from '../dist/engine.js';
 import {MECH_OFFERS,rejectedMtf,sourceManifest,totalMtfRecords,searchMechCatalog,getMechDetails,mechWeightClass} from '../apps/api/src/market.mjs';
 import {importMtf} from '../apps/api/src/mtf.mjs';
 import {validateDesign} from '../apps/api/src/hangar.mjs';
@@ -306,4 +307,117 @@ test('CAT3500D p.55: MechLab constructor and Hangar API return identical unknown
  assert(direct.errors.some(e=>e.includes('Неизвестное оборудование')));
  assert.deepEqual(direct.diagnostics.filter(d=>d.code==='not_in_box_rulebook')
   .map(d=>d.field),['equipment.0.type']);
+});
+
+
+test('CAT3500D pp.49,54: submission metadata, Hangar and MechLab share typed rejection reasons',()=>{
+ const baseDesign={name:'Metadata validation',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},equipment:[]};
+ const cases=[
+  ['empty name',c=>{c.name='';},'name','name_required'],
+  ['long name',c=>{c.name='x'.repeat(31);},'name','name_too_long'],
+  ['unknown key',c=>{c.specialEngine=true;},'config','unknown_design_field'],
+  ['too many rows',c=>{c.equipment=Array.from({length:81},()=>({type:'sink',location:'RT',slot:1}));},
+   'equipment','equipment_rows'],
+  ['missing rear map',c=>{delete c.rear;},'rear','armor_shape'],
+  ['illegal actuator selector',c=>{c.removeActuators=['CT'];},'removeActuators','actuators']
+ ];
+ for(const [name,mutate,field,code] of cases){
+  const c=structuredClone(baseDesign);mutate(c);
+  const expected=designSubmissionDiagnostics(c);
+  assert(expected.some(d=>d.field===field&&d.code===code),name);
+  assert.throws(()=>validateDesign({config:c}),error=>
+   error.status===422&&error.code==='invalid_design'&&
+   JSON.stringify(error.details)===JSON.stringify(expected),
+   name+' must have exactly the same structured reasons as the client');
+ }
+ const file=readFileSync(new URL('../apps/web/src/mechlab.js',import.meta.url),'utf8');
+ assert(file.includes('designSubmissionDiagnostics(c)'),
+  'editor must add the canonical submission diagnostics');
+ const launch=readFileSync(new URL('../apps/web/src/app.js',import.meta.url),'utf8');
+ assert(launch.includes('designSubmissionDiagnostics(d.config).length'),
+  'battle launch must also block invalid metadata');
+});
+
+test('CAT3500D p.54: missing ammo points at affected gun, not a generic equipment row',()=>{
+ const c={name:'Two autocannons',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[{type:'AC/2',location:'RA',slot:5},
+             {type:'AC/2',location:'LA',slot:5},
+             {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}]};
+ const r=construct(c,{strictAgoac:true});
+ assert(r.diagnostics.some(d=>d.code==='ammunition'&&d.field==='equipment.0.type'&&
+  d.message.includes('не менее 2 т')));
+ assert.throws(()=>validateDesign({config:c}),error=>
+  error.status===422&&error.details.some(d=>d.field==='equipment.0.type'&&
+  d.code==='ammunition'&&d.page===54));
+});
+
+
+test('CAT3500D p.54: pinned COM-3A single shared SRM magazine survives source import and actual fire',()=>{
+ const raw=readFileSync(new URL('../data/megamek/scenarios/COM-3A.mtf',import.meta.url),'utf8');
+ const printed=importMtf(raw,{sourcePath:'data/megamek/scenarios/COM-3A.mtf'});
+ const loaded=construct(printed.config);
+ assert.deepEqual(loaded.errors,[]);
+ const weapons=loaded.unit.weapons.map((w,i)=>w.name==='SRM 6'?i:-1)
+  .filter(index=>index>=0);
+ assert.equal(weapons.length,2,'actual source record contains two SRM-6 launchers');
+ assert.equal(loaded.unit.bins.length,1,'actual source record has one SRM-6 ammo slot');
+ assert.equal(loaded.unit.bins[0].shots,15);
+ assert(weapons.every(i=>loaded.unit.weapons[i].ammo===15));
+ const userDesign=construct(printed.config,{strictAgoac:true});
+ assert(userDesign.errors.some(e=>e.includes('SRM 6: требуется не менее 2 т')),
+  'new MechLab designs must follow p.54 even when legacy printed MTF import is allowed');
+ const game=new Game({rng:()=>.99});
+ for(const hex of game.tiles)Object.assign(hex,{type:'plain',height:0,depth:0,surface:0});
+ const attacker=game.units[0],target=game.units[2];
+ Object.assign(attacker,loaded.unit,{q:0,r:0,facing:0,twist:0,flip:false});
+ Object.assign(target,{q:2,r:0});
+ game.phase='fire';game.activeTeam=attacker.team;game.queue=[attacker.team];game.actingId=null;
+ const result=game.declareFire(0,weapons.map(index=>({index,target:2})));
+ assert.equal(result.ok,true,result.error);
+ const shots=game.resolveFire();
+ assert.equal(shots.length,2);
+ assert.equal(attacker.bins[0].shots,13);
+ assert(weapons.every(i=>attacker.weapons[i].ammo===13),
+  'both source launchers read one actually depleted 15-round magazine');
+});
+
+test('CAT3500D p.52: strict engine, Hangar and custom battle block malformed armor fields',()=>{
+ const source=structuredClone(MECH_OFFERS.find(o=>o.id==='mm-grf-1m').config);
+ const cases=[
+  ['armor','CT',[],'armor_points'],
+  ['armor','CT','','armor_points'],
+  ['armor','CT',false,'armor_points'],
+  ['armor','CT','20','armor_points'],
+  ['armor','CT',2.5,'armor_points'],
+  ['rear','LT',{},'armor_points'],
+  ['rear','CT',false,'armor_points'],
+  ['armor','UNKNOWN',2,'armor_location'],
+  ['rear','HD',1,'armor_location']
+ ];
+ for(const [section,loc,value,code] of cases){
+  const config=structuredClone(source);
+  config[section][loc]=value;
+  const field=section+'.'+loc;
+  const diagnostics=designSubmissionDiagnostics(config);
+  assert(diagnostics.some(d=>d.field===field&&d.code===code&&d.step===5&&d.page===52),
+   field+' '+JSON.stringify(value));
+  const direct=construct(config,{strictAgoac:true});
+  assert(direct.errors.length>0,'strict engine must reject '+field);
+  assert(direct.diagnostics.some(d=>d.field===field&&d.code===code&&d.page===52));
+  assert.throws(()=>validateDesign({config}),e=>e.status===422&&
+   e.code==='invalid_design'&&e.details.some(d=>d.field===field&&d.code===code));
+  const g=new Game();
+  const refused=g.configureSetupForces({slots:['custom',null,2,3],
+   custom:{config},approvals:[true,true]});
+  assert.equal(refused.ok,false,'custom battle must reject '+field);
+  assert.match(refused.error||refused.reason||'',/брон|секци|числом/i);
+ }
+ const trusted=structuredClone(source);
+ trusted.armor.CT=[];
+ assert.equal(construct(trusted).errors.length,0,
+  'intentional non-strict source MTF import remains unchanged');
 });
