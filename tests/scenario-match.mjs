@@ -7,6 +7,15 @@ import {newScenarioRoomGame,captureScenarioRoomGame,restoreScenarioRoomGame,
 
 const blocked=(fn,code)=>assert.throws(fn,
  err=>err instanceof AuthError&&err.code===code);
+const figurePiece=(game,index)=>{
+ const spec=game.scenario.picturedTerrain.counters[index];
+ const tiles=spec.printedHexes.map(hex=>game.tiles.find(t=>
+  t.sheet===spec.sheet&&t.printedHex===hex));
+ assert(tiles.every(Boolean),'all source cells must exist');
+ const [origin]=tiles;
+ return {q:origin.q,r:origin.r,
+  footprint:tiles.map(t=>({q:t.q-origin.q,r:t.r-origin.r}))};
+};
 function begin(shortened=false){
  const runtime=newScenarioRoomGame({shortened});
  const win=runtime.game.scenario.sideRollWinner;
@@ -38,6 +47,42 @@ function begin(shortened=false){
  assert.equal(runtime.game.scenario.looseTerrain.piecesPerTeam,2);
  return runtime;
 }
+test('AGoAC Ch11 p.47 source illustration: four exact printed contours and locked triangles',()=>{
+ const {game,rng}=begin();
+ const figure=game.scenario.picturedTerrain.counters;
+ assert.deepEqual(figure.map(f=>f.printedHexes),[
+  ['0711','0712'],['1213','1114','1214'],
+  ['0908','1009'],['0310','0311','0411']
+ ],'original publisher p.47 shapes; west sheet is Desert #2 under errata v8.01');
+ assert.deepEqual(game.setupMap.sheets.map(s=>s.name),
+  ['Desert #2','Grassland #3']);
+ for(let i=0;i<4;i++){
+  const source=figurePiece(game,i);
+  assert.equal(source.footprint.length,i%2===0?2:3);
+  const team=game.scenario.looseTerrain.nextTeam;
+  const role=team===game.scenario.attackerTeam?'attacker':i<2?'command':'recon';
+  const type=['depth1','sublevel1','depth2','sublevel2'][i];
+  const bad={type:'place-terrain',q:source.q+1,r:source.r,
+   terrainType:type,footprint:source.footprint};
+  blocked(()=>applyScenarioRoomSetup(game,role,bad),'illegal_scenario_terrain');
+  if(i%2===1)blocked(()=>applyScenarioRoomSetup(game,role,{
+   type:'place-terrain',q:source.q,r:source.r,terrainType:type,
+   footprint:[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]
+  }),'illegal_scenario_terrain');
+  assert.equal(game.scenario.looseTerrain.pieces.length,i);
+  const result=applyScenarioRoomSetup(game,role,{...bad,
+   q:source.q,r:source.r});
+  assert(result.ok);
+  const piece=game.scenario.looseTerrain.pieces[i];
+  assert.deepEqual(new Set(piece.hexes.map(x=>x.q+','+x.r)),
+   new Set(source.footprint.map(x=>
+    (source.q+x.q)+','+(source.r+x.r))));
+ }
+ assert(game.scenario.looseTerrain.complete);
+ const saved=captureScenarioRoomGame(game,rng);
+ const restored=restoreScenarioRoomGame(saved);
+ assert.equal(restored.game.scenario.looseTerrain.pieces.length,4);
+});
 test('AGoAC Ch11: three-user server start rolls source sides and loads exact pinned scenario 3',()=>{
  for(const shortened of [false,true]){
   const runtime=begin(shortened);
@@ -80,18 +125,10 @@ test('AGoAC Ch11: logged-in attacker and designated defenders place four source 
  const {game,rng}=begin();
  blocked(()=>applyScenarioRoomSetup(game,'attacker',{type:'place-mech',
   id:0,q:0,r:0,facing:0}),'scenario_deployment_not_ready');
- const positions=[
-  [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-  [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
-  [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-  [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
- ];
- for(let i=0;i<positions.length;i++){
-  const [col,row,terrainType,footprint]=positions[i];
-  const tile=game.tiles.find(t=>
-   t.q+Math.floor(t.r/2)+Math.floor(game.setupMap.width/2)===col&&
-   t.r+Math.floor(game.setupMap.height/2)===row);
-  assert(tile);
+ const types=['depth1','sublevel1','depth2','sublevel2'];
+ for(let i=0;i<types.length;i++){
+  const tile=figurePiece(game,i);
+  const terrainType=types[i],footprint=tile.footprint;
   const team=game.scenario.looseTerrain.nextTeam;
   const role=team===game.scenario.attackerTeam?'attacker':i<2?'command':'recon';
   const order={type:'place-terrain',q:tile.q,r:tile.r,terrainType,footprint};
@@ -299,17 +336,10 @@ test('AGoAC Ch11: all three signed roles persist full original and shortened tur
    const result=applyScenarioRoomOrder(runtime.game,role,action);
    assert(result.ok);snapshot();return result;
   };
-  const tile=(col,row)=>runtime.game.tiles.find(t=>
-   t.q+Math.floor(t.r/2)+Math.floor(runtime.game.setupMap.width/2)===col&&
-   t.r+Math.floor(runtime.game.setupMap.height/2)===row);
-  const pieces=[
-   [5,5,'depth1',[{q:0,r:0},{q:1,r:0}]],
-   [10,11,'sublevel1',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]],
-   [21,5,'depth2',[{q:0,r:0},{q:1,r:0}]],
-   [26,11,'sublevel2',[{q:0,r:0},{q:1,r:0},{q:1,r:-1}]]
-  ];
-  for(const [index,[col,row,terrainType,footprint]]of pieces.entries()){
-   const hex=tile(col,row);assert(hex);
+  const types=['depth1','sublevel1','depth2','sublevel2'];
+  for(let index=0;index<types.length;index++){
+   const hex=figurePiece(runtime.game,index);
+   const terrainType=types[index],footprint=hex.footprint;
    const team=runtime.game.scenario.looseTerrain.nextTeam;
    const role=team===runtime.game.scenario.attackerTeam?
     'attacker':index<2?'command':'recon';
@@ -322,6 +352,9 @@ test('AGoAC Ch11: all three signed roles persist full original and shortened tur
   const count=shortened?7:10;
   const defenders=shortened?4:6;
   let command=0,recon=0,attacker=0;
+  const tile=(col,row)=>runtime.game.tiles.find(t=>
+   t.q+Math.floor(t.r/2)+Math.floor(runtime.game.setupMap.width/2)===col&&
+   t.r+Math.floor(runtime.game.setupMap.height/2)===row);
   while(!runtime.game.scenario.placement.complete){
    const g=runtime.game,step=g.scenario.placement.steps[
     g.scenario.placement.placed.length];

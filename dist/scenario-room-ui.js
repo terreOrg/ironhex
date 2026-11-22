@@ -102,6 +102,30 @@ const axialDistance=(a,b)=>Math.max(Math.abs(a.q-b.q),
 // Preview filters are only a convenience: PostgreSQL / Game remains
 // authoritative and must revalidate the full footprint and turn owner.
 function legalTerrainOrigins(game,sheet,footprint){
+ // Canonical figure placement is not the optional free-terrain placement.
+ // The publisher illustration owns fixed 2-/3-hex origins and triangles;
+ // do not reject its edge-adjacent outlines using the optional margin.
+ const figure=game.scenario?.picturedTerrain?.counters;
+ const index=game.scenario?.looseTerrain?.pieces?.length||0;
+ if(figure?.[index]){
+  const spec=figure[index];
+  const source=spec.printedHexes.map(hex=>game.tiles.find(t=>
+   t.sheet===spec.sheet&&t.printedHex===hex));
+  if(source.some(x=>!x)||sheet!==spec.sheet)return [];
+  const origin=source[0];
+  const cells=footprint.map(p=>({q:origin.q+p.q,r:origin.r+p.r}));
+  if(footprint.length!==source.length||!footprint.some(p=>p.q===0&&p.r===0))return [];
+  if(spec.shape==='triangle'&&!source.every(t=>
+   cells.some(h=>h.q===t.q&&h.r===t.r)))return [];
+  const existing=game.scenario?.looseTerrain?.pieces||[];
+  if(cells.some(h=>{
+   const t=game.tiles.find(x=>x.q===h.q&&x.r===h.r);
+   return !t||t.sheet!==sheet||t.depth>0||t.bridge||
+    t.overlayTerrain!=null||existing.some(p=>(p.hexes||[]).some(x=>
+     axialDistance(h,x)<4));
+  }))return [];
+  return [origin];
+ }
  if(!Array.isArray(footprint)||![2,3].includes(footprint.length)||
   !footprint.some(x=>x.q===0&&x.r===0)||
   !footprint.every(x=>Number.isInteger(x.q)&&Number.isInteger(x.r))||
@@ -135,6 +159,12 @@ function printedTerrainDiagram(game,{choices=[],chosen=null,onPick=null}={}){
  svg.style.width='100%';svg.style.height='auto';svg.style.maxWidth='750px';
  const picks=new Set(choices.map(v=>v.q+','+v.r));
  const applied=new Map();
+ const pictured=new Map();
+ (game.scenario?.picturedTerrain?.counters||[]).forEach((piece,i)=>
+  (piece.printedHexes||[]).forEach(hex=>{
+   const tile=game.tiles.find(t=>t.sheet===piece.sheet&&t.printedHex===hex);
+   if(tile)pictured.set(tile.q+','+tile.r,i+1);
+  }));
  (game.scenario?.looseTerrain?.pieces||[]).forEach((piece,i)=>
   (piece.hexes||[]).forEach(hex=>applied.set(hex.q+','+hex.r,{
    index:i,kind:piece.terrainType})));
@@ -149,21 +179,22 @@ function printedTerrainDiagram(game,{choices=[],chosen=null,onPick=null}={}){
   const row=tile.r+Math.floor(game.setupMap.height/2);
   if(col<0||col>=32||row<0||row>=17)continue;
   const cx=18+17.32*(col+((tile.r%2+2)%2)/2),cy=18+15*row;
-  const key=tile.q+','+tile.r,piece=applied.get(key);
+  const key=tile.q+','+tile.r,piece=applied.get(key),planned=pictured.get(key);
   const eligible=picks.has(key);
   const chosenTile=key===chosen;
   const fill=piece?
    (String(piece.kind).startsWith('depth')?'#277a95':'#a85b4b'):
    chosenTile?'#ffe18b':eligible?'#9fa674':
-   tile.depth>0?'#477d89':tile.height>0?'#788b65':'#485e4d';
+   planned?'#907e57':tile.depth>0?'#477d89':
+   tile.height>0?'#788b65':'#485e4d';
   const points=Array.from({length:6},(_,i)=>{
    const angle=(i*60-90)*Math.PI/180;
    return (cx+9.7*Math.cos(angle)).toFixed(2)+','+
     (cy+9.7*Math.sin(angle)).toFixed(2);
   }).join(' ');
   const poly=make('polygon',{points,fill,stroke:
-   chosenTile?'#fff6c9':piece?'#ecd7b3':'#202e2a',
-   'stroke-width':chosenTile?'2.2':'.75',
+   chosenTile?'#fff6c9':piece?'#ecd7b3':planned?'#d9aa63':'#202e2a',
+   'stroke-width':chosenTile?'2.2':planned?'1.8':'.75',
    'data-hex':key,'data-sheet':tile.sheet});
   const title=make('title',{},(tile.printedSheet||'')+' '+
    (tile.printedHex||'')+' · '+key+
@@ -189,8 +220,9 @@ function printedTerrainDiagram(game,{choices=[],chosen=null,onPick=null}={}){
   'stroke-dasharray':'5 4'}));
  wrap.append(svg);
  const legend=E('p','',
-  'Синий — вода (Depth); красный — сухое понижение (Sublevel); '+
-  'оливковый — допустимое начало элемента; жёлтый — выбранный гекс.');
+  'Золотой контур — место из книжной схемы; синий — вода Depth; '+
+  'красный — сухой Sublevel; оливковый — допустимое начало; '+
+  'жёлтый — выбранный гекс.');
  wrap.append(legend);
  const pieces=game.scenario?.looseTerrain?.pieces||[];
  if(pieces.length)wrap.append(E('p','',
@@ -227,6 +259,9 @@ function renderSetup(body,room,game){
   if(room.yourRole!==required){
    frame.append(E('p','','Ожидается размещение игроком '+required+'.'));return;
   }
+  const figure=s.picturedTerrain?.counters?.[index];
+  const printed=figure?.printedHexes?.map(hex=>game.tiles.find(t=>
+   t.sheet===sheet&&t.printedHex===hex))||[];
   const form=E('form','op-form'),t=select([]);
   t.name='hex';
   const type=select(pair?[
@@ -235,9 +270,20 @@ function renderSetup(body,room,game){
   type.name='terrainType';
   form.append(label('Гекс по исходному листу',t),label('Лицевая сторона элемента',type));
   const orientation=select(DIRS.map(([q,r],i)=>[i,(i*60)+'° ('+q+','+r+')']));
-  if(pair){orientation.name='orientation';form.append(label('Разворот двойного элемента',orientation));}
-  const shape=input('offsets','q,r; q,r; q,r','0,0;1,0;1,-1');
-  if(!pair)form.append(label('Три смещения треугольника по печатной схеме',shape));
+  if(pair){
+   orientation.name='orientation';
+   if(printed.length===2){
+    const dx=printed[1].q-printed[0].q,dy=printed[1].r-printed[0].r;
+    const defaultDirection=DIRS.findIndex(([q,r])=>q===dx&&r===dy);
+    if(defaultDirection>=0)orientation.value=String(defaultDirection);
+   }
+   form.append(label('Разворот двойного элемента',orientation));
+  }
+  const shapeOffsets=printed.length===3?printed.map(t=>
+   (t.q-printed[0].q)+','+(t.r-printed[0].r)).join(';'):'';
+  const shape=input('offsets','Треугольник по книге',shapeOffsets);
+  shape.readOnly=true;
+  if(!pair)form.append(label('Фиксированный треугольник по схеме',shape));
   const submit=E('button','op-primary','ПОСТАВИТЬ ЭЛЕМЕНТ');submit.type='submit';
   form.append(submit);frame.append(form);
   const preview=E('div');frame.append(preview);
@@ -284,9 +330,10 @@ function renderSetup(body,room,game){
  if(terrain?.complete&&!s.picturedTerrain?.confirmed){
   const signed=s.picturedTerrain?.approvals||{};
   frame.append(E('p','',
-   'Четыре обязательных элемента поставлены. Сверьте КАЖДЫЙ их гекс '+
-   'и поворот треугольников с диаграммой печатной книги, стр. 47. '+
-   'Эта подпись означает ручную проверку, а не автоматическую сертификацию координат.'));
+   'Четыре обязательных элемента размещены по координатам печатной '+
+   'схемы стр. 47. Поворот треугольников зафиксирован; '+
+   'двойные элементы и их стороны выбираются по правилам. '+
+   'Подтвердите сверку рисунка с цифровым полем.'));
   frame.append(printedTerrainDiagram(game));
   const figureLink=E('a','hub-fullscreen-link','ОТКРЫТЬ ОРИГИНАЛЬНУЮ СХЕМУ · СТР. 47');
   figureLink.href='https://battletech.com/wp-content/uploads/2025/07/BattleTech-A-Game-of-Armored-Combat-Rulebook-1st-SLDF-Print.pdf';

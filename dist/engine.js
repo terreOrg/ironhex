@@ -1,6 +1,10 @@
 import {Game as Legacy,LOCATIONS,DIRS,distance} from './legacy-engine.js';
 import {construct} from './construction.js';
 import {AGOAC_BOARD_SOURCE,AGOAC_BOARD_NAMES,buildAgoacSheet} from './agoac-boards.js';
+import {AGOAC_SCENARIO3_FIGURE,
+ matchesAgoacScenario3Figure} from './agoac-scenario3-figure.js';
+export {AGOAC_SCENARIO3_FIGURE,agoacScenario3FigureTiles,
+ matchesAgoacScenario3Figure} from './agoac-scenario3-figure.js';
 export {LOCATIONS,DIRS,distance};
 // AGoAC pp.3–4: logical game scale; visual model dimensions remain illustrative.
 // Digital battlefield presets, not reproductions of the printed mapsheets.
@@ -1032,6 +1036,9 @@ export class Game extends Legacy{
    }
   }
   const hexes=footprint.map(h=>({q:q+h.q,r:r+h.r}));
+  if(pictured?.required&&!matchesAgoacScenario3Figure(this,
+    setup.pieces.length,{q,r,hexes}))
+   return fail('Элемент не занимает гексы, указанные на печатной схеме сценария 3');
   const keys=new Set(hexes.map(h=>h.q+','+h.r));
   if(keys.size!==hexes.length)return fail('Элемент имеет повторяющиеся гексы');
   const reached=new Set([0]);
@@ -1047,7 +1054,8 @@ export class Game extends Legacy{
   }
   if(reached.size!==hexes.length)return fail('Элемент должен занимать связные гексы');
   const origin=this.tile(q,r);
-  if(!origin||hexes.some(h=>!this.looseTerrainZoneAllowed(h.q,h.r)||
+  if(!origin||hexes.some(h=>(!pictured?.required&&
+    !this.looseTerrainZoneAllowed(h.q,h.r))||
    this.tile(h.q,h.r)?.sheet!==origin.sheet))
    return fail('Все гексы элемента должны находиться внутри одного листа вдали от его краёв');
   if(setup.pieces.some(p=>(p.hexes??[{q:p.q,r:p.r}]).some(occupied=>
@@ -1374,9 +1382,12 @@ export class Game extends Legacy{
   this.scenario.sourceTerrainLoaded=true;
   // CAT3500D p.47 requires FOUR pictured punch-out counters in
   // Divide and Conquer. The mapsheet MTF terrain alone is insufficient.
-  // User must transcribe the physical diagram; never invent locations.
+  // The publisher's four mandatory shapes have source-anchored hex labels.
   if(this.scenario.id==='divide-and-conquer')
-   this.scenario.picturedTerrain={required:true,confirmed:false,sourcePage:47};
+   this.scenario.picturedTerrain={required:true,confirmed:false,sourcePage:47,
+    sourceEdition:'CAT3500D p.47 + official AGoAC errata v8.01',
+    counters:AGOAC_SCENARIO3_FIGURE.map(p=>({
+     sheet:p.sheet,shape:p.shape,printedHexes:[...p.printedHexes]}))};
   return {ok:true,tiles:this.tiles.length,sheets:structuredClone(named),
    sourceRevision:AGOAC_BOARD_SOURCE.revision,artworkImported:false};
  }

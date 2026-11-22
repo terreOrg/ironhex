@@ -1140,10 +1140,13 @@ function showPrintedPlacementStep(){
  if(terrain&&!terrain.complete){
   const next=terrain.nextTeam,pictured=scenario.picturedTerrain?.required;
   const pieceIndex=terrain.pieces.length;
+  const figure=scenario.picturedTerrain?.counters?.[pieceIndex];
+  const sourceCells=figure?.printedHexes.map(hex=>game.tiles.find(t=>
+   t.sheet===figure.sheet&&t.printedHex===hex))||[];
   replaceScenarioModal('<h2>'+(pictured?'Обязательная местность сценария 3':'Дополнительная местность')+
    ' · шаг '+(terrain.pieces.length+1)+
    ' из '+(terrain.piecesPerTeam*2)+'</h2><p>Ход '+(next===0?'зелёных':'красных')+
-   '. Дистанция между отдельными элементами — три пустых гекса, от края каждого листа — более двух.</p>'+   (pictured?'<p>Сверьте контур и координаты с напечатанной схемой, стр. 47. '+   '<a href="https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d%2Bbattletech%2Ba%2Bgame%2Bof%2Barmored%2Bcombat%2Brulebook.pdf#page=49" target="_blank" rel="noopener noreferrer">Схема в книге</a>. '+   'По одному двойному и треугольному контуру на каждом листе.</p>':'')+
+   '. Между элементами — три пустых гекса. Правило отступа от края относится к свободной дополнительной местности.</p>'+   (pictured?'<p>Гексы и треугольники закреплены по напечатанной схеме, стр. 47. '+   '<a href="https://static1.squarespace.com/static/5e5f11b6a6b48b3ae5c4ee36/t/5e69a64e3d430e6e35ad7fda/1583982189894/cat3500d%2Bbattletech%2Ba%2Bgame%2Bof%2Barmored%2Bcombat%2Brulebook.pdf#page=49" target="_blank" rel="noopener noreferrer">Схема в книге</a>. '+   'По одному двойному и треугольному контуру на каждом листе.</p>':'')+
    '<label>Тип элемента<select id="scenario-terrain-type">'+
    '<option value="woods">Лёгкий лес</option><option value="heavy">Густой лес</option>'+
    '<option value="rough">Пересечённая местность</option><option value="rubble">Обломки</option>'+   '<option value="level1">Высота +1</option><option value="level2">Высота +2</option>'+   '<option value="sublevel1">Субуровень −1</option><option value="sublevel2">Субуровень −2</option>'+   '<option value="depth1">Вода, глубина 1</option><option value="depth2">Вода, глубина 2</option></select></label>'+
@@ -1160,8 +1163,9 @@ function showPrintedPlacementStep(){
    (pictured&&!scenario.picturedTerrain.disputes?.[pieceIndex]?
     '<button id="scenario-terrain-dispute">СПОР О СТОРОНЕ / РАЗВОРОТЕ · 2D6</button>':'')+
    '<button class="primary" id="scenario-terrain-place">РАЗМЕСТИТЬ ЭЛЕМЕНТ</button>');
-  scenarioHexOptions($('#scenario-terrain-hex'),game.tiles.filter(t=>
-   game.looseTerrainZoneAllowed(t.q,t.r)&&(!pictured||t.sheet===Math.floor(pieceIndex/2))));
+  scenarioHexOptions($('#scenario-terrain-hex'),pictured?
+   sourceCells.slice(0,1):game.tiles.filter(t=>
+    game.looseTerrainZoneAllowed(t.q,t.r)));
   if(pictured){
    const allowed=new Set(pieceIndex%2===0?
     ['depth1','depth2']:['sublevel1','sublevel2']);
@@ -1180,6 +1184,18 @@ function showPrintedPlacementStep(){
    $('#scenario-terrain-shape').value=pieceIndex%2===0?'2':'custom';
    $('#scenario-terrain-shape').disabled=true;
    $('#scenario-terrain-custom-wrap').hidden=pieceIndex%2===0;
+   if(pieceIndex%2===0&&sourceCells.length===2){
+    const direction=DIRS.findIndex(([q,r])=>
+     q===sourceCells[1].q-sourceCells[0].q&&
+     r===sourceCells[1].r-sourceCells[0].r);
+    if(direction>=0&&!ruling)
+     $('#scenario-terrain-rotation').value=String(direction);
+   }else if(sourceCells.length===3){
+    const pattern=sourceCells.map(t=>
+     (t.q-sourceCells[0].q)+','+(t.r-sourceCells[0].r)).join(';');
+    $('#scenario-terrain-offsets').value=pattern;
+    $('#scenario-terrain-offsets').readOnly=true;
+   }
   }
   $('#scenario-terrain-shape').onchange=()=>{
    $('#scenario-terrain-custom-wrap').hidden=$('#scenario-terrain-shape').value!=='custom';
@@ -1213,7 +1229,7 @@ function showPrintedPlacementStep(){
   return;
  }
  if(scenario.picturedTerrain?.required&&!scenario.picturedTerrain.confirmed){
-  replaceScenarioModal('<h2>Сверка со схемой, стр. 47</h2>'+   '<p>Размещены четыре обязательных элемента, по одному двойному и треугольному на каждом листе. '+   'Проверьте позиции и разворот треугольников по оригинальной книге перед игрой.</p>'+   '<button class="primary" id="scenario-figure-confirm">СВЕРЕНО · НАЧАТЬ РАССТАНОВКУ</button>');
+  replaceScenarioModal('<h2>Сверка со схемой, стр. 47</h2>'+   '<p>Размещены четыре обязательных элемента, по одному двойному и треугольному на каждом листе. '+   'Треугольники закреплены в позициях издательской схемы; у пар доступны разрешённые повороты.</p>'+   '<button class="primary" id="scenario-figure-confirm">СВЕРЕНО · НАЧАТЬ РАССТАНОВКУ</button>');
   $('#scenario-figure-confirm').onclick=()=>{
    const verified=game.confirmDivideAndConquerIllustratedTerrain({sourceDiagramReviewed:true});
    if(!verified.ok)return void toast(verified.error);
