@@ -490,6 +490,13 @@ test('AGoAC Ch12 MechLab enforces printed construction reasons in actual Chromiu
   assert.match(await sheet.textContent(),/Ходьба\/бег\/прыжок/);
   assert.match(await sheet.textContent(),/Критические слоты/);
   assert.match(await sheet.textContent(),/Нераспределённая масса/);
+  // CAT3500D p.54: the design's Heat Data block must mark only installed
+  // sink circles; unused printed circles cannot grant phantom cooling.
+  assert.match(await sheet.textContent(),/HEAT DATA \/ ТЕПЛО/);
+  assert.equal(await sheet.locator('[data-heat-sink][data-installed="true"]').count(),12);
+  assert.equal(await sheet.locator('[data-heat-sink][data-installed="false"]').count(),3);
+  assert.equal(await sheet.locator('[data-heat-level]').count(),31);
+  assert.match(await sheet.textContent(),/Охлаждение: −12 тепла за ход/);
   const head=page.locator('[data-armor="HD"]');
   await head.fill('10');await page.locator('#check').click();
   assert.match(await page.locator('#results').textContent(),/с\. 52/);
