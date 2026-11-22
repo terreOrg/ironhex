@@ -6001,7 +6001,7 @@ test('CAT3500D pp.40–44: completed Piloting chapter keeps 19 source-reviewed r
  assert.deepEqual(chapter.audit.checks.map(x=>x.name).sort(),
   ['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
  assert(chapter.audit.checks.every(x=>x.conclusion==='success'&&Number.isInteger(x.runId)));
- assert.equal(reg.currentTopicId,'agoac-scenarios');
+ assert.equal(reg.currentTopicId,reg.topics.find(t=>t.status!=='verified')?.id??null);
  const suite=readFileSync(new URL('./agoac-foundations.mjs',import.meta.url),'utf8');
  for(const title of [
   'CAT3500D p.41: PSR situation table modifiers use the printed target numbers',
@@ -8037,15 +8037,33 @@ test('CAT3500D pp.47-48: source setup rejects premature campaign import and forg
  assert.equal(game.beginPrintedScenarioPlacement().ok,false,'forged card ID rejected');
 });
 
-test('CAT3500D pp.45-48: five source-certified scenario and loose-terrain cases retain exact four-way main evidence',()=>{
+test('CAT3500D pp.45-48: 25 independently source-certified Chapter 11 cases retain exact four-way main evidence',()=>{
  const reg=JSON.parse(readFileSync(new URL('../rules/agoac-audit.json',import.meta.url),'utf8'));
  const cases=reg.requirements.filter(r=>r.topicId==='agoac-scenarios');
  const verified=cases.filter(r=>r.status==='verified');
  const pending=cases.filter(r=>r.status!=='verified');
- assert.equal(verified.length,23,'do not close unverified scenario cases');
- assert.deepEqual(pending.map(r=>r.id),['agoac-150','agoac-151']);
- assert.equal(reg.topics.find(t=>t.id==='agoac-scenarios').status,'known_missing',
-  'the chapter cannot close with an unverified source figure');
+ assert.equal(verified.length,25,'all printed Chapter 11 source rules must be verified');
+ assert.deepEqual(pending,[],'all Scenario 3 original contours/source controls certified');
+ const chapter=reg.topics.find(t=>t.id==='agoac-scenarios');
+ assert.equal(chapter.status,'verified');
+ assert(chapter.audit.sourceChecked&&chapter.audit.edgeCasesChecked);
+ assert.equal(reg.currentTopicId,'agoac-construction','next chapter is a pointer only');
+ for(const id of ['agoac-150','agoac-151']){
+  const rule=cases.find(r=>r.id===id);
+  assert.equal(rule.status,'verified',id);
+  assert(rule.audit.sourceChecked&&rule.audit.edgeCasesChecked,id);
+  assert.equal(rule.audit.testedSha,'a56975ae15447f73d91f83454fa04803173b1e7b',id);
+  assert.equal(rule.audit.testedTree,'5975a0a2f908a8f04b958f6a522b09450fad94a5',id);
+  assert.equal(rule.audit.mergedSha,'a56975ae15447f73d91f83454fa04803173b1e7b',id);
+  assert.deepEqual(rule.audit.checks.map(c=>[c.name,c.conclusion,c.runId]).sort((a,b)=>a[0].localeCompare(b[0])),[
+   ['Ironhex Browser E2E','success',45010069604],
+   ['Ironhex CI','success',45010069558],
+   ['Ironhex Container Smoke','success',45010069553]
+  ],id);
+  assert.deepEqual([rule.audit.mainQualityGate.name,rule.audit.mainQualityGate.conclusion,
+   rule.audit.mainQualityGate.runId,rule.audit.mainQualityGate.headSha],
+   ['Ironhex SonarQube','success',45010069626,'a56975ae15447f73d91f83454fa04803173b1e7b'],id);
+ }
  const audited=['agoac-141','agoac-144','agoac-145','agoac-162','agoac-163'];
  const expectedSha='c81c2e41fc97515e8ba7f1734aa0c8af1df601a5';
  const expectedTree='61da074b6f775be28598793fa9bfc8b903b91414';

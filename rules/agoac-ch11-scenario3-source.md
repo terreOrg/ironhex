@@ -63,3 +63,30 @@ pixel-based transcription and gameplay correctness need final source QA and
 CI/SonarQube confirmation.
 
 No deployment and no Chapter 12.
+
+## Final source certification — 2026-11-22
+
+The actual CAT3500D printed p.47 (PDF zero-based page 48) was
+revisited visually: one blue two-hex outline and one fixed red
+three-hex triangle occur on each pictured source mapsheet.
+The numbered cells above are *geometry-derived transcriptions*
+of the printed source grid: the printed artwork itself does not place
+four-digit coordinate labels within each outline.
+
+Printed p.48 deployment and official errata v8.01 jointly establish
+command NW, recon SE, and attacker row 1510–1517 on one chosen map.
+The old 2018 west sheet label is superseded: **Desert #2 WEST,
+Grassland #3 EAST**, permanently fixed.
+
+The actual merged `main` commit
+`a56975ae15447f73d91f83454fa04803173b1e7b` passed all four
+checks: Ironhex CI 45010069558, full Browser E2E 45010069604
+(51 tests), Container Smoke 45010069553 (including both full and
+shortened PostgreSQL scenario rooms) and SonarQube 45010069626
+(strict Quality Gate PASSED). The source-figure and printed deployment
+atomic requirements `agoac-150` and `agoac-151` are independently
+certified. This certification does not redistribute publisher art.
+
+The map, underlying engine, source physical hexes and UI are
+unchanged in this documentation-only closeout. No deployment or
+Chapter 12 work.
