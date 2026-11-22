@@ -352,6 +352,9 @@ test('AGoAC Ch11: all three signed roles persist full original and shortened tur
   const count=shortened?7:10;
   const defenders=shortened?4:6;
   let command=0,recon=0,attacker=0;
+  const tile=(col,row)=>runtime.game.tiles.find(t=>
+   t.q+Math.floor(t.r/2)+Math.floor(runtime.game.setupMap.width/2)===col&&
+   t.r+Math.floor(runtime.game.setupMap.height/2)===row);
   while(!runtime.game.scenario.placement.complete){
    const g=runtime.game,step=g.scenario.placement.steps[
     g.scenario.placement.placed.length];
