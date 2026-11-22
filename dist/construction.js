@@ -114,7 +114,7 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
  }
  const weights={structure:ton/10,engine:masses[(rating-20)/5],gyro:Math.ceil(rating/100),cockpit:3,sinks:sinks-10,case:0,armor:Math.ceil([...Object.values(armor),...Object.values(rear)].reduce((a,b)=>a+b,0)/8)/2,jump:jump*(ton<=55?.5:ton<=85?1:2),weapons:0,ammo:0};
  const weapons=[],bins=[],hatchets=[];let extSinks=0,jets=0;
- function place(l,start,n,value){const a=slots[l],i=Number(start)-1;if(!a||!Number.isInteger(i)||i<0||i+n>a.length||a.slice(i,i+n).some(Boolean)){errors.push(`${l} ${start}: ${n} слот(а) заняты или вне секции.`);return false;}for(let k=0;k<n;k++)a[i+k]=value;return true;}
+ function place(l,start,n,value){const a=typeof l==='string'&&Object.hasOwn(slots,l)?slots[l]:null,i=Number(start)-1;if(!a||!Number.isInteger(i)||i<0||i+n>a.length||a.slice(i,i+n).some(Boolean)){errors.push(`${l} ${start}: ${n} слот(а) заняты или вне секции.`);return false;}for(let k=0;k<n;k++)a[i+k]=value;return true;}
  for(const e of c.equipment||[]){const l=e.location;
  if(e.type==='hatchet'){const n=Math.ceil(ton/15);weights.weapons+=n;if(quadLayout||!['LA','RA'].includes(l)||slots[l]?.[2]!=='lower')errors.push('Топор требует руки двуногого меха с нижним актуатором.');else if(place(l,e.slot,n,'hatchet'))hatchets.push({location:l,slots:n});}
  else if(e.type==='jump'){jets++;
@@ -123,7 +123,7 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
   place(l,e.slot,1,'jump');}
  else if(e.type==='sink'){extSinks++;place(l,e.slot,1,'sink');}
  else if(e.type==='case'){if(!['CT','LT','RT'].includes(l)){errors.push('CASE: только торс Внутренней Сферы.');continue;}if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE: не более одной системы на секцию '+l+'.');continue;}if(place(l,e.slot,1,'case'))weights.case+=0.5;}
- else if(e.type==='case2'){if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE II: не более одной CASE в секции '+l+'.');continue;}if(place(l,e.slot,1,'case2'))weights.case+=1;}
+ else if(e.type==='case2'){if(typeof l!=='string'||!Object.hasOwn(slots,l)){errors.push('CASE II: недопустимая секция.');continue;}if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE II: не более одной CASE в секции '+l+'.');continue;}if(place(l,e.slot,1,'case2'))weights.case+=1;}
  else if(e.type==='ammo'){const w=weapons[e.weapon],d=w&&data[w.name],mass=Number(e.mass??1);if(!d?.[8]){errors.push('Боезапас должен ссылаться на уже добавленное оружие.');continue;}if(mass!==1&&!(w.name==='Machine Gun'&&mass===.5)){errors.push('Бункер: 1 т, для пулемёта также 0,5 т.');continue;}weights.ammo+=mass;const shots=d[8]*mass;if(place(l,e.slot,1,`ammo:${e.weapon}:${shots}`))bins.push({location:l,slot:+e.slot-1,weapon:+e.weapon,shots,destroyed:false});}
  else{const d=data[e.type];if(!d){errors.push('Неизвестное оборудование: '+e.type);continue;}if(e.rear&&['LA','RA'].includes(l))errors.push('Оружие в '+l+': нельзя устанавливать заднюю арку на руку (CAT3500D, с. 54).');const index=weapons.length;weights.weapons+=d[6];weapons.push({name:e.type,heat:d[0],damage:d[1],min:d[2],ranges:d.slice(3,6),ammo:d[8]?0:null,location:l,rack:d[9],toHit:d[10]||0,rear:!!e.rear,destroyed:false});if(e.splitLocation){const n=Number(e.splitCount),pairs={LA:['LT'],RA:['RT'],LT:['LA','CT'],RT:['RA','CT'],CT:['LT','RT']};if(quadLayout&&([l,e.splitLocation].some(loc=>Object.hasOwn(QUAD_LEG_LOCATIONS,loc))))
  errors.push(`${e.type}: Quad leg cannot split critical slots with torso like a biped arm.`);

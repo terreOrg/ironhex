@@ -147,3 +147,92 @@ test('CAT3500D p.51: each jump jet requires one torso/leg critical slot and equa
  tooMany.equipment=[{type:'jump',location:'LT',slot:1}];
  assert(construct(tooMany).errors.some(x=>x.includes('Разместите 0')));
 });
+
+test('CAT3500D p.52: gyro mass steps and four mandatory center-torso critical slots',()=>{
+ for(const [ton,walk,gyro] of [[20,5,1],[20,6,2],[55,5,3],[100,4,4]]){
+  const r=ok(blank(ton,walk));
+  assert.equal(r.weights.gyro,gyro,'gyro mass at rating '+ton*walk);
+  assert.deepEqual(r.unit.slots.CT.slice(3,7),Array(4).fill('gyro'));
+ }
+});
+
+test('CAT3500D p.52: three-ton cockpit reserves the printed head slot',()=>{
+ for(const ton of [20,55,100]){
+  const r=ok(blank(ton));
+  assert.equal(r.weights.cockpit,3);
+  assert.equal(r.unit.slots.HD[2],'cockpit');
+  assert.deepEqual(r.unit.slots.HD.filter(x=>x==='sensors'),['sensors','sensors']);
+  assert.deepEqual(r.unit.slots.HD.filter(x=>x==='life'),['life','life']);
+ }
+});
+
+test('CAT3500D p.52: armor enforces nine head points and twice section structure',()=>{
+ const legal=blank(55,5);
+ legal.armor.HD=9;legal.armor.CT=20;legal.rear.CT=12;
+ ok(legal);
+ const badHead=structuredClone(legal);badHead.armor.HD=10;
+ const h=construct(badHead,{strictAgoac:true});
+ assert(h.errors.some(x=>x.includes('HD: превышен предел брони')));
+ assert(h.diagnostics.some(d=>d.field==='armor.HD'&&d.page===52));
+ const badTorso=structuredClone(legal);badTorso.rear.CT=13;
+ const t=construct(badTorso,{strictAgoac:true});
+ assert(t.errors.some(x=>x.includes('CT: превышен предел брони')));
+ assert(t.diagnostics.some(d=>d.field==='armor.CT'&&d.page===52));
+});
+
+test('CAT3500D p.53: standard armor rounds up to eight points per half-ton',()=>{
+ for(const [points,tons] of [[0,0],[1,.5],[8,.5],[9,1],[16,1],[17,1.5]]){
+  const c=blank(55,5);
+  c.armor.LA=Math.min(16,points);
+  c.armor.RA=Math.max(0,points-16);
+  assert.equal(ok(c).weights.armor,tons,points+' armor points');
+ }
+});
+
+test('CAT3500D p.53: ten free sinks and integral capacity floor engine rating over twenty-five',()=>{
+ for(const [ton,walk] of [[20,1],[55,5],[100,4]]){
+  const rating=ton*walk,capacity=Math.floor(rating/25);
+  const free=ok(blank(ton,walk));
+  assert.equal(free.weights.sinks,0);
+  assert.equal(free.unit.slots.RT.filter(x=>x==='sink').length,Math.max(0,10-capacity));
+  const c=blank(ton,walk);c.sinks=12;
+  const external=Math.max(0,12-capacity);
+  c.equipment=Array.from({length:external},(_,i)=>({type:'sink',location:'RT',slot:12-i}));
+  const r=ok(c);
+  assert.equal(r.weights.sinks,2);
+  assert.equal(r.unit.slots.RT.filter(x=>x==='sink').length,external);
+ }
+});
+
+test('CAT3500D p.53: each nonintegral heat sink occupies a separate open critical slot',()=>{
+ const c=blank(20,1),r=ok(c);
+ assert.equal(r.unit.slots.RT.filter(x=>x==='sink').length,10);
+ const missing=structuredClone(c);missing.equipment.pop();
+ assert(construct(missing,{strictAgoac:true}).errors.some(x=>x.includes('10 внешних теплоотводов')));
+ const occupied=structuredClone(c);occupied.equipment[1].slot=occupied.equipment[0].slot;
+ assert(construct(occupied,{strictAgoac:true}).errors.some(x=>x.includes('RT 12:')));
+});
+
+test('CAT3500D p.54: standard PPC and medium laser preserve printed mass and contiguous slot sizes',()=>{
+ const c=blank(55,5);
+ c.equipment=[{type:'PPC',location:'RA',slot:5},{type:'Medium Laser',location:'LT',slot:1}];
+ const r=ok(c);
+ assert.equal(r.weights.weapons,8);
+ assert.deepEqual(r.unit.slots.RA.slice(4,7),['w:0','w:0','w:0']);
+ assert.equal(r.unit.slots.LT[0],'w:1');
+ const unknown=blank(55,5);unknown.equipment=[{type:'Not a weapon',location:'LT',slot:1}];
+ assert(construct(unknown,{strictAgoac:true}).errors.some(x=>x.includes('Неизвестное оборудование')));
+});
+
+test('CAT3500D p.49: invalid equipment locations reject with diagnostics instead of throwing',()=>{
+ for(const location of ['__proto__','constructor','toString','',null,17]){
+  for(const type of ['jump','sink','case2','Medium Laser']){
+   const c=blank(55,5);
+   if(type==='jump')c.jump=1;
+   c.equipment=[{type,location,slot:1}];
+   const r=construct(c,{strictAgoac:true});
+   assert(r.errors.length>0,JSON.stringify({type,location}));
+   assert.equal(r.diagnostics.length,r.errors.length);
+  }
+ }
+});
