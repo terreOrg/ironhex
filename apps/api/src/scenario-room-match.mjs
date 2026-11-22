@@ -46,10 +46,16 @@ export function assertScenario3SourceMap(game){
  check(counts[0]===272&&counts[1]===272,'scenario_source_map_mismatch');
  const setup=game.scenario.looseTerrain,pictured=game.scenario.picturedTerrain;
  if(!pictured?.required||!setup)return;
- check(JSON.stringify(pictured.counters)===JSON.stringify(
-  AGOAC_SCENARIO3_FIGURE.map(p=>({
-   sheet:p.sheet,shape:p.shape,printedHexes:[...p.printedHexes]}))),
-  'scenario_source_terrain_mismatch');
+ check(Array.isArray(pictured.counters)&&
+  pictured.counters.length===AGOAC_SCENARIO3_FIGURE.length&&
+  pictured.counters.every((candidate,i)=>{
+   const original=AGOAC_SCENARIO3_FIGURE[i];
+   return candidate&&candidate.sheet===original.sheet&&
+    candidate.shape===original.shape&&
+    Array.isArray(candidate.printedHexes)&&
+    candidate.printedHexes.length===original.printedHexes.length&&
+    candidate.printedHexes.every((hex,j)=>hex===original.printedHexes[j]);
+  }), 'scenario_source_terrain_mismatch');
  const parts=setup.pieces;
  check(Array.isArray(parts)&&parts.length<=4,'scenario_source_terrain_mismatch');
  const byHex=new Map(game.tiles.map(t=>[t.q+','+t.r,t]));
