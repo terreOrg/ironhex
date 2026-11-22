@@ -28,6 +28,13 @@ export function outOfBookEquipment(config){
     .filter(type=>type&&type!=='ammo'&&
       !allowedSystems.has(type)&&!approved.has(type)))];
 }
+// One source for the reason shown by MechLab and returned by Hangar API.
+export function rulebookEquipmentDetail(type,index){
+ return {code:'not_in_box_rulebook',field:'equipment.'+index+'.type',
+  step:7,page:55,
+  message:String(type)+' отсутствует в таблице A Game of Armored Combat '+
+   '(с. 55). Уберите компонент или используйте отдельные расширенные правила.'};
+}
 // BattleMech Manual and TechManual cover supplementary technology. Keep
 // advanced definitions for continued engineering work, but do not silently
 // treat them as part of AGoAC. This is a provenance marker, not an assertion

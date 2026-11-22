@@ -281,3 +281,29 @@ test('CAT3500D p.55: Hangar preserves explicit unsupported-equipment error despi
  assert(!source.includes('notInBook'),
   'client must consume one canonical constructor diagnostic, not duplicate it');
 });
+
+
+test('CAT3500D p.55: MechLab constructor and Hangar API return identical unknown/advanced gear reasons',()=>{
+ const config={name:'Unsupported component parity',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[{type:'ER PPC',location:'RA',slot:5},
+   {type:'__proto__',location:'LA',slot:5}]};
+ const constructed=construct(config,{strictAgoac:true});
+ const sorted=details=>details.filter(d=>d.code==='not_in_box_rulebook')
+  .sort((a,b)=>a.field.localeCompare(b.field));
+ const expected=sorted(constructed.diagnostics);
+ assert.deepEqual(expected.map(d=>d.field),['equipment.0.type','equipment.1.type']);
+ assert(expected.every(d=>d.page===55&&d.step===7&&
+  d.message.includes('отсутствует в таблице A Game of Armored Combat')));
+ assert.throws(()=>validateDesign({config}),error=>
+  error.status===422&&error.code==='unsupported_rulebook_equipment'&&
+  JSON.stringify(sorted(error.details))===JSON.stringify(expected),
+  'authenticated Hangar must reuse the constructor reasons shown by MechLab');
+ const unknown=structuredClone(config);
+ unknown.equipment.shift();
+ const direct=construct(unknown,{strictAgoac:true});
+ assert(direct.errors.some(e=>e.includes('Неизвестное оборудование')));
+ assert.deepEqual(direct.diagnostics.filter(d=>d.code==='not_in_box_rulebook')
+  .map(d=>d.field),['equipment.0.type']);
+});

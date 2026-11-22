@@ -48,6 +48,15 @@ function renderDesignRecord(result,diagnostics){
  const bins=u.bins.map(b=>'<tr><td>'+esc(u.weapons[b.weapon]?.name||'Оружие')+
   '</td><td>'+esc(b.location)+'</td><td>'+(b.slot+1)+
   '</td><td>'+esc(b.mass)+' т</td><td>'+b.shots+'</td></tr>').join('');
+ // Printed CAT3500D p.54: complete the Heat Data block. The paper record
+ // has fifteen preprinted sink circles; cross out unused ones and extend the
+ // row when the design carries more than fifteen. Only installed sinks cool.
+ const heatCircles=Array.from({length:Math.max(15,u.sinks)},(_,i)=>
+  '<span data-heat-sink="'+(i+1)+'" data-installed="'+(i<u.sinks)+'" '+
+  'aria-label="'+(i<u.sinks?'Теплоотвод установлен':'Незанятое место зачёркнуто')+'">'+
+  (i<u.sinks?'○':'●')+'</span>').join('');
+ const heatScale=Array.from({length:31},(_,heat)=>
+  '<span data-heat-level="'+heat+'">'+heat+'</span>').join('');
  const remaining=Number.isFinite(result.remaining)?result.remaining.toFixed(1):'—';
  target.innerHTML='<p role="status"><b>'+
   (diagnostics.length?'ЧЕРНОВИК — НАРУШЕНИЯ ПРАВИЛ':'ПРОЕКТ ПРОШЁЛ ТЕКУЩИЕ ПРОВЕРКИ')+
@@ -63,6 +72,13 @@ function renderDesignRecord(result,diagnostics){
   weapons+'</tbody></table><h4>Бункеры боеприпасов</h4>'+
   '<table><thead><tr><th>Оружие</th><th>Секция</th><th>Слот</th>'+
   '<th>Масса</th><th>Выстрелов</th></tr></thead><tbody>'+bins+'</tbody></table>'+
+  '<h4>HEAT DATA / ТЕПЛО</h4><p>Теплоотводы: <b>'+u.sinks+
+  '</b> · Охлаждение: −'+u.sinks+' тепла за ход (без повреждений и среды)</p>'+
+  '<div class="design-heat-circles" role="group" aria-label="Круги теплоотводов">'+
+  heatCircles+'</div><p class="hint">○ установлено · ● лишний круг зачёркнут · '+
+  'свыше 15 теплоотводов дополнительные круги добавляются.</p>'+
+  '<div class="design-heat-scale" role="group" aria-label="Шкала нагрева 0–30">'+
+  heatScale+'</div>'+
   '<h4>Критические слоты</h4>'+
   '<div class="design-criticals">'+criticals+'</div>'+
   '<p class="hint">Лист проекта по шагу 8, с. 54. При наличии ошибок сохранение и бой запрещены.</p>';
