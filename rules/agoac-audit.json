@@ -11441,7 +11441,7 @@
       "statement": "MechLab and authenticated hangar API reject invalid construction identically with a rule-specific explanation; no save or battle launch on failure.",
       "status": "tested_case",
       "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Validation and UI (diagnostics). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22: second packet local battle launch revalidates trusted custom config with strictAgoac and outOfBookEquipment; Game.configureSetupForces checks both too, while immutable original printed MTF scenario import preserves source values. Additional static regressions ensure both paths cannot be bypassed by localStorage or direct game setup."
     }
   ]
 }

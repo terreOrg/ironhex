@@ -217,3 +217,16 @@ test('CAT3500D p.54 authenticated custom designs reject insufficient ammo with e
  cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
  assert.doesNotThrow(()=>validateDesign({config:cfg}));
 });
+
+test('CAT3500D p.55: saved-browser and engine custom setup both fail closed on unsupported components',()=>{
+ const app=readFileSync(new URL('../apps/web/src/app.js',import.meta.url),'utf8');
+ const engine=readFileSync(new URL('../packages/engine/engine.js',import.meta.url),'utf8');
+ assert(app.includes("outOfBookEquipment(d.config).length"),
+  'browser battle launch must revalidate localStorage, not trust MechLab state');
+ assert(engine.includes("outOfBookEquipment(custom.config).length"),
+  'direct engine custom setup must not bypass the box rulebook');
+ assert(engine.includes("construct(custom.config,{strictAgoac:true})"),
+  'engine user-created forces must enforce book ammo minimum');
+ assert(engine.includes("construct(design);"),
+  'printed source MTFs are intentionally imported without custom-only restrictions');
+});
