@@ -158,3 +158,35 @@ test('MTF parsing handles long property whitespace with unchanged construction',
   assert.deepEqual(importMtf(raw.replace(/^Config:Biped$/m,'Config:'+' '.repeat(100000)+'Biped')),expected);
   assert.throws(()=>importMtf(raw.replace(/^Config:Biped$/m,'Config:   \nConfig:Biped')),/unsupported_mtf:missing_config/);
 });
+
+test('AGoAC Ch12 server validation returns actionable source-linked refusal reasons',()=>{
+ const base=structuredClone(MECH_OFFERS.find(o=>o.id==='mm-grf-1m').config);
+ const tooMuch=structuredClone(base);
+ tooMuch.armor.HD=10;
+ let rejected;
+ try{validateDesign({config:tooMuch});}catch(error){rejected=error;}
+ assert(rejected);
+ assert.equal(rejected.status,422);
+ assert.equal(rejected.code,'invalid_design');
+ assert(rejected.details?.some(d=>d.code==='armor_limit'&&
+  d.field==='armor.HD'&&d.page===52&&d.message.includes('HD')));
+ const handOnly=structuredClone(base);
+ handOnly.removeHandActuators=['LA'];
+ assert.deepEqual(validateDesign({config:handOnly}).state.config.removeHandActuators,['LA']);
+ const badHand=structuredClone(base);
+ badHand.removeHandActuators=['CT'];
+ assert.throws(()=>validateDesign({config:badHand}),/invalid_design/);
+});
+test('AGoAC Ch12 MechLab exposes engine and server construction feedback in UI',()=>{
+ const source=readFileSync(new URL('../apps/web/src/mechlab.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../apps/web/src/mechlab.html',import.meta.url),'utf8');
+ assert(source.includes('r.diagnostics'),'UI must show rule-specific reasons');
+ assert(source.includes('d.page'),'UI must cite printed rulebook page');
+ assert(source.includes("setAttribute('aria-invalid','true')"),
+  'bad design field must be marked invalid');
+ assert(source.includes("['launch','save-hangar','save-copy']"),
+  'invalid design must block battle and both save paths');
+ assert(source.includes('data.details'),'server reasons must be displayed on save rejection');
+ assert(html.includes('removeHandLA')&&html.includes('removeHandRA'),
+  'hand actuator removal must be independently selectable');
+});

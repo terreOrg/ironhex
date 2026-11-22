@@ -396,7 +396,9 @@ export function createHttpServer({
       return json(res,404,{error:'not_found'},head);
     } catch(error) {
       if (error instanceof AuthError) {
-        return json(res,error.status,{error:error.code},head);
+        return json(res,error.status,{error:error.code,
+          ...(error.code==='invalid_design'&&Array.isArray(error.details)?
+            {details:error.details}: {})},head);
       }
       // Do not send database errors, SQL or password fields to clients.
       console.error('Ironhex API request failed',error?.code || error?.name || 'unknown');

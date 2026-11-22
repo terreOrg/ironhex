@@ -2,7 +2,7 @@ name: Ironhex Browser E2E
 
 on:
   push:
-    branches: [main, 'audit/agoac-*']
+    branches: [main, 'audit/agoac-*', 'feat/agoac-ch12-*']
   workflow_dispatch:
 
 permissions:

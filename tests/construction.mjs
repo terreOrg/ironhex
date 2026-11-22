@@ -11,7 +11,7 @@ d=c();d.jump=6;assert(construct(d).errors.length);
 d=c();d.equipment.pop();assert(construct(d).errors.some(e=>e.includes('теплоотводов')));
 d=c();d.equipment.push({type:'ammo',location:'LT',slot:3,weapon:99,mass:1});assert(construct(d).errors.some(e=>e.includes('ссылаться')));
 d=c();d.tonnage=100;d.walk=3;d.jump=0;d.sinks=10;d.equipment=[{type:'AC/20',location:'RA',slot:5,splitLocation:'RT',splitSlot:1,splitCount:8},{type:'ammo',location:'LT',slot:1,weapon:0,mass:1},{type:'hatchet',location:'LA',slot:5}];assert.deepEqual(construct(d).errors,[]);assert.equal(construct(d).unit.hatchets.length,1);assert.equal(construct(d).unit.slots.RT[1],'w:0');
-assert.deepEqual(construct(d).unit.weapons[0].locations,['RA','RT']);d.equipment[0].splitLocation='LL';assert(construct(d).errors.some(e=>e.includes('AC/20')));d.equipment[0].splitLocation='RT';d.equipment[0].type='AC/10';assert(construct(d).errors.some(e=>e.includes('8+ критических')));
+assert.deepEqual(construct(d).unit.weapons[0].locations,['RA','RT']);d.equipment[0].splitLocation='LL';assert(construct(d).errors.some(e=>e.includes('AC/20')));d.equipment[0].splitLocation='RT';d.equipment[0].type='AC/10';assert(construct(d).errors.some(e=>e.includes('только для AC/20')));
 console.log('9 construction checks passed');
 
 const caseCfg={name:'CASE verification',tonnage:100,walk:3,jump:0,sinks:10,
@@ -112,3 +112,85 @@ const rejectedClan=construct({...example,techBase:'Clan'});
 assert(rejectedClan.errors.some(e=>e.includes('Клановая технология')),
  'Do not silently create a Clan mech using Inner Sphere construction data');
 console.log('Clan tech-base construction safety gate verified');
+
+// CAT3500D Construction p.49–54: source-backed rejection and explicit feedback
+// form one contract in the engine, API and MechLab. No temporary "invalid but
+// accepted" designs may be saved or used in a battle.
+{
+ const cfg=c();cfg.armor.HD=10;
+ const result=construct(cfg);
+ assert(result.errors.some(x=>x.includes('HD')));
+ assert(result.diagnostics.some(x=>x.code==='armor_limit'&&
+   x.field==='armor.HD'&&x.page===52));
+}
+{
+ const cfg=c();cfg.tonnage=45;cfg.walk=10;
+ const result=construct(cfg);
+ assert(result.errors.some(x=>x.includes('Рейтинг двигателя')));
+ assert(result.diagnostics.some(x=>x.code==='engine_rating'&&
+   x.field==='walk'&&x.page===51));
+}
+{
+ const cfg=c();cfg.equipment[0].rear=true; // PPC in right arm
+ const result=construct(cfg);
+ assert(result.errors.some(x=>x.includes('заднюю арку')));
+ assert(result.diagnostics.some(x=>x.code==='weapon_arc'&&x.page===54));
+}
+{
+ const cfg=c();cfg.equipment.push(
+  {type:'ammo',location:'LT',slot:3,weapon:1,mass:-1});
+ const result=construct(cfg);
+ assert(result.errors.some(x=>x.includes('Бункер')));
+ assert(Number.isFinite(result.total),'invalid ammo cannot subtract tonnage');
+ assert.equal(result.weights.ammo,2,'invalid bin cannot add phantom shots or mass');
+ assert(result.diagnostics.some(x=>x.code==='ammunition'&&x.page===54));
+}
+{
+ const cfg=c();cfg.removeHandActuators=['LA'];
+ const result=construct(cfg);
+ assert.deepEqual(result.errors,[]);
+ assert.equal(result.unit.slots.LA[2],'lower');
+ assert.equal(result.unit.slots.LA[3],null,
+  'AGoAC permits removing the hand while keeping lower-arm actuator');
+}
+{
+ const cfg=c();cfg.removeActuators=['LA'];
+ cfg.removeHandActuators=['LA'];
+ const result=construct(cfg);
+ assert.deepEqual(result.errors,[]);
+ assert.equal(result.unit.slots.LA[2],null);
+ assert.equal(result.unit.slots.LA[3],null);
+}
+{
+ const cfg=c();cfg.removeHandActuators=['CT'];
+ const result=construct(cfg);
+ assert(result.errors.some(x=>x.includes('Актуаторы кисти')));
+ assert(result.diagnostics.some(x=>x.code==='actuators'));
+}
+{
+ const cfg=c();cfg.tonnage=100;cfg.walk=3;cfg.jump=0;cfg.sinks=10;
+ cfg.equipment=[{type:'Machine Gun',location:'RA',slot:5},
+  {type:'ammo',location:'LT',slot:1,weapon:0,mass:0.5}];
+ const result=construct(cfg);
+ assert.deepEqual(result.errors,[],'AGoAC p.54 MG may use half-ton bins');
+ assert.equal(result.unit.bins[0].shots,100);
+}
+console.log('AGoAC Ch12 user-visible rule/page diagnostics and illegal design gates verified');
+
+{
+ const cfg=c();cfg.tonnage=100;cfg.walk=3;cfg.jump=0;cfg.sinks=10;
+ cfg.equipment=[
+  {type:'AC/2',location:'RA',slot:5},
+  {type:'AC/2',location:'LA',slot:5},
+  {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}
+ ];
+ let design=construct(cfg);
+ assert.deepEqual(design.errors,[],
+  'printed stock BattleMechs may share one compatible magazine between matching guns');
+ assert(design.unit.weapons.every(w=>w.ammo===45));
+ cfg.equipment.push({type:'ammo',location:'LT',slot:2,weapon:1,mass:1});
+ design=construct(cfg);
+ assert.deepEqual(design.errors,[],
+  'two compatible magazines must form one correctly counted shared pool');
+ assert(design.unit.weapons.every(w=>w.ammo===90));
+}

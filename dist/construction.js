@@ -1,5 +1,37 @@
 import {WEAPON_SPECS,WEAPON_NAMES} from './equipment.js';
 export const LOCS=['HD','CT','LT','RT','LA','RA','LL','RL'];
+// CAT3500D printed Construction pp.49–54. Diagnostics are shared by
+// the client and the API; the original human-readable errors remain stable.
+export function constructionDiagnostics(errors,config={}){
+ return errors.map(message=>{
+  let step=7,page=54,field='equipment',code='equipment_rule';
+  if(/Масса:|Превышение массы/.test(message)){step=1;page=49;field='tonnage';code='tonnage';}
+  else if(/Конфигурация|четырёхног|Кланов/.test(message)){step=1;page=49;field='config';code='unsupported_design';}
+  else if(/Рейтинг двигателя/.test(message)){step=2;page=51;field='walk';code='engine_rating';}
+  else if(/Прыжок:|прыжковых двигателей|Прыжковые двигатели/.test(message)){step=3;page=51;field='jump';code='jump_jets';}
+  else if(/теплоотводов|Теплоотвод/.test(message)){step=6;page=53;field='sinks';code='heat_sinks';}
+  else if(/:.*брон|предел брони/.test(message)){
+   step=5;page=52;field=(/кормовая броня/.test(message)?'rear.':'armor.')+message.slice(0,2);
+   code='armor_limit';
+  }
+  else if(/актуатор|руки|Актуатор/.test(message)){step=1;page=50;field='removeActuators';code='actuators';}
+  else if(/разделение|AC\/20/.test(message)){step=7;page=54;code='ac20_split';}
+  else if(/задн|Назад|арки/.test(message)){step=7;page=54;code='weapon_arc';}
+  else if(/Бункер|Боезапас|боезапас|боеприпас/.test(message)){step=7;page=54;code='ammunition';}
+  else if(/Превышение массы/.test(message)){step=8;page=54;field='tonnage';code='overweight';}
+  const slot=message.match(/^([A-Z]{2}) (\d+):/);
+  if(slot){
+   page=49;code='critical_slots';
+   const index=(config.equipment||[]).findIndex(e=>
+    e.location===slot[1]&&Number(e.slot)===Number(slot[2]));
+   field=index<0?'equipment':`equipment.${index}.slot`;
+  }else if(field==='equipment'){
+   const match=message.match(/(?:Оружие|Боезапас|Бункер) #(\d+)/);
+   if(match)field='equipment.'+match[1];
+  }
+  return {code,field,step,page,message};
+ });
+}
 // BMM corrected sixth printing, printed p.5: the generic "Mech" term includes
 // both biped and quad BattleMechs. Classification is not proof of quad support.
 export const BATTLEMECH_CONFIGURATIONS=Object.freeze(['Biped','Quad']);
@@ -56,9 +88,13 @@ export function construct(c,{auditQuad=false}={}){
  if(!Number.isInteger(walk)||walk<1||rating<20||rating>400||rating%5)errors.push('Рейтинг двигателя: 20–400.');
  if(!Number.isInteger(jump)||jump<0||jump>walk)errors.push('Прыжок: от 0 до значения ходьбы.');
  if(!Number.isInteger(sinks)||sinks<10)errors.push('Нужно не менее 10 теплоотводов.');
+ if(c.removeHandActuators!==undefined&&(!Array.isArray(c.removeHandActuators)||
+    c.removeHandActuators.length>2||
+    c.removeHandActuators.some(l=>!['LA','RA'].includes(l))))
+  errors.push('Актуаторы кисти: допустимы только LA и RA.');
  // Preserve a correct but non-combat-ready quad plan for the audit and
  // construction tests. Quad imports and hangar admission still fail closed.
- if(errors.length)return {errors,...(chassisConfig==='Quad'&&Number.isInteger(ton)&&ton>=20&&ton<=100&&ton%5===0?
+ if(errors.length)return {errors,diagnostics:constructionDiagnostics(errors,c),...(chassisConfig==='Quad'&&Number.isInteger(ton)&&ton>=20&&ton<=100&&ton%5===0?
   {quadLayout:quadStructuralLayout(ton)}:{})};
  const quadLayout=chassisConfig==='Quad'?quadStructuralLayout(ton):null;
  const st=structures[(ton-20)/5],structure=quadLayout?quadLayout.structure:
@@ -83,10 +119,10 @@ export function construct(c,{auditQuad=false}={}){
  else if(e.type==='sink'){extSinks++;place(l,e.slot,1,'sink');}
  else if(e.type==='case'){if(!['CT','LT','RT'].includes(l)){errors.push('CASE: только торс Внутренней Сферы.');continue;}if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE: не более одной системы на секцию '+l+'.');continue;}if(place(l,e.slot,1,'case'))weights.case+=0.5;}
  else if(e.type==='case2'){if(slots[l].some(s=>s==='case'||s==='case2')){errors.push('CASE II: не более одной CASE в секции '+l+'.');continue;}if(place(l,e.slot,1,'case2'))weights.case+=1;}
- else if(e.type==='ammo'){const w=weapons[e.weapon],d=w&&data[w.name],mass=Number(e.mass??1);if(!d?.[8]){errors.push('Боезапас должен ссылаться на уже добавленное оружие.');continue;}if(mass!==1&&!(w.name==='Machine Gun'&&mass===.5))errors.push('Бункер: 1 т, для пулемёта также 0,5 т.');weights.ammo+=mass;const shots=d[8]*mass;if(place(l,e.slot,1,`ammo:${e.weapon}:${shots}`))bins.push({location:l,slot:+e.slot-1,weapon:+e.weapon,shots,destroyed:false});}
- else{const d=data[e.type];if(!d){errors.push('Неизвестное оборудование: '+e.type);continue;}const index=weapons.length;weights.weapons+=d[6];weapons.push({name:e.type,heat:d[0],damage:d[1],min:d[2],ranges:d.slice(3,6),ammo:d[8]?0:null,location:l,rack:d[9],toHit:d[10]||0,rear:!!e.rear,destroyed:false});if(e.splitLocation){const n=Number(e.splitCount),pairs={LA:['LT'],RA:['RT'],LT:['LA','CT'],RT:['RA','CT'],CT:['LT','RT']};if(quadLayout&&([l,e.splitLocation].some(loc=>Object.hasOwn(QUAD_LEG_LOCATIONS,loc))))
+ else if(e.type==='ammo'){const w=weapons[e.weapon],d=w&&data[w.name],mass=Number(e.mass??1);if(!d?.[8]){errors.push('Боезапас должен ссылаться на уже добавленное оружие.');continue;}if(mass!==1&&!(w.name==='Machine Gun'&&mass===.5)){errors.push('Бункер: 1 т, для пулемёта также 0,5 т.');continue;}weights.ammo+=mass;const shots=d[8]*mass;if(place(l,e.slot,1,`ammo:${e.weapon}:${shots}`))bins.push({location:l,slot:+e.slot-1,weapon:+e.weapon,shots,destroyed:false});}
+ else{const d=data[e.type];if(!d){errors.push('Неизвестное оборудование: '+e.type);continue;}if(e.rear&&['LA','RA'].includes(l))errors.push('Оружие в '+l+': нельзя устанавливать заднюю арку на руку (CAT3500D, с. 54).');const index=weapons.length;weights.weapons+=d[6];weapons.push({name:e.type,heat:d[0],damage:d[1],min:d[2],ranges:d.slice(3,6),ammo:d[8]?0:null,location:l,rack:d[9],toHit:d[10]||0,rear:!!e.rear,destroyed:false});if(e.splitLocation){const n=Number(e.splitCount),pairs={LA:['LT'],RA:['RT'],LT:['LA','CT'],RT:['RA','CT'],CT:['LT','RT']};if(quadLayout&&([l,e.splitLocation].some(loc=>Object.hasOwn(QUAD_LEG_LOCATIONS,loc))))
  errors.push(`${e.type}: Quad leg cannot split critical slots with torso like a biped arm.`);
- else if(d[7]<8||!Number.isInteger(n)||n<1||n>=d[7]||!pairs[l]?.includes(e.splitLocation))errors.push(`${e.type}: разделение требует 8+ критических слотов и двух соседних секций торса/рук (не ног).`);else{weapons[index].locations=[l,e.splitLocation];place(l,e.slot,n,`w:${index}`);place(e.splitLocation,e.splitSlot,d[7]-n,`w:${index}`);}}else place(l,e.slot,d[7],`w:${index}`);}
+ else if(e.type!=='AC/20'||!Number.isInteger(n)||n<1||n>=d[7]||!pairs[l]?.includes(e.splitLocation))errors.push(`${e.type}: разделение разрешено только для AC/20 между смежными секциями, кроме ног (CAT3500D, с. 54).`);else{weapons[index].locations=[l,e.splitLocation];place(l,e.slot,n,`w:${index}`);place(e.splitLocation,e.splitSlot,d[7]-n,`w:${index}`);}}else place(l,e.slot,d[7],`w:${index}`);}
  }
  if(jets!==jump)errors.push(`Разместите ${jump} прыжковых двигателей; размещено ${jets}.`);
  const needed=Math.max(0,sinks-Math.floor(rating/25));if(extSinks!==needed)errors.push(`Разместите ${needed} внешних теплоотводов; размещено ${extSinks}.`);
@@ -140,7 +176,7 @@ export function construct(c,{auditQuad=false}={}){
    facing:m.facing,weaponIndices:[...m.weaponIndices],locked:false});
  }
  const total=Object.values(weights).reduce((a,b)=>a+b,0);if(total>ton)errors.push(`Превышение массы на ${(total-ton).toFixed(1)} т.`);
- return {errors,total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,
+ return {errors,diagnostics:constructionDiagnostics(errors,c),total,weights,remaining:ton-total,rating,unit:{techBase:'Inner Sphere',config:chassisConfig,
   ...(c.quirks?{quirks:{extendedTorsoTwist:quirks.extendedTorsoTwist===true},
     directionalTorsoMounts}:{}),
   ...(quadLayout?{actuators:Object.fromEntries(
