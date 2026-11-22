@@ -5,7 +5,7 @@ import {listUnitTestFiles} from '../scripts/unit-test-paths.mjs';
 
 test('CI and SonarQube use the same complete unit manifest including signed rooms',()=>{
  const files=listUnitTestFiles();
- for(const path of ['tests/agoac-ch12-design-gates.mjs','tests/scenario-match.mjs','tests/scenario-command.mjs',
+ for(const path of ['tests/agoac-ch12-design-gates.mjs','tests/agoac-ch13-weapon-reference.mjs','tests/scenario-match.mjs','tests/scenario-command.mjs',
   'tests/scenario-rooms.mjs','tests/terrain-level-labels.mjs']){
   assert(files.includes(path),'missing required source-linked test '+path);
  }
