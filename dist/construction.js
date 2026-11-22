@@ -145,19 +145,6 @@ export function construct(c,{auditQuad=false}={}){
      if(!w.ammo)errors.push(w.name+': нужен боезапас.');
    }
  });
- // CAT3500D p.54: a shared ammo pool does not waive the minimum
- // tonnage per ballistic or missile weapon. Only Machine Gun bins can
- // satisfy their per-gun minimum with half-ton allocations.
- for(const [type,master] of pools){
-  const count=weapons.filter(w=>w.name===type).length;
-  const required=count*(type==='Machine Gun'?0.5:1);
-  const perTon=data[type][8];
-  const actual=bins.filter(b=>b.weapon===master)
-   .reduce((mass,bin)=>mass+bin.shots/perTon,0);
-  if(actual<required)
-   errors.push(type+': необходимо не менее '+required+' т боеприпасов для '+
-    count+' оружия (CAT3500D, с. 54); установлено '+actual+' т.');
- }
  // Optional BMM p.83 directional mounts are design attributes, not
  // phantom weapons. Validate every referenced actual installed gun.
  const mountInputs=Array.isArray(quirks.directionalTorsoMounts)?
