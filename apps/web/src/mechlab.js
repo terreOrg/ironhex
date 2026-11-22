@@ -44,6 +44,9 @@ function renderDesignRecord(result,diagnostics){
   esc((w.locations||[w.location]).join('/'))+'</td><td>'+w.heat+
   '</td><td>'+esc(w.ranges.join('/'))+'</td><td>'+
   (w.ammo===null?'∞':w.ammo)+'</td></tr>').join('');
+ const bins=u.bins.map(b=>'<tr><td>'+esc(u.weapons[b.weapon]?.name||'Оружие')+
+  '</td><td>'+esc(b.location)+'</td><td>'+(b.slot+1)+
+  '</td><td>'+esc(b.mass)+' т</td><td>'+b.shots+'</td></tr>').join('');
  const remaining=Number.isFinite(result.remaining)?result.remaining.toFixed(1):'—';
  target.innerHTML='<p role="status"><b>'+
   (diagnostics.length?'ЧЕРНОВИК — НАРУШЕНИЯ ПРАВИЛ':'ПРОЕКТ ПРОШЁЛ ТЕКУЩИЕ ПРОВЕРКИ')+
@@ -56,7 +59,10 @@ function renderDesignRecord(result,diagnostics){
   '<th>Задняя</th><th>Структура</th></tr></thead><tbody>'+armor+'</tbody></table>'+
   '<h4>Оружие и боезапас</h4><table><thead><tr><th>Оружие</th><th>Секция</th>'+
   '<th>Тепло</th><th>Дальности</th><th>Выстрелов</th></tr></thead><tbody>'+
-  weapons+'</tbody></table><h4>Критические слоты</h4>'+
+  weapons+'</tbody></table><h4>Бункеры боеприпасов</h4>'+
+  '<table><thead><tr><th>Оружие</th><th>Секция</th><th>Слот</th>'+
+  '<th>Масса</th><th>Выстрелов</th></tr></thead><tbody>'+bins+'</tbody></table>'+
+  '<h4>Критические слоты</h4>'+
   '<div class="design-criticals">'+criticals+'</div>'+
   '<p class="hint">Лист проекта по шагу 8, с. 54. При наличии ошибок сохранение и бой запрещены.</p>';
 }
