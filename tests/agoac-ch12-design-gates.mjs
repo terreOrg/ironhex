@@ -541,8 +541,8 @@ test('CAT3500D Chapter 12 final 22-of-22 Verified codifier closure has exact nam
     child.id+' missing source-linked regression: '+named.test);
   }
  }
- assert.equal(audit.currentTopicId,'agoac-equipment');
- assert.equal(audit.topics.find(t=>t.id==='agoac-equipment').status,'not_audited');
+ assert.equal(audit.currentTopicId,null,'all thirteen indexed chapter topics are verified');
+ assert.equal(audit.topics.find(t=>t.id==='agoac-equipment').status,'verified');
  const report=readFileSync(new URL('../rules/agoac-ch12-source-review.md',import.meta.url),'utf8');
  assert(report.includes('f17526102169608480686e5e34e6742d28784c49'));
  for(const id of ['agoac-182','agoac-183','agoac-185','agoac-186'])

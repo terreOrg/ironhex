@@ -1,4 +1,6 @@
 # Active audit: A Game of Armored Combat (AGoAC)
+**Status (2026-11-23):** all 13 currently indexed AGoAC chapter topics / 196 atomic register entries are marked Verified after page-56 source review. This is **not** an exhaustive paragraph-by-paragraph audit of all possible rules/errata, and not a BattleMech Manual certification. Exact linked tests and per-commit CI/Browser/Smoke/Sonar must pass before treating the new final chapter as accepted. The last printed page is 56. See [Chapter 13 source review](agoac-ch13-source-review.md).
+
 
 The user's first-release priority is the 2018 CAT3500D base rules. See [agoac-audit.json](agoac-audit.json). BMM and Tactical Operations audits are deferred; their existing evidence and features are retained. AGoAC is independently audited; CI success is not complete rule conformity. The initial inventory groups chapters; atomic extraction is still incomplete. The initial code tests cover a portion of the play sequence; source review must continue at foundations before certifying further topics.
 

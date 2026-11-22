@@ -11,8 +11,8 @@
     "battlemechsOnly": true,
     "extensionsDeferred": true
   },
-  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12. Ch11 existing weather certification 21.11.2026: 4/25 atomic requirements independently Verified on exact main e12ebe6 and four-way quality gates; 21 remain Known Missing; chapter open. Ch11 rule batch 21.11.2026: scenario sides, initiative effects and moonlit jump MP added to source/dist; four named regression suites pending CI/merge checks. No full scenario/deployment/exit integration. AGoAC Ch11 package verified 2026-11-21: agoac-140,153,158 promoted on exact four-way green main 249f3ba; 7/25 verified, 1 tested_case (148), 17 known_missing. No deploy, no Ch12. Ch11 PR#234 code/test package remains scoped to scenario victory/crippling/map exits with new tests, no deployment; registry Tested Case reflects partial code, not final certification. 7 Verified / 4 Tested Case / 14 Known Missing on branch only. FINAL 2026-11-22: Chapter 11 Scenarios closed 25/25 Verified; now 11 of 13 chapters Verified. Next pointer agoac-construction is NOT authorization to begin Chapter 12. Desert #2 WEST and Grassland #3 EAST permanently fixed; no deployment. 2026-11-23: Chapter 12 Construction 22/22 and its parent formally VERIFIED on publisher CAT3500D pp.14-15,49-55, exact green branch/main CI (678), Browser (52), Container and Sonar; main SHA f17526102169608480686e5e34e6742d28784c49. Next topic pointer agoac-equipment identifies still-not-audited Chapter 13 but does NOT authorize starting it; no deployment.",
-  "currentTopicId": "agoac-equipment",
+  "note": "Initial chapter-level work inventory, not exhaustive atomic extraction. No status inherited from BMM. No topic verified until all printed requirements, exceptions and interactions are audited and CI evidence is attached. Audit progress reports must state the current topic title, its ordinal out of all 13 topics, verified topic count, and number of topics remaining including the current one. Do not run deployment during the rules audit; retain CI, Container Smoke, Browser E2E and SonarQube Strict. Report merged and pending changes separately. Current user-mandated scope lock: audit only Sequence of Play (printed pp.6–7) until verified; do not start the next chapter without explicit approval. Later-chapter mechanics are deferred to their own topics. Test phase integration with existing mechanics, not their internal algorithms; a deferred detailed rule is not by itself a blocker when the current chapter's requirement is implemented and evidenced. Chapter 3 closure records the first three verified topics; currentTopicId identifies the next unverified topic but is not permission to audit it. Await explicit user authorization before Chapter 4. User-authorized scope now Chapter 4 only (Movement, printed pp.8–12); no Chapter 5 until explicit approval. Chapter 5 Combat (printed pp.13–21) authorized and reconciled; after closure the currentTopicId points to Chapter 6 as the next unverified topic only. Do not begin Chapter 6 without explicit user authorization. No deployment. User explicitly authorized Chapter 6 (Hit Location, printed pp.22–24) on 2026-11-19; no Chapter 7 until explicit approval; no deployment. Inventory added before verification, with verified promotion only after exact test evidence. Chapter 6 closure: all six hit-location requirements individually verified; source pages 22–24 inventoried, main Quality Gate passed. Chapter 7 is the next unverified topic, not permission to start it. No deployment. User authorized Chapter 7 only on 2026-11-19. First block covers ordinary physical attack eligibility, target-number rules, height/prone matrix and water. Charge/DFA special modifiers and cancellation consequences, individual weapons/club/punch choices and displacement timing remain for later blocks within this chapter. No deployment. FINAL 20.11.2026: Chapter 8 Damage source/code audit complete, twelve registered requirements Verified on exact green main cbcb9ece. currentTopicId now points to Chapter 9 (Heat) only as next unverified chapter; it does not authorize work on Chapter 9. No deployment. 21.11.2026 Chapter 9 Heat first detailed inventory registered 12 groups 109–120, not closed. Source CAT3500D printed pp.37–39 and errata v8.01; 118 known-missing and 120 simultaneous effects pending. Chapter 8 remains closed. No deployment. FINAL 2026-11-21: Heat Chapter 9 fully Verified 12/12 on exact four-way green main 94910663. Nine of thirteen AGoAC chapters verified; next chapter pointer only, no Chapter 10 work, no deployment. 21.11.2026 Ch10 Piloting/Displacement/Falling/Pilot Injury audited against printed pp.40–44 and official AGoAC errata v8.01; 19 atomic requirements (121–139) mapped to code/tests, 14 verified, 4 tested_case, 1 known_missing (p44 accidental-fall target impact height -1 errata). Remains open. No engine/deploy. 21.11.2026 Ch10 correction batch: errata accidental fall impact fixed in both engine copies; regression matrices for p41 PSR, 6 fall facings, 35 dry falls and 54 accidental collisions. On PR branch: 14 Verified, 5 Tested Case awaiting final CI/Browser/Smoke and post-merge strict Sonar; zero known-missing, not closed. No deploy. FINAL 2026-11-21: Ch10 Piloting/Displacement/Falling/Pilot Injury source-to-code closure, 19/19 independently Verified against printed pp.40–44 and official errata. Main 9b963f0 four-way quality gates all success, exact closure PR-head tests still required. Next chapter pointer to scenarios only, no Chapter11 work or deployment. Ch11 START 21.11.2026: 25 source-inventoried atomic groups 140–164; 4 tested cases for existing night/gale calculations with dedicated test matrix, 21 known missing. Chapter remains open. No deploy/no Ch12. Ch11 existing weather certification 21.11.2026: 4/25 atomic requirements independently Verified on exact main e12ebe6 and four-way quality gates; 21 remain Known Missing; chapter open. Ch11 rule batch 21.11.2026: scenario sides, initiative effects and moonlit jump MP added to source/dist; four named regression suites pending CI/merge checks. No full scenario/deployment/exit integration. AGoAC Ch11 package verified 2026-11-21: agoac-140,153,158 promoted on exact four-way green main 249f3ba; 7/25 verified, 1 tested_case (148), 17 known_missing. No deploy, no Ch12. Ch11 PR#234 code/test package remains scoped to scenario victory/crippling/map exits with new tests, no deployment; registry Tested Case reflects partial code, not final certification. 7 Verified / 4 Tested Case / 14 Known Missing on branch only. FINAL 2026-11-22: Chapter 11 Scenarios closed 25/25 Verified; now 11 of 13 chapters Verified. Next pointer agoac-construction is NOT authorization to begin Chapter 12. Desert #2 WEST and Grassland #3 EAST permanently fixed; no deployment. 2026-11-23: Chapter 12 Construction 22/22 and its parent formally VERIFIED on publisher CAT3500D pp.14-15,49-55, exact green branch/main CI (678), Browser (52), Container and Sonar; main SHA f17526102169608480686e5e34e6742d28784c49. Next topic pointer agoac-equipment identifies still-not-audited Chapter 13 but does NOT authorize starting it; no deployment. 2026-11-23 Chapter 13 last printed page=56 (not 57): ten source-referenced groups 187–196 independently audited against category descriptions and earlier p.55 printed weapon table; all 13 indexed chapter headings and 196 registered requirements now marked Verified, conditional on the new unit suite and merged main four-way quality gates. Not an exhaustive paragraph-by-paragraph transcription of every BattleTech AGoAC exception: this audit only certifies its enumerated register. No deployment. Scenario3 map Desert #2 WEST + Grassland #3 EAST unchanged.",
+  "currentTopicId": null,
   "topics": [
     {
       "id": "agoac-foundations",
@@ -735,10 +735,29 @@
       "id": "agoac-equipment",
       "title": "Weapons and equipment data and references",
       "pages": [
-        56,
-        57
+        56
       ],
-      "status": "not_audited"
+      "status": "verified",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "inventoryComplete": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "requirementIds": [
+          "agoac-187",
+          "agoac-188",
+          "agoac-189",
+          "agoac-190",
+          "agoac-191",
+          "agoac-192",
+          "agoac-193",
+          "agoac-194",
+          "agoac-195",
+          "agoac-196"
+        ],
+        "review": "All nine named weapon/equipment descriptions plus source-scope cross-reference inventoried on printed page 56 and page 55; numerical comparisons independently transcribed, actual combat packets, constructor Hatchet and advanced-equipment exclusion tested. Existing Chapter 12 and Combat edge evidence retained. Source baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 all four quality gates passed; PR new tests and merged main gates mandatory. No new rules added; chapter 11 map unchanged."
+      },
+      "reviewNote": "2026-11-23: final publisher page 56 audited visually, not page 57. Ten atomic reference groups agoac-187..196 source-linked; previous 17-row source table and engine cross-check confirmed. Parent Verified subject to exact PR and merged main CI/Browser/Smoke/Sonar acceptance; no deployment. Distinguish indexed 13/13 topic verification from exhaustive rulebook conformance."
     }
   ],
   "requirements": [
@@ -12462,6 +12481,566 @@
         },
         "report": "rules/agoac-ch12-source-review.md",
         "review": "CAT3500D pp.49,52–55: centralized source-cited field/step/page validation for strict engine, authenticated Hangar 422, UI save/launch, custom Game setup and invalid localStorage. Regresions cover malformed armor types/sections and Check-button bypass plus malicious equipment, ammo, actuators, collisions, overweight."
+      }
+    },
+    {
+      "id": "agoac-187",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "The chapter refers to the page-55 data, covers exactly seventeen standard box weapons plus Hatchet and Heat Sink, and does not make advanced technology part of basic AGoAC.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: reference chapter has exactly seventeen independently transcribed base weapons"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Reference scope and source table. p.56 opening; p.55 table; p.54 equipment boundary. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 opening; p.55 table; p.54 equipment boundary. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-188",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "All four autocannon calibers AC/2, AC/5, AC/10 and AC/20 match printed mass, slots, heat, damage, ranges and shots and resolve as direct-fire packets.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: all autocannon calibers match their source table and direct-fire packets"
+        },
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.54: split AC/20 restricts placement and runs in live battle"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Autocannons. p.56 Autocannons; p.55 Direct-Fire Ballistic Weapons. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Autocannons; p.55 Direct-Fire Ballistic Weapons. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-189",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "The base Flamer is a standard close-range direct-fire energy weapon with heat 3, damage 2, no magazine and p.55 ranges; flavor text does not authorize advanced flamer options.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: flamers retain their printed direct-fire stats without inventing infantry rules"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Flamers. p.56 Flamers; p.55 Direct-Fire Energy Weapons. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Flamers; p.55 Direct-Fire Energy Weapons. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-190",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "Standard Small, Medium and Large Laser use the printed base heat, armor damage, mass, slots and ranges and are not charged ammunition.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: three laser sizes match mass, heat, range and damage without ammunition"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Lasers. p.56 Lasers; p.55 Direct-Fire Energy Weapons. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Lasers; p.55 Direct-Fire Energy Weapons. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-191",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "Standard Machine Gun uses zero weapon heat, damage 2, short range, half-ton weapon mass and 200 shots/ton; half-ton ammo-bin exception is in earlier Construction rules.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: machine gun preserves its zero heat, two damage and 200-shot capacity"
+        },
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.54: two half-ton MG bins keep finite shots through shared combat firing"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Machine guns. p.56 Machine Guns; p.55 Ballistic Weapons; p.54. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Machine Guns; p.55 Ballistic Weapons; p.54. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-192",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "LRM and SRM base families use printed launcher racks, finite compatible ammunition and cluster damage resolution; descriptive guidance supplies no new attack mechanic.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D p.56: missile launcher family uses exact rack groups and finite ammunition"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Missile launchers. p.56 Missile Launchers; p.55 Missile Weapons. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Missile Launchers; p.55 Missile Weapons. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-193",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "All LRM 5/10/15/20 use six-hex minimum, printed long brackets, shots/ton and five-point cluster damage packets.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: LRM family has six-hex minimum and five-point cluster packets"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.21: indirect LRM modifiers use spotter movement and terrain but attacker range, with later spotter firing penalty"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Long-range missiles. p.56 Long-Range Missiles; p.55 Missile Weapons. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Long-Range Missiles; p.55 Missile Weapons. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-194",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "All SRM 2/4/6 use no minimum range, printed short brackets and two damage per missile with one packet per missile.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: SRM family has no minimum and applies two damage per missile"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC pp.23–24: all base launcher cluster rolls allocate separate SRM or five-point LRM packets"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Short-range missiles. p.56 Short-Range Missiles; p.55 Missile Weapons. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Short-Range Missiles; p.55 Missile Weapons. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-195",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "Base PPC retains 10 heat, 10 damage, 3 minimum range, mass 7 tons and 3 critical slots; advanced ER PPC is outside base scope.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: PPC keeps ten heat, ten damage and three-hex minimum"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Particle projector cannons. p.56 Particle Projector Cannons; p.55 Energy Weapons. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Particle Projector Cannons; p.55 Energy Weapons. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
+      }
+    },
+    {
+      "id": "agoac-196",
+      "topicId": "agoac-equipment",
+      "pages": [
+        56
+      ],
+      "statement": "Basic Hatchet is legal in the box rulebook with a biped arm mount, chassis-based critical size and physical damage as certified previously under combat/Construction.",
+      "status": "verified",
+      "evidence": [
+        {
+          "file": "tests/agoac-ch13-weapon-reference.mjs",
+          "test": "CAT3500D pp.55–56: Hatchet is a basic physical weapon with chassis-based criticals"
+        },
+        {
+          "file": "tests/agoac-foundations.mjs",
+          "test": "AGoAC p.28: hatchet side arc and optional hit tables apply four only when not forced"
+        }
+      ],
+      "reviewNote": "2026-11-23 independent source page-56 reference and page-55 numerical table audit: Physical weapons. p.56 Physical Weapons; p.55 Hatchet; p.28. Basic 3025 scope only; no supplemental mechanics inferred. Main baseline 3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6 previously passed all four gates; new reference and unit tests must also pass branch and post-merge CI before closure.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018), original publisher PDF, printed pp.55–56; final reference text visually compared",
+        "verifiedOn": "2026-11-23",
+        "testedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "testedTree": "9c7e2b1db0e3a12ab43a7b06184e74c8014e90ec",
+        "mergedSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45076774615,
+            "jobId": 137375648664,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45076774654,
+            "jobId": 137375648829,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45078438569,
+            "jobId": 137380835473,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45076774587,
+          "jobId": 137375648438,
+          "conclusion": "success",
+          "headSha": "3f7509e8fd6d0ebdfaf4e7fb9cb7fdbef793f3b6"
+        },
+        "report": "rules/agoac-ch13-source-review.md",
+        "review": "Source visual review: p.56 Physical Weapons; p.55 Hatchet; p.28. Printed category mapped to exact WEAPON_SPECS / rulebook / constructor / actual Game attack data with independent named test; original page 56 descriptive text does not add new combat rules."
       }
     }
   ]
