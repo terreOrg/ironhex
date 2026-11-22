@@ -1,6 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {construct,LOCS} from '../dist/construction.js';
+import {Game} from '../dist/engine.js';
 
 // Independent CAT3500D (2018) printed p.50 table: CT, side torso, arms, legs.
 // Do not derive the expected values from the engine under test.
@@ -235,4 +236,114 @@ test('CAT3500D p.49: invalid equipment locations reject with diagnostics instead
    assert.equal(r.diagnostics.length,r.errors.length);
   }
  }
+});
+
+
+test('CAT3500D p.54: split AC/20 restricts placement and runs in live battle',()=>{
+ const c=blank(100,3);
+ c.equipment=[
+  {type:'AC/20',location:'RA',slot:5,splitLocation:'RT',splitSlot:1,splitCount:8},
+  {type:'ammo',location:'LT',slot:1,weapon:0,mass:1},
+  {type:'Medium Laser',location:'LT',slot:2,rear:true}
+ ];
+ const design=ok(c);
+ assert.deepEqual(design.unit.slots.RA.slice(4,12),Array(8).fill('w:0'));
+ assert.deepEqual(design.unit.slots.RT.slice(0,2),Array(2).fill('w:0'));
+ assert.deepEqual(design.unit.weapons[0].locations,['RA','RT']);
+ assert.equal(design.unit.weapons[0].ammo,5);
+ for(const splitLocation of ['LL','HD','LT','__proto__']){
+  const bad=structuredClone(c);bad.equipment[0].splitLocation=splitLocation;
+  const r=construct(bad,{strictAgoac:true});
+  assert(r.errors.some(e=>e.includes('разделение')),splitLocation);
+  assert(r.diagnostics.some(d=>d.code==='ac20_split'&&d.page===54));
+ }
+ for(const splitCount of [0,-1,10,1.5]){
+  const bad=structuredClone(c);bad.equipment[0].splitCount=splitCount;
+  assert(construct(bad).errors.some(e=>e.includes('разделение')),String(splitCount));
+ }
+ const over=structuredClone(c);over.equipment[0].splitSlot=12;
+ assert(construct(over).errors.some(e=>e.includes('RT 12:')));
+ const other=structuredClone(c);other.equipment[0].type='AC/10';
+ assert(construct(other).errors.some(e=>e.includes('только для AC/20')));
+ const game=new Game({rng:()=>.99});
+ for(const tile of game.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ const attacker=game.units[0],target=game.units[2];
+ Object.assign(attacker,design.unit,{q:0,r:0,facing:0,twist:0});
+ Object.assign(target,{q:2,r:0});
+ const gun=attacker.weapons[0],rear=attacker.weapons[1];
+ assert(game.arc(attacker,target,gun));
+ assert(!game.arc(attacker,target,rear));
+ assert(!game.arc(attacker,{q:-2,r:0},gun));
+ assert(game.arc(attacker,{q:-2,r:0},rear));
+ assert(game.tiles.some(tile=>(tile.q||tile.r)&&
+  game.arc(attacker,tile,{...gun,locations:undefined})&&!game.arc(attacker,tile,gun)),
+  'split torso/arm gun must have a narrower arc than plain arm gun');
+ assert.equal(game.preview(0,2,0).legal,true);
+ game.phase='fire';game.activeTeam=attacker.team;
+ game.queue=[attacker.team];game.actingId=null;
+ const fired=game.declareFire(0,[{index:0,target:2}]);
+ assert.equal(fired.ok,true,fired.error);
+ assert.equal(gun.ammo,4);
+ const resolution=game.resolveFire();
+ assert.equal(resolution.length,1);
+ assert.equal(resolution[0].shots.length,1);
+ assert.equal(resolution[0].shots[0].hit,true);
+ assert.equal(attacker.pendingHeat,7);
+});
+
+test('CAT3500D p.54: two half-ton MG bins keep finite shots through shared combat firing',()=>{
+ const c=blank(100,3);
+ c.equipment=[
+  {type:'Machine Gun',location:'RA',slot:5},
+  {type:'Machine Gun',location:'LA',slot:5},
+  {type:'ammo',location:'LT',slot:1,weapon:0,mass:0.5},
+  {type:'ammo',location:'LT',slot:2,weapon:1,mass:0.5}
+ ];
+ const result=ok(c),u=result.unit;
+ assert.equal(result.weights.ammo,1);
+ assert.deepEqual(u.bins.map(b=>b.mass),[0.5,0.5]);
+ assert.deepEqual(u.bins.map(b=>b.shots),[100,100]);
+ assert.deepEqual(u.bins.map(b=>b.slot),[0,1]);
+ assert.deepEqual(u.weapons.map(w=>w.shared),[0,0]);
+ assert.deepEqual(u.weapons.map(w=>w.ammo),[200,200]);
+ const game=new Game({rng:()=>.99});
+ for(const tile of game.tiles)Object.assign(tile,{type:'plain',height:0,depth:0,surface:0});
+ const attacker=game.units[0],target=game.units[2];
+ Object.assign(attacker,u,{q:0,r:0,facing:0});
+ Object.assign(target,{q:2,r:0});
+ game.phase='fire';game.activeTeam=attacker.team;
+ game.queue=[attacker.team];game.actingId=null;
+ const fired=game.declareFire(0,[{index:0,target:2},{index:1,target:2}]);
+ assert.equal(fired.ok,true,fired.error);
+ assert.deepEqual(attacker.weapons.map(w=>w.ammo),[198,198]);
+ const resolved=game.resolveFire();
+ assert.equal(resolved.length,1);
+ assert.equal(resolved[0].shots.length,2);
+ assert.equal(attacker.bins.reduce((sum,b)=>sum+b.shots,0),198);
+ const missing=structuredClone(c);missing.equipment.pop();
+ assert(construct(missing,{strictAgoac:true}).errors.some(e=>e.includes('не менее 1 т')));
+});
+
+test('CAT3500D p.54: malicious weapon names and split sections reject without crashing',()=>{
+ for(const type of ['__proto__','constructor','toString','hasOwnProperty']){
+  const c=blank(100,3);c.equipment=[{type,location:'RA',slot:5}];
+  const r=construct(c,{strictAgoac:true});
+  assert(r.errors.some(e=>e.includes('Неизвестное оборудование')),type);
+  assert.equal(r.errors.length,r.diagnostics.length);
+  assert(Number.isFinite(r.total),'no NaN tonnage');
+ }
+ for(const location of ['__proto__','constructor','toString']){
+  const c=blank(100,3);
+  c.equipment=[{type:'AC/20',location,slot:5,
+   splitLocation:'RT',splitSlot:1,splitCount:8},
+   {type:'ammo',location:'LT',slot:1,weapon:0,mass:1}];
+  const r=construct(c,{strictAgoac:true});
+  assert(r.errors.some(e=>e.includes('разделение')),location);
+  assert(r.diagnostics.some(d=>d.code==='ac20_split'));
+ }
+ const c=blank(100,3);
+ c.equipment=[{type:'Medium Laser',location:'LT',slot:1,rear:'false'}];
+ const r=construct(c,{strictAgoac:true});
+ assert(r.errors.some(e=>e.includes('задняя арка должна быть логическим')));
+ assert(r.diagnostics.some(d=>d.code==='weapon_arc'&&d.page===54));
 });
