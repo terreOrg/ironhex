@@ -727,9 +727,9 @@
           "agoac-185",
           "agoac-186"
         ],
-        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review. Third subpacket: p.54 per-gun ammo minimum now enforced only for user-authored designs, while frozen original printed scenario MTFs preserve canonical shared SRM-6 ammo source. No premature certification; full CI and source regression required. Fourth packet: constructor-to-live-combat split AC/20 arc and ammo consumption, individual ammo bin masses/shots on the technical record, and defensive input validation. Verification remains pending. Direct page-54 source comparison corrected previously incorrect claim that rear arm mounts are prohibited. Constructor and regression now permit them. Fifth packet implements actual constructor and technical-sheet fixes, not only tests: order-independent weapons/ammo; safe per-bin weight; specific API/UI field diagnostics; rear-mounted weapon arc on record and Roll Again placeholders. No scenario, chapter 13 or deployment changes. Sixth packet addresses direct constructor trust boundary: basic AGoAC-only equipment checked within strict engine, not just API and MechLab; native overmass maps to final record step and printed page; E2E/CI/PG/Sonar pending. Historic non-strict MTF import remains separate."
+        "review": "First code-first/source-first inventory of 22 atomic groups against engine, market/hangar and MechLab. Existing basic calculations, unsupported quad rejection, armor/slot bounds and source data identified. Missing/unchecked: source conflict on printed ammo per-weapon minimum vs shared magazines, running MP record metadata, completed record sheet, backend/GUI reason parity and edge tests. The first PR adds source-linked diagnostics and corrects illegal AC20 split/arm rear/invalid ammo; none are marked Verified until passing PR/main checks. Second packet p.51/54/55: running MP added; complete editable draft record shown; supplemental CASE and CASE II rejected by base UI/API with printed page, Hatchet and Heat Sink retained. No Verified claim until CI/Browser/PG/Sonar and independent source edge review. Third subpacket: p.54 per-gun ammo minimum now enforced only for user-authored designs, while frozen original printed scenario MTFs preserve canonical shared SRM-6 ammo source. No premature certification; full CI and source regression required. Fourth packet: constructor-to-live-combat split AC/20 arc and ammo consumption, individual ammo bin masses/shots on the technical record, and defensive input validation. Verification remains pending. Direct page-54 source comparison corrected previously incorrect claim that rear arm mounts are prohibited. Constructor and regression now permit them. Fifth packet implements actual constructor and technical-sheet fixes, not only tests: order-independent weapons/ammo; safe per-bin weight; specific API/UI field diagnostics; rear-mounted weapon arc on record and Roll Again placeholders. No scenario, chapter 13 or deployment changes. Sixth packet addresses direct constructor trust boundary: basic AGoAC-only equipment checked within strict engine, not just API and MechLab; native overmass maps to final record step and printed page; E2E/CI/PG/Sonar pending. Historic non-strict MTF import remains separate. 2026-11-22: 18/22 independently source/edge-reviewed children promoted Verified on identical PR/main tree evidence; all 77 engine masses, 17 structure rows, 17 standard weapon rows compared to publisher CAT3500D. Four pending child IDs: 182,183,185,186; remain tested_case. See rules/agoac-ch12-source-review.md."
       },
-      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work. 2026-11-22 second packet source-checked p.51/54/55, post-merge checks pending."
+      "reviewNote": " 2026-11-22: 22 atomic Construction requirements inventoried with source references. Most implemented partially, but no rules certified yet. No chapter 13 work. 2026-11-22 second packet source-checked p.51/54/55, post-merge checks pending. 2026-11-22: 18 of 22 individual requirements source-certified; chapter remains known_missing pending #182/#183/#185/#186."
     },
     {
       "id": "agoac-equipment",
@@ -11189,14 +11189,52 @@
         49
       ],
       "statement": "Standard Biped BattleMech chassis uses 20–100 t in 5-ton increments and 10% structure mass.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.49-50: chassis tonnage 20 through 100 in increments of five, structure ten percent"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (tonnage). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49-50: chassis tonnage 20 through 100 in increments of five, structure ten percent. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (tonnage). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49-50: chassis tonnage 20 through 100 in increments of five, structure ten percent. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed pp.49–50; all legal 20–100t chassis rows, 5t granularity, nonlegal boundaries and ton/10 structural mass reviewed against strict engine and named test. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed pp.49–50; all legal 20–100t chassis rows, 5t granularity, nonlegal boundaries and ton/10 structural mass reviewed against strict engine and named test."
+      }
     },
     {
       "id": "agoac-166",
@@ -11205,14 +11243,52 @@
         50
       ],
       "statement": "Internal Structure Table maps standard tonnage to fixed head/torso/arm/leg structure points; locations cannot redistribute structure.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.50: all seventeen internal-structure rows are fixed per chassis section"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (structure). Checked CAT3500D original printed p.50 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.50: all seventeen internal-structure rows are fixed per chassis section. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (structure). Checked CAT3500D original printed p.50 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.50: all seventeen internal-structure rows are fixed per chassis section. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed p.50; independently compared all 17 total-mass rows with fixed CT/side/arm/leg source table. No redistribution and fixed HD=3; named row-complete test passes. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.50; independently compared all 17 total-mass rows with fixed CT/side/arm/leg source table. No redistribution and fixed HD=3; named row-complete test passes."
+      }
     },
     {
       "id": "agoac-167",
@@ -11221,14 +11297,52 @@
         49
       ],
       "statement": "Preassigned critical slots reserve life support, sensors, cockpit, fusion engine, gyro, limb actuators; unoccupied slots remain free.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.49: preassigned systems reserve exact printed critical slots"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49: preassigned systems reserve exact printed critical slots. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49: preassigned systems reserve exact printed critical slots. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed p.49 and standard record; preassigned six head, ten CT and limb system slots, available per location and unchanged fixed system positioning reviewed against constructor slots and named test. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.49 and standard record; preassigned six head, ten CT and limb system slots, available per location and unchanged fixed system positioning reviewed against constructor slots and named test."
+      }
     },
     {
       "id": "agoac-168",
@@ -11237,14 +11351,52 @@
         49
       ],
       "statement": "Critical slots may hold at most one component, and all multi-slot items must occupy contiguous slots within their allowed location.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.49: multi-slot weapons occupy adjacent free slots with no overlap"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49: multi-slot weapons occupy adjacent free slots with no overlap. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49: multi-slot weapons occupy adjacent free slots with no overlap. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed p.49; constructor place() rejects collisions, out-of-range and noncontiguous multi-slot components; atomic contiguous placement checked, AC/20 special split reviewed separately at #181. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.49; constructor place() rejects collisions, out-of-range and noncontiguous multi-slot components; atomic contiguous placement checked, AC/20 special split reviewed separately at #181."
+      }
     },
     {
       "id": "agoac-169",
@@ -11253,14 +11405,52 @@
         49
       ],
       "statement": "The hand actuator may be removed alone; removing the lower arm actuator always removes its hand, freeing the correct critical slots.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D pp.49-51: hand/lower-arm removals preserve mandatory upper actuators"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Actuators (removeHandActuators). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D pp.49-51: hand/lower-arm removals preserve mandatory upper actuators. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Actuators (removeHandActuators). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D pp.49-51: hand/lower-arm removals preserve mandatory upper actuators. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed pp.49,51; lower actuator removal also removes hand, hand alone removable, upper and shoulder remain; malformed/duplicated selectors rejected; source test checked. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed pp.49,51; lower actuator removal also removes hand, hand alone removable, upper and shoulder remain; malformed/duplicated selectors rejected; source test checked."
+      }
     },
     {
       "id": "agoac-170",
@@ -11269,14 +11459,52 @@
         51
       ],
       "statement": "Standard fusion engine rating equals tonnage × Walking MP with published rating/weight table 20–400.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D pp.51-52: fusion rating and printed engine mass boundaries"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (walk). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D pp.51-52: fusion rating and printed engine mass boundaries. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (walk). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D pp.51-52: fusion rating and printed engine mass boundaries. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed pp.51–52; checked all 77 engine table entries (20–400 step 5) one by one against construction masses: ZERO mismatches. Legal rating=ton*walk, endpoint/boundary tests checked. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed pp.51–52; checked all 77 engine table entries (20–400 step 5) one by one against construction masses: ZERO mismatches. Legal rating=ton*walk, endpoint/boundary tests checked."
+      }
     },
     {
       "id": "agoac-171",
@@ -11285,7 +11513,7 @@
         51
       ],
       "statement": "Running MP equals ceiling(1.5 × Walking MP), independent of Jump MP.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/construction.mjs",
@@ -11296,7 +11524,45 @@
           "test": "CAT3500D p.51: running is ceil walking times 1.5, independent of jumping"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: Constructor returns run=ceil(walk*1.5) and record sheet uses it; independent tests cover 5→8 and 3→5. Not Verified before exact post-merge evidence. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: running is ceil walking times 1.5, independent of jumping. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: Constructor returns run=ceil(walk*1.5) and record sheet uses it; independent tests cover 5→8 and 3→5. Not Verified before exact post-merge evidence. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: running is ceil walking times 1.5, independent of jumping. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed p.51, Walking MP*1.5 round up, irrespective of jumping; unit.run and MechLab data use the result; all walking edge cases in source-linked test. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.51, Walking MP*1.5 round up, irrespective of jumping; unit.run and MechLab data use the result; all walking edge cases in source-linked test."
+      }
     },
     {
       "id": "agoac-172",
@@ -11305,14 +11571,52 @@
         51
       ],
       "statement": "Each jump jet provides exactly one Jump MP, count ≤ Walking MP, and weighs 0.5/1/2 tons by chassis mass band.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.51: per-jet mass is 0.5/1/2 tons across published tonnage bands"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: per-jet mass is 0.5/1/2 tons across published tonnage bands. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: per-jet mass is 0.5/1/2 tons across published tonnage bands. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed p.51 three weight bands 20–55/60–85/90–100, jump<=walk and installed jet count; boundary tests cover 55/60/85/90 and per-jet tons. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.51 three weight bands 20–55/60–85/90–100, jump<=walk and installed jet count; boundary tests cover 55/60/85/90 and per-jet tons."
+      }
     },
     {
       "id": "agoac-173",
@@ -11321,14 +11625,52 @@
         51
       ],
       "statement": "Jump jets require one separate slot each, only in torso or leg locations; desired Jump MP equals installed count.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.51: each jump jet requires one torso/leg critical slot and equal Jump MP"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump_slots). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: each jump jet requires one torso/leg critical slot and equal Jump MP. No certification until merge and exact main gates; no scenario map modification."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump_slots). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: each jump jet requires one torso/leg critical slot and equal Jump MP. No certification until merge and exact main gates; no scenario map modification. 2026-11-22 individual source/edge certification: Printed p.51 jet slot restrictions; exactly one slot per jet in torso/leg, prohibited head/arms, missing/extra jets and overlapping slots rejected; source test. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.51 jet slot restrictions; exactly one slot per jet in torso/leg, prohibited head/arms, missing/extra jets and overlapping slots rejected; source test."
+      }
     },
     {
       "id": "agoac-174",
@@ -11337,14 +11679,52 @@
         52
       ],
       "statement": "Standard gyro mass equals ceiling(engine rating/100) tons, reserves four center torso critical slots.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.52: gyro mass steps and four mandatory center-torso critical slots"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (gyro). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: gyro mass steps and four mandatory center-torso critical slots; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (gyro). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: gyro mass steps and four mandatory center-torso critical slots; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 individual source/edge certification: Printed p.52; ceil(rating/100) gyro tonnage and four reserved CT criticals; boundary and installed system tests. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.52; ceil(rating/100) gyro tonnage and four reserved CT criticals; boundary and installed system tests."
+      }
     },
     {
       "id": "agoac-175",
@@ -11353,14 +11733,52 @@
         52
       ],
       "statement": "Standard cockpit weighs 3 tons and occupies mandatory head location alongside support and sensors.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.52: three-ton cockpit reserves the printed head slot"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (cockpit). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: three-ton cockpit reserves the printed head slot; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Control systems (cockpit). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: three-ton cockpit reserves the printed head slot; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 individual source/edge certification: Printed p.52; cockpit exactly three tons and fixed head slot, surrounded by mandatory sensors/life support; test verifies on 20,55,100t. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.52; cockpit exactly three tons and fixed head slot, surrounded by mandatory sensors/life support; test verifies on 20,55,100t."
+      }
     },
     {
       "id": "agoac-176",
@@ -11369,14 +11787,52 @@
         52
       ],
       "statement": "Armor head cap is nine; other locations cap front+rear total at twice internal structure, including torso rear allocation.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.52: armor enforces nine head points and twice section structure"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: armor enforces nine head points and twice section structure; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor). Checked CAT3500D original printed p.52 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.52: armor enforces nine head points and twice section structure; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 individual source/edge certification: Printed pp.51–52; verified all caps derive from fixed structure values, head up to 9, each torso front+rear not above 2x structure; illegal value and rear-overflow tests. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed pp.51–52; verified all caps derive from fixed structure values, head up to 9, each torso front+rear not above 2x structure; illegal value and rear-overflow tests."
+      }
     },
     {
       "id": "agoac-177",
@@ -11385,14 +11841,52 @@
         53
       ],
       "statement": "Standard armor provides 16 points/ton in 0.5-ton increments (eight points per half-ton); unassigned points become unused.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.53: standard armor rounds up to eight points per half-ton"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor_weight). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: standard armor rounds up to eight points per half-ton; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Armor (armor_weight). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: standard armor rounds up to eight points per half-ton; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 individual source/edge certification: Printed pp.52–53; 16 armor points/t, half-ton lots, ceil(total/8) half-ton weight, leftover points cannot be assigned outside armor caps; boundary point counts checked. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed pp.52–53; 16 armor points/t, half-ton lots, ceil(total/8) half-ton weight, leftover points cannot be assigned outside armor caps; boundary point counts checked."
+      }
     },
     {
       "id": "agoac-178",
@@ -11401,14 +11895,52 @@
         53
       ],
       "statement": "Fusion engine provides ten free heat sinks; additional sinks weigh one ton and engine integral capacity equals floor(rating/25).",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.53: ten free sinks and integral capacity floor engine rating over twenty-five"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sinks). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: ten free sinks and integral capacity floor engine rating over twenty-five; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sinks). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: ten free sinks and integral capacity floor engine rating over twenty-five; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 individual source/edge certification: Printed p.53; first ten sinks free by tonnage, subsequent one ton per sink, integral capacity floor(rating/25) affects only critical slot allocation; verified sink count/engine boundary cases. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.53; first ten sinks free by tonnage, subsequent one ton per sink, integral capacity floor(rating/25) affects only critical slot allocation; verified sink count/engine boundary cases."
+      }
     },
     {
       "id": "agoac-179",
@@ -11417,14 +11949,52 @@
         53
       ],
       "statement": "Each heat sink exceeding integral capacity uses exactly one critical slot in any legal open location; free sinks may also need critical space.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.53: each nonintegral heat sink occupies a separate open critical slot"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sink_slots). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: each nonintegral heat sink occupies a separate open critical slot; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Heat sinks (sink_slots). Checked CAT3500D original printed p.53 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.53: each nonintegral heat sink occupies a separate open critical slot; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 individual source/edge certification: Printed p.53; all sinks beyond integral capacity must each consume one legal open critical even when among free ten; anywhere legal; missing and collision cases rejected in tested constructor. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.53; all sinks beyond integral capacity must each consume one legal open critical even when among free ten; anywhere legal; missing and collision cases rejected in tested constructor."
+      }
     },
     {
       "id": "agoac-180",
@@ -11433,7 +12003,7 @@
         54
       ],
       "statement": "Weapons must use published standard tonnage and critical capacity and be installed contiguously in permitted sections.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
@@ -11444,7 +12014,45 @@
           "test": "CAT3500D p.55: strict construction itself rejects later technology, while historical imports remain possible"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapons). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.54: standard PPC and medium laser preserve printed mass and contiguous slot sizes; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 Ch12 engine patch: strict constructor itself rejects out-of-box equipment with exact p.55 row, UI consumes the same canonical reason, Hangar preserves authenticated 422 contract, and overmass is classified as Step 8 on p.54. Pending branch+main gates and full source audit; not yet Verified."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (weapons). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 Ch12 second source-to-engine edge packet adds independent named regression for CAT3500D p.54: standard PPC and medium laser preserve printed mass and contiguous slot sizes; this is TESTED CASE, not VERIFIED until post-merge exact gates and cross-surface review. 2026-11-22 Ch12 engine patch: strict constructor itself rejects out-of-box equipment with exact p.55 row, UI consumes the same canonical reason, Hangar preserves authenticated 422 contract, and overmass is classified as Step 8 on p.54. Pending branch+main gates and full source audit; not yet Verified. 2026-11-22 individual source/edge certification: Printed pp.54–55; independently compared ALL 17 standard energy/ballistic/missile WEAPON_SPECS rows (heat/damage/minimum/ranges/mass/critical/ammo) with book: ZERO mismatches. Hatchet weight and slots chassis-based, restricted arm; strict engine excludes advanced gear, contiguous weapon placements and constructor-to-Game firing tested. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed pp.54–55; independently compared ALL 17 standard energy/ballistic/missile WEAPON_SPECS rows (heat/damage/minimum/ranges/mass/critical/ammo) with book: ZERO mismatches. Hatchet weight and slots chassis-based, restricted arm; strict engine excludes advanced gear, contiguous weapon placements and constructor-to-Game firing tested."
+      }
     },
     {
       "id": "agoac-181",
@@ -11453,14 +12061,52 @@
         54
       ],
       "statement": "Only AC/20 may be split between adjacent torso/arm sections (never legs), with more restrictive firing arc.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
           "test": "CAT3500D p.54: split AC/20 restricts placement and runs in live battle"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (ac20_split). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Weapons (ac20_split). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 individual source/edge certification: Printed p.54; AC/20 only exception to contiguous single-section placement, restricted to adjacent torso/arm pairs, no leg; 10 critical slots distributed, more restrictive torso arc and live fire/ammo demonstrated. Count and invalid pair cases rejected. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.54; AC/20 only exception to contiguous single-section placement, restricted to adjacent torso/arm pairs, no leg; 10 critical slots distributed, more restrictive torso arc and live fire/ammo demonstrated. Count and invalid pair cases rejected."
+      }
     },
     {
       "id": "agoac-182",
@@ -11521,7 +12167,7 @@
         54
       ],
       "statement": "Ammo bins consume one slot each, full 1-ton bins except machine guns optionally 0.5 ton; total and shots must be finite.",
-      "status": "tested_case",
+      "status": "verified",
       "evidence": [
         {
           "file": "tests/agoac-ch12-design-gates.mjs",
@@ -11532,7 +12178,45 @@
           "test": "CAT3500D p.54: wrong ammo references receive row-specific reason and do not add phantom weight"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_bins). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Ammunition (ammo_bins). Checked CAT3500D original printed p.54 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 integrated split-AC20 fire, front/rear arc, shared finite ammo and record-sheet bin tests; tested_case until source certification and exact main CI. 2026-11-22 engine-change packet: independent of editor row order, ammunition is resolved after weapons; invalid bins do not add phantom tonnage; API returns the exact invalid row/field; record explicitly marks rear mounts and unoccupied Roll Again slots. Remains tested_case until exact post-merge checks and source conformance. 2026-11-22 individual source/edge certification: Printed p.54; each 1t ammo bin and 0.5t machine-gun bin consumes one critical slot; valid shot count finite, invalid half-ton/occupied/unknown references reject without mass; shared finite ammo consumed in combat. PR head 4dd7073/tree 00f7c69; identical main tree 3e38d19; CI 671/671, Browser, PG smoke, main Sonar green. Report rules/agoac-ch12-source-review.md.",
+      "audit": {
+        "sourceChecked": true,
+        "edgeCasesChecked": true,
+        "sourceEdition": "BattleTech: A Game of Armored Combat CAT3500D (2018) printed pp.49–55, publisher PDF, all 17 structure, all 77 fusion engine and all 17 base weapon rows compared",
+        "verifiedOn": "2026-11-22",
+        "testedSha": "4dd7073ccd1dde7892c9d9b517ec8ead194bb40e",
+        "testedTree": "00f7c69e7e955e6a88d68daba94f3f82067a62d8",
+        "mergedSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33",
+        "checks": [
+          {
+            "name": "Ironhex CI",
+            "runId": 45063730458,
+            "jobId": 137335155579,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Browser E2E",
+            "runId": 45063730554,
+            "jobId": 137335242499,
+            "conclusion": "success"
+          },
+          {
+            "name": "Ironhex Container Smoke",
+            "runId": 45063730459,
+            "jobId": 137335159177,
+            "conclusion": "success"
+          }
+        ],
+        "mainQualityGate": {
+          "name": "Ironhex SonarQube",
+          "runId": 45064863816,
+          "jobId": 137338650851,
+          "conclusion": "success",
+          "headSha": "3e38d19afe5eb3b739c202feeafeb917844ecb33"
+        },
+        "report": "rules/agoac-ch12-source-review.md",
+        "review": "Printed p.54; each 1t ammo bin and 0.5t machine-gun bin consumes one critical slot; valid shot count finite, invalid half-ton/occupied/unknown references reject without mass; shared finite ammo consumed in combat."
+      }
     },
     {
       "id": "agoac-185",
