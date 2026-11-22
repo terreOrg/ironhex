@@ -430,3 +430,34 @@ test('CAT3500D p.54: wrong ammo references receive row-specific reason and do no
   'occupied ammo slots cannot contribute phantom installed mass');
  assert.equal(blocked.unit.bins.length,0);
 });
+
+
+test('CAT3500D p.55: strict construction itself rejects later technology, while historical imports remain possible',()=>{
+ for(const [item,index] of [
+  [{type:'ER PPC',location:'RA',slot:5},0],
+  [{type:'case',location:'LT',slot:1},0]
+ ]){
+  const c=blank(100,3);c.equipment.push(item);
+  const row=c.equipment.length-1;
+  const strict=construct(c,{strictAgoac:true});
+  assert(strict.errors.some(e=>e.includes('вне таблицы AGoAC')));
+  assert(strict.diagnostics.some(d=>
+   d.code==='not_in_box_rulebook'&&d.page===55&&d.step===7&&
+   d.field==='equipment.'+row+'.type'));
+  const legacy=construct(c);
+  assert(!legacy.errors.some(e=>e.includes('вне таблицы AGoAC')),
+   'source-authoritative historical imports retain their separate non-strict path');
+ }
+});
+
+test('CAT3500D pp.50,54: excess mass is diagnosed at final sheet step 8, not chassis step 1',()=>{
+ const c=blank(20,1);
+ c.equipment.push(
+  {type:'PPC',location:'RA',slot:5},
+  {type:'PPC',location:'LA',slot:5},
+  {type:'PPC',location:'LT',slot:1});
+ const r=construct(c,{strictAgoac:true});
+ assert(r.errors.some(e=>e.includes('Превышение массы')));
+ assert(r.diagnostics.some(d=>d.code==='overweight'&&d.step===8&&
+  d.page===54&&d.field==='tonnage'));
+});

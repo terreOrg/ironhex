@@ -265,3 +265,19 @@ test('CAT3500D p.54: authenticated hangar accepts ammo before guns and locates i
   error.details.some(d=>d.field==='equipment.2.mass'&&
    d.code==='ammunition'&&d.page===54));
 });
+
+
+test('CAT3500D p.55: Hangar preserves explicit unsupported-equipment error despite strict engine guard',()=>{
+ const config={name:'Out-of-box',tonnage:100,walk:3,jump:0,sinks:10,
+  armor:{HD:9,CT:0,LT:0,RT:0,LA:0,RA:0,LL:0,RL:0},
+  rear:{CT:0,LT:0,RT:0},
+  equipment:[{type:'ER PPC',location:'RA',slot:5}]};
+ assert.throws(()=>validateDesign({config}),e=>
+  e.status===422&&e.code==='unsupported_rulebook_equipment'&&
+  e.details.some(d=>d.field==='equipment.0.type'&&d.page===55&&
+    d.code==='not_in_box_rulebook'));
+ const source=readFileSync(new URL('../apps/web/src/mechlab.js',import.meta.url),'utf8');
+ assert(source.includes('construct(c,{strictAgoac:true})'));
+ assert(!source.includes('notInBook'),
+  'client must consume one canonical constructor diagnostic, not duplicate it');
+});

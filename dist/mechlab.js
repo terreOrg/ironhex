@@ -1,6 +1,6 @@
 import {construct,example,EQUIPMENT,LOCS} from './construction.js';
 import {ammoBinsFor} from './equipment.js';
-import {BASE_WEAPONS,outOfBookEquipment} from './rulebook.js';
+import {BASE_WEAPONS} from './rulebook.js';
 const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let currentHangarId=new URL(location.href).searchParams.get('mech');
 let marketOwned=false,installedConfig=null,equipmentStock={};
@@ -68,21 +68,12 @@ function renderDesignRecord(result,diagnostics){
   '<p class="hint">Лист проекта по шагу 8, с. 54. При наличии ошибок сохранение и бой запрещены.</p>';
 }
 function check(){
- const r=construct(c,{strictAgoac:true}),notInBook=outOfBookEquipment(c);
+ const r=construct(c,{strictAgoac:true});
  const diagnostics=[...(r.diagnostics||[])];
  if(!String(c.name||'').trim()){
   const message='Название меха обязательно перед сохранением.';
   r.errors.push(message);
   diagnostics.push({code:'name_required',field:'name',step:8,page:54,message});
- }
- if(notInBook.length){
-  for(const [index,item] of c.equipment.entries()){
-   if(!notInBook.includes(item.type))continue;
-   const message=item.type+': отсутствует в таблице A Game of Armored Combat (с. 55). Снимите компонент или используйте расширенные правила.';
-   r.errors.push(message);
-   diagnostics.push({code:'unsupported_equipment',
-    field:'equipment.'+index+'.type',step:7,page:55,message});
-  }
  }
  document.querySelectorAll('[aria-invalid="true"]').forEach(el=>el.removeAttribute('aria-invalid'));
  for(const d of diagnostics){

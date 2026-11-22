@@ -26,13 +26,6 @@ export function validateDesign(input) {
     throw new AuthError(422,'invalid_design');
   }
   if (JSON.stringify(c).length > 6400) throw new AuthError(422,'invalid_design');
-  let result;
-  try { result = construct(c,{strictAgoac:true}); }
-  catch { throw new AuthError(422,'invalid_design'); }
-  if (result.errors.length || !Number.isFinite(result.total) ||
-      !Number.isFinite(result.remaining) || result.remaining < -0.001) {
-    throw new AuthError(422,'invalid_design',result.diagnostics||[]);
-  }
   const supplemental=outOfBookEquipment(c);
   if(supplemental.length){
     const details=c.equipment.flatMap((item,index)=>
@@ -43,6 +36,13 @@ export function validateDesign(input) {
           '(с. 55). Уберите компонент или используйте отдельные расширенные правила.'
       }]:[]);
     throw new AuthError(422,'unsupported_rulebook_equipment',details);
+  }
+  let result;
+  try { result = construct(c,{strictAgoac:true}); }
+  catch { throw new AuthError(422,'invalid_design'); }
+  if (result.errors.length || !Number.isFinite(result.total) ||
+      !Number.isFinite(result.remaining) || result.remaining < -0.001) {
+    throw new AuthError(422,'invalid_design',result.diagnostics||[]);
   }
   const callsign = input.callsign == null || input.callsign === '' ? null : input.callsign;
   if (callsign != null && (typeof callsign !== 'string' ||
