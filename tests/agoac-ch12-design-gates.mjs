@@ -168,7 +168,7 @@ test('CAT3500D p.52: three-ton cockpit reserves the printed head slot',()=>{
 
 test('CAT3500D p.52: armor enforces nine head points and twice section structure',()=>{
  const legal=blank(55,5);
- legal.armor.HD=9;legal.armor.CT=20;legal.rear.CT=12;
+ legal.armor.HD=9;legal.armor.CT=24;legal.rear.CT=12;
  ok(legal);
  const badHead=structuredClone(legal);badHead.armor.HD=10;
  const h=construct(badHead,{strictAgoac:true});
