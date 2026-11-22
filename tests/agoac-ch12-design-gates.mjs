@@ -317,8 +317,9 @@ test('CAT3500D p.54: two half-ton MG bins keep finite shots through shared comba
  assert.equal(fired.ok,true,fired.error);
  assert.deepEqual(attacker.weapons.map(w=>w.ammo),[198,198]);
  const resolved=game.resolveFire();
- assert.equal(resolved.length,1);
- assert.equal(resolved[0].shots.length,2);
+ assert.equal(resolved.length,2,'each of the two machine guns produces its own resolution entry');
+ assert(resolved.every(entry=>entry.shots.length===1),
+  'both declared weapons resolve exactly one shot');
  assert.equal(attacker.bins.reduce((sum,b)=>sum+b.shots,0),198);
  const missing=structuredClone(c);missing.equipment.pop();
  assert(construct(missing,{strictAgoac:true}).errors.some(e=>e.includes('не менее 1 т')));
