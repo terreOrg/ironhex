@@ -6001,7 +6001,7 @@ test('CAT3500D pp.40–44: completed Piloting chapter keeps 19 source-reviewed r
  assert.deepEqual(chapter.audit.checks.map(x=>x.name).sort(),
   ['Ironhex Browser E2E','Ironhex CI','Ironhex Container Smoke']);
  assert(chapter.audit.checks.every(x=>x.conclusion==='success'&&Number.isInteger(x.runId)));
- assert.equal(reg.currentTopicId,'agoac-scenarios');
+ assert.equal(reg.currentTopicId,reg.topics.find(t=>t.status!=='verified')?.id??null);
  const suite=readFileSync(new URL('./agoac-foundations.mjs',import.meta.url),'utf8');
  for(const title of [
   'CAT3500D p.41: PSR situation table modifiers use the printed target numbers',
