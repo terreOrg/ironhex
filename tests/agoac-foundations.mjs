@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_PRINTED_SCENARIOS,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds,normalizeMapHex} from '../dist/engine.js';
+import {Game,defaultMechWarriorSkills,DIRS,distance,AGOAC_PRINTED_SCENARIOS,agoacScenario3FigureTiles,AGOAC_SCALE,rangeMeters,elapsedBattleSeconds,normalizeMapHex} from '../dist/engine.js';
 import {recordSheet} from '../dist/record-sheet.js';
 import {firingArcTiles} from '../dist/fire-arcs.js';
 import {example as setupExample} from '../dist/construction.js';
@@ -6666,10 +6666,13 @@ test('CAT3500D p.48: shared defenders arbitrate by 2D6 with tie rerolls once PER
 
 // The positions below exercise engine geometry, not a transcription of
 // the licensed p.47 diagram. A real game requires player confirmation.
-const printedFigureTiles=g=>g.scenario.picturedTerrain.counters.map(p=>{
- const tiles=p.printedHexes.map(hex=>g.tiles.find(t=>
-  t.sheet===p.sheet&&t.printedHex===hex));
- assert(tiles.every(Boolean),'all published source hexes are present');
+const printedFigureTiles=g=>g.scenario.picturedTerrain.counters.map((p,index)=>{
+ // Counter geometry must follow its rotated *axial* source contour.
+ // Original printed labels alone no longer describe adjacent digital
+ // cells after a 180-degree turn of a staggered paper hex grid.
+ const tiles=agoacScenario3FigureTiles(g,index);
+ assert.equal(tiles.length,p.printedHexes.length,
+  'all published source hexes survive sheet rotation');
  return tiles;
 });
 const footprintFrom=cells=>cells.map(t=>({

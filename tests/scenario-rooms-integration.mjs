@@ -6,6 +6,10 @@ import {restoreScenarioRoomGame} from '../apps/api/src/scenario-room-match.mjs';
 import {agoacScenario3FigureTiles} from '../packages/engine/agoac-scenario3-figure.js';
 const base='http://127.0.0.1:3000',suffix=randomBytes(5).toString('hex');
 const pool=createPool(),password='Ch11-PG-Integration-2026!';
+const tile=(game,col,row)=>{
+ const r=row-8,q=col-16-Math.floor(r/2);
+ return game.tile(q,r);
+};
 async function req(path,{method='GET',body,cookie,origin=true}={}){
  const headers={};
  if(method!=='GET'){headers['Content-Type']='application/json';if(origin)headers.Origin=base;}
