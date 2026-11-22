@@ -14,7 +14,7 @@ export function constructionDiagnostics(errors,config={}){
    step=5;page=52;field=(/кормовая броня/.test(message)?'rear.':'armor.')+message.slice(0,2);
    code='armor_limit';
   }
-  else if(/актуатор|руки|Актуатор/.test(message)){step=1;page=50;field='removeActuators';code='actuators';}
+  else if(/актуатор|руки|Актуатор/.test(message)){step=1;page=50;field=message.includes('кисти')?'removeHandActuators':'removeActuators';code='actuators';}
   else if(/разделение|AC\/20/.test(message)){step=7;page=54;code='ac20_split';}
   else if(/задн|Назад|арки/.test(message)){step=7;page=54;code='weapon_arc';}
   else if(/Бункер|Боезапас|боезапас|боеприпас/.test(message)){step=7;page=54;code='ammunition';}
@@ -88,10 +88,15 @@ export function construct(c,{auditQuad=false,strictAgoac=false}={}){
  if(!Number.isInteger(walk)||walk<1||rating<20||rating>400||rating%5)errors.push('Рейтинг двигателя: 20–400.');
  if(!Number.isInteger(jump)||jump<0||jump>walk)errors.push('Прыжок: от 0 до значения ходьбы.');
  if(!Number.isInteger(sinks)||sinks<10)errors.push('Нужно не менее 10 теплоотводов.');
- if(c.removeHandActuators!==undefined&&(!Array.isArray(c.removeHandActuators)||
-    c.removeHandActuators.length>2||
-    c.removeHandActuators.some(l=>!['LA','RA'].includes(l))))
-  errors.push('Актуаторы кисти: допустимы только LA и RA.');
+ const legalArmList=parts=>Array.isArray(parts)&&parts.length<=2&&
+  parts.every(loc=>['LA','RA'].includes(loc))&&new Set(parts).size===parts.length;
+ if(c.removeActuators!==undefined&&!legalArmList(c.removeActuators))
+  errors.push('Актуаторы предплечья: допустимы только LA и RA без повторений.');
+ if(c.removeHandActuators!==undefined&&!legalArmList(c.removeHandActuators))
+  errors.push('Актуаторы кисти: допустимы только LA и RA без повторений.');
+ if(c.equipment!==undefined&&(!Array.isArray(c.equipment)||
+   c.equipment.some(e=>!e||typeof e!=='object'||Array.isArray(e))))
+  errors.push('Список оборудования должен содержать только объекты компонентов.');
  // Preserve a correct but non-combat-ready quad plan for the audit and
  // construction tests. Quad imports and hangar admission still fail closed.
  if(errors.length)return {errors,diagnostics:constructionDiagnostics(errors,c),...(chassisConfig==='Quad'&&Number.isInteger(ton)&&ton>=20&&ton<=100&&ton%5===0?

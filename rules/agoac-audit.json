@@ -11190,8 +11190,13 @@
       ],
       "statement": "Standard Biped BattleMech chassis uses 20–100 t in 5-ton increments and 10% structure mass.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (tonnage). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.49-50: chassis tonnage 20 through 100 in increments of five, structure ten percent"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (tonnage). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49-50: chassis tonnage 20 through 100 in increments of five, structure ten percent. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-166",
@@ -11201,8 +11206,13 @@
       ],
       "statement": "Internal Structure Table maps standard tonnage to fixed head/torso/arm/leg structure points; locations cannot redistribute structure.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (structure). Checked CAT3500D original printed p.50 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.50: all seventeen internal-structure rows are fixed per chassis section"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Chassis (structure). Checked CAT3500D original printed p.50 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.50: all seventeen internal-structure rows are fixed per chassis section. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-167",
@@ -11212,8 +11222,13 @@
       ],
       "statement": "Preassigned critical slots reserve life support, sensors, cockpit, fusion engine, gyro, limb actuators; unoccupied slots remain free.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.49: preassigned systems reserve exact printed critical slots"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49: preassigned systems reserve exact printed critical slots. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-168",
@@ -11223,8 +11238,13 @@
       ],
       "statement": "Critical slots may hold at most one component, and all multi-slot items must occupy contiguous slots within their allowed location.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.49: multi-slot weapons occupy adjacent free slots with no overlap"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Critical space (slots). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.49: multi-slot weapons occupy adjacent free slots with no overlap. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-169",
@@ -11234,8 +11254,13 @@
       ],
       "statement": "The hand actuator may be removed alone; removing the lower arm actuator always removes its hand, freeing the correct critical slots.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Actuators (removeHandActuators). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D pp.49-51: hand/lower-arm removals preserve mandatory upper actuators"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Actuators (removeHandActuators). Checked CAT3500D original printed p.49 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D pp.49-51: hand/lower-arm removals preserve mandatory upper actuators. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-170",
@@ -11245,8 +11270,13 @@
       ],
       "statement": "Standard fusion engine rating equals tonnage × Walking MP with published rating/weight table 20–400.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (walk). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D pp.51-52: fusion rating and printed engine mass boundaries"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (walk). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D pp.51-52: fusion rating and printed engine mass boundaries. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-171",
@@ -11260,9 +11290,13 @@
         {
           "file": "tests/construction.mjs",
           "test": "AGoAC Ch12 running MP and remaining design tonnage checked"
+        },
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.51: running is ceil walking times 1.5, independent of jumping"
         }
       ],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: Constructor returns run=ceil(walk*1.5) and record sheet uses it; independent tests cover 5→8 and 3→5. Not Verified before exact post-merge evidence."
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Engine (run). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Known missing or incomplete behavior must be implemented before certification. 2026-11-22 second packet: Constructor returns run=ceil(walk*1.5) and record sheet uses it; independent tests cover 5→8 and 3→5. Not Verified before exact post-merge evidence. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: running is ceil walking times 1.5, independent of jumping. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-172",
@@ -11272,8 +11306,13 @@
       ],
       "statement": "Each jump jet provides exactly one Jump MP, count ≤ Walking MP, and weighs 0.5/1/2 tons by chassis mass band.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.51: per-jet mass is 0.5/1/2 tons across published tonnage bands"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: per-jet mass is 0.5/1/2 tons across published tonnage bands. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-173",
@@ -11283,8 +11322,13 @@
       ],
       "statement": "Jump jets require one separate slot each, only in torso or leg locations; desired Jump MP equals installed count.",
       "status": "tested_case",
-      "evidence": [],
-      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump_slots). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet."
+      "evidence": [
+        {
+          "file": "tests/agoac-ch12-design-gates.mjs",
+          "test": "CAT3500D p.51: each jump jet requires one torso/leg critical slot and equal Jump MP"
+        }
+      ],
+      "reviewNote": "2026-11-22 initial Chapter 12 inventory: Jump jets (jump_slots). Checked CAT3500D original printed p.51 against packages/engine/construction.js, apps/api/src/hangar.mjs and apps/web/src/mechlab.js. Existing behavior does not equal Verified; exact source-to-code edge audits and merged four-way gates required. Existing code and initial regression cover a subset; no source certification yet. 2026-11-22 source regression batch: independently checked CAT3500D printed pp.49–52 and added named Ch12 tests for CAT3500D p.51: each jump jet requires one torso/leg critical slot and equal Jump MP. No certification until merge and exact main gates; no scenario map modification."
     },
     {
       "id": "agoac-174",
