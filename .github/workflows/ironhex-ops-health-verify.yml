@@ -1,0 +1,54 @@
+name: IRONHEX verify deployed containers fe1b539
+on:
+  push:
+    branches:
+      - ops/verify-ironhex-deploy-fe1b539-20261123
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    name: Confirm Komodo restart and local frontend, API, PostgreSQL health
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 12
+    steps:
+      - name: Check exact target deployment and live services
+        shell: bash
+        run: |
+          set -euo pipefail
+          min_epoch=$(date -u -d '2026-11-23T06:29:31Z' +%s)
+          echo "Expected Komodo webhook accepted at UTC 2026-11-23T06:29:31Z"
+          echo "Waiting for all three services to have started after the webhook and respond healthy."
+          for attempt in $(seq 1 80); do
+            statuses=""
+            healthy=1
+            for name in ironhex-web ironhex-api ironhex-db; do
+              if ! docker inspect "$name" >/dev/null 2>&1; then
+                statuses="$statuses $name=missing"
+                healthy=0
+                continue
+              fi
+              status=$(docker inspect -f '{{.State.Status}}' "$name")
+              started=$(docker inspect -f '{{.State.StartedAt}}' "$name")
+              started_epoch=$(date -u -d "$started" +%s)
+              statuses="$statuses $name=$status@$started"
+              if [[ "$status" != running || "$started_epoch" -lt "$min_epoch" ]]; then healthy=0; fi
+            done
+            if [[ "$healthy" -eq 1 ]]; then
+              if ! docker inspect -f '{{.State.Health.Status}}' ironhex-db | grep -qx healthy; then healthy=0; fi
+              if ! curl --silent --show-error --fail --max-time 4 http://127.0.0.1:18088/health | grep -qx OK; then healthy=0; fi
+              if ! curl --silent --show-error --fail --max-time 4 http://127.0.0.1:18089/api/health >/dev/null; then healthy=0; fi
+            fi
+            if [[ "$healthy" -eq 1 ]]; then
+              echo "SUCCESS: All three IronHex containers were restarted since the accepted deployment webhook."
+              echo "SUCCESS: Web /health and API /api/health respond; PostgreSQL health is healthy."
+              echo "$statuses"
+              exit 0
+            fi
+            if (( attempt % 6 == 0 )); then echo "Attempt $attempt: waiting. Status:$statuses"; fi
+            sleep 5
+          done
+          echo "::error::Deployed services did not pass post-webhook restart and health checks."
+          docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' | grep -E '(^NAMES|ironhex)' || true
+          exit 1
