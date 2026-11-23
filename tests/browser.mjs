@@ -995,6 +995,20 @@ test('Commander catalog supports combined mass filters and opens a complete Mech
           balance:150000,stock:{},equipmentStock:{},
           mechOffers:[offer],catalog:[],repairs:[],ledger:[],contracts:[]
         });
+        if(url.pathname==='/api/v1/economy/equipment'){
+          return respond(route,200,{total:2,archived:1,matches:2,
+            page:1,pages:1,items:[{sku:'weapon:Medium Laser',name:'Medium Laser',
+              kind:'weapon',group:'laser',source:'IronHex equipment registry',
+              eligible:true},{sku:'weapon:Large Laser',name:'Large Laser',
+              kind:'weapon',group:'laser',source:'IronHex equipment registry',
+              eligible:true}]});
+        }
+        if(url.pathname==='/api/v1/economy/equipment/detail'){
+          return respond(route,200,{item:{sku:url.searchParams.get('sku'),
+            name:url.searchParams.get('sku').slice(7),kind:'weapon',group:'laser',
+            eligible:true,source:'IronHex equipment registry',
+            heat:3,damage:5,mass:1,slots:1,ranges:[3,6,9]}});
+        }
         if(url.pathname==='/api/v1/economy/mechs'){
           calls.push(Object.fromEntries(url.searchParams));
           return respond(route,200,{total:4305,available:8,matches:1,
@@ -1003,6 +1017,9 @@ test('Commander catalog supports combined mass filters and opens a complete Mech
         if(url.pathname==='/api/v1/economy/mechs/detail'){
           assert.equal(url.searchParams.get('path'),path);
           return respond(route,200,{item:{...offer,sourceLicense:'CC-BY-NC-SA-4.0',
+            referenceComplete:true,sourceFields:{mass:'55',config:'Biped'},
+            sourceSections:{'Right Torso':['LRM 20','IS Ammo LRM 20']},
+            sourceRaw:'Config:Biped\nMass:55\nRight Torso:\nLRM 20',
             techBase:'Inner Sphere',engineRating:275,
             movement:{walk:5,run:8,jump:5},heatSinks:12,
             remainingTonnage:0,armor:[
@@ -1029,8 +1046,19 @@ test('Commander catalog supports combined mass filters and opens a complete Mech
       assert.match(await page.locator('#economy-detail-dialog').textContent(),/ВНУТРЕННЯЯ СТРУКТУРА/);
       await page.locator('#economy-detail-dialog .economy-critical summary').click();
       assert.match(await page.locator('#economy-detail-dialog').textContent(),/Боезапас LRM 20/);
+      assert.equal(await page.locator('#economy-detail-dialog .folio-line-art').count(),1);
+      assert(await page.locator('#economy-detail-dialog .folio-cover').isVisible());
+      await page.locator('#economy-detail-dialog .folio-source-section summary').last().click();
+      assert.match(await page.locator('#economy-detail-dialog').textContent(),/Config:Biped/);
       await page.locator('#economy-detail-dialog .economy-detail-close').click();
       assert.equal(await page.locator('#economy-detail-dialog').evaluate(e=>e.open),false);
+      await page.locator('#economy-equipment-archive .economy-name').first().waitFor({state:'visible'});
+      const examples=await page.locator('#economy-equipment-archive .folio-line-art').count();
+      assert.equal(examples,2,'One reusable schematic per equipment class, no missing icon');
+      await page.locator('#economy-equipment-archive .economy-name').first().click();
+      assert.match(await page.locator('#economy-detail-dialog').textContent(),/Medium Laser/);
+      assert.equal(await page.locator('#economy-detail-dialog .folio-line-art').count(),1);
+      await page.locator('#economy-detail-dialog .economy-detail-close').click();
       await page.locator('#economy-weight-class').selectOption('medium');
       await page.locator('#economy-tonnage-min').selectOption('50');
       await page.locator('#economy-tonnage-max').selectOption('60');

@@ -1,3 +1,4 @@
+import {createFolioSchematic,unitArtworkKind} from './folio-art.js';
 // Server-authoritative C-Bills dashboard, supplies and repair orders.
 const el=(tag,cls,text)=>{
   const node=document.createElement(tag);
@@ -26,6 +27,7 @@ const messages={
   magazine_damaged:'Бункер повреждён. Сначала замените его через ремонт компонентов.'
 };
 let root=null,refreshHangar=()=>{},busy=false,catalogPage=1,catalogTimer=null,catalogSerial=0,detailSerial=0;
+let equipmentPage=1,equipmentSerial=0,equipmentTimer=null;
 async function request(path,method='GET',body){
   const res=await fetch(path,{
     method,credentials:'same-origin',cache:'no-store',
@@ -151,6 +153,23 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
   detail.addEventListener('close',()=>{detailSerial++;});
   document.querySelector('#economy-detail-dialog')?.remove();
   document.body.append(detail);
+  const equipmentSearch=el('input','economy-filter');
+  equipmentSearch.id='economy-equipment-search';equipmentSearch.type='search';
+  equipmentSearch.placeholder='Поиск по всему оборудованию MegaMek…';
+  equipmentSearch.setAttribute('aria-label','Поиск технических компонентов');
+  equipmentSearch.addEventListener('input',()=>scheduleEquipmentRefresh(true));
+  const equipmentGroup=el('select','economy-equipment-group');
+  equipmentGroup.id='economy-equipment-group';
+  for(const [value,title] of [['','Все типы'],['laser','Лазеры'],['ballistic','Баллистика'],
+    ['missile','Ракетное оружие'],['ppc','PPC'],['machinegun','Пулемёты'],
+    ['ammo','Боеприпасы'],['cooling','Охлаждение'],['hatchet','Рукопашное оружие'],
+    ['system','Системы']]){
+    const option=el('option','',title);option.value=value;equipmentGroup.append(option);
+  }
+  equipmentGroup.onchange=()=>scheduleEquipmentRefresh();
+  const equipmentSummary=el('p','op-message');equipmentSummary.id='economy-equipment-summary';
+  const equipmentArchive=el('div','economy-mechs');equipmentArchive.id='economy-equipment-archive';
+  const equipmentPager=el('div','economy-pager');equipmentPager.id='economy-equipment-pager';
   const archiveSummary=el('p','op-message');archiveSummary.id='economy-archive-summary';
   const archive=el('div','economy-mechs');archive.id='economy-archive';
   const pager=el('div','economy-pager');pager.id='economy-pager';
@@ -169,6 +188,9 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
     el('h4','economy-heading','ГОТОВЫЕ К ПОКУПКЕ'),mechs,
     el('h4','economy-heading','ПОЛНЫЙ КАТАЛОГ MEGAMEK'),filter,onlyAvailable,
     filters,reset,filterHint,archiveSummary,archive,pager,
+    el('h3','economy-heading','АРХИВ ОБОРУДОВАНИЯ И КОМПОНЕНТОВ'),
+    el('p','economy-filter-hint','Справочные названия извлечены из оригинальных технических записей. Иллюстрация привязана к классу: один лазерный чертёж для всех лазеров. Наличие записи не означает доступность покупки.'),
+    equipmentSearch,equipmentGroup,equipmentSummary,equipmentArchive,equipmentPager,
     el('h3','economy-heading','ВООРУЖЕНИЕ, СИСТЕМЫ, БОЕПРИПАСЫ И РЕМОНТ'),
     el('p','economy-filter-hint','Справочник: A Game of Armored Combat, стр. 55 (параметры оружия). Цена, оплата ремонта и запасных частей являются экономикой кампании.'),supplies,
     el('h3','economy-heading','ОРУЖЕЙНЫЙ СКЛАД'),inventory,
@@ -244,6 +266,7 @@ export async function refreshEconomy(){
     for(const entry of data.catalog||[]){
       const card=el('div','economy-item');
       const text=el('div','');
+      const canBrowse=['weapon','ammo','system'].includes(entry.kind);
       text.append(el('strong','',entry.name),
         el('small','','Цена: '+money(entry.price)+' · На складе: '+
           (entry.kind==='weapon'?(data.equipmentStock?.[entry.name]||0):
@@ -268,7 +291,13 @@ export async function refreshEconomy(){
         if(confirm('Приобрести '+entry.name+' за '+money(entry.price)+'?'))
           void mutate('/api/v1/economy/purchase',{sku:entry.sku,quantity:1});
       };
-      card.append(text,buy);stock.append(card);
+      card.append(text,buy);
+      if(canBrowse){
+        const details=el('button','op-secondary','ДОСЬЕ');
+        details.type='button';details.onclick=()=>void openEquipmentDetails(entry.sku);
+        card.append(details);
+      }
+      stock.append(card);
     }
     const magazines=root.querySelector('#economy-magazines');
     magazines.replaceChildren();
@@ -363,6 +392,7 @@ export async function refreshEconomy(){
     }
     notice('Данные подтверждены сервером.');
     void refreshMtfCatalog();
+    void refreshEquipmentCatalog();
   }catch(e){notice('Служба снабжения недоступна: '+e.message);}
 }
 
@@ -382,7 +412,8 @@ async function refreshMtfCatalog(){
     const data=await request('/api/v1/economy/mechs?'+queryString.toString());
     if(serial!==catalogSerial)return;
     summary.textContent='В каталоге '+data.total.toLocaleString('ru-RU')+
-      ' вариантов · поддерживаются движком '+data.available+
+      ' технических записей · полные файлы '+data.archived+
+      ' · поддерживаются движком '+data.available+
       ' · найдено '+data.matches.toLocaleString('ru-RU');
     archive.replaceChildren();
     for(const item of data.items||[]){
@@ -396,8 +427,11 @@ async function refreshMtfCatalog(){
         content.append(el('small','',item.description||''),
           el('small','',money(item.price)));
       }else{
-        content.append(el('small','',
-          'Справочная запись. Эта модификация ещё не поддерживается боевым движком IronHex.'));
+        content.append(el('small','',item.referenceComplete?
+          'Полная исходная карточка · только справочник, не доступно для боя':
+          'Исходный файл отсутствует · доступны только название и ссылка'));
+        if(item.tonnage!=null)content.append(el('small','','Масса '+item.tonnage+' т'));
+        if(item.era)content.append(el('small','','Год '+item.era));
       }
       if(item.sourceUrl){
         const link=el('a','economy-source-link','Исходная модель · MegaMek Data');
@@ -499,7 +533,7 @@ async function openMechDetails(path){
   const modal=document.querySelector('#economy-detail-dialog');
   if(!modal)return;
   const serial=++detailSerial;
-  const container=el('div','economy-detail-content');
+  const container=el('div','economy-detail-content folio-folder');
   const dismiss=el('button','economy-detail-close','ЗАКРЫТЬ ×');
   dismiss.type='button';dismiss.onclick=()=>modal.close();
   container.append(dismiss,el('h2','','Загрузка характеристик…'));
@@ -512,8 +546,11 @@ async function openMechDetails(path){
   try{
     const {item}=await request('/api/v1/economy/mechs/detail?'+new URLSearchParams({path}));
     if(serial!==detailSerial)return;
-    container.replaceChildren(dismiss,el('small','op-kicker','IRON HEX / MEGAMEK UNIT DOSSIER'),
-      el('h2','',item.name));
+    const cover=makeFolioCover(item.name,
+      unitArtworkKind(item.kind,item.sourceConfig),
+      item.available?'ДОПУЩЕНО К БОЮ':'СПРАВОЧНЫЙ АРХИВ',
+      item.kind||'meks');
+    container.replaceChildren(dismiss,cover);
     container.append(el('p','economy-detail-license',
       'Источник: MegaMek Data · '+item.sourceLicense+
       (item.available?' · Поддерживается движком':' · Архивная запись')));
@@ -521,9 +558,17 @@ async function openMechDetails(path){
     stats.append(detailStat('Весовой класс',({
       light:'Лёгкий',medium:'Средний',heavy:'Тяжёлый',assault:'Штурмовой'
     })[item.weightClass]||'Не указан'));
-    if(item.tonnage!==undefined)stats.append(detailStat('Масса',item.tonnage+' т'));
+    if(item.tonnage!=null)stats.append(detailStat('Масса',item.tonnage+' т'));
     if(item.era)stats.append(detailStat('Год модели',item.era));
     if(item.role)stats.append(detailStat('Роль',item.role));
+    if(!item.available&&item.referenceComplete){
+      if(item.sourceTechBase)stats.append(detailStat('Технология',item.sourceTechBase));
+      if(item.engine)stats.append(detailStat('Двигатель',item.engine));
+      if(item.movement?.walk!=null)stats.append(detailStat('Ходьба / бег / прыжок',
+        [item.movement.walk,item.movement.run,item.movement.jump??'—'].join(' / ')+' MP'));
+      if(item.movement?.cruise!=null)stats.append(detailStat('Крейсерский MP',item.movement.cruise));
+      if(item.heatSinks)stats.append(detailStat('Теплоотводы',item.heatSinks));
+    }
     if(item.available){
       stats.append(detailStat('Цена IronHex',money(item.price)),
         detailStat('Технология',item.techBase),
@@ -553,11 +598,12 @@ async function openMechDetails(path){
         details.append(el('p','',loc+' · '+values.map((v,i)=>String(i+1)+': '+(v||'свободно')).join(' | ')));
       slots.append(details);
     }else{
-      container.append(el('p','op-warning',item.note||
-        'Полная карточка этой модификации пока не импортирована.'));
+      container.append(el('p','folio-unavailable',item.note||
+        'Данная единица техники не поддерживается действующим боевым движком.'));
     }
+    appendOriginalMegaMekRecord(container,item);
     if(item.sourceUrl){
-      const link=el('a','economy-source-link','ОТКРЫТЬ ИСХОДНЫЙ MTF · MEGAMEK');
+      const link=el('a','economy-source-link','ОТКРЫТЬ ОРИГИНАЛЬНЫЙ ФАЙЛ · MEGAMEK');
       link.href=item.sourceUrl;link.target='_blank';link.rel='noopener noreferrer';
       container.append(link);
     }
@@ -566,4 +612,131 @@ async function openMechDetails(path){
       el('h2','','Ошибка загрузки характеристик'),
       el('p','op-warning',error.message));
   }
+}
+
+
+function makeFolioCover(name,art,status,subtype){
+ const cover=el('header','folio-cover');
+ const metadata=el('div','folio-cover-info');
+ metadata.append(el('small','folio-index','IRON HEX // ТЕХНИЧЕСКИЙ АРХИВ'),
+   el('h2','folio-title',name),
+   el('span','folio-status',status),
+   el('small','folio-category','КАТЕГОРИЯ: '+String(subtype).toUpperCase()));
+ cover.append(createFolioSchematic(art),metadata);
+ return cover;
+}
+function appendOriginalMegaMekRecord(container,item){
+ if(!item.referenceComplete)return;
+ const source=detailSection(container,'ОРИГИНАЛЬНЫЕ ПОЛЯ И ДАННЫЕ MEGAMEK');
+ const fields=Object.entries(item.sourceFields||{});
+ if(fields.length)detailTable(source,['Исходное поле','Значение'],
+   fields.map(([key,value])=>[key,value]));
+ const sections=Object.entries(item.sourceSections||{});
+ if(sections.length){
+  const sheet=detailSection(container,'КРИТИЧЕСКИЕ СЛОТЫ И ИСХОДНЫЕ СЕКЦИИ');
+  for(const [section,lines] of sections){
+   const group=el('details','folio-source-section');
+   group.append(el('summary','',section+' · '+lines.length+' строк'));
+   const list=el('ol','folio-source-lines');
+   for(const line of lines)list.append(el('li','',line||'—'));
+   group.append(list);sheet.append(group);
+  }
+ }
+ if(item.sourceRaw){
+  const raw=detailSection(container,'АРХИВНЫЙ ОРИГИНАЛ · БЕЗ ПОТЕРИ ДАННЫХ');
+  const collapsed=el('details','folio-source-section');
+  collapsed.append(el('summary','','Раскрыть полный оригинальный MTF/BLK'));
+  const pre=el('pre','folio-raw-source');pre.textContent=item.sourceRaw;
+  collapsed.append(pre);raw.append(collapsed);
+ }
+}
+function scheduleEquipmentRefresh(debounce=false){
+ equipmentPage=1;
+ clearTimeout(equipmentTimer);
+ if(debounce)equipmentTimer=setTimeout(()=>void refreshEquipmentCatalog(),240);
+ else void refreshEquipmentCatalog();
+}
+async function refreshEquipmentCatalog(){
+ if(!root)return;
+ const serial=++equipmentSerial;
+ const container=root.querySelector('#economy-equipment-archive');
+ const message=root.querySelector('#economy-equipment-summary');
+ const pager=root.querySelector('#economy-equipment-pager');
+ if(!container||!message||!pager)return;
+ message.textContent='Загрузка перечня оборудования…';
+ try{
+  const query=root.querySelector('#economy-equipment-search')?.value?.trim()||'';
+  const group=root.querySelector('#economy-equipment-group')?.value||'';
+  const data=await request('/api/v1/economy/equipment?'+new URLSearchParams({
+   query,group,page:String(equipmentPage)}));
+  if(serial!==equipmentSerial)return;
+  message.textContent=data.total.toLocaleString('ru-RU')+
+   ' компонентов и названий · найдено '+data.matches.toLocaleString('ru-RU')+
+   ' · строк из архива '+data.archived;
+  container.replaceChildren();
+  for(const entry of data.items||[]){
+   const card=el('article','economy-item folio-equipment-entry');
+   const preview=createFolioSchematic(entry.group);
+   const info=el('div','');
+   const title=el('button','economy-name',entry.name);
+   title.onclick=()=>void openEquipmentDetails(entry.sku);
+   info.append(title,el('small','',entry.source),
+     el('small','',entry.eligible?'Доступно по профилю AGoAC':
+      'Справочная запись · не разрешено к покупке по умолчанию'));
+   card.append(preview,info);container.append(card);
+  }
+  if(!data.items?.length)container.append(el('p','op-empty','Оборудование не найдено.'));
+  pager.replaceChildren();
+  const prev=el('button','op-secondary','НАЗАД');
+  prev.disabled=data.page<=1;
+  prev.onclick=()=>{equipmentPage--;void refreshEquipmentCatalog()};
+  const caption=el('span','','Страница '+data.page+' из '+Math.max(1,data.pages));
+  const next=el('button','op-secondary','ДАЛЕЕ');
+  next.disabled=data.page>=data.pages;
+  next.onclick=()=>{equipmentPage++;void refreshEquipmentCatalog()};
+  pager.append(prev,caption,next);
+ }catch(e){if(serial===equipmentSerial)message.textContent='Ошибка справочника: '+e.message}
+}
+async function openEquipmentDetails(sku){
+ const modal=document.querySelector('#economy-detail-dialog');
+ if(!modal)return;
+ const serial=++detailSerial;
+ const container=el('div','economy-detail-content folio-folder');
+ const dismiss=el('button','economy-detail-close','ЗАКРЫТЬ ×');
+ dismiss.onclick=()=>modal.close();
+ container.append(dismiss,el('h2','','Загрузка оборудования…'));
+ modal.replaceChildren(container);
+ if(!modal.open)modal.showModal();
+ try{
+  const {item}=await request('/api/v1/economy/equipment/detail?'+new URLSearchParams({sku}));
+  if(serial!==detailSerial)return;
+  container.replaceChildren(dismiss,makeFolioCover(item.name,item.group,
+   item.eligible?'БАЗОВОЕ ОБОРУДОВАНИЕ':'ТОЛЬКО СПРАВОЧНИК',
+   item.kind));
+  container.append(el('p','economy-detail-license','Источник характеристик: '+item.source+
+   ' · MegaMek/mm-data CC BY-NC-SA 4.0 для извлечённых исходных названий'));
+  const stats=el('div','economy-detail-stats');
+  for(const [name,value] of [
+   ['Тип',item.group],['Технология',item.techBase],['Год',item.era],
+   ['Масса, т',item.mass],['Критические слоты',item.slots],
+   ['Нагрев',item.heat],['Урон',item.damage],['Минимальная дальность',item.minimum],
+   ['Диапазоны',item.ranges?.join(' / ')],['Выстрелов/тонна',item.roundsPerTon],
+   ['Единиц с этим компонентом',item.unitCount],['Снарядов',item.shots]
+  ])if(value!==undefined&&value!==null)stats.append(detailStat(name,value));
+  container.append(stats);
+  if(item.examples?.length){
+   const section=detailSection(container,'ИСХОДНЫЕ ЕДИНИЦЫ С ЭТИМ ОБОРУДОВАНИЕМ');
+   for(const path of item.examples){
+    const link=el('button','folio-reference-link',path);
+    link.onclick=()=>void openMechDetails(path);
+    section.append(link);
+   }
+  }
+  if(!item.eligible)container.append(el('p','folio-unavailable',
+   'Справочные данные не предоставляют право на покупку или установку; используйте только поддерживаемые правилами компоненты.'));
+ }catch(error){
+  if(serial===detailSerial)container.replaceChildren(dismiss,
+   el('h2','','Ошибка загрузки оборудования'),
+   el('p','op-warning',error.message));
+ }
 }

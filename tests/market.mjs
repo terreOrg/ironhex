@@ -5,8 +5,11 @@ import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {construct,designSubmissionDiagnostics} from '../packages/engine/construction.js';
 import {Game} from '../dist/engine.js';
-import {MECH_OFFERS,rejectedMtf,sourceManifest,totalMtfRecords,searchMechCatalog,getMechDetails,mechWeightClass} from '../apps/api/src/market.mjs';
+import {MECH_OFFERS,rejectedMtf,sourceManifest,totalMtfRecords,totalArchiveRecords,archivedTechnicalRecords,archiveComplete,
+  searchMechCatalog,getMechDetails,mechWeightClass,searchReferenceEquipment,
+  getReferenceEquipmentDetails} from '../apps/api/src/market.mjs';
 import {importMtf} from '../apps/api/src/mtf.mjs';
+import {parseMegaMekUnit} from '../apps/api/src/mm-archive.mjs';
 import {validateDesign} from '../apps/api/src/hangar.mjs';
 const base=fileURLToPath(new URL('../data/megamek/meks/',import.meta.url));
 
@@ -68,7 +71,8 @@ test('Shared BattleTech ammunition is a single pool for identical weapons',()=>{
 test('MegaMek reference index includes all 4,305 MTF entries with safe pagination',()=>{
   assert.equal(totalMtfRecords,4305);
   const first=searchMechCatalog({query:'Atlas',page:1,limit:12});
-  assert.equal(first.total,4305);
+  assert.equal(first.total,totalArchiveRecords);
+  assert(totalArchiveRecords>=4305);
   assert(first.matches>12);
   assert.equal(first.items.length,12);
   assert(first.items.every(item=>item.sourceUrl?.startsWith('https://github.com/MegaMek/mm-data/blob/')));
@@ -102,9 +106,17 @@ test('Technical dossier returns verified engine data without synthetic statistic
   assert(archive);
   const unavailable=getMechDetails(archive.sourcePath);
   assert.equal(unavailable.available,false);
-  assert.equal(unavailable.tonnage,undefined,
-    'Unimported MTF variants must not be assigned imaginary tonnage');
-  assert(unavailable.note.includes('не включён'));
+  if(unavailable.referenceComplete){
+    assert.equal(typeof unavailable.sourceRaw,'string');
+    assert(unavailable.sourceRaw.length>100);
+    assert.equal(typeof unavailable.sourceFields,'object');
+    assert(unavailable.note.includes('импортирована'));
+    if(unavailable.tonnage!=null)
+      assert(Number.isFinite(unavailable.tonnage));
+  }else{
+    assert.equal(unavailable.tonnage,undefined,
+      'Never invent tonnage for files without a source record');
+  }
 });
 test('Filters combine server-side before pagination and do not guess unknown mass',()=>{
   assert.equal(mechWeightClass(35),'light');
@@ -117,8 +129,8 @@ test('Filters combine server-side before pagination and do not guess unknown mas
   assert(medium.items.every(x=>x.available&&x.weightClass==='medium'&&
     x.tonnage>=50&&x.tonnage<=55));
   const noMass=searchMechCatalog({tonnageMin:99,tonnageMax:100,limit:60});
-  assert(noMass.items.every(x=>x.available),
-    'Rows without parsed tonnage must not leak into a mass-filtered search');
+  assert(noMass.items.every(x=>x.tonnage>=99&&x.tonnage<=100),
+    'All mass-filtered rows must have source-derived mass, ready or not');
   const names=searchMechCatalog({query:'GRF-1M',tonnageMin:55,tonnageMax:55});
   assert(names.items.some(x=>x.offerId==='mm-grf-1m'));
   assert.equal(searchMechCatalog({query:'GRF-1M',tonnageMax:40}).matches,0);
@@ -420,4 +432,74 @@ test('CAT3500D p.52: strict engine, Hangar and custom battle block malformed arm
  trusted.armor.CT=[];
  assert.equal(construct(trusted).errors.length,0,
   'intentional non-strict source MTF import remains unchanged');
+});
+
+
+test('MegaMek complete pinned archive retains 11,248 lossless unit records',()=>{
+ assert.equal(archiveComplete,true,'The exact pinned source archive must be bundled');
+ assert.equal(totalMtfRecords,4305);
+ assert.equal(totalArchiveRecords,11248);
+ assert.equal(archivedTechnicalRecords,11248);
+ const all=searchMechCatalog({query:'',limit:60});
+ assert.equal(all.total,11248);
+ assert.equal(all.archived,11248);
+ assert.equal(all.archiveComplete,true);
+ assert(all.items.every(item=>item.referenceComplete));
+ const vehicle=searchMechCatalog({query:'AC/2 Carrier',limit:60}).items.find(x=>
+  x.kind==='vehicles');
+ assert(vehicle,'Vehicle BLK must be indexed, not only MTF Mechs');
+ const dossier=getMechDetails(vehicle.sourcePath);
+ assert.equal(dossier.sourceFormat,'blk');
+ assert.equal(dossier.movement.walk,null,'Vehicle motion must not be labelled Walking MP');
+ assert.equal(dossier.movement.run,null,'Do not invent Running MP for a tank');
+ assert.equal(dossier.movement.cruise,3,'Keep actual MegaMek BLK cruising MP');
+ assert.equal(dossier.available,false);
+ assert.equal(dossier.referenceComplete,true);
+ assert(dossier.sourceRaw.includes('<UnitType>'));
+ assert(dossier.sourceFields['unitType'.toLowerCase()]);
+ assert(Array.isArray(dossier.sourceSections['Front Equipment']));
+ assert(dossier.sourceEquipment.some(x=>x.name.includes('Autocannon')));
+ assert.equal(dossier.price,undefined,'No invented shop price for source-only entries');
+ assert.equal(getMechDetails('../secrets.json'),null);
+});
+
+test('All source MTF BattleMechs provide their original machine-readable technical fields',()=>{
+ const source=readFileSync(join(base,sourceManifest.entries.find(x=>x.file.includes('Griffin')).file),'utf8');
+ const parsed=parseMegaMekUnit(source,sourceManifest.entries.find(x=>x.file.includes('Griffin')).sourcePath);
+ assert.equal(parsed.kind,'meks');
+ assert.equal(parsed.format,'mtf');
+ assert.equal(parsed.tonnage,55);
+ assert.equal(parsed.movement.walk,5);
+ assert.equal(parsed.movement.jump,5);
+ assert(parsed.sections['Right Torso'].length>=12);
+ assert(parsed.raw.includes('Config:Biped'));
+ assert.throws(()=>parseMegaMekUnit(source,'../secrets.mtf'),/Invalid pinned MegaMek path/);
+ assert.throws(()=>parseMegaMekUnit(source,'data/mekfiles/meks/a.mtf/../b.mtf'),/Invalid pinned/);
+});
+
+test('Equipment search returns all source component names but only canonical base parts are eligible',()=>{
+ const laser=searchReferenceEquipment({query:'Laser',group:'laser',limit:20});
+ assert(laser.total>35);
+ assert(laser.matches>3);
+ const exact=searchReferenceEquipment({query:'Medium Laser',group:'laser',limit:60});
+ const baseItem=exact.items.find(x=>x.sku==='weapon:Medium Laser');
+ assert(baseItem&&baseItem.eligible,'Canonical component must be searchable by its full name');
+ const imageClass=getReferenceEquipmentDetails('weapon:Small Laser').group;
+ assert.equal(imageClass,getReferenceEquipmentDetails('weapon:Large Laser').group,
+  'All laser variants intentionally share the same artwork class');
+ const excluded=getReferenceEquipmentDetails('weapon:ER PPC');
+ assert(excluded&&!excluded.eligible);
+ const sources=searchReferenceEquipment({query:'Autocannon',limit:60});
+ assert(sources.items.some(x=>x.kind==='source'&&!x.eligible));
+ const unit=sources.items.find(x=>x.kind==='source');
+ const detail=getReferenceEquipmentDetails(unit.sku);
+ assert.equal(detail.source,'MegaMek/mm-data technical unit records');
+ assert(detail.unitCount>0&&detail.examples.length>0);
+ assert.equal(getReferenceEquipmentDetails('../market-data'),null);
+});
+
+test('Reference equipment never interprets armor numbers as component records',()=>{
+ const items=searchReferenceEquipment({query:'12',limit:60}).items;
+ assert(!items.some(x=>x.kind==='source'&&x.name==='12'),
+   'BLK armor arrays must remain source fields, not purchasable components');
 });
