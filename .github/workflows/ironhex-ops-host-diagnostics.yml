@@ -36,6 +36,22 @@ jobs:
           for name in ironhex-web ironhex-api ironhex-db; do
             docker inspect -f 'Compose {{.Name}} project={{index .Config.Labels "com.docker.compose.project"}} service={{index .Config.Labels "com.docker.compose.service"}} working_dir={{index .Config.Labels "com.docker.compose.project.working_dir"}} config_files={{index .Config.Labels "com.docker.compose.project.config_files"}}' "$name" 2>/dev/null || true
           done
+
+          echo 'Read-only bt stack build metadata:'
+          for loc in /etc/komodo/stacks/bt /etc/komodo/stacks/ironhex; do
+            if [ -d "$loc" ]; then
+              echo "Stack directory exists: $loc"
+              if [ -d "$loc/.git" ]; then git -C "$loc" rev-parse HEAD || true; else echo 'No .git in stack directory'; fi
+              if [ -f "$loc/compose.yaml" ]; then
+                (cd "$loc" && docker compose -f compose.yaml config --format json 2>/dev/null) |
+                  python3 -c 'import json,sys; d=json.load(sys.stdin); print(json.dumps({k:{"image":v.get("image"),"build":v.get("build"),"pull_policy":v.get("pull_policy"),"volumes":[x.get("source") for x in v.get("volumes",[]) if isinstance(x,dict)]} for k,v in d.get("services",{}).items() if k.startswith("ironhex-")}))' || true
+              fi
+              echo 'Stack filenames (not contents):'
+              find "$loc" -maxdepth 1 -type f -printf '%f\n' | head -25
+            else
+              echo "Not a directory: $loc"
+            fi
+          done
           echo 'Komodo containers:'
           docker ps --format '{{.Names}}' | grep -i komodo || true
           echo 'API port 18089 /api/health:'
