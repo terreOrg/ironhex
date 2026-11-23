@@ -498,6 +498,26 @@ test('Equipment search returns all source component names but only canonical bas
  assert.equal(getReferenceEquipmentDetails('../market-data'),null);
 });
 
+test('MegaMek MTF and BLK parsing preserves keys, source fields and tags without backtracking',()=>{
+ const spaces=' '.repeat(12000);
+ const mtf='Chassis:'+spaces+'Griffin\nModel: GRF-1N\nHead:\nCockpit\n';
+ const mech=parseMegaMekUnit(mtf,'data/mekfiles/meks/Griffin.mtf');
+ assert.equal(mech.name,'Griffin GRF-1N');
+ assert.equal(mech.sourcePath,'data/mekfiles/meks/Griffin.mtf');
+ assert.deepEqual(mech.sections.Head,['Cockpit']);
+ assert.equal(mech.raw,mtf,'Original MTF bytes remain intact');
+ const blk='<Name>'+spaces+'AC/2 Carrier'+spaces+'</Name>\n'+
+  '<UnitType>Tank</UnitType>\n'+
+  '<Front Equipment>\nIS Autocannon/2\n</Front Equipment>\n'+
+  '<mul id:> original source tag </mul id:>\n';
+ const vehicle=parseMegaMekUnit(blk,'data/mekfiles/vehicles/AC2.blk');
+ assert.equal(vehicle.name,'AC/2 Carrier');
+ assert.equal(vehicle.fields.unittype,'Tank');
+ assert.deepEqual(vehicle.sections['Front Equipment'],['IS Autocannon/2']);
+ assert.equal(vehicle.fields['mul id:'],'original source tag');
+ assert.equal(vehicle.raw,blk,'Original BLK bytes remain intact');
+});
+
 test('Reference equipment never interprets armor numbers as component records',()=>{
  const items=searchReferenceEquipment({query:'12',limit:60}).items;
  assert(!items.some(x=>x.kind==='source'&&x.name==='12'),
