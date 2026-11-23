@@ -22,7 +22,8 @@ while(pending.length){
   else if(ent.isFile()&&/\.(mtf|blk)$/i.test(ent.name))paths.push(path);
  }
 }
-paths.sort();
+// Preserve built-in UTF-16 lexicographic order explicitly.
+paths.sort((a,b)=>a<b?-1:a>b?1:0);
 const index=JSON.parse(await readFile(join(project,'data','megamek','full-index.json'),'utf8'));
 if(index.revision!==MM_DATA_REVISION||index.count!==4305)
  throw Error('Pinned MTF index revision/count mismatch');

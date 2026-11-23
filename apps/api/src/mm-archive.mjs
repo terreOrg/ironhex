@@ -37,9 +37,11 @@ export function parseMegaMekUnit(raw,sourcePath){
  if(type==='mtf'){
   let location=null;
   for(const line of raw.replace(/\r/g,'').split('\n')){
-   const match=line.match(/^([^:#\r\n]{1,100}):\s*(.*)$/);
-   if(match){
-    const key=match[1].trim(),val=match[2].trim();
+   // A bounded key and first separator avoid quadratic regex backtracking.
+   const colon=line.indexOf(':');
+   const keyText=colon>0&&colon<=100?line.slice(0,colon):null;
+   if(keyText!==null&&!keyText.includes('#')){
+    const key=keyText.trim(),val=line.slice(colon+1).trim();
     if(MECH_LOCS.has(key)&&!val){location=key;sections[key]=[];continue}
     if(val&&!Object.hasOwn(fields,key.toLowerCase()))fields[key.toLowerCase()]=val;
    }
@@ -49,9 +51,17 @@ export function parseMegaMekUnit(raw,sourcePath){
  }else{
   // MegaMek BLK uses XML-like tagged records rather than a valid XML DOM.
   // Tags with unusual names such as <mul id:> must not crash the importer.
-  const pattern=/<([^<>/\r\n]{1,100})>\s*([\s\S]*?)\s*<\/\1>/g;
-  for(const match of raw.matchAll(pattern)){
-   const key=strip(match[1],100),value=strip(match[2],500000);
+  // Scan each opening tag and find its exact closing delimiter literally.
+  // The old nested-whitespace regex could backtrack super-linearly.
+  const openingTag=/<([^<>/\r\n]{1,100})>/g;
+  let match;
+  while((match=openingTag.exec(raw))!==null){
+   const close='</'+match[1]+'>';
+   const end=raw.indexOf(close,openingTag.lastIndex);
+   if(end<0)continue;
+   const key=strip(match[1],100);
+   const value=strip(raw.slice(openingTag.lastIndex,end),500000);
+   openingTag.lastIndex=end+close.length;
    if(!Object.hasOwn(fields,key.toLowerCase()))fields[key.toLowerCase()]=value;
    if(/equipment|armor|critical|transport|bay|weapon/i.test(key))
     sections[key]=arrayOfLines(value);
