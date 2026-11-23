@@ -70,6 +70,12 @@ jobs:
                   if re.match(r'^    (image|pull_policy|build|context|dockerfile):',line): print(line)
           except Exception as e: print(type(e).__name__)
           PY
+
+          echo 'Privilege and Komodo periphery executor probes (read-only):'
+          if sudo -n true >/dev/null 2>&1; then echo 'SUDO_NONINTERACTIVE=YES'; else echo 'SUDO_NONINTERACTIVE=NO'; fi
+          if docker exec komodo-periphery-1 sh -c 'command -v docker >/dev/null && docker compose version >/dev/null 2>&1' >/dev/null 2>&1; then echo 'PERIPHERY_COMPOSE=YES'; else echo 'PERIPHERY_COMPOSE=NO'; fi
+          if docker exec komodo-periphery-1 sh -c 'test -r /etc/komodo/stacks/bt/.env' >/dev/null 2>&1; then echo 'PERIPHERY_ENV_READ=YES'; else echo 'PERIPHERY_ENV_READ=NO'; fi
+          if docker exec komodo-periphery-1 sh -c 'test -f /etc/komodo/stacks/bt/compose.yaml' >/dev/null 2>&1; then echo 'PERIPHERY_STACK_PATH=YES'; else echo 'PERIPHERY_STACK_PATH=NO'; fi
           echo 'Komodo containers:'
           docker ps --format '{{.Names}}' | grep -i komodo || true
           echo 'API port 18089 /api/health:'
