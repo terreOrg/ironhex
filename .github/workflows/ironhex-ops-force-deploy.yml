@@ -1,0 +1,99 @@
+name: IRONHEX force deploy verified main fe1b539
+on:
+  push:
+    branches:
+      - ops/force-deploy-ironhex-fe1b539-20261123
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ironhex-live-compose-update
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and deploy web/API in existing Komodo bt project
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 25
+    steps:
+      - name: Verify source and deploy only application services
+        shell: bash
+        run: |
+          set -euo pipefail
+          stack=/etc/komodo/stacks/bt
+          expected=fe1b539cedd3228de87433c06b04c624c3397676
+          actual=$(git -c safe.directory="$stack" -C "$stack" rev-parse HEAD)
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error::Stack source is not expected main SHA. Reject deployment."
+            exit 1
+          fi
+          echo "Verified on-server stack source SHA: $actual"
+          for name in ironhex-web ironhex-api ironhex-db; do
+            project=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$name")
+            if [[ "$project" != bt ]]; then
+              echo "::error::Container $name does not belong to expected bt Compose project."
+              exit 1
+            fi
+          done
+          if ! docker exec --workdir "$stack" komodo-periphery-1 \
+            sh -ec 'docker compose -p bt -f compose.yaml config --quiet'; then
+            echo "::error::Komodo-managed Compose or private environment cannot be validated."
+            exit 1
+          fi
+          db_before=$(docker inspect -f '{{.Id}}' ironhex-db)
+          web_before=$(docker inspect -f '{{.Id}}' ironhex-web)
+          api_before=$(docker inspect -f '{{.Id}}' ironhex-api)
+          web_image_before=$(docker inspect -f '{{.Image}}' ironhex-web)
+          api_image_before=$(docker inspect -f '{{.Image}}' ironhex-api)
+          rollback() {
+            set +e
+            echo "::error::New application deploy failed checks; restoring previous web/API images, leaving PostgreSQL intact."
+            docker tag "$web_image_before" ironhex-web:local
+            docker tag "$api_image_before" ironhex-api:local
+            current_web=$(docker inspect -f '{{.Id}}' ironhex-web 2>/dev/null)
+            current_api=$(docker inspect -f '{{.Id}}' ironhex-api 2>/dev/null)
+            if [[ "$current_web" != "$web_before" || "$current_api" != "$api_before" ]]; then
+              docker exec --workdir "$stack" komodo-periphery-1 \
+                sh -ec 'docker compose -p bt -f compose.yaml up -d --no-build --no-deps --force-recreate ironhex-web ironhex-api'
+            fi
+            exit 1
+          }
+          trap rollback ERR
+          echo "Building ONLY IronHex web and API from exact verified main."
+          docker exec --workdir "$stack" komodo-periphery-1 \
+            sh -ec 'docker compose -p bt -f compose.yaml build ironhex-web ironhex-api'
+          echo "Recreating ONLY web and API in existing bt Compose project."
+          docker exec --workdir "$stack" komodo-periphery-1 \
+            sh -ec 'docker compose -p bt -f compose.yaml up -d --no-build --no-deps --force-recreate ironhex-web ironhex-api'
+          if [[ "$(docker inspect -f '{{.Id}}' ironhex-db)" != "$db_before" ]]; then
+            echo "::error::Database container was unexpectedly replaced."
+            exit 1
+          fi
+          new_web=$(docker inspect -f '{{.Id}}' ironhex-web)
+          new_api=$(docker inspect -f '{{.Id}}' ironhex-api)
+          if [[ "$new_web" == "$web_before" || "$new_api" == "$api_before" ]]; then
+            echo "::error::Application containers not recreated."
+            exit 1
+          fi
+          healthy=0
+          for attempt in $(seq 1 45); do
+            if [[ "$(docker inspect -f '{{.State.Status}}' ironhex-web)" == running && \
+                  "$(docker inspect -f '{{.State.Status}}' ironhex-api)" == running && \
+                  "$(docker inspect -f '{{.State.Health.Status}}' ironhex-db)" == healthy ]] &&
+               curl -fsS --max-time 4 http://127.0.0.1:18088/health | grep -qx OK &&
+               curl -fsS --max-time 4 http://127.0.0.1:18089/api/health >/dev/null; then
+              healthy=1
+              break
+            fi
+            sleep 4
+          done
+          if [[ "$healthy" != 1 ]]; then
+            echo "::error::Web/API health did not recover after deploy."
+            exit 1
+          fi
+          echo "VERIFIED DEPLOY: source=$actual project=bt web/api recreated and healthy; DB container and named data volume preserved."
+          for name in ironhex-web ironhex-api ironhex-db; do
+            docker inspect -f 'Container {{.Name}} status={{.State.Status}} started={{.State.StartedAt}} image={{.Image}}' "$name"
+          done
+          trap - ERR
