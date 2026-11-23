@@ -28,5 +28,15 @@ jobs:
           done
           echo 'Frontend port 18088 /health:'
           curl -sS -o /dev/null -w 'http=%{http_code} seconds=%{time_total}\n' --connect-timeout 2 --max-time 5 http://127.0.0.1:18088/health || true
+
+          echo 'Komodo CLI check:'
+          if command -v km >/dev/null 2>&1; then command -v km; km --version || true; else echo 'km not in runner PATH'; fi
+          echo 'Compose projects and service provenance:'
+          docker compose ls --format json || true
+          for name in ironhex-web ironhex-api ironhex-db; do
+            docker inspect -f 'Compose {{.Name}} project={{index .Config.Labels "com.docker.compose.project"}} service={{index .Config.Labels "com.docker.compose.service"}} working_dir={{index .Config.Labels "com.docker.compose.project.working_dir"}} config_files={{index .Config.Labels "com.docker.compose.project.config_files"}}' "$name" 2>/dev/null || true
+          done
+          echo 'Komodo containers:'
+          docker ps --format '{{.Names}}' | grep -i komodo || true
           echo 'API port 18089 /api/health:'
           curl -sS -o /dev/null -w 'http=%{http_code} seconds=%{time_total}\n' --connect-timeout 2 --max-time 5 http://127.0.0.1:18089/api/health || true
