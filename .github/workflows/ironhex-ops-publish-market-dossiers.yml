@@ -1,0 +1,176 @@
+name: IRONHEX publish market dossiers 11e0219
+on:
+  push:
+    branches:
+      - ops/merge-market-cards-deploy-20261123
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: ironhex-live-compose-update
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Confirm all main gates, full smoke, Komodo and force-deploy dossier cards
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 90
+    steps:
+      - name: Exact-main quality gates and full manual Container Smoke
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner=context.repo.owner,repo=context.repo.repo;
+            const target='11e0219783bfbe5e68865035b41ad0b12f52fa0a';
+            const needed=['Ironhex CI','Ironhex Browser E2E','Ironhex SonarQube','Ironhex Container Smoke'];
+            const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+            const current=async()=>{
+              const {data}=await github.rest.repos.getBranch({owner,repo,branch:'main'});
+              if(data.commit.sha!==target)throw new Error('Main moved; refusing stale deployment');
+            };
+            const list=async()=>{
+              const {data}=await github.rest.actions.listWorkflowRunsForRepo({owner,repo,head_sha:target,per_page:100});
+              return data.workflow_runs||[];
+            };
+            await current();
+            let ready=false;
+            for(let attempt=0;attempt<240;attempt++){
+              const runs=await list();
+              const states=needed.map(name=>({
+                name,
+                matching:runs.filter(r=>r.name===name&&r.head_sha===target&&r.head_branch==='main'&&r.event==='push')
+              }));
+              for(const item of states){
+                if(item.matching.some(r=>r.status==='completed'&&r.conclusion!=='success'&&r.conclusion!=='cancelled'))
+                  throw new Error(item.name+' is failing; deployment prohibited');
+              }
+              ready=states.every(item=>item.matching.some(r=>r.status==='completed'&&r.conclusion==='success'));
+              if(ready)break;
+              await current();
+              if(attempt===239)throw new Error('Timeout waiting for all exact-main CI, Browser, Sonar, Smoke gates');
+              await sleep(12000);
+            }
+            await current();
+            core.info('Exact-main CI, Browser, Sonar, push Smoke all passed. Dispatching mandated full manual Smoke.');
+            const start=Date.now()-3000;
+            await github.rest.actions.createWorkflowDispatch({owner,repo,workflow_id:'container-smoke.yml',ref:'main'});
+            let fullSmoke=false;
+            for(let attempt=0;attempt<120;attempt++){
+              await current();
+              const runs=await list();
+              const smoke=runs.filter(r=>r.name==='Ironhex Container Smoke'&&r.head_sha===target&&
+                r.head_branch==='main'&&r.event==='workflow_dispatch'&&Date.parse(r.created_at)>=start);
+              if(smoke.some(r=>r.status==='completed'&&r.conclusion!=='success'&&r.conclusion!=='cancelled'))
+                throw new Error('Manual full Container Smoke failed');
+              if(smoke.some(r=>r.status==='completed'&&r.conclusion==='success')){fullSmoke=true;break}
+              if(attempt===119)throw new Error('Manual full Container Smoke did not complete');
+              await sleep(12000);
+            }
+            if(!fullSmoke)throw new Error('Manual full Container Smoke missing');
+            await current();
+            core.info('Dispatching the existing main-only Ironhex Deploy workflow for '+target);
+            const deploySince=Date.now()-3000;
+            await github.rest.actions.createWorkflowDispatch({owner,repo,workflow_id:'deploy.yml',ref:'main'});
+            core.info('Official deployment dispatched after all four main gates and full manual smoke.');
+            for(let attempt=0;attempt<90;attempt++){
+              await current();
+              const runs=await list();
+              const deployment=runs.filter(r=>r.name==='Ironhex Deploy'&&r.head_sha===target&&
+                r.event==='workflow_dispatch'&&Date.parse(r.created_at)>=deploySince);
+              if(deployment.some(r=>r.status==='completed'&&r.conclusion==='success')){
+                core.info('Komodo webhook accepted; force-rebuilding actual bt stack on local runner next.');
+                break;
+              }
+              if(deployment.some(r=>r.status==='completed'&&r.conclusion!=='success')){
+                throw new Error('The official deploy webhook did not pass');
+              }
+              if(attempt===89)throw new Error('Timed out waiting for official deploy job');
+              await sleep(10000);
+            }
+      - name: Rebuild real Komodo bt stack application services and verify dossiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          stack=/etc/komodo/stacks/bt
+          expected=11e0219783bfbe5e68865035b41ad0b12f52fa0a
+          actual=$(git -c safe.directory="$stack" -C "$stack" rev-parse HEAD)
+          if [[ "$actual" != "$expected" ]]; then
+            echo "::error::Stack source is not expected main SHA. Reject deployment."
+            exit 1
+          fi
+          echo "Verified on-server stack source SHA: $actual"
+          for name in ironhex-web ironhex-api ironhex-db; do
+            project=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$name")
+            if [[ "$project" != bt ]]; then
+              echo "::error::Container $name does not belong to expected bt Compose project."
+              exit 1
+            fi
+          done
+          if ! docker exec --workdir "$stack" komodo-periphery-1 \
+            sh -ec 'docker compose -p bt -f compose.yaml config --quiet'; then
+            echo "::error::Komodo-managed Compose or private environment cannot be validated."
+            exit 1
+          fi
+          db_before=$(docker inspect -f '{{.Id}}' ironhex-db)
+          web_before=$(docker inspect -f '{{.Id}}' ironhex-web)
+          api_before=$(docker inspect -f '{{.Id}}' ironhex-api)
+          web_image_before=$(docker inspect -f '{{.Image}}' ironhex-web)
+          api_image_before=$(docker inspect -f '{{.Image}}' ironhex-api)
+          rollback() {
+            set +e
+            echo "::error::New application deploy failed checks; restoring previous web/API images, leaving PostgreSQL intact."
+            docker tag "$web_image_before" ironhex-web:local
+            docker tag "$api_image_before" ironhex-api:local
+            current_web=$(docker inspect -f '{{.Id}}' ironhex-web 2>/dev/null)
+            current_api=$(docker inspect -f '{{.Id}}' ironhex-api 2>/dev/null)
+            if [[ "$current_web" != "$web_before" || "$current_api" != "$api_before" ]]; then
+              docker exec --workdir "$stack" komodo-periphery-1 \
+                sh -ec 'docker compose -p bt -f compose.yaml up -d --no-build --no-deps --force-recreate ironhex-web ironhex-api'
+            fi
+            exit 1
+          }
+          trap rollback ERR
+          echo "Building ONLY IronHex web and API from exact verified main."
+          docker exec --workdir "$stack" komodo-periphery-1 \
+            sh -ec 'docker compose -p bt -f compose.yaml build ironhex-web ironhex-api'
+          echo "Recreating ONLY web and API in existing bt Compose project."
+          docker exec --workdir "$stack" komodo-periphery-1 \
+            sh -ec 'docker compose -p bt -f compose.yaml up -d --no-build --no-deps --force-recreate ironhex-web ironhex-api'
+          if [[ "$(docker inspect -f '{{.Id}}' ironhex-db)" != "$db_before" ]]; then
+            echo "::error::Database container was unexpectedly replaced."
+            exit 1
+          fi
+          new_web=$(docker inspect -f '{{.Id}}' ironhex-web)
+          new_api=$(docker inspect -f '{{.Id}}' ironhex-api)
+          if [[ "$new_web" == "$web_before" || "$new_api" == "$api_before" ]]; then
+            echo "::error::Application containers not recreated."
+            exit 1
+          fi
+          healthy=0
+          for attempt in $(seq 1 45); do
+            if [[ "$(docker inspect -f '{{.State.Status}}' ironhex-web)" == running && \
+                  "$(docker inspect -f '{{.State.Status}}' ironhex-api)" == running && \
+                  "$(docker inspect -f '{{.State.Health.Status}}' ironhex-db)" == healthy ]] &&
+               curl -fsS --max-time 4 http://127.0.0.1:18088/health | grep -qx OK &&
+               curl -fsS --max-time 4 http://127.0.0.1:18089/api/health >/dev/null; then
+              healthy=1
+              break
+            fi
+            sleep 4
+          done
+          if [[ "$healthy" != 1 ]]; then
+            echo "::error::Web/API health did not recover after deploy."
+            exit 1
+          fi
+          curl -fsS --max-time 4 http://127.0.0.1:18088/folio-art.js | grep -q 'folio-illustration' ||
+            { echo "::error::Market dossier illustration script absent from deployed web"; exit 1; }
+          docker exec ironhex-api sh -c 'test -s /app/data/megamek/archive/all-units.json.gz' ||
+            { echo "::error::Complete MegaMek dossier archive absent from deployed API"; exit 1; }
+          echo "VERIFIED DEPLOY: source=$actual project=bt market dossier artifacts loaded, web/api healthy, DB unchanged."
+          for name in ironhex-web ironhex-api ironhex-db; do
+            docker inspect -f 'Container {{.Name}} status={{.State.Status}} started={{.State.StartedAt}} image={{.Image}}' "$name"
+          done
+          trap - ERR
