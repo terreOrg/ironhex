@@ -1,0 +1,58 @@
+name: IRONHEX gated deploy 664d37bf
+on:
+  push:
+    branches: [ops/ironhex-verified-deploy-664d37bf-20261123]
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    name: Verify exact four gates, run manual full smoke and dispatch official Deploy
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 40
+    steps:
+      - name: Check exact main and start verified deploy
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner=context.repo.owner,repo=context.repo.repo;
+            const target='664d37bf0cabcaab566de8de251e3e8f3d3f3162';
+            const required=['Ironhex CI','Ironhex Browser E2E','Ironhex Container Smoke','Ironhex SonarQube'];
+            const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+            const ensureHead=async()=>{
+              const {data}=await github.rest.repos.getBranch({owner,repo,branch:'main'});
+              if(data.commit.sha!==target)throw Error('Refusing to deploy stale main');
+            };
+            const getRuns=async()=>{
+              const {data}=await github.rest.actions.listWorkflowRunsForRepo({owner,repo,head_sha:target,per_page:100});
+              return data.workflow_runs||[];
+            };
+            await ensureHead();
+            const existing=await getRuns();
+            for(const name of required){
+              const matches=existing.filter(x=>x.name===name&&x.head_sha===target&&x.head_branch==='main'&&x.event==='push');
+              if(!matches.some(x=>x.status==='completed'&&x.conclusion==='success'))
+                throw Error('Required exact-main gate not passed: '+name);
+              if(matches.some(x=>x.status==='completed'&&x.conclusion==='failure'))
+                throw Error('Failure exists for required gate: '+name);
+            }
+            core.info('All four exact-main mandatory checks passed for '+target);
+            const since=Date.now()-3000;
+            await github.rest.actions.createWorkflowDispatch({owner,repo,workflow_id:'container-smoke.yml',ref:'main'});
+            for(let i=0;i<80;i++){
+              await ensureHead();
+              const runs=(await getRuns()).filter(x=>x.name==='Ironhex Container Smoke'&&
+                x.head_sha===target&&x.head_branch==='main'&&
+                x.event==='workflow_dispatch'&&Date.parse(x.created_at)>=since);
+              if(runs.some(x=>x.status==='completed'&&x.conclusion==='success'))break;
+              if(runs.some(x=>x.status==='completed'&&x.conclusion==='failure'))throw Error('Full Container Smoke failed');
+              if(i===79)throw Error('Timed out waiting for full Container Smoke');
+              await pause(12000);
+            }
+            await ensureHead();
+            await github.rest.actions.createWorkflowDispatch({owner,repo,workflow_id:'deploy.yml',ref:'main'});
+            core.info('Official Ironhex Deploy requested for verified main '+target+
+              '; the deploy job must report Komodo acceptance, followed by runtime health verification.');
