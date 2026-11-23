@@ -1,0 +1,58 @@
+name: IRONHEX post-deploy health 664d37bf
+on:
+  push:
+    branches: [ops/ironhex-postdeploy-health-664d37bf-20261123]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify Komodo source SHA, updated containers, DB persistence and health
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 10
+    steps:
+      - name: Check live stack and health without modifying services
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=664d37bf0cabcaab566de8de251e3e8f3d3f3162
+          stack=/etc/komodo/stacks/bt
+          webhook_epoch=$(date -u -d '2026-11-23T08:26:32Z' +%s)
+          for attempt in $(seq 1 85); do
+            actual=$(git -c safe.directory="$stack" -C "$stack" rev-parse HEAD 2>/dev/null || true)
+            ready=1
+            if [[ "$actual" != "$target" ]]; then ready=0; fi
+            statuses=""
+            for name in ironhex-web ironhex-api ironhex-db; do
+              if ! docker inspect "$name" >/dev/null 2>&1; then
+                ready=0
+                statuses="$statuses $name=missing"
+                continue
+              fi
+              state=$(docker inspect -f '{{.State.Status}}' "$name")
+              started=$(docker inspect -f '{{.State.StartedAt}}' "$name")
+              timestamp=$(date -u -d "$started" +%s)
+              statuses="$statuses $name=$state@$started"
+              if [[ "$state" != running ]]; then ready=0; fi
+              if [[ "$name" != ironhex-db && "$timestamp" -lt "$webhook_epoch" ]]; then ready=0; fi
+              project=$(docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' "$name")
+              if [[ "$project" != bt ]]; then ready=0; fi
+            done
+            if [[ "$ready" == 1 ]]; then
+              if ! docker inspect -f '{{.State.Health.Status}}' ironhex-db | grep -qx healthy; then ready=0; fi
+              if ! curl -fsS --max-time 4 http://127.0.0.1:18088/health | grep -qx OK; then ready=0; fi
+              if ! curl -fsS --max-time 4 http://127.0.0.1:18089/api/health >/dev/null; then ready=0; fi
+            fi
+            if [[ "$ready" == 1 ]]; then
+              echo "VERIFIED LIVE DEPLOY: exact stack SHA=$actual"
+              echo "VERIFIED: new web and API containers started after webhook; all services running; PostgreSQL healthy."
+              echo "VERIFIED: HTTP /health and /api/health OK."
+              echo "$statuses"
+              exit 0
+            fi
+            if (( attempt % 6 == 0 )); then echo "Waiting attempt $attempt: stack=$actual containers:$statuses"; fi
+            sleep 5
+          done
+          echo "::error::Live Komodo stack did not reach exact tested SHA and health after webhook."
+          exit 1
