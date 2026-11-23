@@ -13,6 +13,10 @@ jobs:
     runs-on: [self-hosted, Linux, X64, spellfire]
     timeout-minutes: 3
     steps:
+      - name: Set up Node.js 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Print issue metadata without exposing credentials
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
