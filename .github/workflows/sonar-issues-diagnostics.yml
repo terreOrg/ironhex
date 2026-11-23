@@ -1,0 +1,38 @@
+name: IRONHEX Sonar issue diagnostics
+
+on:
+  push:
+    branches: [ops/sonar-diagnostics-20261123]
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: List current open Sonar issues
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 3
+    steps:
+      - name: Print issue metadata without exposing credentials
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          node <<'NODE'
+          const base = process.env.SONAR_HOST_URL;
+          const token = process.env.SONAR_TOKEN;
+          if (!base || !token) throw Error('Missing Sonar configuration');
+          const url = new URL(base.replace(/\/$/, '') + '/api/issues/search');
+          url.searchParams.set('componentKeys', 'ironhex');
+          url.searchParams.set('resolved', 'false');
+          url.searchParams.set('ps', '100');
+          const response = await fetch(url, {headers: {Authorization: 'Basic ' + Buffer.from(token + ':').toString('base64')}});
+          if (!response.ok) throw Error('Sonar returned HTTP ' + response.status);
+          const result = await response.json();
+          const issues = (result.issues || []).map(i => ({
+            key: i.key, rule: i.rule, type: i.type, severity: i.severity, message: i.message,
+            component: i.component, line: i.line || i.textRange?.startLine || null,
+            status: i.status, creationDate: i.creationDate
+          }));
+          console.log(JSON.stringify({total: result.total, issues: issues.slice(0, 100)}, null, 2));
+          NODE
