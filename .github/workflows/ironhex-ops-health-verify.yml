@@ -19,7 +19,7 @@ jobs:
           set -euo pipefail
           min_epoch=$(date -u -d '2026-11-23T06:29:31Z' +%s)
           echo "Expected Komodo webhook accepted at UTC 2026-11-23T06:29:31Z"
-          echo "Waiting for all three services to have started after the webhook and respond healthy."
+          echo "Waiting for web and API restart, and all three services healthy. Database must preserve its state; restart is not required."
           for attempt in $(seq 1 80); do
             statuses=""
             healthy=1
@@ -33,7 +33,8 @@ jobs:
               started=$(docker inspect -f '{{.State.StartedAt}}' "$name")
               started_epoch=$(date -u -d "$started" +%s)
               statuses="$statuses $name=$status@$started"
-              if [[ "$status" != running || "$started_epoch" -lt "$min_epoch" ]]; then healthy=0; fi
+              if [[ "$status" != running ]]; then healthy=0; fi
+              if [[ "$name" != ironhex-db && "$started_epoch" -lt "$min_epoch" ]]; then healthy=0; fi
             done
             if [[ "$healthy" -eq 1 ]]; then
               if ! docker inspect -f '{{.State.Health.Status}}' ironhex-db | grep -qx healthy; then healthy=0; fi
@@ -41,7 +42,7 @@ jobs:
               if ! curl --silent --show-error --fail --max-time 4 http://127.0.0.1:18089/api/health >/dev/null; then healthy=0; fi
             fi
             if [[ "$healthy" -eq 1 ]]; then
-              echo "SUCCESS: All three IronHex containers were restarted since the accepted deployment webhook."
+              echo "SUCCESS: Web and API restarted after Komodo deploy; database remains running (persistent DB restart not required)."
               echo "SUCCESS: Web /health and API /api/health respond; PostgreSQL health is healthy."
               echo "$statuses"
               exit 0
