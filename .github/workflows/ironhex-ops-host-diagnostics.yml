@@ -1,0 +1,32 @@
+name: IRONHEX deploy host diagnostics fe1b539
+on:
+  push:
+    branches:
+      - ops/diagnose-ironhex-deploy-fe1b539-20261123
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Read-only deployment diagnostic from local runner
+    runs-on: [self-hosted, Linux, X64, spellfire]
+    timeout-minutes: 3
+    steps:
+      - name: Inspect local containers and HTTP health
+        shell: bash
+        run: |
+          echo "Host time UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Komodo webhook accepted at 2026-11-23T06:29:31Z"
+          for name in ironhex-web ironhex-api ironhex-db; do
+            if docker inspect "$name" >/dev/null 2>&1; then
+              docker inspect -f 'Container {{.Name}} status={{.State.Status}} started={{.State.StartedAt}} image={{.Image}}' "$name"
+              docker inspect -f 'Health={{if .State.Health}}{{.State.Health.Status}}{{else}}not-defined{{end}}' "$name"
+            else
+              echo "MISSING: $name"
+            fi
+          done
+          echo 'Frontend port 18088 /health:'
+          curl -sS -o /dev/null -w 'http=%{http_code} seconds=%{time_total}\n' --connect-timeout 2 --max-time 5 http://127.0.0.1:18088/health || true
+          echo 'API port 18089 /api/health:'
+          curl -sS -o /dev/null -w 'http=%{http_code} seconds=%{time_total}\n' --connect-timeout 2 --max-time 5 http://127.0.0.1:18089/api/health || true
