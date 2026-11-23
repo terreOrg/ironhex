@@ -52,6 +52,24 @@ jobs:
               echo "Not a directory: $loc"
             fi
           done
+
+          echo 'Stack ownership and git revision (safe read-only):'
+          stat -c 'path=%n owner=%U group=%G mode=%a' /etc/komodo/stacks/bt /etc/komodo/stacks/bt/compose.yaml /etc/komodo/stacks/bt/.env || true
+          git -c safe.directory=/etc/komodo/stacks/bt -C /etc/komodo/stacks/bt rev-parse HEAD || true
+          git -c safe.directory=/etc/komodo/stacks/bt -C /etc/komodo/stacks/bt branch --show-current || true
+          echo 'Does Compose config parse:'
+          if (cd /etc/komodo/stacks/bt && docker compose -f compose.yaml config --quiet >/dev/null 2>&1); then echo COMPOSE_CONFIG_VALID; else echo COMPOSE_CONFIG_INVALID_OR_UNREADABLE; fi
+          echo 'Read selected YAML build and image keys without environment values:'
+          python3 - <<'PY'
+          import pathlib,re
+          src=pathlib.Path('/etc/komodo/stacks/bt/compose.yaml')
+          try:
+              data=src.read_text().splitlines()
+              for index,line in enumerate(data):
+                  if re.match(r'^  ironhex-(web|api|db):',line): print(line)
+                  if re.match(r'^    (image|pull_policy|build|context|dockerfile):',line): print(line)
+          except Exception as e: print(type(e).__name__)
+          PY
           echo 'Komodo containers:'
           docker ps --format '{{.Names}}' | grep -i komodo || true
           echo 'API port 18089 /api/health:'
