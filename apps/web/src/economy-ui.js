@@ -150,7 +150,7 @@ export function installEconomyUI(hubRoot,onHangarRefresh){
   detail.addEventListener('click',event=>{
     if(event.target===detail)detail.close();
   });
-  detail.addEventListener('close',()=>{detailSerial++;});
+  detail.addEventListener('close',()=>{if(!detail.open)detailSerial++;});
   document.querySelector('#economy-detail-dialog')?.remove();
   document.body.append(detail);
   const equipmentSearch=el('input','economy-filter');

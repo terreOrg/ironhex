@@ -1056,6 +1056,7 @@ test('Commander catalog supports combined mass filters and opens a complete Mech
       const examples=await page.locator('#economy-equipment-archive .folio-line-art').count();
       assert.equal(examples,2,'One reusable schematic per equipment class, no missing icon');
       await page.locator('#economy-equipment-archive .economy-name').first().click();
+      await page.locator('#economy-detail-dialog[open] .folio-cover').waitFor({state:'visible'});
       assert.match(await page.locator('#economy-detail-dialog').textContent(),/Medium Laser/);
       assert.equal(await page.locator('#economy-detail-dialog .folio-line-art').count(),1);
       await page.locator('#economy-detail-dialog .economy-detail-close').click();
